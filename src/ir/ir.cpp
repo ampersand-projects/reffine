@@ -12,5 +12,4 @@ void Cast::Accept(Visitor& v) const { v.Visit(*this); }
 void NaryExpr::Accept(Visitor& v) const { v.Visit(*this); }
 void Read::Accept(Visitor& v) const { v.Visit(*this); }
 void PushBack::Accept(Visitor& v) const { v.Visit(*this); }
-void MakeIdx::Accept(Visitor& v) const { v.Visit(*this); }
 void Loop::Accept(Visitor& v) const { v.Visit(*this); }

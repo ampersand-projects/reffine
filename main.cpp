@@ -18,8 +18,7 @@ int main()
 
     auto idx = make_shared<SymNode>("idx", types::IDX);
     auto one = make_shared<Const>(BaseType::IDX, 1);
-    auto idx_init = make_shared<MakeIdx>(one);
-    loop->idx_inits[idx] = idx_init;
+    loop->idx_inits[idx] = one;
     loop->idx_incrs[idx] = make_shared<Add>(idx, one);
 
     loop->body_cond = make_shared<Const>(BaseType::BOOL, 1);

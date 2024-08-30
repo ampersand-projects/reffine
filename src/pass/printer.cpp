@@ -101,11 +101,6 @@ void IRPrinter::Visit(const NaryExpr& e)
     }
 }
 
-void IRPrinter::Visit(const MakeIdx& make_idx)
-{
-    emitfunc("make_idx", { make_idx.val });
-}
-
 void IRPrinter::Visit(const Read& read)
 {
     emitfunc("read", { read.vector, read.idx });

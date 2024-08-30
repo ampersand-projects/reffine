@@ -45,7 +45,6 @@ public:
     void Visit(const Const&) override;
     void Visit(const Cast&) override;
     void Visit(const NaryExpr&) override;
-    void Visit(const MakeIdx&) override;
     void Visit(const Read&) override;
     void Visit(const PushBack&) override;
     void Visit(const Loop&) override;

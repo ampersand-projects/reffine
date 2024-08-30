@@ -37,7 +37,6 @@ protected:
     virtual ValTy visit(const Read&) = 0;
     virtual ValTy visit(const PushBack&) = 0;
     virtual ValTy visit(const Call&) = 0;
-    virtual ValTy visit(const MakeIdx&) = 0;
     virtual ValTy visit(const LoopNode&) = 0;
 
     void Visit(const Select& expr) final { val() = visit(expr); }
@@ -48,7 +47,6 @@ protected:
     void Visit(const Read& expr) final { val() = visit(expr); }
     void Visit(const PushBack& expr) final { val() = visit(expr); }
     void Visit(const Call& expr) final { val() = visit(expr); }
-    void Visit(const MakeIdx& expr) final { val() = visit(expr); }
     void Visit(const LoopNode& expr) final { val() = visit(expr); }
 
     CtxTy& switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); return new_ctx; }

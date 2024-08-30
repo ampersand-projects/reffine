@@ -13,17 +13,6 @@ using namespace std;
 
 namespace reffine {
 
-struct MakeIdx : public ExprNode {
-    Expr val;
-
-    MakeIdx(Expr val) : ExprNode(types::IDX), val(val)
-    {
-        ASSERT(val->type.is_idx());
-    }
-
-    void Accept(Visitor&) const final;
-};
-
 struct Read : public ExprNode {
     Sym vector;
     Sym idx;
