@@ -3,6 +3,7 @@
 using namespace reffine;
 
 void SymNode::Accept(Visitor& v) const { v.Visit(*this); }
+void Func::Accept(Visitor& v) const { v.Visit(*this); }
 void Call::Accept(Visitor& v) const { v.Visit(*this); }
 void Select::Accept(Visitor& v) const { v.Visit(*this); }
 void IfElse::Accept(Visitor& v) const { v.Visit(*this); }

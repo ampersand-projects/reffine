@@ -14,8 +14,9 @@ int main()
 {
     auto input = make_shared<SymNode>("in", types::VECTOR<1>(types::INT32));
     auto output = make_shared<SymNode>("out", types::VECTOR<1>(types::INT32));
-    auto loop = make_shared<Loop>(output);
 
+    // construct the loop
+    auto loop = make_shared<Loop>(output);
     auto idx = make_shared<SymNode>("idx", types::IDX);
     auto one = make_shared<Const>(BaseType::IDX, 1);
     loop->idx_inits[idx] = one;
@@ -30,8 +31,15 @@ int main()
     auto two = make_shared<Const>(BaseType::INT32, 2);
     auto add_two = make_shared<Add>(read, two);
     loop->body = make_shared<PushBack>(output, add_two);
+
+    auto loop_sym = make_shared<SymNode>("loop", loop);
     
-    cout << IRPrinter::Build(loop);
+    // construct the function
+    auto inputs = vector<Sym>{input, output};
+    auto loop_fn = make_shared<Func>("query", loop_sym, inputs);
+    loop_fn->tbl[loop_sym] = loop;
+
+    cout << IRPrinter::Build(loop_fn);
 
     return 0;
 }

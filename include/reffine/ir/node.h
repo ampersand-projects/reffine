@@ -14,13 +14,6 @@ using namespace std;
 namespace reffine {
 
 class Visitor;
-struct ExprNode;
-typedef shared_ptr<ExprNode> Expr;
-struct SymNode;
-typedef shared_ptr<SymNode> Sym;
-typedef vector<Sym> Params;
-typedef map<Sym, Expr> SymTable;
-typedef map<Sym, Sym> Aux;
 
 struct StmtNode {
     virtual ~StmtNode() {}
@@ -35,9 +28,8 @@ struct ExprNode : public StmtNode {
     explicit ExprNode(DataType type) : StmtNode(), type(type) {}
 
     virtual ~ExprNode() {}
-
-    virtual void Accept(Visitor&) const = 0;
 };
+typedef shared_ptr<ExprNode> Expr;
 
 struct SymNode : public ExprNode {
     const string name;
@@ -47,21 +39,9 @@ struct SymNode : public ExprNode {
 
     void Accept(Visitor&) const override;
 };
+typedef shared_ptr<SymNode> Sym;
 
-struct FuncNode : public ExprNode {
-    string name;
-    Params inputs;
-    Sym output;
-    SymTable syms;
-
-    FuncNode(string name, Params inputs, Sym output, SymTable syms) :
-        ExprNode(output->type), name(name), inputs(std::move(inputs)), output(output), syms(std::move(syms))
-    {}
-
-protected:
-    FuncNode(string name, DataType type) : ExprNode(std::move(type)), name(name) {}
-};
-typedef shared_ptr<FuncNode> Func;
+typedef map<Sym, Expr> SymTable;
 
 }  // namespace reffine
 

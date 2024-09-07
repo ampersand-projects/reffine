@@ -37,6 +37,7 @@ public:
     static string Build(const llvm::Module*);
 
     void Visit(const SymNode&) override;
+    void Visit(const Func&) override;
     void Visit(const Call&) override;
     void Visit(const IfElse&) override;
     void Visit(const Select&) override;

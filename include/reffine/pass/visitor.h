@@ -12,6 +12,7 @@ public:
      * Reffine IR
      */
     virtual void Visit(const SymNode&) = 0;
+    virtual void Visit(const Func&) = 0;
     virtual void Visit(const Call&) = 0;
     virtual void Visit(const Select&) = 0;
     virtual void Visit(const IfElse&) = 0;

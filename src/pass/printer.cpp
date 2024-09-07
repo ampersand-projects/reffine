@@ -136,10 +136,30 @@ void IRPrinter::Visit(const Select& select)
     ostr << ")";
 }
 
+void IRPrinter::Visit(const Func& fn)
+{
+    ostr << "def " << fn.name << "(";
+    for (const auto& input : fn.inputs) {
+        ostr << input->name << ", ";
+    }
+    ostr << ") {";
+
+    enter_block();
+    for (const auto& [sym, val] : fn.tbl) {
+        emitassign(sym, val);
+        emitnewline();
+    }
+
+    emitnewline();
+    ostr << "return " << fn.output->name;
+    exit_block();
+
+    ostr << "}";
+    emitnewline();
+}
+
 void IRPrinter::Visit(const Loop& loop)
 {
-    emitcomment("Loop block");
-    emitnewline();
     ostr << "{";
     enter_block();
 
@@ -191,7 +211,6 @@ void IRPrinter::Visit(const Loop& loop)
     loop.output->Accept(*this);
     exit_block();
     ostr << "}";
-    emitnewline();
 }
 
 string IRPrinter::Build(const Stmt stmt)
