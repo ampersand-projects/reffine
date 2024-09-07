@@ -35,15 +35,32 @@ struct DataType {
     const BaseType btype;
     const vector<DataType> dtypes;
     const size_t size;
+    const size_t dim;
 
-    explicit DataType(BaseType btype, vector<DataType> dtypes = {}, size_t size = 0) :
-        btype(btype), dtypes(dtypes), size(size)
+    explicit DataType(
+        BaseType btype,
+        vector<DataType> dtypes = {},
+        size_t size = 0,
+        size_t dim = 0) :
+        btype(btype), dtypes(dtypes), size(size), dim(dim)
     {
         switch (btype) {
-            case BaseType::STRUCT: ASSERT(dtypes.size() > 0); break;
-            case BaseType::PTR: ASSERT(dtypes.size() == 1); break;
-            case BaseType::VECTOR: ASSERT(dtypes.size() == 1); break;
-            default: ASSERT(dtypes.size() == 0); break;
+            case BaseType::STRUCT:
+                ASSERT(dtypes.size() > 0);
+                ASSERT(dim == 0);
+                break;
+            case BaseType::PTR:
+                ASSERT(dtypes.size() == 1);
+                ASSERT(dim == 0);
+                break;
+            case BaseType::VECTOR:
+                ASSERT(dtypes.size() == 1);
+                ASSERT(dim > 0);
+                break;
+            default:
+                ASSERT(dtypes.size() == 0);
+                ASSERT(dim == 0);
+                break;
         }
     }
 
@@ -194,7 +211,11 @@ DataType STRUCT()
     return DataType(BaseType::STRUCT, dtypes);
 }
 
-DataType VECTOR(DataType);
+template<size_t dim>
+DataType VECTOR(DataType type)
+{
+    return DataType(BaseType::VECTOR, { type }, /*size=*/0, /*dim=*/dim);
+}
 
 }  // namespace reffine::types
 

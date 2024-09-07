@@ -12,8 +12,8 @@ using namespace std;
 
 int main()
 {
-    auto input = make_shared<SymNode>("in", types::VECTOR(types::INT32));
-    auto output = make_shared<SymNode>("out", types::VECTOR(types::INT32));
+    auto input = make_shared<SymNode>("in", types::VECTOR<1>(types::INT32));
+    auto output = make_shared<SymNode>("out", types::VECTOR<1>(types::INT32));
     auto loop = make_shared<Loop>(output);
 
     auto idx = make_shared<SymNode>("idx", types::IDX);

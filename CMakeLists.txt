@@ -22,7 +22,6 @@ include_directories(${LLVM_INCLUDE_DIRS} include)
 add_definitions(${LLVM_DEFINITIONS})
 
 set(SRC_FILES
-    src/base/type.cpp
     src/ir/ir.cpp
     src/pass/printer.cpp
     main.cpp
