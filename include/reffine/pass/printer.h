@@ -33,7 +33,6 @@ public:
         ctx(std::move(ctx)), tabstop(tabstop)
     {}
 
-    static string Build(const Expr);
     static string Build(const Stmt);
     static string Build(const llvm::Module*);
 

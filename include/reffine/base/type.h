@@ -13,7 +13,7 @@ using namespace std;
 namespace reffine {
 
 enum class BaseType {
-    UNKNOWN,
+    UNKNOWN, // never use this type
     BOOL,
     INT8,
     INT16,
@@ -59,6 +59,11 @@ struct DataType {
     bool is_arr() const { return size > 0; }
     bool is_idx() const { return btype == BaseType::IDX; }
     bool is_vector() const { return btype == BaseType::VECTOR; }
+
+    bool is_val() const
+    {
+        return !(this->is_vector() || this->is_idx());
+    }
 
     bool is_float() const
     {

@@ -138,6 +138,11 @@ void IRPrinter::Visit(const Select& select)
 
 void IRPrinter::Visit(const Loop& loop)
 {
+    emitcomment("Loop block");
+    emitnewline();
+    ostr << "{";
+    enter_block();
+
     emitcomment("initialization");
     emitnewline();
     for (const auto& [idx, init_expr] : loop.idx_inits) {
@@ -172,22 +177,21 @@ void IRPrinter::Visit(const Loop& loop)
     emitnewline();
 
     emitcomment("update indices");
-    emitnewline();
     for (const auto& [idx, incr_expr] : loop.idx_incrs) {
-        emitassign(idx, incr_expr);
         emitnewline();
+        emitassign(idx, incr_expr);
     }
 
     exit_block();
     ostr << "}";
     emitnewline();
-}
+    emitnewline();
 
-string IRPrinter::Build(const Expr expr)
-{
-    IRPrinter printer;
-    expr->Accept(printer);
-    return printer.ostr.str();
+    ostr << "return ";
+    loop.output->Accept(*this);
+    exit_block();
+    ostr << "}";
+    emitnewline();
 }
 
 string IRPrinter::Build(const Stmt stmt)

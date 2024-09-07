@@ -22,22 +22,22 @@ typedef vector<Sym> Params;
 typedef map<Sym, Expr> SymTable;
 typedef map<Sym, Sym> Aux;
 
-struct ExprNode {
-    const DataType type;
-
-    explicit ExprNode(DataType type) : type(type) {}
-
-    virtual ~ExprNode() {}
-
-    virtual void Accept(Visitor&) const = 0;
-};
-
 struct StmtNode {
     virtual ~StmtNode() {}
 
     virtual void Accept(Visitor&) const = 0;
 };
 typedef shared_ptr<StmtNode> Stmt;
+
+struct ExprNode : public StmtNode {
+    const DataType type;
+
+    explicit ExprNode(DataType type) : StmtNode(), type(type) {}
+
+    virtual ~ExprNode() {}
+
+    virtual void Accept(Visitor&) const = 0;
+};
 
 struct SymNode : public ExprNode {
     const string name;

@@ -34,13 +34,22 @@ struct PushBack : public StmtNode {
     PushBack(Sym vector, Expr val) :
         StmtNode(), vector(vector), val(val)
     {
+        ASSERT(val->type.is_val());
         ASSERT(vector->type.dtypes[0] == val->type);
     }
 
     void Accept(Visitor&) const final;
 };
 
-struct Loop : public StmtNode {
+struct StmtsNode : public StmtNode {
+    vector<Stmt> stmts;
+
+    StmtsNode(vector<Stmt> stmts) : StmtNode(), stmts(stmts) {}
+
+    void Accept(Visitor&) const final;
+};
+
+struct Loop : public ExprNode {
     map<Sym, Expr> idx_inits;
 
     // Loop increment
@@ -55,7 +64,10 @@ struct Loop : public StmtNode {
     // Lopp body
     Stmt body;
 
-    Loop() : StmtNode() {}
+    // Loop output
+    Expr output;
+
+    Loop(Expr output) : ExprNode(output->type), output(output) {}
 
     void Accept(Visitor&) const final;
 };
