@@ -46,16 +46,16 @@ struct DataType {
     {
         switch (btype) {
             case BaseType::STRUCT:
-                ASSERT(dtypes.size() > 0);
                 ASSERT(dim == 0);
+                ASSERT(dtypes.size() > 0);
                 break;
             case BaseType::PTR:
-                ASSERT(dtypes.size() == 1);
                 ASSERT(dim == 0);
+                ASSERT(dtypes.size() == 1);
                 break;
             case BaseType::VECTOR:
-                ASSERT(dtypes.size() == 1);
                 ASSERT(dim > 0);
+                ASSERT(dtypes.size() > dim);
                 break;
             default:
                 ASSERT(dtypes.size() == 0);
@@ -212,9 +212,9 @@ DataType STRUCT()
 }
 
 template<size_t dim>
-DataType VECTOR(DataType type)
+DataType VECTOR(vector<DataType> types)
 {
-    return DataType(BaseType::VECTOR, { type }, /*size=*/0, /*dim=*/dim);
+    return DataType(BaseType::VECTOR, types, /*size=*/0, /*dim=*/dim);
 }
 
 }  // namespace reffine::types
