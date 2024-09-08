@@ -14,11 +14,11 @@ namespace reffine {
 template<typename ValTy>
 class IRPassCtx {
 public:
-    IRPassCtx(const map<Sym, Expr>& in_sym_tbl) :
+    IRPassCtx(const SymTable& in_sym_tbl) :
         in_sym_tbl(in_sym_tbl)
     {}
 
-    const map<Sym, Expr>& in_sym_tbl;
+    const SymTable& in_sym_tbl;
     map<Sym, ValTy> sym_val_map;
     ValTy val;
 };
@@ -28,8 +28,8 @@ class IRPass : public Visitor {
 protected:
     virtual CtxTy& ctx() = 0;
 
-    virtual ValTy visit(const SymNode&) = 0;
     virtual ValTy visit(const Select&) = 0;
+    virtual ValTy visit(const IfElse&) = 0;
     virtual ValTy visit(const Exists&) = 0;
     virtual ValTy visit(const Const&) = 0;
     virtual ValTy visit(const Cast&) = 0;
@@ -37,9 +37,12 @@ protected:
     virtual ValTy visit(const Read&) = 0;
     virtual ValTy visit(const PushBack&) = 0;
     virtual ValTy visit(const Call&) = 0;
-    virtual ValTy visit(const LoopNode&) = 0;
+    virtual ValTy visit(const Stmts&) = 0;
+    virtual ValTy visit(const Func&) = 0;
+    virtual ValTy visit(const Loop&) = 0;
 
     void Visit(const Select& expr) final { val() = visit(expr); }
+    void Visit(const IfElse& expr) final { val() = visit(expr); }
     void Visit(const Exists& expr) final { val() = visit(expr); }
     void Visit(const Const& expr) final { val() = visit(expr); }
     void Visit(const Cast& expr) final { val() = visit(expr); }
@@ -47,7 +50,9 @@ protected:
     void Visit(const Read& expr) final { val() = visit(expr); }
     void Visit(const PushBack& expr) final { val() = visit(expr); }
     void Visit(const Call& expr) final { val() = visit(expr); }
-    void Visit(const LoopNode& expr) final { val() = visit(expr); }
+    void Visit(const Stmts& stmt) final { val() = visit(stmt); }
+    void Visit(const Func& stmt) final { val() = visit(stmt); }
+    void Visit(const Loop& expr) final { val() = visit(expr); }
 
     CtxTy& switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); return new_ctx; }
 
@@ -69,20 +74,16 @@ protected:
         auto tmp = tmp_sym(symbol);
 
         if (ctx().sym_val_map.find(tmp) == ctx().sym_val_map.end()) {
-            if (ctx().in_sym_tbl.find(tmp) == ctx().in_sym_tbl.end()) {
-                auto expr = ctx().in_sym_tbl.at(tmp);
-                assign(tmp, expr);
-            }
-            auto value = visit(symbol);
-            ctx().sym_val_map[tmp] = value;
+            auto expr = ctx().in_sym_tbl.at(tmp);
+            ctx().sym_val_map[tmp] = assign(tmp, expr);
         }
 
         val() = ctx().sym_val_map.at(tmp);
     }
 
-    virtual void assign(Sym sym, Expr expr)
+    virtual ValTy assign(Sym sym, Expr expr)
     {
-        eval(expr);
+        return eval(expr);
     }
 
 private:

@@ -10,7 +10,7 @@
 using namespace reffine;
 using namespace std;
 
-int main()
+shared_ptr<Func> reffine_fn()
 {
     auto input = make_shared<SymNode>("in", types::VECTOR<1>({types::INT32, types::INT32}));
     auto output = make_shared<SymNode>("out", types::VECTOR<1>({types::INT32, types::INT32}));
@@ -39,7 +39,27 @@ int main()
     auto loop_fn = make_shared<Func>("query", loop_sym, inputs);
     loop_fn->tbl[loop_sym] = loop;
 
-    cout << IRPrinter::Build(loop_fn);
+    return loop_fn;
+}
+
+shared_ptr<Func> simple_fn()
+{
+    auto a = make_shared<SymNode>("a", types::INT32);
+    auto b = make_shared<SymNode>("b", types::INT32);
+
+    auto add = make_shared<Add>(a, b);
+    auto c = make_shared<SymNode>("c", add);
+
+    auto foo_fn = make_shared<Func>("foo", c, vector<Sym>{a, b});
+    foo_fn->tbl[c] = add;
+
+    return foo_fn;
+}
+
+int main()
+{
+    auto fn = simple_fn();
+    cout << IRPrinter::Build(fn);
 
     return 0;
 }

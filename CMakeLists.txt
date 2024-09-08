@@ -24,6 +24,7 @@ add_definitions(${LLVM_DEFINITIONS})
 set(SRC_FILES
     src/ir/ir.cpp
     src/pass/printer.cpp
+    src/pass/llvmgen.cpp
     main.cpp
 )
 
@@ -38,4 +39,3 @@ llvm_map_components_to_libnames(llvm_libs core executionengine support native or
 target_link_libraries(reffine ${llvm_libs})
 
 target_compile_options(reffine PRIVATE -Wall -Wextra -pedantic -Werror -Wno-unused-parameter)
-
