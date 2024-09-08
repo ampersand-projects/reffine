@@ -75,15 +75,15 @@ protected:
 
         if (ctx().sym_val_map.find(tmp) == ctx().sym_val_map.end()) {
             auto expr = ctx().in_sym_tbl.at(tmp);
-            ctx().sym_val_map[tmp] = assign(tmp, expr);
+            assign(tmp, eval(expr));
         }
 
         val() = ctx().sym_val_map.at(tmp);
     }
 
-    virtual ValTy assign(Sym sym, Expr expr)
+    void assign(Sym sym, ValTy val)
     {
-        return eval(expr);
+        ctx().sym_val_map[sym] = val;
     }
 
 private:

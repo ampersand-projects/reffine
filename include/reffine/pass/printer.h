@@ -34,7 +34,7 @@ public:
     {}
 
     static string Build(const Stmt);
-    static string Build(const llvm::Module*);
+    static string Build(const llvm::Module&);
 
     void Visit(const SymNode&) override;
     void Visit(const Stmts&) override;

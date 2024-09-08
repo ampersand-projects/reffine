@@ -251,7 +251,6 @@ Value* LLVMGen::visit(const IfElse&) { return nullptr; }
 Value* LLVMGen::visit(const Read&) { return nullptr; }
 Value* LLVMGen::visit(const PushBack&) { return nullptr; }
 Value* LLVMGen::visit(const Stmts&) { return nullptr; }
-Value* LLVMGen::visit(const Func&) { return nullptr; }
 Value* LLVMGen::visit(const Loop&) { return nullptr; }
 
 Value* LLVMGen::visit(const Exists& exists)
@@ -262,6 +261,27 @@ Value* LLVMGen::visit(const Exists& exists)
 Value* LLVMGen::visit(const Call& call)
 {
     return llcall(call.name, lltype(call), call.args);
+}
+
+Value* LLVMGen::visit(const Func& func)
+{
+    // Define function signature
+    vector<llvm::Type*> args_type;
+    for (const auto& input : func.inputs) {
+        args_type.push_back(lltype(input->type));
+    }
+    auto fn = llfunc(func.name, lltype(func.output), args_type);
+    for (size_t i = 0; i < func.inputs.size(); i++) {
+        auto input = func.inputs[i];
+        assign(input, fn->getArg(i));
+    }
+
+    auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
+
+    builder()->SetInsertPoint(entry_bb);
+    builder()->CreateRet(eval(func.output));
+
+    return fn;
 }
 
 void LLVMGen::Build(const Func* func, llvm::Module& llmod)

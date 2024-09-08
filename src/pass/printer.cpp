@@ -151,7 +151,8 @@ void IRPrinter::Visit(const Func& fn)
     }
 
     emitnewline();
-    ostr << "return " << fn.output->name;
+    ostr << "return ";
+    fn.output->Accept(*this);
     exit_block();
 
     ostr << "}";
@@ -228,11 +229,11 @@ string IRPrinter::Build(const Stmt stmt)
     return printer.ostr.str();
 }
 
-string IRPrinter::Build(const llvm::Module* mod)
+string IRPrinter::Build(const llvm::Module& llmod)
 {
     std::string str;
     llvm::raw_string_ostream ostr(str);
-    ostr << *mod;
+    ostr << llmod;
     ostr.flush();
     return ostr.str();
 }

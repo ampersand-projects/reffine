@@ -25,6 +25,7 @@ set(SRC_FILES
     src/ir/ir.cpp
     src/pass/printer.cpp
     src/pass/llvmgen.cpp
+    src/engine/engine.cpp
     main.cpp
 )
 

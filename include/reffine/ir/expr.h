@@ -17,11 +17,11 @@ namespace reffine {
 
 struct Func : public StmtNode {
     string name;
-    Sym output;
+    Expr output;
     vector<Sym> inputs;
     SymTable tbl;
 
-    Func(string name, Sym output, vector<Sym> inputs, SymTable tbl = {}) :
+    Func(string name, Expr output, vector<Sym> inputs, SymTable tbl = {}) :
         StmtNode(), name(name), output(output), inputs(std::move(inputs)), tbl(std::move(tbl))
     {}
 

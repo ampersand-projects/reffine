@@ -6,6 +6,8 @@
 #include "reffine/ir/loop.h"
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
+#include "reffine/pass/llvmgen.h"
+#include "reffine/engine/engine.h"
 
 using namespace reffine;
 using namespace std;
@@ -44,15 +46,8 @@ shared_ptr<Func> reffine_fn()
 
 shared_ptr<Func> simple_fn()
 {
-    auto a = make_shared<SymNode>("a", types::INT32);
-    auto b = make_shared<SymNode>("b", types::INT32);
-
-    auto add = make_shared<Add>(a, b);
-    auto c = make_shared<SymNode>("c", add);
-
-    auto foo_fn = make_shared<Func>("foo", c, vector<Sym>{a, b});
-    foo_fn->tbl[c] = add;
-
+    auto c = make_shared<Const>(BaseType::INT32, 123);
+    auto foo_fn = make_shared<Func>("foo", c, vector<Sym>{});
     return foo_fn;
 }
 
@@ -60,6 +55,16 @@ int main()
 {
     auto fn = simple_fn();
     cout << IRPrinter::Build(fn);
+
+    auto jit = ExecEngine::Get();
+    auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
+    LLVMGen::Build(fn.get(), *llmod);
+    cout << IRPrinter::Build(*llmod);
+
+    jit->AddModule(std::move(llmod));
+    auto query_fn = jit->Lookup<int (*)()>("foo");
+
+    cout << "Result: " << query_fn() << endl;
 
     return 0;
 }

@@ -18,8 +18,6 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/ExecutionEngine/Orc/IRTransformLayer.h"
 #include "llvm/IR/LegacyPassManager.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
-#include "llvm/Transforms/IPO.h"
 
 using namespace std;
 using namespace llvm;
@@ -44,7 +42,13 @@ public:
     static ExecEngine* Get();
     void AddModule(unique_ptr<Module>);
     LLVMContext& GetCtx();
-    intptr_t Lookup(StringRef);
+
+    template<typename FnTy>
+    FnTy Lookup(StringRef name)
+    {
+        auto fn_sym = cantFail(es->lookup({ &jd }, mangler(name.str())));
+        return fn_sym.getAddress().toPtr<FnTy>();
+    }
 
 private:
     static Expected<ThreadSafeModule> optimize_module(ThreadSafeModule, const MaterializationResponsibility&);
