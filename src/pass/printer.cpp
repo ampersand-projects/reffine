@@ -158,6 +158,14 @@ void IRPrinter::Visit(const Func& fn)
     emitnewline();
 }
 
+void IRPrinter::Visit(const Stmts& stmts)
+{
+    for (const auto& stmt : stmts.stmts) {
+        stmt->Accept(*this);
+        emitnewline();
+    }
+}
+
 void IRPrinter::Visit(const Loop& loop)
 {
     ostr << "{";

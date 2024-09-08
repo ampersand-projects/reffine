@@ -41,10 +41,10 @@ struct PushBack : public StmtNode {
     void Accept(Visitor&) const final;
 };
 
-struct StmtsNode : public StmtNode {
+struct Stmts : public StmtNode {
     vector<Stmt> stmts;
 
-    StmtsNode(vector<Stmt> stmts) : StmtNode(), stmts(stmts) {}
+    Stmts(vector<Stmt> stmts) : StmtNode(), stmts(stmts) {}
 
     void Accept(Visitor&) const final;
 };
