@@ -80,7 +80,6 @@ private:
         lhs->Accept(*this);
         ostr << " = ";
         rhs->Accept(*this);
-        ostr << ";";
     }
 
     void emitfunc(const string name, const vector<Expr> args)

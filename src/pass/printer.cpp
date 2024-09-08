@@ -142,7 +142,7 @@ void IRPrinter::Visit(const Func& fn)
     for (const auto& input : fn.inputs) {
         ostr << input->name << ", ";
     }
-    ostr << ") {";
+    ostr << "\b\b" << ") {";
 
     enter_block();
     for (const auto& [sym, val] : fn.tbl) {
@@ -178,7 +178,7 @@ void IRPrinter::Visit(const Loop& loop)
     emitnewline();
     ostr << "if (";
     loop.exit_cond->Accept(*this);
-    ostr << ") break;";
+    ostr << ") break";
     emitnewline();
     emitnewline();
 
@@ -186,7 +186,7 @@ void IRPrinter::Visit(const Loop& loop)
     emitnewline();
     ostr << "if (";
     loop.body_cond->Accept(*this);
-    ostr << ") break;";
+    ostr << ") break";
     emitnewline();
     emitnewline();
 
