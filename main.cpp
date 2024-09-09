@@ -46,8 +46,15 @@ shared_ptr<Func> reffine_fn()
 
 shared_ptr<Func> simple_fn()
 {
-    auto c = make_shared<Const>(BaseType::INT32, 123);
-    auto foo_fn = make_shared<Func>("foo", c, vector<Sym>{});
+    auto a_sym = make_shared<SymNode>("a", types::INT32);
+    auto b_sym = make_shared<SymNode>("b", types::INT32);
+
+    auto add = make_shared<Add>(a_sym, b_sym);
+    auto add_sym = make_shared<SymNode>("add", add);
+
+    auto foo_fn = make_shared<Func>("foo", add_sym, vector<Sym>{a_sym, b_sym});
+    foo_fn->tbl[add_sym] = add;
+
     return foo_fn;
 }
 
@@ -62,9 +69,9 @@ int main()
     cout << IRPrinter::Build(*llmod);
 
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<int (*)()>(fn->name);
+    auto query_fn = jit->Lookup<int (*)(int, int)>(fn->name);
 
-    cout << "Result: " << query_fn() << endl;
+    cout << "Result: " << query_fn(10, 12) << endl;
 
     return 0;
 }
