@@ -284,7 +284,7 @@ Value* LLVMGen::visit(const Func& func)
     return fn;
 }
 
-void LLVMGen::Build(const Func* func, llvm::Module& llmod)
+void LLVMGen::Build(const shared_ptr<Func> func, llvm::Module& llmod)
 {
     LLVMGenCtx ctx(func);
     LLVMGen llgen(std::move(ctx), llmod);

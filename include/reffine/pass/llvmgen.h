@@ -25,7 +25,7 @@ namespace reffine {
 
 class LLVMGenCtx : public IRPassCtx<llvm::Value*> {
 public:
-    LLVMGenCtx(const Func* func) :
+    LLVMGenCtx(const shared_ptr<Func> func) :
         IRPassCtx(func->tbl)
     {}
 
@@ -41,7 +41,7 @@ public:
         _builder(make_unique<llvm::IRBuilder<>>(llmod.getContext()))
     {}
 
-    static void Build(const Func*, llvm::Module&);
+    static void Build(const shared_ptr<Func>, llvm::Module&);
 
 private:
     LLVMGenCtx& ctx() override { return _ctx; }

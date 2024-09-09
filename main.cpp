@@ -58,7 +58,7 @@ int main()
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(fn.get(), *llmod);
+    LLVMGen::Build(fn, *llmod);
     cout << IRPrinter::Build(*llmod);
 
     jit->AddModule(std::move(llmod));
