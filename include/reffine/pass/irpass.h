@@ -81,7 +81,7 @@ protected:
         val() = ctx().sym_val_map.at(tmp);
     }
 
-    void assign(Sym sym, ValTy val)
+    virtual void assign(Sym sym, ValTy val)
     {
         ctx().sym_val_map[sym] = val;
     }

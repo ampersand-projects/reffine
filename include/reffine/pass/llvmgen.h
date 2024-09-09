@@ -46,6 +46,12 @@ public:
 private:
     LLVMGenCtx& ctx() override { return _ctx; }
 
+    void assign(Sym sym, llvm::Value* val) override
+    {
+        IRPass::assign(sym, val);
+        val->setName(sym->name);
+    }
+
     llvm::Value* visit(const Call&) final;
     llvm::Value* visit(const IfElse&) final;
     llvm::Value* visit(const Select&) final;
