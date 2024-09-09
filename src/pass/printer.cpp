@@ -142,7 +142,7 @@ void IRPrinter::Visit(const Func& fn)
     for (const auto& input : fn.inputs) {
         ostr << input->name << ", ";
     }
-    ostr << "\b\b" << ") {";
+    ostr << (fn.inputs.size() > 0 ? "\b\b" : "") << ") {";
 
     enter_block();
     for (const auto& [sym, val] : fn.tbl) {

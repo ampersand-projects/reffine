@@ -62,7 +62,7 @@ int main()
     cout << IRPrinter::Build(*llmod);
 
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<int (*)()>("foo");
+    auto query_fn = jit->Lookup<int (*)()>(fn->name);
 
     cout << "Result: " << query_fn() << endl;
 
