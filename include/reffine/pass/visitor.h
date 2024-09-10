@@ -27,6 +27,7 @@ public:
     virtual void Visit(const Stmts&) = 0;
     virtual void Visit(const Read&) = 0;
     virtual void Visit(const PushBack&) = 0;
+    virtual void Visit(const Assign&) = 0;
     virtual void Visit(const Loop&) = 0;
 };
 

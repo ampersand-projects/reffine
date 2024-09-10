@@ -167,6 +167,11 @@ void IRPrinter::Visit(const Stmts& stmts)
     }
 }
 
+void IRPrinter::Visit(const Assign& assign)
+{
+    emitassign(assign.lhs, assign.rhs);
+}
+
 void IRPrinter::Visit(const Loop& loop)
 {
     ostr << "{";
@@ -174,10 +179,7 @@ void IRPrinter::Visit(const Loop& loop)
 
     emitcomment("initialization");
     emitnewline();
-    for (const auto& [idx, init_expr] : loop.idx_inits) {
-        emitassign(idx, init_expr);
-        emitnewline();
-    }
+    loop.init->Accept(*this);
     emitnewline();
 
     ostr << "while(1) {";
@@ -193,7 +195,7 @@ void IRPrinter::Visit(const Loop& loop)
 
     emitcomment("body condition check");
     emitnewline();
-    ostr << "if (";
+    ostr << "if (!";
     loop.body_cond->Accept(*this);
     ostr << ") break";
     emitnewline();
@@ -206,10 +208,8 @@ void IRPrinter::Visit(const Loop& loop)
     emitnewline();
 
     emitcomment("update indices");
-    for (const auto& [idx, incr_expr] : loop.idx_incrs) {
-        emitnewline();
-        emitassign(idx, incr_expr);
-    }
+    emitnewline();
+    loop.incr->Accept(*this);
 
     exit_block();
     ostr << "}";

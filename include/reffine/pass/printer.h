@@ -48,6 +48,7 @@ public:
     void Visit(const NaryExpr&) override;
     void Visit(const Read&) override;
     void Visit(const PushBack&) override;
+    void Visit(const Assign&) override;
     void Visit(const Loop&) override;
 
 private:

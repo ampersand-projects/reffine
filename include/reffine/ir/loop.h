@@ -49,11 +49,21 @@ struct Stmts : public StmtNode {
     void Accept(Visitor&) const final;
 };
 
+struct Assign : public StmtNode {
+    Sym lhs;
+    Expr rhs;
+
+    Assign(Sym lhs, Expr rhs) : StmtNode(), lhs(lhs), rhs(rhs) {}
+
+    void Accept(Visitor&) const final;
+};
+
 struct Loop : public ExprNode {
-    map<Sym, Expr> idx_inits;
+    // Loop initialization
+    Stmt init;
 
     // Loop increment
-    map<Sym, Expr> idx_incrs;
+    Stmt incr;
 
     // Exit condition
     Expr exit_cond;

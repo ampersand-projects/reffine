@@ -12,6 +12,7 @@
 using namespace reffine;
 using namespace std;
 
+/*
 shared_ptr<Func> reffine_fn()
 {
     auto input = make_shared<SymNode>("in", types::VECTOR<1>({types::INT32, types::INT32}));
@@ -43,17 +44,29 @@ shared_ptr<Func> reffine_fn()
 
     return loop_fn;
 }
+*/
 
 shared_ptr<Func> simple_fn()
 {
-    auto a_sym = make_shared<SymNode>("a", types::INT32);
-    auto b_sym = make_shared<SymNode>("b", types::INT32);
+    auto n_sym = make_shared<SymNode>("n", types::INT32);
 
-    auto add = make_shared<Add>(a_sym, b_sym);
-    auto add_sym = make_shared<SymNode>("add", add);
+    auto one = make_shared<Const>(BaseType::INT32, 1);
+    auto k_sym = make_shared<SymNode>("k", one);
+    auto loop = make_shared<Loop>(k_sym);
+    auto loop_sym = make_shared<SymNode>("loop", loop);
 
-    auto foo_fn = make_shared<Func>("foo", add_sym, vector<Sym>{a_sym, b_sym});
-    foo_fn->tbl[add_sym] = add;
+    auto idx_sym = make_shared<SymNode>("i", types::INT32);
+    loop->init = make_shared<Stmts>(vector<Stmt>{
+        make_shared<Assign>(idx_sym, one),
+        make_shared<Assign>(k_sym, one),
+    });
+    loop->incr = make_shared<Assign>(idx_sym, make_shared<Add>(idx_sym, one));
+    loop->exit_cond = make_shared<LessThan>(idx_sym, n_sym);
+    loop->body_cond = make_shared<Const>(BaseType::BOOL, 1);
+    loop->body = make_shared<Assign>(k_sym, make_shared<Add>(k_sym, idx_sym));
+
+    auto foo_fn = make_shared<Func>("foo", loop_sym, vector<Sym>{n_sym});
+    foo_fn->tbl[loop_sym] = loop;
 
     return foo_fn;
 }
@@ -63,15 +76,17 @@ int main()
     auto fn = simple_fn();
     cout << IRPrinter::Build(fn);
 
+    /*
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
     LLVMGen::Build(fn, *llmod);
     cout << IRPrinter::Build(*llmod);
 
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<int (*)(int, int)>(fn->name);
+    auto query_fn = jit->Lookup<int (*)(int)>(fn->name);
 
-    cout << "Result: " << query_fn(10, 12) << endl;
+    cout << "Result: " << query_fn(11) << endl;
+    */
 
     return 0;
 }

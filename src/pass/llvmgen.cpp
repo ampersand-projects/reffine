@@ -252,6 +252,7 @@ Value* LLVMGen::visit(const Read&) { return nullptr; }
 Value* LLVMGen::visit(const PushBack&) { return nullptr; }
 Value* LLVMGen::visit(const Stmts&) { return nullptr; }
 Value* LLVMGen::visit(const Loop&) { return nullptr; }
+Value* LLVMGen::visit(const Assign&) { return nullptr; }
 
 Value* LLVMGen::visit(const Exists& exists)
 {
