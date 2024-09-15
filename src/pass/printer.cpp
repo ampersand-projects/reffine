@@ -187,19 +187,21 @@ void IRPrinter::Visit(const Loop& loop)
 
     emitcomment("exit condition check");
     emitnewline();
-    ostr << "if (";
+    ostr << "if (!";
     loop.exit_cond->Accept(*this);
     ostr << ") break";
     emitnewline();
     emitnewline();
 
-    emitcomment("body condition check");
-    emitnewline();
-    ostr << "if (!";
-    loop.body_cond->Accept(*this);
-    ostr << ") break";
-    emitnewline();
-    emitnewline();
+    if (loop.body_cond) {
+        emitcomment("body condition check");
+        emitnewline();
+        ostr << "if (!";
+        loop.body_cond->Accept(*this);
+        ostr << ") break";
+        emitnewline();
+        emitnewline();
+    }
 
     emitcomment("loop body");
     emitnewline();

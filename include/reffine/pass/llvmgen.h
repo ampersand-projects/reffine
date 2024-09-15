@@ -61,9 +61,9 @@ private:
     llvm::Value* visit(const NaryExpr&) final;
     llvm::Value* visit(const Read&) final;
     llvm::Value* visit(const PushBack&) final;
-    llvm::Value* visit(const Stmts&) final;
-    llvm::Value* visit(const Func&) final;
-    llvm::Value* visit(const Assign&) final;
+    void visit(const Stmts&) final;
+    void visit(const Func&) final;
+    void visit(const Assign&) final;
     llvm::Value* visit(const Loop&) final;
 
     llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);

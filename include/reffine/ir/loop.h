@@ -27,15 +27,16 @@ struct Read : public ExprNode {
     void Accept(Visitor&) const final;
 };
 
-struct PushBack : public StmtNode {
-    Sym vector;
+struct PushBack : public ExprNode {
+    Expr vector;
     Expr val;
 
-    PushBack(Sym vector, Expr val) :
-        StmtNode(), vector(vector), val(val)
+    PushBack(Expr vector, Expr val) :
+        ExprNode(vector->type), vector(vector), val(val)
     {
         ASSERT(val->type.is_val());
         ASSERT(vector->type.dtypes[0] == val->type);
+        ASSERT(vector->type.is_vector());
     }
 
     void Accept(Visitor&) const final;

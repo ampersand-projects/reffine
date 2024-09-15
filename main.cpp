@@ -62,7 +62,7 @@ shared_ptr<Func> simple_fn()
     });
     loop->incr = make_shared<Assign>(idx_sym, make_shared<Add>(idx_sym, one));
     loop->exit_cond = make_shared<LessThan>(idx_sym, n_sym);
-    loop->body_cond = make_shared<Const>(BaseType::BOOL, 1);
+    loop->body_cond = nullptr;
     loop->body = make_shared<Assign>(k_sym, make_shared<Add>(k_sym, idx_sym));
 
     auto foo_fn = make_shared<Func>("foo", loop_sym, vector<Sym>{n_sym});

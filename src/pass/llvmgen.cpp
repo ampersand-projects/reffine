@@ -250,9 +250,6 @@ Value* LLVMGen::visit(const Select&) { return nullptr; }
 Value* LLVMGen::visit(const IfElse&) { return nullptr; }
 Value* LLVMGen::visit(const Read&) { return nullptr; }
 Value* LLVMGen::visit(const PushBack&) { return nullptr; }
-Value* LLVMGen::visit(const Stmts&) { return nullptr; }
-Value* LLVMGen::visit(const Loop&) { return nullptr; }
-Value* LLVMGen::visit(const Assign&) { return nullptr; }
 
 Value* LLVMGen::visit(const Exists& exists)
 {
@@ -264,7 +261,18 @@ Value* LLVMGen::visit(const Call& call)
     return llcall(call.name, lltype(call), call.args);
 }
 
-Value* LLVMGen::visit(const Func& func)
+void LLVMGen::visit(const Stmts&) { }
+
+void LLVMGen::visit(const Assign&) { }
+
+Value* LLVMGen::visit(const Loop& loop) {
+    //auto parent_block = builder()->GetInsertBlock()->getParent();
+
+    return nullptr;
+}
+
+
+void LLVMGen::visit(const Func& func)
 {
     // Define function signature
     vector<llvm::Type*> args_type;
@@ -281,8 +289,6 @@ Value* LLVMGen::visit(const Func& func)
 
     builder()->SetInsertPoint(entry_bb);
     builder()->CreateRet(eval(func.output));
-
-    return fn;
 }
 
 void LLVMGen::Build(const shared_ptr<Func> func, llvm::Module& llmod)
