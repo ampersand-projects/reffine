@@ -71,22 +71,37 @@ shared_ptr<Func> simple_fn()
     return foo_fn;
 }
 
+shared_ptr<Func> abs_fn()
+{
+    auto a_sym = make_shared<SymNode>("a", types::INT32);
+    auto b_sym = make_shared<SymNode>("b", types::INT32);
+
+    auto cond = make_shared<GreaterThan>(a_sym, b_sym);
+    auto true_body = make_shared<Sub>(a_sym, b_sym);
+    auto false_body = make_shared<Sub>(b_sym, a_sym);
+    auto ifelse = make_shared<IfElse>(cond, true_body, false_body);
+    auto ifelse_sym = make_shared<SymNode>("abs", ifelse);
+
+    auto foo_fn = make_shared<Func>("foo", ifelse_sym, vector<Sym>{a_sym, b_sym});
+    foo_fn->tbl[ifelse_sym] = ifelse;
+
+    return foo_fn;
+}
+
 int main()
 {
-    auto fn = simple_fn();
+    auto fn = abs_fn();
     cout << IRPrinter::Build(fn);
 
-    /*
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
     LLVMGen::Build(fn, *llmod);
     cout << IRPrinter::Build(*llmod);
 
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<int (*)(int)>(fn->name);
+    auto query_fn = jit->Lookup<int (*)(int, int)>(fn->name);
 
-    cout << "Result: " << query_fn(11) << endl;
-    */
+    cout << "Result: " << query_fn(14, 11) << endl;
 
     return 0;
 }

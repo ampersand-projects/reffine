@@ -247,7 +247,42 @@ Value* LLVMGen::visit(const NaryExpr& e)
 }
 
 Value* LLVMGen::visit(const Select&) { return nullptr; }
-Value* LLVMGen::visit(const IfElse&) { return nullptr; }
+
+Value* LLVMGen::visit(const IfElse& ifelse)
+{
+    auto parent_fn = builder()->GetInsertBlock()->getParent();
+    auto then_bb = BasicBlock::Create(llctx(), "then");
+    auto else_bb = BasicBlock::Create(llctx(), "else");
+    auto merge_bb = BasicBlock::Create(llctx(), "merge");
+
+    // condition check
+    auto cond = eval(ifelse.cond);
+    builder()->CreateCondBr(cond, then_bb, else_bb);
+
+    // then block
+    parent_fn->insert(parent_fn->end(), then_bb);
+    builder()->SetInsertPoint(then_bb);
+    auto true_val = eval(ifelse.true_body);
+    then_bb = builder()->GetInsertBlock();
+    builder()->CreateBr(merge_bb);
+
+    // else block
+    parent_fn->insert(parent_fn->end(), else_bb);
+    builder()->SetInsertPoint(else_bb);
+    auto false_val = eval(ifelse.false_body);
+    else_bb = builder()->GetInsertBlock();
+    builder()->CreateBr(merge_bb);
+
+    // merge block
+    parent_fn->insert(parent_fn->end(), merge_bb);
+    builder()->SetInsertPoint(merge_bb);
+    auto merge_phi = builder()->CreatePHI(lltype(ifelse), 2);
+    merge_phi->addIncoming(true_val, then_bb);
+    merge_phi->addIncoming(false_val, else_bb);
+
+    return merge_phi;
+}
+
 Value* LLVMGen::visit(const Read&) { return nullptr; }
 Value* LLVMGen::visit(const PushBack&) { return nullptr; }
 
@@ -266,7 +301,16 @@ void LLVMGen::visit(const Stmts&) { }
 void LLVMGen::visit(const Assign&) { }
 
 Value* LLVMGen::visit(const Loop& loop) {
-    //auto parent_block = builder()->GetInsertBlock()->getParent();
+    ASSERT(loop.body_cond == nullptr);
+
+    /*
+    auto parent_fn = builder()->GetInsertBlock()->getParent();
+    auto preheader_bb = BasicBlock::Create(llctx(), "preheader", parent_fn);
+    auto header_bb = BasicBlock::Create(llctx(), "header", parent_fn);
+    auto body_bb = BasicBlock::Create(llctx(), "body", parent_fn);
+    auto end_bb = BasicBlock::Create(llctx(), "end", parent_fn);
+    auto exit_bb = BasicBlock::Create(llctx(), "exit", parent_fn);
+    */
 
     return nullptr;
 }
