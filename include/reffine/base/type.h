@@ -27,6 +27,8 @@ enum class BaseType {
     FLOAT64,
     STRUCT,
     PTR,
+
+    // Reffine IR types
     IDX,
     VECTOR,
 };

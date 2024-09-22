@@ -296,23 +296,68 @@ Value* LLVMGen::visit(const Call& call)
     return llcall(call.name, lltype(call), call.args);
 }
 
-void LLVMGen::visit(const Stmts&) { }
+void LLVMGen::visit(const Stmts& stmts)
+{
+    for (const auto& stmt : stmts.stmts) {
+        eval(stmt);
+    }
+}
 
-void LLVMGen::visit(const Assign&) { }
+Value* LLVMGen::visit(const Alloc& alloc)
+{
+    return builder()->CreateAlloca(lltype(alloc.type), alloc.type.size);
+}
+
+Value* LLVMGen::visit(const Load& load)
+{
+    auto addr = eval(load.addr);
+    auto addr_type = lltype(load.addr->type.deref());
+    return builder()->CreateLoad(addr_type, addr);
+}
+
+Value* LLVMGen::visit(const Store& store)
+{
+    auto addr = eval(store.addr);
+    auto val = eval(store.val);
+    builder()->CreateStore(val, addr);
+    return addr;
+}
 
 Value* LLVMGen::visit(const Loop& loop) {
     ASSERT(loop.body_cond == nullptr);
+    ASSERT(loop.incr == nullptr);
 
-    /*
     auto parent_fn = builder()->GetInsertBlock()->getParent();
-    auto preheader_bb = BasicBlock::Create(llctx(), "preheader", parent_fn);
-    auto header_bb = BasicBlock::Create(llctx(), "header", parent_fn);
-    auto body_bb = BasicBlock::Create(llctx(), "body", parent_fn);
-    auto end_bb = BasicBlock::Create(llctx(), "end", parent_fn);
-    auto exit_bb = BasicBlock::Create(llctx(), "exit", parent_fn);
-    */
+    auto preheader_bb = BasicBlock::Create(llctx(), "preheader");
+    auto header_bb = BasicBlock::Create(llctx(), "header");
+    auto body_bb = BasicBlock::Create(llctx(), "body");
+    auto exit_bb = BasicBlock::Create(llctx(), "exit");
 
-    return nullptr;
+    builder()->CreateBr(preheader_bb);
+
+    // initialize loop
+    parent_fn->insert(parent_fn->end(), preheader_bb);
+    builder()->SetInsertPoint(preheader_bb);
+    eval(loop.init);
+    builder()->CreateBr(header_bb);
+
+    // loop exit condition
+    parent_fn->insert(parent_fn->end(), header_bb);
+    builder()->SetInsertPoint(header_bb);
+    builder()->CreateCondBr(eval(loop.exit_cond), exit_bb, body_bb);
+
+    // loop body
+    parent_fn->insert(parent_fn->end(), body_bb);
+    builder()->SetInsertPoint(body_bb);
+    eval(loop.body);
+
+    // Jump back to loop header
+    builder()->CreateBr(header_bb);
+
+    // loop exit
+    parent_fn->insert(parent_fn->end(), exit_bb);
+    builder()->SetInsertPoint(exit_bb);
+    return eval(loop.output);
 }
 
 

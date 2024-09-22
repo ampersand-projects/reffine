@@ -63,7 +63,9 @@ private:
     llvm::Value* visit(const PushBack&) final;
     void visit(const Stmts&) final;
     void visit(const Func&) final;
-    void visit(const Assign&) final;
+    llvm::Value* visit(const Alloc&) final;
+    llvm::Value* visit(const Load&) final;
+    llvm::Value* visit(const Store&) final;
     llvm::Value* visit(const Loop&) final;
 
     llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);

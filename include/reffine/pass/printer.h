@@ -48,7 +48,9 @@ public:
     void Visit(const NaryExpr&) override;
     void Visit(const Read&) override;
     void Visit(const PushBack&) override;
-    void Visit(const Assign&) override;
+    void Visit(const Alloc&) override;
+    void Visit(const Load&) override;
+    void Visit(const Store&) override;
     void Visit(const Loop&) override;
 
 private:
@@ -87,11 +89,11 @@ private:
     void emitfunc(const string name, const vector<Expr> args)
     {
         ostr << name << "(";
-        for (size_t i = 0; i < args.size()-1; i++) {
+        for (size_t i = 0; i < args.size(); i++) {
             args[i]->Accept(*this);
             ostr << ", ";
         }
-        args.back()->Accept(*this);
+        if (args.size() > 0) { ostr << "\b\b"; };
         ostr << ")";
     }
 

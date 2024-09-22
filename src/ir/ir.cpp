@@ -14,5 +14,7 @@ void NaryExpr::Accept(Visitor& v) const { v.Visit(*this); }
 void Read::Accept(Visitor& v) const { v.Visit(*this); }
 void PushBack::Accept(Visitor& v) const { v.Visit(*this); }
 void Stmts::Accept(Visitor& v) const { v.Visit(*this); }
-void Assign::Accept(Visitor& v) const { v.Visit(*this); }
+void Alloc::Accept(Visitor& v) const { v.Visit(*this); }
+void Load::Accept(Visitor& v) const { v.Visit(*this); }
+void Store::Accept(Visitor& v) const { v.Visit(*this); }
 void Loop::Accept(Visitor& v) const { v.Visit(*this); }

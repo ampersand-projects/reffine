@@ -50,11 +50,32 @@ struct Stmts : public StmtNode {
     void Accept(Visitor&) const final;
 };
 
-struct Assign : public StmtNode {
-    Sym lhs;
-    Expr rhs;
+struct Alloc : public ExprNode {
+    Alloc(DataType type) : ExprNode(type.ptr()) {}
 
-    Assign(Sym lhs, Expr rhs) : StmtNode(), lhs(lhs), rhs(rhs) {}
+    void Accept(Visitor&) const final;
+};
+
+struct Load : public ExprNode {
+    Expr addr;
+
+    Load(Expr addr) : ExprNode(addr->type.deref()), addr(addr)
+    {
+        ASSERT(addr->type.is_ptr());
+    }
+
+    void Accept(Visitor&) const final;
+};
+
+struct Store : public ExprNode {
+    Expr addr;
+    Expr val;
+
+    Store(Expr addr, Expr val) : ExprNode(addr->type), addr(addr), val(val)
+    {
+        ASSERT(addr->type.is_ptr());
+        ASSERT(addr->type == val->type.ptr());
+    }
 
     void Accept(Visitor&) const final;
 };

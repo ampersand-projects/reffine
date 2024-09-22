@@ -10,17 +10,6 @@ static const auto EXISTS = "\u2203";
 //static const auto IN = "\u2208";
 //static const auto PHI = "\u0278";
 
-string idx_str(int64_t idx)
-{
-    ostringstream ostr;
-    if (idx > 0) {
-        ostr << " + " << idx;
-    } else if (idx < 0) {
-        ostr << " - " << -idx;
-    }
-    return ostr.str();
-}
-
 void IRPrinter::Visit(const SymNode& sym)
 {
     ostr << sym.name;
@@ -52,24 +41,7 @@ void IRPrinter::Visit(const Const& cnst)
 
 void IRPrinter::Visit(const Cast& e)
 {
-    string destty;
-    switch (e.type.btype) {
-        case BaseType::INT8: destty = "int8"; break;
-        case BaseType::INT16: destty = "int16"; break;
-        case BaseType::INT32: destty = "int32"; break;
-        case BaseType::INT64: destty = "long"; break;
-        case BaseType::UINT8: destty = "uint8"; break;
-        case BaseType::UINT16: destty = "uint16"; break;
-        case BaseType::UINT32: destty = "uint32"; break;
-        case BaseType::UINT64: destty = "ulong"; break;
-        case BaseType::FLOAT32: destty = "float"; break;
-        case BaseType::FLOAT64: destty = "double"; break;
-        case BaseType::BOOL: destty = "bool"; break;
-        case BaseType::IDX: destty = "idx"; break;
-        default: throw std::runtime_error("Invalid destination type for cast");
-    }
-
-    ostr << "(" << destty << ") ";
+    ostr << "(" << e.type.str() << ") ";
     e.arg->Accept(*this);
 }
 
@@ -167,9 +139,19 @@ void IRPrinter::Visit(const Stmts& stmts)
     }
 }
 
-void IRPrinter::Visit(const Assign& assign)
+void IRPrinter::Visit(const Alloc& alloc)
 {
-    emitassign(assign.lhs, assign.rhs);
+    ostr << "alloc " << alloc.type.deref().str();
+}
+
+void IRPrinter::Visit(const Load& load)
+{
+    emitfunc("load", vector<Expr>{load.addr});
+}
+
+void IRPrinter::Visit(const Store& store)
+{
+    emitfunc("store", vector<Expr>{store.addr, store.val});
 }
 
 void IRPrinter::Visit(const Loop& loop)
@@ -206,12 +188,13 @@ void IRPrinter::Visit(const Loop& loop)
     emitcomment("loop body");
     emitnewline();
     loop.body->Accept(*this);
-    emitnewline();
-    emitnewline();
 
-    emitcomment("update indices");
-    emitnewline();
-    loop.incr->Accept(*this);
+    if (loop.incr) {
+        emitnewline();
+        emitcomment("update indices");
+        emitnewline();
+        loop.incr->Accept(*this);
+    }
 
     exit_block();
     ostr << "}";

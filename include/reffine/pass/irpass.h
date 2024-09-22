@@ -39,7 +39,9 @@ protected:
     virtual ValTy visit(const Call&) = 0;
     virtual void visit(const Stmts&) = 0;
     virtual void visit(const Func&) = 0;
-    virtual void visit(const Assign&) = 0;
+    virtual ValTy visit(const Alloc&) = 0;
+    virtual ValTy visit(const Load&) = 0;
+    virtual ValTy visit(const Store&) = 0;
     virtual ValTy visit(const Loop&) = 0;
 
     void Visit(const Select& expr) final { val() = visit(expr); }
@@ -51,21 +53,23 @@ protected:
     void Visit(const Read& expr) final { val() = visit(expr); }
     void Visit(const PushBack& expr) final { val() = visit(expr); }
     void Visit(const Call& expr) final { val() = visit(expr); }
-    void Visit(const Stmts& stmt) final { visit(stmt); }
-    void Visit(const Func& stmt) final { visit(stmt); }
-    void Visit(const Assign& stmt) final { visit(stmt); }
+    void Visit(const Stmts& stmt) final { visit(stmt); val() = nullptr; }
+    void Visit(const Func& stmt) final { visit(stmt); val() = nullptr; }
+    void Visit(const Alloc& expr) final { val() = visit(expr); }
+    void Visit(const Load& expr) final { val() = visit(expr); }
+    void Visit(const Store& expr) final { val() = visit(expr); }
     void Visit(const Loop& expr) final { val() = visit(expr); }
 
     CtxTy& switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); return new_ctx; }
 
     ValTy& val() { return ctx().val; }
 
-    ValTy eval(const Expr expr)
+    ValTy eval(const Stmt stmt)
     {
         ValTy new_val = nullptr;
 
         swap(new_val, val());
-        expr->Accept(*this);
+        stmt->Accept(*this);
         swap(val(), new_val);
 
         return new_val;

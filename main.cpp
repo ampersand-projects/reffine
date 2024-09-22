@@ -50,23 +50,33 @@ shared_ptr<Func> simple_fn()
 {
     auto n_sym = make_shared<SymNode>("n", types::INT32);
 
-    auto one = make_shared<Const>(BaseType::INT32, 1);
-    auto k_sym = make_shared<SymNode>("k", one);
-    auto loop = make_shared<Loop>(k_sym);
-    auto loop_sym = make_shared<SymNode>("loop", loop);
+    auto idx_alloc = make_shared<Alloc>(types::INT32);
+    auto idx_addr = make_shared<SymNode>("idx_addr", idx_alloc);
+    auto sum_alloc = make_shared<Alloc>(types::INT32);
+    auto sum_addr = make_shared<SymNode>("sum_addr", sum_alloc);
 
-    auto idx_sym = make_shared<SymNode>("i", types::INT32);
+    auto zero = make_shared<Const>(BaseType::INT32, 0);
+    auto one = make_shared<Const>(BaseType::INT32, 1);
+    auto two = make_shared<Const>(BaseType::INT32, 2);
+
+    auto loop = make_shared<Loop>(make_shared<Load>(sum_addr));
+    auto loop_sym = make_shared<SymNode>("loop", loop);
     loop->init = make_shared<Stmts>(vector<Stmt>{
-        make_shared<Assign>(idx_sym, one),
-        make_shared<Assign>(k_sym, one),
+        make_shared<Store>(idx_addr, zero),
+        make_shared<Store>(sum_addr, one),
     });
-    loop->incr = make_shared<Assign>(idx_sym, make_shared<Add>(idx_sym, one));
-    loop->exit_cond = make_shared<LessThan>(idx_sym, n_sym);
+    loop->incr = nullptr;
+    loop->exit_cond = make_shared<GreaterThanEqual>(make_shared<Load>(idx_addr), n_sym);
     loop->body_cond = nullptr;
-    loop->body = make_shared<Assign>(k_sym, make_shared<Add>(k_sym, idx_sym));
+    loop->body = make_shared<Stmts>(vector<Stmt>{
+        make_shared<Store>(idx_addr, make_shared<Add>(make_shared<Load>(idx_addr), one)),
+        make_shared<Store>(sum_addr, make_shared<Mul>(make_shared<Load>(sum_addr), two)),
+    });
 
     auto foo_fn = make_shared<Func>("foo", loop_sym, vector<Sym>{n_sym});
     foo_fn->tbl[loop_sym] = loop;
+    foo_fn->tbl[idx_addr] = idx_alloc;
+    foo_fn->tbl[sum_addr] = sum_alloc;
 
     return foo_fn;
 }
@@ -90,7 +100,7 @@ shared_ptr<Func> abs_fn()
 
 int main()
 {
-    auto fn = abs_fn();
+    auto fn = simple_fn();
     cout << IRPrinter::Build(fn);
 
     auto jit = ExecEngine::Get();
@@ -99,9 +109,9 @@ int main()
     cout << IRPrinter::Build(*llmod);
 
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<int (*)(int, int)>(fn->name);
+    auto query_fn = jit->Lookup<int (*)(int)>(fn->name);
 
-    cout << "Result: " << query_fn(14, 11) << endl;
+    cout << "Result: " << query_fn(5) << endl;
 
     return 0;
 }
