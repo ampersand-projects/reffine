@@ -101,12 +101,12 @@ shared_ptr<Func> abs_fn()
 int main()
 {
     auto fn = simple_fn();
-    cout << IRPrinter::Build(fn);
+    cout << IRPrinter::Build(fn) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
     LLVMGen::Build(fn, *llmod);
-    cout << IRPrinter::Build(*llmod);
+    cout << IRPrinter::Build(*llmod) << endl;
 
     jit->AddModule(std::move(llmod));
     auto query_fn = jit->Lookup<int (*)(int)>(fn->name);
