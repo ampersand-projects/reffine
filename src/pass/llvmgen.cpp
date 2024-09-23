@@ -66,6 +66,8 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
         }
         case BaseType::PTR:
             return PointerType::get(lltype(type.dtypes[0]), 0);
+        case BaseType::VECTOR:
+            return PointerType::get(llvm::StructType::getTypeByName(llctx(), "struct.ArrowArray"), 0);
         case BaseType::UNKNOWN:
         default:
             throw std::runtime_error("Invalid type");
@@ -385,4 +387,35 @@ void LLVMGen::Build(const shared_ptr<Func> func, llvm::Module& llmod)
     LLVMGenCtx ctx(func);
     LLVMGen llgen(std::move(ctx), llmod);
     func->Accept(llgen);
+}
+
+void LLVMGen::register_vinstrs()
+{
+    const auto buffer = llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(vinstr_str));
+
+    llvm::SMDiagnostic error;
+    std::unique_ptr<llvm::Module> vinstr_mod = llvm::parseIR(*buffer, error, llctx());
+    if (!vinstr_mod) {
+        throw std::runtime_error("Failed to parse vinstr bitcode");
+    }
+    if (llvm::verifyModule(*vinstr_mod)) {
+        throw std::runtime_error("Failed to verify vinstr module");
+    }
+
+    // For some reason if we try to set internal linkage before we link
+    // modules, then the JIT will be unable to find the symbols.
+    // Instead we collect the function names first, then add internal
+    // linkage to them after linking the modules
+    std::vector<string> vinstr_names;
+    for (const auto& function : vinstr_mod->functions()) {
+        if (function.isDeclaration()) {
+            continue;
+        }
+        vinstr_names.push_back(function.getName().str());
+    }
+
+    llvm::Linker::linkModules(*llmod(), std::move(vinstr_mod));
+    for (const auto& name : vinstr_names) {
+        llmod()->getFunction(name.c_str())->setLinkage(llvm::Function::InternalLinkage);
+    }
 }

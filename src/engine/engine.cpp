@@ -4,6 +4,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 
+#include "reffine/pass/vinstr.h"
 #include "reffine/engine/engine.h"
 
 using namespace reffine;
@@ -57,4 +58,11 @@ Expected<ThreadSafeModule> ExecEngine::optimize_module(ThreadSafeModule tsm, con
 unique_ptr<ExecutionSession> ExecEngine::createExecutionSession() {
     unique_ptr<SelfExecutorProcessControl> epc = llvm::cantFail(SelfExecutorProcessControl::Create());
     return std::make_unique<ExecutionSession>(std::move(epc));
+}
+
+void ExecEngine::register_symbols()
+{
+    cantFail(jd.define(absoluteSymbols(SymbolMap({
+        //{ mangler("get_vector_len"), { ExecutorAddr::fromPtr(&get_vector_len), JITSymbolFlags::Callable } }
+    }))));
 }

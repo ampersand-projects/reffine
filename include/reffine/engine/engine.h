@@ -37,6 +37,8 @@ public:
         jd(es->createBareJITDylib("__reffine_dylib"))
     {
         jd.addGenerator(cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(dl.getGlobalPrefix())));
+
+        register_symbols();
     }
 
     static ExecEngine* Get();
@@ -64,6 +66,8 @@ private:
     ThreadSafeContext ctx;
 
     JITDylib& jd;
+
+    void register_symbols();
 };
 
 }  // namespace reffine

@@ -1,0 +1,17 @@
+REFFINE_BUILD_DIR="build/"
+ARROW_DIR="third_party/arrow/cpp/"
+ARROW_BUILD_DIR="${ARROW_DIR}/build"
+
+# Build Arrow
+mkdir -p ${ARROW_BUILD_DIR}
+pushd ${ARROW_BUILD_DIR}
+cmake .. --preset ninja-debug-basic -DARROW_BUILD_STATIC=ON
+cmake --build .
+popd
+
+# Build Reffine
+mkdir -p ${REFFINE_BUILD_DIR}
+pushd ${REFFINE_BUILD_DIR}
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+make -j
+popd

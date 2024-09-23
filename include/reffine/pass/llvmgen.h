@@ -21,6 +21,8 @@
 
 using namespace std;
 
+extern const char* vinstr_str;
+
 namespace reffine {
 
 class LLVMGenCtx : public IRPassCtx<llvm::Value*> {
@@ -39,12 +41,16 @@ public:
         _ctx(std::move(llgenctx)),
         _llmod(llmod),
         _builder(make_unique<llvm::IRBuilder<>>(llmod.getContext()))
-    {}
+    {
+        register_vinstrs();
+    }
 
     static void Build(const shared_ptr<Func>, llvm::Module&);
 
 private:
     LLVMGenCtx& ctx() override { return _ctx; }
+
+    void register_vinstrs();
 
     void assign(Sym sym, llvm::Value* val) override
     {

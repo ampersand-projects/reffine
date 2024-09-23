@@ -1,6 +1,14 @@
 #include <iostream>
 #include <memory>
 
+#include <arrow/api.h>
+#include <arrow/csv/api.h>
+#include <arrow/io/api.h>
+#include <arrow/ipc/api.h>
+#include <arrow/result.h>
+#include <arrow/status.h>
+#include <arrow/c/bridge.h>
+
 #include "reffine/ir/node.h"
 #include "reffine/ir/expr.h"
 #include "reffine/ir/loop.h"
@@ -8,43 +16,54 @@
 #include "reffine/pass/printer.h"
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
+#include "reffine/arrow/defs.h"
 
 using namespace reffine;
 using namespace std;
 
-/*
-shared_ptr<Func> reffine_fn()
+arrow::Status csv_to_arrow()
 {
-    auto input = make_shared<SymNode>("in", types::VECTOR<1>({types::INT32, types::INT32}));
-    auto output = make_shared<SymNode>("out", types::VECTOR<1>({types::INT32, types::INT32}));
+    std::shared_ptr<arrow::io::ReadableFile> infile;
+    ARROW_ASSIGN_OR_RAISE(infile, arrow::io::ReadableFile::Open("../students.csv"));
 
-    // construct the loop
-    auto loop = make_shared<Loop>(output);
-    auto idx = make_shared<SymNode>("idx", types::IDX);
-    auto one = make_shared<Const>(BaseType::IDX, 1);
-    loop->idx_inits[idx] = one;
-    loop->idx_incrs[idx] = make_shared<Add>(idx, one);
+    std::shared_ptr<arrow::Table> csv_table;
+    ARROW_ASSIGN_OR_RAISE(auto csv_reader, arrow::csv::TableReader::Make(
+        arrow::io::default_io_context(), infile, arrow::csv::ReadOptions::Defaults(),
+        arrow::csv::ParseOptions::Defaults(), arrow::csv::ConvertOptions::Defaults()));
+    ARROW_ASSIGN_OR_RAISE(csv_table, csv_reader->Read());
 
-    loop->body_cond = make_shared<Const>(BaseType::BOOL, 1);
+    std::shared_ptr<arrow::io::FileOutputStream> outfile;
+    ARROW_ASSIGN_OR_RAISE(outfile, arrow::io::FileOutputStream::Open("../students.arrow"));
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::ipc::RecordBatchWriter> ipc_writer,
+            arrow::ipc::MakeFileWriter(outfile, csv_table->schema()));
+    ARROW_RETURN_NOT_OK(ipc_writer->WriteTable(*csv_table));
+    ARROW_RETURN_NOT_OK(ipc_writer->Close());
 
-    auto ten = make_shared<Const>(BaseType::IDX, 10);
-    loop->exit_cond = make_shared<LessThan>(idx, ten);
-
-    auto read = make_shared<Read>(input, idx);
-    auto two = make_shared<Const>(BaseType::INT32, 2);
-    auto add_two = make_shared<Add>(read, two);
-    loop->body = make_shared<PushBack>(output, add_two);
-
-    auto loop_sym = make_shared<SymNode>("loop", loop);
-    
-    // construct the function
-    auto inputs = vector<Sym>{input, output};
-    auto loop_fn = make_shared<Func>("query", loop_sym, inputs);
-    loop_fn->tbl[loop_sym] = loop;
-
-    return loop_fn;
+    return arrow::Status::OK();
 }
-*/
+
+arrow::Status query_arrow_file(int (*query_fn)(void*))
+{
+    ARROW_ASSIGN_OR_RAISE(auto infile, arrow::io::ReadableFile::Open(
+                "../students.arrow", arrow::default_memory_pool()));
+
+    ARROW_ASSIGN_OR_RAISE(auto ipc_reader, arrow::ipc::RecordBatchFileReader::Open(infile));
+
+    ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
+
+    cout << rbatch->ToString() << endl;
+
+    ArrowSchema in_schema;
+    ArrowArray in_array;
+
+    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &in_array, &in_schema));
+    arrow_print_schema(&in_schema);
+    arrow_print_array(&in_array);
+
+    cout << "Result: " <<  query_fn(&in_array) << endl;
+
+    return arrow::Status::OK();
+}
 
 shared_ptr<Func> simple_fn()
 {
@@ -98,9 +117,50 @@ shared_ptr<Func> abs_fn()
     return foo_fn;
 }
 
+shared_ptr<Func> vector_fn()
+{
+    auto vec_sym = make_shared<SymNode>("vec", types::VECTOR<1>(vector<DataType>{
+        types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
+
+    auto len = make_shared<Call>("get_vector_len", types::INT64, vector<Expr>{vec_sym});
+    auto len_sym = make_shared<SymNode>("len", len);
+
+    auto zero = make_shared<Const>(BaseType::INT64, 0);
+    auto one = make_shared<Const>(BaseType::INT64, 1);
+
+    auto idx_alloc = make_shared<Alloc>(types::INT64);
+    auto idx_addr = make_shared<SymNode>("idx_addr", idx_alloc);
+    auto sum_alloc = make_shared<Alloc>(types::INT64);
+    auto sum_addr = make_shared<SymNode>("sum_addr", sum_alloc);
+
+    auto val = make_shared<Call>("read_val", types::INT64, vector<Expr>{vec_sym, make_shared<Load>(idx_addr)});
+
+    auto loop = make_shared<Loop>(make_shared<Load>(sum_addr));
+    auto loop_sym = make_shared<SymNode>("loop", loop);
+    loop->init = make_shared<Stmts>(vector<Stmt>{
+        make_shared<Store>(idx_addr, zero),
+        make_shared<Store>(sum_addr, zero),
+    });
+    loop->incr = nullptr;
+    loop->exit_cond = make_shared<GreaterThanEqual>(make_shared<Load>(idx_addr), len_sym);
+    loop->body_cond = nullptr;
+    loop->body = make_shared<Stmts>(vector<Stmt>{
+        make_shared<Store>(sum_addr, make_shared<Add>(make_shared<Load>(sum_addr), val)),
+        make_shared<Store>(idx_addr, make_shared<Add>(make_shared<Load>(idx_addr), one)),
+    });
+
+    auto foo_fn = make_shared<Func>("foo", loop_sym, vector<Sym>{vec_sym});
+    foo_fn->tbl[len_sym] = len;
+    foo_fn->tbl[idx_addr] = idx_alloc;
+    foo_fn->tbl[sum_addr] = sum_alloc;
+    foo_fn->tbl[loop_sym] = loop;
+
+    return foo_fn;
+}
+
 int main()
 {
-    auto fn = simple_fn();
+    auto fn = vector_fn();
     cout << IRPrinter::Build(fn) << endl;
 
     auto jit = ExecEngine::Get();
@@ -109,9 +169,13 @@ int main()
     cout << IRPrinter::Build(*llmod) << endl;
 
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<int (*)(int)>(fn->name);
+    auto query_fn = jit->Lookup<int (*)(void*)>(fn->name);
 
-    cout << "Result: " << query_fn(5) << endl;
+    //auto status = csv_to_arrow();
+    auto status = query_arrow_file(query_fn);
+    if (!status.ok()) {
+        cerr << status.ToString() << endl;
+    }
 
     return 0;
 }

@@ -1,0 +1,3 @@
+[submodule "third_party/arrow"]
+	path = third_party/arrow
+	url = https://github.com/apache/arrow.git
