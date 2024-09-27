@@ -10,6 +10,7 @@ extern "C" {
 
 REFFINE_VINSTR_ATTR int64_t get_vector_len(ArrowArray*);
 REFFINE_VINSTR_ATTR int64_t read_val(ArrowArray*, int);
+REFFINE_VINSTR_ATTR int64_t transform_val(ArrowArray*, ArrowArray*, int);
 
 }  // extern "C"
 }  // namespace reffine
