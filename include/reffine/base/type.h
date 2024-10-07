@@ -36,15 +36,13 @@ enum class BaseType {
 struct DataType {
     const BaseType btype;
     const vector<DataType> dtypes;
-    const size_t size;
     const size_t dim;
 
     explicit DataType(
         BaseType btype,
         vector<DataType> dtypes = {},
-        size_t size = 0,
         size_t dim = 0) :
-        btype(btype), dtypes(dtypes), size(size), dim(dim)
+        btype(btype), dtypes(dtypes), dim(dim)
     {
         switch (btype) {
             case BaseType::STRUCT:
@@ -70,12 +68,11 @@ struct DataType {
     {
         return (this->btype == o.btype)
             && (this->dtypes == o.dtypes)
-            && (this->size == o.size);
+            && (this->dim == o.dim);
     }
 
     bool is_struct() const { return btype == BaseType::STRUCT; }
     bool is_ptr() const { return btype == BaseType::PTR; }
-    bool is_arr() const { return size > 0; }
     bool is_idx() const { return btype == BaseType::IDX; }
     bool is_vector() const { return btype == BaseType::VECTOR; }
 
@@ -216,7 +213,7 @@ DataType STRUCT()
 template<size_t dim>
 DataType VECTOR(vector<DataType> types)
 {
-    return DataType(BaseType::VECTOR, types, /*size=*/0, /*dim=*/dim);
+    return DataType(BaseType::VECTOR, types, dim);
 }
 
 }  // namespace reffine::types

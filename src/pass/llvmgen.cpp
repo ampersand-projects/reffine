@@ -52,6 +52,7 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
             return llvm::Type::getInt32Ty(llctx());
         case BaseType::INT64:
         case BaseType::UINT64:
+        case BaseType::IDX:
             return llvm::Type::getInt64Ty(llctx());
         case BaseType::FLOAT32:
             return llvm::Type::getFloatTy(llctx());
@@ -250,7 +251,7 @@ Value* LLVMGen::visit(const NaryExpr& e)
 
 Value* LLVMGen::visit(const Select&) { return nullptr; }
 
-Value* LLVMGen::visit(const IfElse& ifelse)
+void LLVMGen::visit(const IfElse& ifelse)
 {
     auto parent_fn = builder()->GetInsertBlock()->getParent();
     auto then_bb = BasicBlock::Create(llctx(), "then");
@@ -264,29 +265,54 @@ Value* LLVMGen::visit(const IfElse& ifelse)
     // then block
     parent_fn->insert(parent_fn->end(), then_bb);
     builder()->SetInsertPoint(then_bb);
-    auto true_val = eval(ifelse.true_body);
+    eval(ifelse.true_body);
     then_bb = builder()->GetInsertBlock();
     builder()->CreateBr(merge_bb);
 
     // else block
     parent_fn->insert(parent_fn->end(), else_bb);
     builder()->SetInsertPoint(else_bb);
-    auto false_val = eval(ifelse.false_body);
+    eval(ifelse.false_body);
     else_bb = builder()->GetInsertBlock();
     builder()->CreateBr(merge_bb);
 
     // merge block
     parent_fn->insert(parent_fn->end(), merge_bb);
     builder()->SetInsertPoint(merge_bb);
-    auto merge_phi = builder()->CreatePHI(lltype(ifelse), 2);
-    merge_phi->addIncoming(true_val, then_bb);
-    merge_phi->addIncoming(false_val, else_bb);
-
-    return merge_phi;
 }
 
-Value* LLVMGen::visit(const Read&) { return nullptr; }
-Value* LLVMGen::visit(const PushBack&) { return nullptr; }
+void LLVMGen::visit(const NoOp&) { /* do nothing */ }
+
+Value* LLVMGen::visit(const IsValid& is_valid)
+{
+    auto vec_val = eval(is_valid.vec);
+    auto idx_val = eval(is_valid.idx);
+    auto col_val = ConstantInt::get(lltype(types::UINT32), is_valid.col);
+
+    return llcall("get_vector_null_bit", lltype(is_valid), { vec_val, idx_val, col_val });
+}
+
+Value* LLVMGen::visit(const SetValid& set_valid)
+{
+    auto vec_val = eval(set_valid.vec);
+    auto idx_val = eval(set_valid.idx);
+    auto validity_val = eval(set_valid.validity);
+    auto col_val = ConstantInt::get(lltype(types::UINT32), set_valid.col);
+
+    return llcall("set_vector_null_bit", lltype(set_valid), { vec_val, idx_val, validity_val, col_val });
+}
+
+Value* LLVMGen::visit(const FetchDataPtr& fetch_data_ptr)
+{
+    auto vec_val = eval(fetch_data_ptr.vec);
+    auto idx_val = eval(fetch_data_ptr.idx);
+    auto col_val = ConstantInt::get(lltype(types::UINT32), fetch_data_ptr.col);
+
+    auto buf_addr = llcall("get_vector_data_buf", lltype(fetch_data_ptr), {vec_val, col_val});
+    auto data_addr = builder()->CreateGEP(lltype(fetch_data_ptr), buf_addr, idx_val);
+
+    return data_addr;
+}
 
 Value* LLVMGen::visit(const Exists& exists)
 {
@@ -307,7 +333,7 @@ void LLVMGen::visit(const Stmts& stmts)
 
 Value* LLVMGen::visit(const Alloc& alloc)
 {
-    return builder()->CreateAlloca(lltype(alloc.type), alloc.type.size);
+    return builder()->CreateAlloca(lltype(alloc.type), eval(alloc.size));
 }
 
 Value* LLVMGen::visit(const Load& load)
@@ -317,17 +343,20 @@ Value* LLVMGen::visit(const Load& load)
     return builder()->CreateLoad(addr_type, addr);
 }
 
-Value* LLVMGen::visit(const Store& store)
+void LLVMGen::visit(const Store& store)
 {
     auto addr = eval(store.addr);
     auto val = eval(store.val);
     builder()->CreateStore(val, addr);
-    return addr;
 }
 
 Value* LLVMGen::visit(const Loop& loop) {
+    // Loop body condition needs to be merged into loop body before code generation
     ASSERT(loop.body_cond == nullptr);
-    ASSERT(loop.incr == nullptr);
+    // Loop must have a body
+    ASSERT(loop.body != nullptr);
+    // Loop must have an exit condition
+    ASSERT(loop.exit_cond != nullptr);
 
     auto parent_fn = builder()->GetInsertBlock()->getParent();
     auto preheader_bb = BasicBlock::Create(llctx(), "preheader");
@@ -340,7 +369,7 @@ Value* LLVMGen::visit(const Loop& loop) {
     // initialize loop
     parent_fn->insert(parent_fn->end(), preheader_bb);
     builder()->SetInsertPoint(preheader_bb);
-    eval(loop.init);
+    if (loop.init) { eval(loop.init); }
     builder()->CreateBr(header_bb);
 
     // loop exit condition
@@ -353,12 +382,16 @@ Value* LLVMGen::visit(const Loop& loop) {
     builder()->SetInsertPoint(body_bb);
     eval(loop.body);
 
+    // loop increment
+    if (loop.incr) { eval(loop.incr); }
+
     // Jump back to loop header
     builder()->CreateBr(header_bb);
 
-    // loop exit
+    // loop post and exit
     parent_fn->insert(parent_fn->end(), exit_bb);
     builder()->SetInsertPoint(exit_bb);
+    if (loop.post) { eval(loop.post); }
     return eval(loop.output);
 }
 

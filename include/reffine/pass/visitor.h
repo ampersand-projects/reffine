@@ -15,21 +15,25 @@ public:
     virtual void Visit(const Func&) = 0;
     virtual void Visit(const Call&) = 0;
     virtual void Visit(const Select&) = 0;
-    virtual void Visit(const IfElse&) = 0;
     virtual void Visit(const Exists&) = 0;
     virtual void Visit(const Const&) = 0;
     virtual void Visit(const Cast&) = 0;
     virtual void Visit(const NaryExpr&) = 0;
+    virtual void Visit(const Read&) = 0;
+    virtual void Visit(const Write&) = 0;
 
     /**
      * Loop IR
      */
+    virtual void Visit(const IsValid&) = 0;
+    virtual void Visit(const SetValid&) = 0;
+    virtual void Visit(const FetchDataPtr&) = 0;
     virtual void Visit(const Stmts&) = 0;
-    virtual void Visit(const Read&) = 0;
-    virtual void Visit(const PushBack&) = 0;
     virtual void Visit(const Alloc&) = 0;
     virtual void Visit(const Load&) = 0;
     virtual void Visit(const Store&) = 0;
+    virtual void Visit(const IfElse&) = 0;
+    virtual void Visit(const NoOp&) = 0;
     virtual void Visit(const Loop&) = 0;
 };
 

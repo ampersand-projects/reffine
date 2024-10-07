@@ -39,22 +39,6 @@ struct Call : public ExprNode {
     void Accept(Visitor&) const final;
 };
 
-struct IfElse : public ExprNode {
-    Expr cond;
-    Expr true_body;
-    Expr false_body;
-
-    IfElse(Expr cond, Expr true_body, Expr false_body) :
-        ExprNode(true_body->type), cond(cond), true_body(true_body), false_body(false_body)
-    {
-        ASSERT(cond->type == types::BOOL);
-        ASSERT(true_body->type == false_body->type);
-    }
-
-    void Accept(Visitor&) const final;
-};
-
-
 struct Select : public ExprNode {
     Expr cond;
     Expr true_body;
@@ -230,6 +214,40 @@ struct Pow : public BinaryExpr {
     Pow(Expr a, Expr b) : BinaryExpr(a->type, MathOp::POW, a, b) {
         ASSERT(a->type.is_float());
     }
+};
+
+struct Read : public ExprNode {
+    Expr vec;
+    Expr idx;
+    size_t col;
+
+    Read(Expr vec, Expr idx, size_t col) :
+        ExprNode(vec->type.dtypes[col]), vec(vec), idx(idx), col(col)
+    {
+        ASSERT(vec->type.is_vector());
+        ASSERT(idx->type.is_idx());
+        ASSERT(col < vec->type.dtypes.size());
+    }
+
+    void Accept(Visitor&) const final;
+};
+
+struct Write : public ExprNode {
+    Expr vec;
+    Expr idx;
+    Expr val;
+    size_t col;
+
+    Write(Expr vec, Expr idx, Expr val, size_t col) :
+        ExprNode(vec->type), vec(vec), idx(idx), val(val), col(col)
+    {
+        ASSERT(val->type.is_val());
+        ASSERT(vec->type.is_vector());
+        ASSERT(vec->type.dtypes[col] == val->type);
+        ASSERT(idx->type.is_idx());
+    }
+
+    void Accept(Visitor&) const final;
 };
 
 }  // namespace reffine

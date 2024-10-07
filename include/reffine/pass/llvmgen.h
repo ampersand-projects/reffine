@@ -59,20 +59,24 @@ private:
     }
 
     llvm::Value* visit(const Call&) final;
-    llvm::Value* visit(const IfElse&) final;
+    void visit(const IfElse&) final;
+    void visit(const NoOp&) final;
     llvm::Value* visit(const Select&) final;
     llvm::Value* visit(const Exists&) final;
     llvm::Value* visit(const Const&) final;
     llvm::Value* visit(const Cast&) final;
     llvm::Value* visit(const NaryExpr&) final;
-    llvm::Value* visit(const Read&) final;
-    llvm::Value* visit(const PushBack&) final;
+    llvm::Value* visit(const Read&) final { throw runtime_error("Operation not supported"); }
+    llvm::Value* visit(const Write&) final { throw runtime_error("Operation not supported"); }
     void visit(const Stmts&) final;
     void visit(const Func&) final;
     llvm::Value* visit(const Alloc&) final;
     llvm::Value* visit(const Load&) final;
-    llvm::Value* visit(const Store&) final;
+    void visit(const Store&) final;
     llvm::Value* visit(const Loop&) final;
+    llvm::Value* visit(const IsValid&) final;
+    llvm::Value* visit(const SetValid&) final;
+    llvm::Value* visit(const FetchDataPtr&) final;
 
     llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);

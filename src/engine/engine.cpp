@@ -4,7 +4,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 
-#include "reffine/pass/vinstr.h"
 #include "reffine/engine/engine.h"
 
 using namespace reffine;

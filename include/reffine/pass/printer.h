@@ -47,11 +47,15 @@ public:
     void Visit(const Cast&) override;
     void Visit(const NaryExpr&) override;
     void Visit(const Read&) override;
-    void Visit(const PushBack&) override;
+    void Visit(const Write&) override;
     void Visit(const Alloc&) override;
     void Visit(const Load&) override;
     void Visit(const Store&) override;
     void Visit(const Loop&) override;
+    void Visit(const IsValid&) override;
+    void Visit(const SetValid&) override;
+    void Visit(const FetchDataPtr&) override;
+    void Visit(const NoOp&) override;
 
 private:
     void enter_op() { ctx.nesting++; }

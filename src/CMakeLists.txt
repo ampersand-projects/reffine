@@ -20,7 +20,7 @@ llvm_map_components_to_libnames(llvm_libs core executionengine support native or
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/gen_vinstr.sh ${CMAKE_CXX_COMPILER} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
-    DEPENDS pass/vinstr.cpp
+    DEPENDS pass/vinstr.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../include/reffine/pass/vinstr.h
 )
 
 add_library(reffine STATIC ${SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp)

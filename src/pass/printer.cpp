@@ -1,4 +1,5 @@
 #include <unordered_set>
+#include <format>
 
 #include "reffine/pass/printer.h"
 
@@ -75,12 +76,12 @@ void IRPrinter::Visit(const NaryExpr& e)
 
 void IRPrinter::Visit(const Read& read)
 {
-    emitfunc("read", { read.vector, read.idx });
+    emitfunc(format("read<{}>", read.col), { read.vec, read.idx });
 }
 
-void IRPrinter::Visit(const PushBack& push_back)
+void IRPrinter::Visit(const Write& write)
 {
-    emitfunc("push_back", { push_back.vector, push_back.val });
+    emitfunc(format("write<{}>", write.col), { write.vec, write.idx, write.val });
 }
 
 void IRPrinter::Visit(const Call& call)
@@ -90,11 +91,26 @@ void IRPrinter::Visit(const Call& call)
 
 void IRPrinter::Visit(const IfElse& ifelse)
 {
+    ostr << "if (";
     ifelse.cond->Accept(*this);
-    ostr << " ? ";
+    ostr << ") {";
+
+    enter_block();
     ifelse.true_body->Accept(*this);
-    ostr << " : ";
+    exit_block();
+
+    ostr << "} else {";
+    enter_block();
     ifelse.false_body->Accept(*this);
+    exit_block();
+    ostr << "}";
+
+    emitnewline();
+}
+
+void IRPrinter::Visit(const NoOp&)
+{
+    ostr << "noop";
 }
 
 void IRPrinter::Visit(const Select& select)
@@ -159,17 +175,19 @@ void IRPrinter::Visit(const Loop& loop)
     ostr << "{";
     enter_block();
 
-    emitcomment("initialization");
-    emitnewline();
-    loop.init->Accept(*this);
-    emitnewline();
+    if (loop.init) {
+        emitcomment("initialization");
+        emitnewline();
+        loop.init->Accept(*this);
+        emitnewline();
+    }
 
     ostr << "while(1) {";
     enter_block();
 
     emitcomment("exit condition check");
     emitnewline();
-    ostr << "if (!";
+    ostr << "if (";
     loop.exit_cond->Accept(*this);
     ostr << ") break";
     emitnewline();
@@ -201,10 +219,33 @@ void IRPrinter::Visit(const Loop& loop)
     emitnewline();
     emitnewline();
 
+    if (loop.post) {
+        emitcomment("post processing");
+        emitnewline();
+        loop.post->Accept(*this);
+        emitnewline();
+    }
+
+    emitnewline();
     ostr << "return ";
     loop.output->Accept(*this);
     exit_block();
     ostr << "}";
+}
+
+void IRPrinter::Visit(const IsValid& is_valid)
+{
+    emitfunc(format("is_valid<{}>", is_valid.col), { is_valid.vec, is_valid.idx });
+}
+
+void IRPrinter::Visit(const SetValid& set_valid)
+{
+    emitfunc(format("set_valid<{}>", set_valid.col), { set_valid.vec, set_valid.idx, set_valid.validity });
+}
+
+void IRPrinter::Visit(const FetchDataPtr& fetch_data_ptr)
+{
+    emitfunc(format("fetch_data_ptr<{}>", fetch_data_ptr.col), { fetch_data_ptr.vec, fetch_data_ptr.idx });
 }
 
 string IRPrinter::Build(const Stmt stmt)
