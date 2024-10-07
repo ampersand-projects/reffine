@@ -96,9 +96,7 @@ shared_ptr<Func> vector_fn()
         make_shared<Store>(idx_addr, make_shared<Const>(BaseType::IDX, 0)),
         make_shared<Store>(sum_addr, make_shared<Const>(BaseType::INT64, 0)),
     });
-    loop->incr = nullptr;
     loop->exit_cond = make_shared<GreaterThanEqual>(idx, len_sym);
-    loop->body_cond = nullptr;
     loop->body = make_shared<Stmts>(vector<Stmt>{
         make_shared<Store>(sum_addr, make_shared<Add>(sum, val)),
         make_shared<Store>(idx_addr, make_shared<Add>(idx, make_shared<Const>(BaseType::IDX, 1))),
@@ -126,6 +124,7 @@ shared_ptr<Func> transform_fn()
     auto zero = make_shared<Const>(BaseType::IDX, 0);
     auto one = make_shared<Const>(BaseType::IDX, 1);
     auto sixty = make_shared<Const>(BaseType::INT64, 60);
+    auto twenty = make_shared<Const>(BaseType::INT64, 20);
     auto _true = make_shared<Const>(BaseType::BOOL, 1);
     auto _false = make_shared<Const>(BaseType::BOOL, 0);
 
@@ -153,10 +152,12 @@ shared_ptr<Func> transform_fn()
         make_shared<Store>(idx_addr, make_shared<Add>(make_shared<Load>(idx_addr), one)),
     });
     loop->exit_cond = make_shared<GreaterThanEqual>(make_shared<Load>(idx_addr), len_sym);
-    loop->body_cond = nullptr;
     loop->body = make_shared<Stmts>(vector<Stmt>{
         make_shared<IfElse>(
-            make_shared<And>(id_valid, hours_valid),
+            make_shared<And>(
+                make_shared<And>(id_valid, hours_valid),
+                make_shared<GreaterThanEqual>(hours_data, twenty)
+            ),
             make_shared<Stmts>(vector<Stmt>{
                 make_shared<Store>(out_id_data_ptr, make_shared<Load>(id_data_ptr)),
                 make_shared<Store>(out_minutes_data_ptr, out_minutes),

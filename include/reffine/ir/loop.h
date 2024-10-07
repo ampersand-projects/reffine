@@ -130,22 +130,22 @@ struct NoOp : public StmtNode {
 
 struct Loop : public ExprNode {
     // Loop initialization
-    Stmt init;
+    Stmt init = nullptr;
 
     // Loop increment
-    Stmt incr;
+    Stmt incr = nullptr;
 
     // Exit condition
-    Expr exit_cond;
+    Expr exit_cond = nullptr;
 
     // Body condition
-    Expr body_cond;
+    Expr body_cond = nullptr;
 
     // Lopp body
-    Stmt body;
+    Stmt body = nullptr;
 
     // Loop post
-    Stmt post;
+    Stmt post = nullptr;
 
     // Loop output
     Expr output;
