@@ -57,8 +57,8 @@ arrow::Status query_arrow_file(void* (*query_fn)(void*, void*))
     ArrowArray in_array;
     ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &in_array, &in_schema));
 
-    StructSchema out_schema("output");
-    StructArray out_array(in_array.length);
+    VectorSchema out_schema("output");
+    VectorArray out_array(in_array.length);
     out_schema.add_child<Int64Schema>("id");
     out_schema.add_child<Int64Schema>("minutes_studied");
     out_array.add_child<Int64Array>(in_array.length);

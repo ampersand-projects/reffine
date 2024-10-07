@@ -111,11 +111,6 @@ struct ArrowArray2 : public ArrowArray {
     }
 };
 
-#define GEN_SCHEMA(SCHEMA, FMT_STR) \
-    struct SCHEMA : public ArrowSchema2 { \
-        SCHEMA(std::string name) : ArrowSchema2(name, FMT_STR) {} \
-    };
-
 struct NullableArray : public ArrowArray2 {
     NullableArray(size_t len) : ArrowArray2() {
         this->add_buffer<char>(len / 8 + 1);
