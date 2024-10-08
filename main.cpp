@@ -191,6 +191,9 @@ int main()
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
     LLVMGen::Build(fn, *llmod);
     cout << IRPrinter::Build(*llmod) << endl;
+    if (llvm::verifyModule(*llmod)) {
+        throw std::runtime_error("LLVM module verification failed!!!");
+    }
 
     jit->AddModule(std::move(llmod));
     auto query_fn = jit->Lookup<void* (*)(void*, void*)>(fn->name);
