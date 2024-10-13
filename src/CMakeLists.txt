@@ -1,3 +1,12 @@
+cmake_minimum_required(VERSION 3.13.4)
+
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 set(SRC_FILES
     ir/ir.cpp
     pass/printer.cpp
@@ -22,17 +31,8 @@ add_custom_command(
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/gen_vinstr.sh ${CMAKE_CXX_COMPILER} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS pass/vinstr.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../include/reffine/pass/vinstr.h
 )
+add_library(reffine SHARED ${SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp)
 
-add_library(reffine STATIC ${SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp)
-
-target_link_libraries(reffine
-    ${llvm_libs}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/arrow/cpp/build/debug/libarrow.a
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/arrow/cpp/build/debug/libarrow_bundled_dependencies.a
-)
-target_include_directories(reffine PUBLIC
-    ${LLVM_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/arrow/cpp/src/
-)
+target_link_libraries(reffine ${llvm_libs})
+target_include_directories(reffine PUBLIC ${LLVM_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 target_compile_options(reffine PRIVATE -Wall -Wextra -pedantic -Werror -Wno-unused-parameter)

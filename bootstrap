@@ -1,17 +1,46 @@
-REFFINE_BUILD_DIR="build/"
-ARROW_DIR="third_party/arrow/cpp/"
-ARROW_BUILD_DIR="${ARROW_DIR}/build"
+INSTALL_PREFIX=${HOME}/.local
 
-# Build Arrow
+# Build and install LLVM
+LLVM_SRC_DIR="third_party/llvm-project"
+LLVM_BUILD_DIR="${LLVM_SRC_DIR}/build"
+mkdir -p ${LLVM_BUILD_DIR}
+pushd ${LLVM_BUILD_DIR}
+cmake -G Ninja \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DLLVM_ENABLE_RTTI=ON \
+      -DLLVM_TARGETS_TO_BUILD="X86" \
+      -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" \
+      -DLLVM_ENABLE_RUNTIMES="libc;libcxx;libcxxabi;libunwind" \
+      -DLLVM_ENABLE_ZLIB=OFF \
+      -DLLVM_ENABLE_ZSTD=OFF \
+      -DLLVM_ENABLE_TERMINFO=OFF \
+      -DLLVM_BUILD_LLVM_DYLIB=ON \
+      -DLLVM_LINK_LLVM_DYLIB=ON \
+      -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+      ../llvm
+cmake --build .
+cmake --build . --target install
+popd
+
+# Build and install Apache Arrow
+ARROW_SRC_DIR="third_party/arrow/cpp/"
+ARROW_BUILD_DIR="${ARROW_SRC_DIR}/build"
 mkdir -p ${ARROW_BUILD_DIR}
 pushd ${ARROW_BUILD_DIR}
-cmake .. --preset ninja-debug-basic -DARROW_BUILD_STATIC=ON
+cmake --preset ninja-debug-basic \
+      -DARROW_BUILD_STATIC=ON \
+      -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+      ..
 cmake --build .
+cmake --build . --target install
 popd
 
 # Build Reffine
+REFFINE_BUILD_DIR="build/"
 mkdir -p ${REFFINE_BUILD_DIR}
 pushd ${REFFINE_BUILD_DIR}
-cmake -DCMAKE_BUILD_TYPE=Debug ..
+cmake -DCMAKE_BUILD_TYPE=Debug \
+      -DCMAKE_PREFIX_PATH=${INSTALL_PREFIX} \
+      ..
 make -j
 popd
