@@ -7,7 +7,6 @@
 #include <utility>
 #include <string>
 
-#include "reffine/ir/node.h"
 #include "reffine/ir/expr.h"
 
 using namespace std;
@@ -64,14 +63,6 @@ struct FetchDataPtr : public ExprNode {
     void Accept(Visitor&) const final;
 };
 
-struct Stmts : public StmtNode {
-    vector<Stmt> stmts;
-
-    Stmts(vector<Stmt> stmts) : StmtNode(), stmts(stmts) {}
-
-    void Accept(Visitor&) const final;
-};
-
 struct Alloc : public ExprNode {
     Expr size;
 
@@ -106,26 +97,6 @@ struct Store : public StmtNode {
     }
 
     void Accept(Visitor&) const final;
-};
-
-struct IfElse : public StmtNode {
-    Expr cond;
-    Stmt true_body;
-    Stmt false_body;
-
-    IfElse(Expr cond, Stmt true_body, Stmt false_body) :
-        StmtNode(), cond(cond), true_body(true_body), false_body(false_body)
-    {
-        ASSERT(cond->type == types::BOOL);
-    }
-
-    void Accept(Visitor&) const final;
-};
-
-struct NoOp : public StmtNode {
-	NoOp() : StmtNode() {}
-
-	void Accept(Visitor&) const final;
 };
 
 struct Loop : public ExprNode {

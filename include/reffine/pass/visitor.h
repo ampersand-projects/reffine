@@ -2,6 +2,7 @@
 #define INCLUDE_REFFINE_PASS_VISITOR_H_
 
 #include "reffine/ir/expr.h"
+#include "reffine/ir/stmt.h"
 #include "reffine/ir/loop.h"
 
 namespace reffine {
