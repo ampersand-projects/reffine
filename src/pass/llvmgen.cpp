@@ -251,37 +251,10 @@ Value* LLVMGen::visit(const NaryExpr& e)
 
 Value* LLVMGen::visit(const Select& select) 
 {
-    auto parent_fn = builder()->GetInsertBlock()->getParent();
-    auto condtrue_bb = BasicBlock::Create(llctx(), "cond_true");
-    auto condfalse_bb = BasicBlock::Create(llctx(), "cond_false");
-    auto merge_bb = BasicBlock::Create(llctx(), "merge");
-
-    // condition check
     auto cond = eval(select.cond);
-    builder()->CreateCondBr(cond, condtrue_bb, condfalse_bb);
-
-    // condition true block
-    parent_fn->insert(parent_fn->end(), condtrue_bb);
-    builder()->SetInsertPoint(condtrue_bb);
     auto true_val = eval(select.true_body);
-    condtrue_bb = builder()->GetInsertBlock();
-    builder()->CreateBr(merge_bb);
-
-    // condition false
-    parent_fn->insert(parent_fn->end(), condfalse_bb);
-    builder()->SetInsertPoint(condfalse_bb);
     auto false_val = eval(select.false_body);
-    condfalse_bb = builder()->GetInsertBlock();
-    builder()->CreateBr(merge_bb);
-
-    // merge block
-    parent_fn->insert(parent_fn->end(), merge_bb);
-    builder()->SetInsertPoint(merge_bb);
-    auto merge_phi = builder()->CreatePHI(true_val->getType(), 2);
-    merge_phi->addIncoming(true_val, condtrue_bb);
-    merge_phi->addIncoming(false_val, condfalse_bb);
-    
-    return merge_phi;
+    return builder()->CreateSelect(cond, true_val, false_val);
 }
 
 void LLVMGen::visit(const IfElse& ifelse)
