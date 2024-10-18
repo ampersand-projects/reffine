@@ -1,5 +1,4 @@
 #include <unordered_set>
-#include <format>
 
 #include "reffine/pass/printer.h"
 
@@ -76,12 +75,12 @@ void IRPrinter::Visit(const NaryExpr& e)
 
 void IRPrinter::Visit(const Read& read)
 {
-    emitfunc(format("read<{}>", read.col), { read.vec, read.idx });
+    emitfunc("read<" + std::to_string(read.col) + ">", { read.vec, read.idx });
 }
 
 void IRPrinter::Visit(const Write& write)
 {
-    emitfunc(format("write<{}>", write.col), { write.vec, write.idx, write.val });
+    emitfunc("write<" + std::to_string(write.col) + ">", { write.vec, write.idx, write.val });
 }
 
 void IRPrinter::Visit(const Call& call)
@@ -235,17 +234,17 @@ void IRPrinter::Visit(const Loop& loop)
 
 void IRPrinter::Visit(const IsValid& is_valid)
 {
-    emitfunc(format("is_valid<{}>", is_valid.col), { is_valid.vec, is_valid.idx });
+    emitfunc("is_valid<" + std::to_string(is_valid.col) + ">", { is_valid.vec, is_valid.idx });
 }
 
 void IRPrinter::Visit(const SetValid& set_valid)
 {
-    emitfunc(format("set_valid<{}>", set_valid.col), { set_valid.vec, set_valid.idx, set_valid.validity });
+    emitfunc("set_valid<" + std::to_string(set_valid.col) + ">", { set_valid.vec, set_valid.idx, set_valid.validity });
 }
 
 void IRPrinter::Visit(const FetchDataPtr& fetch_data_ptr)
 {
-    emitfunc(format("fetch_data_ptr<{}>", fetch_data_ptr.col), { fetch_data_ptr.vec, fetch_data_ptr.idx });
+    emitfunc("fetch_data_ptr<" + std::to_string(fetch_data_ptr.col) + ">", { fetch_data_ptr.vec, fetch_data_ptr.idx });
 }
 
 string IRPrinter::Build(const Stmt stmt)
