@@ -52,11 +52,7 @@ private:
 
     void register_vinstrs();
 
-    void assign(Sym sym, llvm::Value* val) override
-    {
-        IRPass::assign(sym, val);
-        val->setName(sym->name);
-    }
+    void assign(Sym sym, llvm::Value* val) override;
 
     llvm::Value* visit(const Call&) final;
     void visit(const IfElse&) final;

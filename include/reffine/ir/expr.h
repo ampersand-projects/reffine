@@ -7,26 +7,11 @@
 #include <map>
 #include <utility>
 
-#include "reffine/base/type.h"
-#include "reffine/base/log.h"
 #include "reffine/ir/node.h"
 
 using namespace std;
 
 namespace reffine {
-
-struct Func : public StmtNode {
-    string name;
-    Expr output;
-    vector<Sym> inputs;
-    SymTable tbl;
-
-    Func(string name, Expr output, vector<Sym> inputs, SymTable tbl = {}) :
-        StmtNode(), name(name), output(output), inputs(std::move(inputs)), tbl(std::move(tbl))
-    {}
-
-    void Accept(Visitor&) const override;
-};
 
 struct Call : public ExprNode {
     string name;

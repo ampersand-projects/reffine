@@ -10,6 +10,7 @@
 #include <arrow/c/bridge.h>
 
 #include "reffine/ir/node.h"
+#include "reffine/ir/stmt.h"
 #include "reffine/ir/expr.h"
 #include "reffine/ir/loop.h"
 #include "reffine/base/type.h"
