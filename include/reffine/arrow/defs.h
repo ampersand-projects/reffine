@@ -18,6 +18,7 @@ using Int32Schema = GenArrowSchema<'i'>;
 using Int64Schema = GenArrowSchema<'l'>;
 using FloatSchema = GenArrowSchema<'f'>;
 using DoubleSchema = GenArrowSchema<'g'>;
+using BooleanSchema = GenArrowSchema<'b'>;
 using VectorSchema = StructSchema;
 
 /*
@@ -33,4 +34,5 @@ using Int32Array = PrimArray<int32_t>;
 using Int64Array = PrimArray<int64_t>;
 using FloatArray = PrimArray<float>;
 using DoubleArray = PrimArray<double>;
+using BooleanArray = PrimArray<std::vector<bool>>;
 using VectorArray = StructArray;
