@@ -315,7 +315,7 @@ Value* LLVMGen::visit(const FetchDataPtr& fetch_data_ptr)
     auto col_val = ConstantInt::get(lltype(types::UINT32), fetch_data_ptr.col);
 
     auto buf_addr = llcall("get_vector_data_buf", lltype(fetch_data_ptr), {vec_val, col_val});
-    auto data_addr = builder()->CreateGEP(lltype(fetch_data_ptr), buf_addr, idx_val);
+    auto data_addr = builder()->CreateGEP(lltype(fetch_data_ptr.type.deref()), buf_addr, idx_val);
 
     return data_addr;
 }
@@ -465,6 +465,7 @@ void LLVMGen::register_vinstrs()
 void LLVMGen::assign(Sym sym, llvm::Value* val)
 {
     auto var_addr = builder()->CreateAlloca(val->getType(), nullptr);
+    var_addr->setName(sym->name + "_addr");
     builder()->CreateStore(val, var_addr);
     auto var = builder()->CreateLoad(lltype(sym), var_addr);
     var->setName(sym->name);
