@@ -62,10 +62,10 @@ arrow::Status query_arrow_file(void* (*query_fn)(void*, void*))
     VectorArray out_array(in_array.length);
     out_schema.add_child<Int64Schema>("id");
     out_schema.add_child<Int64Schema>("minutes_studied");
-    out_schema.add_child<Int8Schema>("slept_enough");
+    out_schema.add_child<BooleanSchema>("slept_enough");
     out_array.add_child<Int64Array>(in_array.length);
     out_array.add_child<Int64Array>(in_array.length);
-    out_array.add_child<Int8Array>(in_array.length);
+    out_array.add_child<BooleanArray>(in_array.length);
 
     query_fn(&in_array, &out_array);
 
@@ -119,7 +119,7 @@ shared_ptr<Func> transform_fn()
     auto vec_in_sym = make_shared<SymNode>("vec_in", types::VECTOR<1>(vector<DataType>{
         types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
     auto vec_out_sym = make_shared<SymNode>("vec_out", types::VECTOR<1>(vector<DataType>{
-        types::INT64, types::INT64, types::INT8 }));
+        types::INT64, types::INT64, types::BOOL }));
 
     auto len = make_shared<Call>("get_vector_len", types::IDX, vector<Expr>{vec_in_sym});
     auto len_sym = make_shared<SymNode>("len", len);
@@ -180,9 +180,9 @@ shared_ptr<Func> transform_fn()
             out_sleep_data_ptr,
             make_shared<Select>(
                 make_shared<LessThan>(hours_slept_data, eight),
-		make_shared<Const>(BaseType::INT8, 0),
-		make_shared<Const>(BaseType::INT8, 1)
-            )
+		_false,
+		_true          
+	    )
         ),
         make_shared<SetValid>(vec_out_sym, idx, _true, 2)
     });
