@@ -62,8 +62,10 @@ arrow::Status query_arrow_file(void* (*query_fn)(void*, void*))
     VectorArray out_array(in_array.length);
     out_schema.add_child<Int64Schema>("id");
     out_schema.add_child<Int64Schema>("minutes_studied");
+    out_schema.add_child<BooleanSchema>("slept_enough");
     out_array.add_child<Int64Array>(in_array.length);
     out_array.add_child<Int64Array>(in_array.length);
+    out_array.add_child<BooleanArray>(in_array.length);
 
     query_fn(&in_array, &out_array);
 
@@ -117,13 +119,14 @@ shared_ptr<Func> transform_fn()
     auto vec_in_sym = make_shared<SymNode>("vec_in", types::VECTOR<1>(vector<DataType>{
         types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
     auto vec_out_sym = make_shared<SymNode>("vec_out", types::VECTOR<1>(vector<DataType>{
-        types::INT64, types::INT64 }));
+        types::INT64, types::INT64, types::INT8 }));
 
     auto len = make_shared<Call>("get_vector_len", types::IDX, vector<Expr>{vec_in_sym});
     auto len_sym = make_shared<SymNode>("len", len);
 
     auto zero = make_shared<Const>(BaseType::IDX, 0);
     auto one = make_shared<Const>(BaseType::IDX, 1);
+    auto eight = make_shared<Const>(BaseType::INT64, 8);
     auto sixty = make_shared<Const>(BaseType::INT64, 60);
     auto twenty = make_shared<Const>(BaseType::INT64, 20);
     auto _true = make_shared<Const>(BaseType::BOOL, 1);
@@ -139,9 +142,12 @@ shared_ptr<Func> transform_fn()
     auto hours_valid = make_shared<IsValid>(vec_in_sym, idx, 1);
     auto hours_data_ptr = make_shared<FetchDataPtr>(vec_in_sym, idx, 1);
     auto hours_data = make_shared<Load>(hours_data_ptr);
+    auto hours_slept_data_ptr = make_shared<FetchDataPtr>(vec_in_sym, idx, 3);
+    auto hours_slept_data = make_shared<Load>(hours_slept_data_ptr);
 
     auto out_id_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 0);
     auto out_minutes_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 1);
+    auto out_sleep_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 2);
     auto out_minutes = make_shared<Mul>(hours_data, sixty);
 
     auto loop = make_shared<Loop>(vec_out_sym);
@@ -170,6 +176,15 @@ shared_ptr<Func> transform_fn()
                 make_shared<SetValid>(vec_out_sym, idx, _false, 1),
             })
         ),
+        make_shared<Store>(
+            out_sleep_data_ptr,
+            make_shared<Select>(
+                make_shared<LessThan>(hours_slept_data, eight),
+		make_shared<Const>(BaseType::INT8, 0),
+		make_shared<Const>(BaseType::INT8, 1)
+	    )
+        ),
+        make_shared<SetValid>(vec_out_sym, idx, _true, 2)
     });
     loop->post = make_shared<Call>("set_vector_len", types::INT64, vector<Expr>{
         vec_out_sym, make_shared<Load>(idx_addr)
