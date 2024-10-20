@@ -356,7 +356,8 @@ void LLVMGen::visit(const Store& store)
     builder()->CreateStore(val, addr);
 }
 
-Value* LLVMGen::visit(const Loop& loop) {
+Value* LLVMGen::visit(const Loop& loop)
+{
     // Loop body condition needs to be merged into loop body before code generation
     ASSERT(loop.body_cond == nullptr);
     // Loop must have a body
@@ -398,6 +399,7 @@ Value* LLVMGen::visit(const Loop& loop) {
     parent_fn->insert(parent_fn->end(), exit_bb);
     builder()->SetInsertPoint(exit_bb);
     if (loop.post) { eval(loop.post); }
+
     return eval(loop.output);
 }
 
@@ -412,7 +414,8 @@ void LLVMGen::visit(const Func& func)
     auto fn = llfunc(func.name, lltype(func.output), args_type);
     for (size_t i = 0; i < func.inputs.size(); i++) {
         auto input = func.inputs[i];
-        assign(input, fn->getArg(i));
+        fn->getArg(i)->setName(input->name);
+        IRPass::assign(input, fn->getArg(i));
     }
 
     auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
@@ -457,4 +460,13 @@ void LLVMGen::register_vinstrs()
     for (const auto& name : vinstr_names) {
         llmod()->getFunction(name.c_str())->setLinkage(llvm::Function::InternalLinkage);
     }
+}
+
+void LLVMGen::assign(Sym sym, llvm::Value* val)
+{
+    auto var_addr = builder()->CreateAlloca(val->getType(), nullptr);
+    builder()->CreateStore(val, var_addr);
+    auto var = builder()->CreateLoad(lltype(sym), var_addr);
+    var->setName(sym->name);
+    IRPass::assign(sym, var);
 }
