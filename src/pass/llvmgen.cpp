@@ -415,7 +415,7 @@ void LLVMGen::visit(const Func& func)
     for (size_t i = 0; i < func.inputs.size(); i++) {
         auto input = func.inputs[i];
         fn->getArg(i)->setName(input->name);
-        IRPass::assign(input, fn->getArg(i));
+        IRGen::assign(input, fn->getArg(i));
     }
 
     auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
@@ -469,5 +469,5 @@ void LLVMGen::assign(Sym sym, llvm::Value* val)
     builder()->CreateStore(val, var_addr);
     auto var = builder()->CreateLoad(lltype(sym), var_addr);
     var->setName(sym->name);
-    IRPass::assign(sym, var);
+    IRGen::assign(sym, var);
 }

@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <fstream>
 
-#include "reffine/pass/irpass.h"
+#include "reffine/pass/irgen.h"
 
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/IRBuilder.h"
@@ -25,17 +25,17 @@ extern const char* vinstr_str;
 
 namespace reffine {
 
-class LLVMGenCtx : public IRPassCtx<llvm::Value*> {
+class LLVMGenCtx : public IRGenCtx<llvm::Value*> {
 public:
     LLVMGenCtx(const shared_ptr<Func> func) :
-        IRPassCtx(func->tbl)
+        IRGenCtx(func->tbl)
     {}
 
 private:
     friend class LLVMGen;
 };
 
-class LLVMGen : public IRPass<LLVMGenCtx, llvm::Value*> {
+class LLVMGen : public IRGen<LLVMGenCtx, llvm::Value*> {
 public:
     explicit LLVMGen(LLVMGenCtx llgenctx, llvm::Module& llmod) :
         _ctx(std::move(llgenctx)),
