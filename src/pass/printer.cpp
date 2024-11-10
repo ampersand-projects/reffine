@@ -12,7 +12,6 @@ static const auto EXISTS = "\u2203";
 
 void IRPrinter::Visit(const SymNode& sym)
 {
-    IRPass::Visit(sym);
     ostr << sym.name;
 }
 
@@ -43,7 +42,7 @@ void IRPrinter::Visit(const Const& cnst)
 void IRPrinter::Visit(const Cast& e)
 {
     ostr << "(" << e.type.str() << ") ";
-    eval(e.arg);
+    e.arg->Accept(*this);
 }
 
 void IRPrinter::Visit(const NaryExpr& e)
@@ -56,7 +55,7 @@ void IRPrinter::Visit(const NaryExpr& e)
         case MathOp::MAX: emitfunc("max", {e.arg(0), e.arg(1)}); break;
         case MathOp::MIN: emitfunc("min", {e.arg(0), e.arg(1)}); break;
         case MathOp::MOD: emitbinary(e.arg(0), "%", e.arg(1)); break;
-        case MathOp::ABS: ostr << "|"; eval(e.arg(0)); ostr << "|"; break;
+        case MathOp::ABS: ostr << "|"; e.arg(0)->Accept(*this); ostr << "|"; break;
         case MathOp::NEG: emitunary("-", {e.arg(0)}); break;
         case MathOp::SQRT: emitfunc("sqrt", {e.arg(0)}); break;
         case MathOp::POW: emitfunc("pow", {e.arg(0), e.arg(1)}); break;
@@ -92,16 +91,16 @@ void IRPrinter::Visit(const Call& call)
 void IRPrinter::Visit(const IfElse& ifelse)
 {
     ostr << "if (";
-    eval(ifelse.cond);
+    ifelse.cond->Accept(*this);
     ostr << ") {";
 
     enter_block();
-    eval(ifelse.true_body);
+    ifelse.true_body->Accept(*this);
     exit_block();
 
     ostr << "} else {";
     enter_block();
-    eval(ifelse.false_body);
+    ifelse.false_body->Accept(*this);
     exit_block();
     ostr << "}";
 
@@ -116,11 +115,11 @@ void IRPrinter::Visit(const NoOp&)
 void IRPrinter::Visit(const Select& select)
 {
     ostr << "(";
-    eval(select.cond);
+    select.cond->Accept(*this);
     ostr << " ? ";
-    eval(select.true_body);
+    select.true_body->Accept(*this);
     ostr << " : ";
-    eval(select.false_body);
+    select.false_body->Accept(*this);
     ostr << ")";
 }
 
@@ -140,7 +139,7 @@ void IRPrinter::Visit(const Func& fn)
 
     emitnewline();
     ostr << "return ";
-    eval(fn.output);
+    fn.output->Accept(*this);
     exit_block();
 
     ostr << "}";
@@ -150,7 +149,7 @@ void IRPrinter::Visit(const Func& fn)
 void IRPrinter::Visit(const Stmts& stmts)
 {
     for (const auto& stmt : stmts.stmts) {
-        eval(stmt);
+        stmt->Accept(*this);
         emitnewline();
     }
 }
@@ -178,7 +177,7 @@ void IRPrinter::Visit(const Loop& loop)
     if (loop.init) {
         emitcomment("initialization");
         emitnewline();
-        eval(loop.init);
+        loop.init->Accept(*this);
         emitnewline();
     }
 
@@ -188,7 +187,7 @@ void IRPrinter::Visit(const Loop& loop)
     emitcomment("exit condition check");
     emitnewline();
     ostr << "if (";
-    eval(loop.exit_cond);
+    loop.exit_cond->Accept(*this);
     ostr << ") break";
     emitnewline();
     emitnewline();
@@ -197,7 +196,7 @@ void IRPrinter::Visit(const Loop& loop)
         emitcomment("body condition check");
         emitnewline();
         ostr << "if (!";
-        eval(loop.body_cond);
+        loop.body_cond->Accept(*this);
         ostr << ") break";
         emitnewline();
         emitnewline();
@@ -205,13 +204,13 @@ void IRPrinter::Visit(const Loop& loop)
 
     emitcomment("loop body");
     emitnewline();
-    eval(loop.body);
+    loop.body->Accept(*this);
 
     if (loop.incr) {
         emitnewline();
         emitcomment("update indices");
         emitnewline();
-        eval(loop.incr);
+        loop.incr->Accept(*this);
     }
 
     exit_block();
@@ -222,13 +221,13 @@ void IRPrinter::Visit(const Loop& loop)
     if (loop.post) {
         emitcomment("post processing");
         emitnewline();
-        eval(loop.post);
+        loop.post->Accept(*this);
         emitnewline();
     }
 
     emitnewline();
     ostr << "return ";
-    eval(loop.output);
+    loop.output->Accept(*this);
     exit_block();
     ostr << "}";
 }
@@ -248,10 +247,10 @@ void IRPrinter::Visit(const FetchDataPtr& fetch_data_ptr)
     emitfunc("fetch_data_ptr<" + std::to_string(fetch_data_ptr.col) + ">", { fetch_data_ptr.vec, fetch_data_ptr.idx });
 }
 
-string IRPrinter::Build(const shared_ptr<Func> func)
+string IRPrinter::Build(const Stmt stmt)
 {
-    IRPrinter printer(func);
-    func->Accept(printer);
+    IRPrinter printer;
+    stmt->Accept(printer);
     return printer.ostr.str();
 }
 

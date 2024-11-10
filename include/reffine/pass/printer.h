@@ -7,17 +7,15 @@
 #include <vector>
 
 #include "llvm/IR/Module.h"
-#include "reffine/pass/irpass.h"
+#include "reffine/pass/visitor.h"
 
 using namespace std;
 
 namespace reffine {
 
-class IRPrinterCtx : public IRPassCtx {
+class IRPrinterCtx {
 public:
-    IRPrinterCtx(const shared_ptr<Func> func) :
-        IRPassCtx(func->tbl), indent(0), nesting(0)
-    {}
+    IRPrinterCtx() : indent(0), nesting(0) {}
 
 private:
     size_t indent;
@@ -26,85 +24,84 @@ private:
     friend class IRPrinter;
 };
 
-class IRPrinter : public IRPass<IRPrinterCtx> {
+class IRPrinter : public Visitor {
 public:
+    IRPrinter() : IRPrinter(IRPrinterCtx()) {}
     explicit IRPrinter(IRPrinterCtx ctx) : IRPrinter(std::move(ctx), 2) {}
 
     IRPrinter(IRPrinterCtx ctx, size_t tabstop) :
-        _ctx(std::move(ctx)), tabstop(tabstop)
+        ctx(std::move(ctx)), tabstop(tabstop)
     {}
 
-    static string Build(const shared_ptr<Func> func);
+    static string Build(const Stmt);
     static string Build(const llvm::Module&);
 
-    void Visit(const SymNode&) final;
-    void Visit(const Stmts&) final;
-    void Visit(const Func&) final;
-    void Visit(const Call&) final;
-    void Visit(const IfElse&) final;
-    void Visit(const Select&) final;
-    void Visit(const Exists&) final;
-    void Visit(const Const&) final;
-    void Visit(const Cast&) final;
-    void Visit(const NaryExpr&) final;
-    void Visit(const Read&) final;
-    void Visit(const Write&) final;
-    void Visit(const Alloc&) final;
-    void Visit(const Load&) final;
-    void Visit(const Store&) final;
-    void Visit(const Loop&) final;
-    void Visit(const IsValid&) final;
-    void Visit(const SetValid&) final;
-    void Visit(const FetchDataPtr&) final;
-    void Visit(const NoOp&) final;
+    void Visit(const SymNode&) override;
+    void Visit(const Stmts&) override;
+    void Visit(const Func&) override;
+    void Visit(const Call&) override;
+    void Visit(const IfElse&) override;
+    void Visit(const Select&) override;
+    void Visit(const Exists&) override;
+    void Visit(const Const&) override;
+    void Visit(const Cast&) override;
+    void Visit(const NaryExpr&) override;
+    void Visit(const Read&) override;
+    void Visit(const Write&) override;
+    void Visit(const Alloc&) override;
+    void Visit(const Load&) override;
+    void Visit(const Store&) override;
+    void Visit(const Loop&) override;
+    void Visit(const IsValid&) override;
+    void Visit(const SetValid&) override;
+    void Visit(const FetchDataPtr&) override;
+    void Visit(const NoOp&) override;
 
 private:
-    IRPrinterCtx& ctx() { return _ctx; }
-
-    void enter_op() { ctx().nesting++; }
-    void exit_op() { ctx().nesting--; }
-    void enter_block() { ctx().indent++; emitnewline(); }
-    void exit_block() { ctx().indent--; emitnewline(); }
+    void enter_op() { ctx.nesting++; }
+    void exit_op() { ctx.nesting--; }
+    void enter_block() { ctx.indent++; emitnewline(); }
+    void exit_block() { ctx.indent--; emitnewline(); }
 
     void emittab() { ostr << string(1 << tabstop, ' '); }
-    void emitnewline() { ostr << endl << string(ctx().indent << tabstop, ' '); }
+    void emitnewline() { ostr << endl << string(ctx.indent << tabstop, ' '); }
     void emit(string str) { ostr << str; }
     void emitcomment(string comment) { ostr << "/* " << comment << " */"; }
 
     void emitunary(const string op, const Expr a)
     {
         ostr << op;
-        eval(a);
+        a->Accept(*this);
     }
 
     void emitbinary(const Expr a, const string op, const Expr b)
     {
         ostr << "(";
-        eval(a);
+        a->Accept(*this);
         ostr << " " << op << " ";
-        eval(b);
+        b->Accept(*this);
         ostr << ")";
     }
 
     void emitassign(const Expr lhs, const Expr rhs)
     {
-        eval(lhs);
+        lhs->Accept(*this);
         ostr << " = ";
-        eval(rhs);
+        rhs->Accept(*this);
     }
 
     void emitfunc(const string name, const vector<Expr> args)
     {
         ostr << name << "(";
         for (size_t i = 0; i < args.size(); i++) {
-            eval(args[i]);
+            args[i]->Accept(*this);
             ostr << ", ";
         }
         if (args.size() > 0) { ostr << "\b\b"; };
         ostr << ")";
     }
 
-    IRPrinterCtx _ctx;
+    IRPrinterCtx ctx;
     size_t tabstop;
     ostringstream ostr;
 };
