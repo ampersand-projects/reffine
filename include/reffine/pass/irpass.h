@@ -23,14 +23,8 @@ public:
 
 template<typename CtxTy>
 class IRPass : public Visitor {
-protected:
-    virtual CtxTy& ctx() = 0;
-
-    CtxTy& switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); return new_ctx; }
-
-    void eval(const Stmt stmt) { stmt->Accept(*this); }
-
-    void Visit(const SymNode& symbol) final
+public:
+    void Visit(const SymNode& symbol) override
     {
         auto tmp = tmp_sym(symbol);
 
@@ -40,9 +34,16 @@ protected:
         }
     }
 
+protected:
+    virtual CtxTy& ctx() = 0;
+
+    CtxTy& switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); return new_ctx; }
+
+    void eval(const Stmt stmt) { stmt->Accept(*this); }
+
     virtual void assign(Sym sym)
     {
-        ctx().sym_set.insert(tmp);
+        ctx().sym_set.insert(sym);
     }
 
 private:
