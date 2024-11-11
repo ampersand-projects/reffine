@@ -13,24 +13,132 @@ namespace reffine {
 
 class IRPassCtx {
 public:
-    IRPassCtx(const SymTable& in_sym_tbl) :
+    IRPassCtx(SymTable& in_sym_tbl) :
         in_sym_tbl(in_sym_tbl)
     {}
 
-    const SymTable& in_sym_tbl;
+    SymTable& in_sym_tbl;
     set<Sym> sym_set;
 };
 
 template<typename CtxTy>
 class IRPass : public Visitor {
+public:
+    explicit IRPass(CtxTy ctx) : _ctx(std::move(ctx)) {}
+
+    void Visit(Select& expr) override
+    {
+        eval(expr.cond);
+        eval(expr.true_body);
+        eval(expr.false_body);
+    }
+
+    void Visit(IfElse& stmt) override
+    {
+        eval(stmt.cond);
+        eval(stmt.true_body);
+        eval(stmt.false_body);
+    }
+
+    void Visit(Exists& expr) override { eval(expr.sym); }
+
+    void Visit(Const& expr) override {}
+
+    void Visit(Cast& expr) override { eval(expr.arg); }
+
+    void Visit(NaryExpr& expr) override
+    {
+        for (auto& arg : expr.args) {
+            eval(arg);
+        }
+    }
+
+    void Visit(Read& expr) override
+    {
+        eval(expr.vec);
+        eval(expr.idx);
+    }
+
+    void Visit(Write& expr) override
+    {
+        eval(expr.vec);
+        eval(expr.idx);
+        eval(expr.val);
+    }
+
+    void Visit(Call& expr) override
+    {
+        for (auto& arg : expr.args) {
+            eval(arg);
+        }
+    }
+
+    void Visit(Stmts& stmt) override
+    {
+        for (auto& stmt : stmt.stmts) {
+            eval(stmt);
+        }
+    }
+
+    void Visit(Func& stmt) override
+    {
+        for (auto& input : stmt.inputs) {
+            assign(input);
+        }
+
+        eval(stmt.output);
+    }
+
+    void Visit(Alloc& expr) override { eval(expr.size); }
+
+    void Visit(Load& expr) override { eval(expr.addr); }
+
+    void Visit(Store& expr) override
+    {
+        eval(expr.addr);
+        eval(expr.val);
+    }
+
+    void Visit(Loop& expr) override
+    {
+        if (expr.init) { eval(expr.init); }
+        if (expr.incr) { eval(expr.incr); }
+        eval(expr.exit_cond);
+        if (expr.body_cond) { eval(expr.body_cond); }
+        eval(expr.body);
+        if (expr.post) { eval(expr.post); }
+        eval(expr.output);
+    }
+
+    void Visit(IsValid& expr) override
+    {
+        eval(expr.vec);
+        eval(expr.idx);
+    }
+
+    void Visit(SetValid& expr) override
+    {
+        eval(expr.vec);
+        eval(expr.idx);
+        eval(expr.validity);
+    }
+
+    void Visit(FetchDataPtr& expr) override
+    {
+        eval(expr.vec);
+        eval(expr.idx);
+    }
+
+    void Visit(NoOp& stmt) override {}
+
 protected:
-    virtual CtxTy& ctx() = 0;
+    virtual CtxTy& ctx() { return _ctx; }
 
     CtxTy& switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); return new_ctx; }
 
-    void eval(const Stmt stmt) { stmt->Accept(*this); }
+    void eval(Stmt stmt) { stmt->Accept(*this); }
 
-    void Visit(const SymNode& symbol) final
+    void Visit(SymNode& symbol) final
     {
         auto tmp = tmp_sym(symbol);
 
@@ -42,15 +150,17 @@ protected:
 
     virtual void assign(Sym sym)
     {
-        ctx().sym_set.insert(tmp);
+        ctx().sym_set.insert(sym);
     }
 
 private:
-    Sym tmp_sym(const SymNode& symbol)
+    Sym tmp_sym(SymNode& symbol)
     {
         shared_ptr<SymNode> tmp_sym(const_cast<SymNode*>(&symbol), [](SymNode*) {});
         return tmp_sym;
     }
+
+    CtxTy _ctx;
 };
 
 }  // namespace reffine

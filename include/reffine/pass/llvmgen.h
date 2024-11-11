@@ -27,7 +27,7 @@ namespace reffine {
 
 class LLVMGenCtx : public IRGenCtx<llvm::Value*> {
 public:
-    LLVMGenCtx(const shared_ptr<Func> func) :
+    LLVMGenCtx(shared_ptr<Func> func) :
         IRGenCtx(func->tbl)
     {}
 
@@ -45,7 +45,7 @@ public:
         register_vinstrs();
     }
 
-    static void Build(const shared_ptr<Func>, llvm::Module&);
+    static void Build(shared_ptr<Func>, llvm::Module&);
 
 private:
     LLVMGenCtx& ctx() override { return _ctx; }
@@ -54,25 +54,25 @@ private:
 
     void assign(Sym sym, llvm::Value* val) override;
 
-    llvm::Value* visit(const Call&) final;
-    void visit(const IfElse&) final;
-    void visit(const NoOp&) final;
-    llvm::Value* visit(const Select&) final;
-    llvm::Value* visit(const Exists&) final;
-    llvm::Value* visit(const Const&) final;
-    llvm::Value* visit(const Cast&) final;
-    llvm::Value* visit(const NaryExpr&) final;
-    llvm::Value* visit(const Read&) final { throw runtime_error("Operation not supported"); }
-    llvm::Value* visit(const Write&) final { throw runtime_error("Operation not supported"); }
-    void visit(const Stmts&) final;
-    void visit(const Func&) final;
-    llvm::Value* visit(const Alloc&) final;
-    llvm::Value* visit(const Load&) final;
-    void visit(const Store&) final;
-    llvm::Value* visit(const Loop&) final;
-    llvm::Value* visit(const IsValid&) final;
-    llvm::Value* visit(const SetValid&) final;
-    llvm::Value* visit(const FetchDataPtr&) final;
+    llvm::Value* visit(Call&) final;
+    void visit(IfElse&) final;
+    void visit(NoOp&) final;
+    llvm::Value* visit(Select&) final;
+    llvm::Value* visit(Exists&) final;
+    llvm::Value* visit(Const&) final;
+    llvm::Value* visit(Cast&) final;
+    llvm::Value* visit(NaryExpr&) final;
+    llvm::Value* visit(Read&) final { throw runtime_error("Operation not supported"); }
+    llvm::Value* visit(Write&) final { throw runtime_error("Operation not supported"); }
+    void visit(Stmts&) final;
+    void visit(Func&) final;
+    llvm::Value* visit(Alloc&) final;
+    llvm::Value* visit(Load&) final;
+    void visit(Store&) final;
+    llvm::Value* visit(Loop&) final;
+    llvm::Value* visit(IsValid&) final;
+    llvm::Value* visit(SetValid&) final;
+    llvm::Value* visit(FetchDataPtr&) final;
 
     llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);

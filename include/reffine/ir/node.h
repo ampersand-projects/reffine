@@ -18,7 +18,7 @@ class Visitor;
 struct StmtNode {
     virtual ~StmtNode() {}
 
-    virtual void Accept(Visitor&) const = 0;
+    virtual void Accept(Visitor&) = 0;
 };
 typedef shared_ptr<StmtNode> Stmt;
 
@@ -37,7 +37,7 @@ struct SymNode : public ExprNode {
     SymNode(string name, DataType type) : ExprNode(type), name(name) {}
     SymNode(string name, Expr expr) : SymNode(name, expr->type) {}
 
-    void Accept(Visitor&) const override;
+    void Accept(Visitor&) override;
 };
 typedef shared_ptr<SymNode> Sym;
 

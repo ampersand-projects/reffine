@@ -15,7 +15,7 @@ struct Func : public StmtNode {
         StmtNode(), name(name), output(output), inputs(std::move(inputs)), tbl(std::move(tbl))
     {}
 
-    void Accept(Visitor&) const override;
+    void Accept(Visitor&) override;
 };
 
 struct Stmts : public StmtNode {
@@ -23,7 +23,7 @@ struct Stmts : public StmtNode {
 
     Stmts(vector<Stmt> stmts) : StmtNode(), stmts(stmts) {}
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct IfElse : public StmtNode {
@@ -37,13 +37,13 @@ struct IfElse : public StmtNode {
         ASSERT(cond->type == types::BOOL);
     }
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct NoOp : public StmtNode {
 	NoOp() : StmtNode() {}
 
-	void Accept(Visitor&) const final;
+	void Accept(Visitor&) final;
 };
 
 }  // namespace reffine

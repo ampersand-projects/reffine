@@ -26,7 +26,7 @@ struct IsValid : public ExprNode {
         ASSERT(col < vec->type.dtypes.size());
     }
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct SetValid : public ExprNode {
@@ -44,7 +44,7 @@ struct SetValid : public ExprNode {
         ASSERT(col < vec->type.dtypes.size());
     }
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct FetchDataPtr : public ExprNode {
@@ -60,7 +60,7 @@ struct FetchDataPtr : public ExprNode {
         ASSERT(col < vec->type.dtypes.size());
     }
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct Alloc : public ExprNode {
@@ -72,7 +72,7 @@ struct Alloc : public ExprNode {
         ASSERT(size->type.is_int() && !size->type.is_signed());
     }
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct Load : public ExprNode {
@@ -83,7 +83,7 @@ struct Load : public ExprNode {
         ASSERT(addr->type.is_ptr());
     }
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct Store : public StmtNode {
@@ -96,7 +96,7 @@ struct Store : public StmtNode {
         ASSERT(addr->type == val->type.ptr());
     }
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct Loop : public ExprNode {
@@ -123,7 +123,7 @@ struct Loop : public ExprNode {
 
     Loop(Expr output) : ExprNode(output->type), output(output) {}
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 }  // namespace reffine
