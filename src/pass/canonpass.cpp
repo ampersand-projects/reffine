@@ -14,3 +14,9 @@ void CanonPass::Visit(Loop& loop)
         loop.incr = nullptr;
     }
 }
+
+void CanonPass::Build(shared_ptr<Func> func)
+{
+    CanonPass pass(func);
+    func->Accept(pass);
+}

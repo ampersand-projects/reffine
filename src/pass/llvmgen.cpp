@@ -358,8 +358,9 @@ void LLVMGen::visit(Store& store)
 
 Value* LLVMGen::visit(Loop& loop)
 {
-    // Loop body condition needs to be merged into loop body before code generation
+    // Loop body condition and incr needs to be merged into loop body before code generation
     ASSERT(loop.body_cond == nullptr);
+    ASSERT(loop.incr == nullptr);
     // Loop must have a body
     ASSERT(loop.body != nullptr);
     // Loop must have an exit condition
@@ -388,9 +389,6 @@ Value* LLVMGen::visit(Loop& loop)
     parent_fn->insert(parent_fn->end(), body_bb);
     builder()->SetInsertPoint(body_bb);
     eval(loop.body);
-
-    // loop increment
-    if (loop.incr) { eval(loop.incr); }
 
     // Jump back to loop header
     builder()->CreateBr(header_bb);

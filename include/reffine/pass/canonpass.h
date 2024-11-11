@@ -12,6 +12,8 @@ public:
         IRPass(IRPassCtx(func->tbl))
     {}
 
+    static void Build(shared_ptr<Func>);
+
 protected:
     void Visit(Loop&) final;
 };
