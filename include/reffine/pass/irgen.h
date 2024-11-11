@@ -99,13 +99,6 @@ protected:
     {
         ctx().sym_val_map[sym] = val;
     }
-
-private:
-    Sym tmp_sym(SymNode& symbol)
-    {
-        shared_ptr<SymNode> tmp_sym(const_cast<SymNode*>(&symbol), [](SymNode*) {});
-        return tmp_sym;
-    }
 };
 
 }  // namespace reffine

@@ -36,6 +36,14 @@ public:
     virtual void Visit(IfElse&) = 0;
     virtual void Visit(NoOp&) = 0;
     virtual void Visit(Loop&) = 0;
+
+protected:
+    Sym tmp_sym(SymNode& symbol)
+    {
+        shared_ptr<SymNode> tmp_sym(const_cast<SymNode*>(&symbol), [](SymNode*) {});
+        return tmp_sym;
+    }
+
 };
 
 }  // namespace reffine
