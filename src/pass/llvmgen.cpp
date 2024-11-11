@@ -75,7 +75,7 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
     }
 }
 
-Value* LLVMGen::visit(const Const& cnst)
+Value* LLVMGen::visit(Const& cnst)
 {
     switch (cnst.type.btype) {
         case BaseType::BOOL:
@@ -94,7 +94,7 @@ Value* LLVMGen::visit(const Const& cnst)
     }
 }
 
-Value* LLVMGen::visit(const Cast& e)
+Value* LLVMGen::visit(Cast& e)
 {
     auto input_val = eval(e.arg);
     auto dest_type = lltype(e);
@@ -102,7 +102,7 @@ Value* LLVMGen::visit(const Cast& e)
     return builder()->CreateCast(op, input_val, dest_type);
 }
 
-Value* LLVMGen::visit(const NaryExpr& e)
+Value* LLVMGen::visit(NaryExpr& e)
 {
     switch (e.op) {
         case MathOp::ADD: {
@@ -249,7 +249,7 @@ Value* LLVMGen::visit(const NaryExpr& e)
     }
 }
 
-Value* LLVMGen::visit(const Select& select) 
+Value* LLVMGen::visit(Select& select) 
 {
     auto cond = eval(select.cond);
     auto true_val = eval(select.true_body);
@@ -257,7 +257,7 @@ Value* LLVMGen::visit(const Select& select)
     return builder()->CreateSelect(cond, true_val, false_val);
 }
 
-void LLVMGen::visit(const IfElse& ifelse)
+void LLVMGen::visit(IfElse& ifelse)
 {
     auto parent_fn = builder()->GetInsertBlock()->getParent();
     auto then_bb = BasicBlock::Create(llctx(), "then");
@@ -287,9 +287,9 @@ void LLVMGen::visit(const IfElse& ifelse)
     builder()->SetInsertPoint(merge_bb);
 }
 
-void LLVMGen::visit(const NoOp&) { /* do nothing */ }
+void LLVMGen::visit(NoOp&) { /* do nothing */ }
 
-Value* LLVMGen::visit(const IsValid& is_valid)
+Value* LLVMGen::visit(IsValid& is_valid)
 {
     auto vec_val = eval(is_valid.vec);
     auto idx_val = eval(is_valid.idx);
@@ -298,7 +298,7 @@ Value* LLVMGen::visit(const IsValid& is_valid)
     return llcall("get_vector_null_bit", lltype(is_valid), { vec_val, idx_val, col_val });
 }
 
-Value* LLVMGen::visit(const SetValid& set_valid)
+Value* LLVMGen::visit(SetValid& set_valid)
 {
     auto vec_val = eval(set_valid.vec);
     auto idx_val = eval(set_valid.idx);
@@ -308,7 +308,7 @@ Value* LLVMGen::visit(const SetValid& set_valid)
     return llcall("set_vector_null_bit", lltype(set_valid), { vec_val, idx_val, validity_val, col_val });
 }
 
-Value* LLVMGen::visit(const FetchDataPtr& fetch_data_ptr)
+Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
 {
     auto vec_val = eval(fetch_data_ptr.vec);
     auto idx_val = eval(fetch_data_ptr.idx);
@@ -320,46 +320,47 @@ Value* LLVMGen::visit(const FetchDataPtr& fetch_data_ptr)
     return data_addr;
 }
 
-Value* LLVMGen::visit(const Exists& exists)
+Value* LLVMGen::visit(Exists& exists)
 {
     return builder()->CreateIsNotNull(eval(exists.sym));
 }
 
-Value* LLVMGen::visit(const Call& call)
+Value* LLVMGen::visit(Call& call)
 {
     return llcall(call.name, lltype(call), call.args);
 }
 
-void LLVMGen::visit(const Stmts& stmts)
+void LLVMGen::visit(Stmts& stmts)
 {
-    for (const auto& stmt : stmts.stmts) {
+    for (auto& stmt : stmts.stmts) {
         eval(stmt);
     }
 }
 
-Value* LLVMGen::visit(const Alloc& alloc)
+Value* LLVMGen::visit(Alloc& alloc)
 {
     return builder()->CreateAlloca(lltype(alloc.type), eval(alloc.size));
 }
 
-Value* LLVMGen::visit(const Load& load)
+Value* LLVMGen::visit(Load& load)
 {
     auto addr = eval(load.addr);
     auto addr_type = lltype(load.addr->type.deref());
     return builder()->CreateLoad(addr_type, addr);
 }
 
-void LLVMGen::visit(const Store& store)
+void LLVMGen::visit(Store& store)
 {
     auto addr = eval(store.addr);
     auto val = eval(store.val);
     builder()->CreateStore(val, addr);
 }
 
-Value* LLVMGen::visit(const Loop& loop)
+Value* LLVMGen::visit(Loop& loop)
 {
-    // Loop body condition needs to be merged into loop body before code generation
+    // Loop body condition and incr needs to be merged into loop body before code generation
     ASSERT(loop.body_cond == nullptr);
+    ASSERT(loop.incr == nullptr);
     // Loop must have a body
     ASSERT(loop.body != nullptr);
     // Loop must have an exit condition
@@ -389,9 +390,6 @@ Value* LLVMGen::visit(const Loop& loop)
     builder()->SetInsertPoint(body_bb);
     eval(loop.body);
 
-    // loop increment
-    if (loop.incr) { eval(loop.incr); }
-
     // Jump back to loop header
     builder()->CreateBr(header_bb);
 
@@ -404,18 +402,18 @@ Value* LLVMGen::visit(const Loop& loop)
 }
 
 
-void LLVMGen::visit(const Func& func)
+void LLVMGen::visit(Func& func)
 {
     // Define function signature
     vector<llvm::Type*> args_type;
-    for (const auto& input : func.inputs) {
+    for (auto& input : func.inputs) {
         args_type.push_back(lltype(input->type));
     }
     auto fn = llfunc(func.name, lltype(func.output), args_type);
     for (size_t i = 0; i < func.inputs.size(); i++) {
         auto input = func.inputs[i];
         fn->getArg(i)->setName(input->name);
-        IRPass::assign(input, fn->getArg(i));
+        IRGen::assign(input, fn->getArg(i));
     }
 
     auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
@@ -424,7 +422,7 @@ void LLVMGen::visit(const Func& func)
     builder()->CreateRet(eval(func.output));
 }
 
-void LLVMGen::Build(const shared_ptr<Func> func, llvm::Module& llmod)
+void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
 {
     LLVMGenCtx ctx(func);
     LLVMGen llgen(std::move(ctx), llmod);
@@ -469,5 +467,5 @@ void LLVMGen::assign(Sym sym, llvm::Value* val)
     builder()->CreateStore(val, var_addr);
     auto var = builder()->CreateLoad(lltype(sym), var_addr);
     var->setName(sym->name);
-    IRPass::assign(sym, var);
+    IRGen::assign(sym, var);
 }

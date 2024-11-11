@@ -21,7 +21,7 @@ struct Call : public ExprNode {
         ExprNode(type), name(name), args(std::move(args))
     {}
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct Select : public ExprNode {
@@ -36,7 +36,7 @@ struct Select : public ExprNode {
         ASSERT(true_body->type == false_body->type);
     }
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct Const : public ExprNode {
@@ -46,7 +46,7 @@ struct Const : public ExprNode {
         ExprNode(DataType(btype)), val(val)
     {}
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct Exists : public ExprNode {
@@ -54,7 +54,7 @@ struct Exists : public ExprNode {
 
     explicit Exists(Sym sym) : ExprNode(types::BOOL), sym(sym) {}
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct Cast : public ExprNode {
@@ -65,7 +65,7 @@ struct Cast : public ExprNode {
         ASSERT(!arg->type.is_struct() && !type.is_struct());
     }
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct NaryExpr : public ExprNode {
@@ -78,11 +78,11 @@ struct NaryExpr : public ExprNode {
         ASSERT(!arg(0)->type.is_ptr() && !arg(0)->type.is_struct());
     }
 
-    Expr arg(size_t i) const { return args[i]; }
+    Expr arg(size_t i) { return args[i]; }
 
-    size_t size() const { return args.size(); }
+    size_t size() { return args.size(); }
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct UnaryExpr : public NaryExpr {
@@ -214,7 +214,7 @@ struct Read : public ExprNode {
         ASSERT(col < vec->type.dtypes.size());
     }
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 struct Write : public ExprNode {
@@ -232,7 +232,7 @@ struct Write : public ExprNode {
         ASSERT(idx->type.is_idx());
     }
 
-    void Accept(Visitor&) const final;
+    void Accept(Visitor&) final;
 };
 
 }  // namespace reffine

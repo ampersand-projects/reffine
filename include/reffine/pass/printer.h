@@ -33,29 +33,29 @@ public:
         ctx(std::move(ctx)), tabstop(tabstop)
     {}
 
-    static string Build(const Stmt);
-    static string Build(const llvm::Module&);
+    static string Build(Stmt);
+    static string Build(llvm::Module&);
 
-    void Visit(const SymNode&) override;
-    void Visit(const Stmts&) override;
-    void Visit(const Func&) override;
-    void Visit(const Call&) override;
-    void Visit(const IfElse&) override;
-    void Visit(const Select&) override;
-    void Visit(const Exists&) override;
-    void Visit(const Const&) override;
-    void Visit(const Cast&) override;
-    void Visit(const NaryExpr&) override;
-    void Visit(const Read&) override;
-    void Visit(const Write&) override;
-    void Visit(const Alloc&) override;
-    void Visit(const Load&) override;
-    void Visit(const Store&) override;
-    void Visit(const Loop&) override;
-    void Visit(const IsValid&) override;
-    void Visit(const SetValid&) override;
-    void Visit(const FetchDataPtr&) override;
-    void Visit(const NoOp&) override;
+    void Visit(SymNode&) override;
+    void Visit(Stmts&) override;
+    void Visit(Func&) override;
+    void Visit(Call&) override;
+    void Visit(IfElse&) override;
+    void Visit(Select&) override;
+    void Visit(Exists&) override;
+    void Visit(Const&) override;
+    void Visit(Cast&) override;
+    void Visit(NaryExpr&) override;
+    void Visit(Read&) override;
+    void Visit(Write&) override;
+    void Visit(Alloc&) override;
+    void Visit(Load&) override;
+    void Visit(Store&) override;
+    void Visit(Loop&) override;
+    void Visit(IsValid&) override;
+    void Visit(SetValid&) override;
+    void Visit(FetchDataPtr&) override;
+    void Visit(NoOp&) override;
 
 private:
     void enter_op() { ctx.nesting++; }
@@ -68,13 +68,13 @@ private:
     void emit(string str) { ostr << str; }
     void emitcomment(string comment) { ostr << "/* " << comment << " */"; }
 
-    void emitunary(const string op, const Expr a)
+    void emitunary(string op, Expr a)
     {
         ostr << op;
         a->Accept(*this);
     }
 
-    void emitbinary(const Expr a, const string op, const Expr b)
+    void emitbinary(Expr a, string op, Expr b)
     {
         ostr << "(";
         a->Accept(*this);
@@ -83,14 +83,14 @@ private:
         ostr << ")";
     }
 
-    void emitassign(const Expr lhs, const Expr rhs)
+    void emitassign(Expr lhs, Expr rhs)
     {
         lhs->Accept(*this);
         ostr << " = ";
         rhs->Accept(*this);
     }
 
-    void emitfunc(const string name, const vector<Expr> args)
+    void emitfunc(string name, vector<Expr> args)
     {
         ostr << name << "(";
         for (size_t i = 0; i < args.size(); i++) {

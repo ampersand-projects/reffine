@@ -10,17 +10,17 @@ static const auto EXISTS = "\u2203";
 //static const auto IN = "\u2208";
 //static const auto PHI = "\u0278";
 
-void IRPrinter::Visit(const SymNode& sym)
+void IRPrinter::Visit(SymNode& sym)
 {
     ostr << sym.name;
 }
 
-void IRPrinter::Visit(const Exists& exists)
+void IRPrinter::Visit(Exists& exists)
 {
     emitunary(EXISTS, exists.sym);
 }
 
-void IRPrinter::Visit(const Const& cnst)
+void IRPrinter::Visit(Const& cnst)
 {
     switch (cnst.type.btype) {
         case BaseType::BOOL: ostr << (cnst.val ? "true" : "false"); break;
@@ -39,13 +39,13 @@ void IRPrinter::Visit(const Const& cnst)
     }
 }
 
-void IRPrinter::Visit(const Cast& e)
+void IRPrinter::Visit(Cast& e)
 {
     ostr << "(" << e.type.str() << ") ";
     e.arg->Accept(*this);
 }
 
-void IRPrinter::Visit(const NaryExpr& e)
+void IRPrinter::Visit(NaryExpr& e)
 {
     switch (e.op) {
         case MathOp::ADD: emitbinary(e.arg(0), "+", e.arg(1)); break;
@@ -73,22 +73,22 @@ void IRPrinter::Visit(const NaryExpr& e)
     }
 }
 
-void IRPrinter::Visit(const Read& read)
+void IRPrinter::Visit(Read& read)
 {
     emitfunc("read<" + std::to_string(read.col) + ">", { read.vec, read.idx });
 }
 
-void IRPrinter::Visit(const Write& write)
+void IRPrinter::Visit(Write& write)
 {
     emitfunc("write<" + std::to_string(write.col) + ">", { write.vec, write.idx, write.val });
 }
 
-void IRPrinter::Visit(const Call& call)
+void IRPrinter::Visit(Call& call)
 {
     emitfunc(call.name, call.args);
 }
 
-void IRPrinter::Visit(const IfElse& ifelse)
+void IRPrinter::Visit(IfElse& ifelse)
 {
     ostr << "if (";
     ifelse.cond->Accept(*this);
@@ -107,12 +107,12 @@ void IRPrinter::Visit(const IfElse& ifelse)
     emitnewline();
 }
 
-void IRPrinter::Visit(const NoOp&)
+void IRPrinter::Visit(NoOp&)
 {
     ostr << "noop";
 }
 
-void IRPrinter::Visit(const Select& select)
+void IRPrinter::Visit(Select& select)
 {
     ostr << "(";
     select.cond->Accept(*this);
@@ -123,16 +123,16 @@ void IRPrinter::Visit(const Select& select)
     ostr << ")";
 }
 
-void IRPrinter::Visit(const Func& fn)
+void IRPrinter::Visit(Func& fn)
 {
     ostr << "def " << fn.name << "(";
-    for (const auto& input : fn.inputs) {
+    for (auto& input : fn.inputs) {
         ostr << input->name << ", ";
     }
     ostr << (fn.inputs.size() > 0 ? "\b\b" : "") << ") {";
 
     enter_block();
-    for (const auto& [sym, val] : fn.tbl) {
+    for (auto& [sym, val] : fn.tbl) {
         emitassign(sym, val);
         emitnewline();
     }
@@ -146,30 +146,30 @@ void IRPrinter::Visit(const Func& fn)
     emitnewline();
 }
 
-void IRPrinter::Visit(const Stmts& stmts)
+void IRPrinter::Visit(Stmts& stmts)
 {
-    for (const auto& stmt : stmts.stmts) {
+    for (auto& stmt : stmts.stmts) {
         stmt->Accept(*this);
         emitnewline();
     }
 }
 
-void IRPrinter::Visit(const Alloc& alloc)
+void IRPrinter::Visit(Alloc& alloc)
 {
     ostr << "alloc " << alloc.type.deref().str();
 }
 
-void IRPrinter::Visit(const Load& load)
+void IRPrinter::Visit(Load& load)
 {
     emitfunc("load", vector<Expr>{load.addr});
 }
 
-void IRPrinter::Visit(const Store& store)
+void IRPrinter::Visit(Store& store)
 {
     emitfunc("store", vector<Expr>{store.addr, store.val});
 }
 
-void IRPrinter::Visit(const Loop& loop)
+void IRPrinter::Visit(Loop& loop)
 {
     ostr << "{";
     enter_block();
@@ -232,29 +232,29 @@ void IRPrinter::Visit(const Loop& loop)
     ostr << "}";
 }
 
-void IRPrinter::Visit(const IsValid& is_valid)
+void IRPrinter::Visit(IsValid& is_valid)
 {
     emitfunc("is_valid<" + std::to_string(is_valid.col) + ">", { is_valid.vec, is_valid.idx });
 }
 
-void IRPrinter::Visit(const SetValid& set_valid)
+void IRPrinter::Visit(SetValid& set_valid)
 {
     emitfunc("set_valid<" + std::to_string(set_valid.col) + ">", { set_valid.vec, set_valid.idx, set_valid.validity });
 }
 
-void IRPrinter::Visit(const FetchDataPtr& fetch_data_ptr)
+void IRPrinter::Visit(FetchDataPtr& fetch_data_ptr)
 {
     emitfunc("fetch_data_ptr<" + std::to_string(fetch_data_ptr.col) + ">", { fetch_data_ptr.vec, fetch_data_ptr.idx });
 }
 
-string IRPrinter::Build(const Stmt stmt)
+string IRPrinter::Build(Stmt stmt)
 {
     IRPrinter printer;
     stmt->Accept(printer);
     return printer.ostr.str();
 }
 
-string IRPrinter::Build(const llvm::Module& llmod)
+string IRPrinter::Build(llvm::Module& llmod)
 {
     std::string str;
     llvm::raw_string_ostream ostr(str);
