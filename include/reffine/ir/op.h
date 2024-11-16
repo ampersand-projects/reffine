@@ -64,6 +64,21 @@ private:
     }
 };
 
+typedef function<Expr()> InitFnTy;
+typedef function<Expr(Expr, Expr)> AccFnTy;
+
+struct Reduce : public ExprNode {
+    Expr vec;
+    InitFnTy init_fn;
+    AccFnTy acc_fn;
+
+    Reduce(Expr vec, InitFnTy init_fn, AccFnTy acc_fn) :
+        ExprNode(types::UNKNOWN), vec(vec), init_fn(init_fn), acc_fn(acc_fn)
+    {}
+
+    void Accept(Visitor&) override;
+};
+
 }  // namespace reffine
 
 #endif  // INCLUDE_REFFINE_IR_OP_H_

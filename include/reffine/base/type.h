@@ -159,6 +159,7 @@ enum class MathOp {
 
 namespace reffine::types {
 
+static const DataType UNKNOWN(BaseType::UNKNOWN);
 static const DataType BOOL(BaseType::BOOL);
 static const DataType INT8(BaseType::INT8);
 static const DataType INT16(BaseType::INT16);
