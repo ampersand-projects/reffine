@@ -14,24 +14,27 @@ struct Op : public ExprNode {
     vector<Expr> outputs;
 
     Op(vector<Sym> idxs, vector<Expr> preds, vector<Expr> outputs) :
-        ExprNode(extract_type(idxs, outputs)), idxs(move(idxs)), preds(move(preds)), outputs(move(output))
+        ExprNode(extract_type(idxs, outputs)),
+        idxs(std::move(idxs)), preds(std::move(preds)), outputs(std::move(outputs))
     {}
 
     void Accept(Visitor&) override;
 
 private:
-    static DataType extract_type(const vector<Sym>& idxs, const vector<Expr>& output)
+    static DataType extract_type(const vector<Sym>& idxs, const vector<Expr>& outputs)
     {
         vector<DataType> dtypes;
 
         for (const auto& idx : idxs) {
-            dtypes.push_back(idx.type);
+            ASSERT(idx->type.is_val());
+            dtypes.push_back(idx->type);
         }
         for (const auto& output : outputs) {
-            dtypes.push_back(output.type);
+            ASSERT(output->type.is_val());
+            dtypes.push_back(output->type);
         }
 
-        return DataType(BaseType::VECTOR, move(dtypes), idxs.size());
+        return DataType(BaseType::VECTOR, std::move(dtypes), idxs.size());
     }
 };
 
@@ -40,7 +43,7 @@ struct Element : public ExprNode {
     vector<Expr> idxs;
 
     Element(Expr vec, vector<Expr> idxs) :
-        ExprNode(extract_type(vec, idxs)), vec(vec), idxs(move(idxs))
+        ExprNode(extract_type(vec, idxs)), vec(vec), idxs(std::move(idxs))
     {}
 
     void Accept(Visitor&) override;
@@ -54,18 +57,15 @@ private:
         ASSERT(vtype.dim == idxs.size());
 
         for (int i=0; i<idxs.size(); i++) {
-            ASSERT(vtype.dtypes[i] == idxs[i].type);
+            ASSERT(vtype.dtypes[i] == idxs[i]->type);
         }
 
-        return DataType(
-            BaseType::STRUCT,
-            std::vector<DataType>(vtype.dtypes.begin() + vtype.dim, vtype.dtypes.end())
-        );
+        return vec->type.valty();
     }
 };
 
-typedef function<Expr()> InitFnTy;
-typedef function<Expr(Expr, Expr)> AccFnTy;
+typedef function<Expr()> InitFnTy;  // () -> state
+typedef function<Expr(Expr, Expr)> AccFnTy;  // (state, val) -> state
 
 struct Reduce : public ExprNode {
     Expr vec;
@@ -73,7 +73,7 @@ struct Reduce : public ExprNode {
     AccFnTy acc_fn;
 
     Reduce(Expr vec, InitFnTy init_fn, AccFnTy acc_fn) :
-        ExprNode(types::UNKNOWN), vec(vec), init_fn(init_fn), acc_fn(acc_fn)
+        ExprNode(init_fn()->type), vec(vec), init_fn(init_fn), acc_fn(acc_fn)
     {}
 
     void Accept(Visitor&) override;
