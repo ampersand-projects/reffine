@@ -68,6 +68,18 @@ struct Cast : public ExprNode {
     void Accept(Visitor&) final;
 };
 
+struct Get : public ExprNode {
+    Expr val;
+    size_t col;
+
+    Get(Expr val, size_t col) : ExprNode(val->type.dtypes[col]), val(val), col(col)
+    {
+        ASSERT(val->type.is_struct());
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct NaryExpr : public ExprNode {
     MathOp op;
     vector<Expr> args;

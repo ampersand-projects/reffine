@@ -6,7 +6,8 @@ using namespace reffine;
 using namespace std;
 
 static const auto EXISTS = "\u2203";
-//static const auto FORALL = "\u2200";
+static const auto FORALL = "\u2200";
+static const auto REDCLE = "\u2295";
 //static const auto IN = "\u2208";
 //static const auto PHI = "\u0278";
 
@@ -45,6 +46,11 @@ void IRPrinter::Visit(Cast& e)
     e.arg->Accept(*this);
 }
 
+void IRPrinter::Visit(Get& e)
+{
+    emitfunc("get<" + std::to_string(e.col) + ">", { e.val });
+}
+
 void IRPrinter::Visit(NaryExpr& e)
 {
     switch (e.op) {
@@ -81,6 +87,64 @@ void IRPrinter::Visit(Read& read)
 void IRPrinter::Visit(Write& write)
 {
     emitfunc("write<" + std::to_string(write.col) + ">", { write.vec, write.idx, write.val });
+}
+
+void IRPrinter::Visit(Op& op)
+{
+    ostr << FORALL << " ";
+    for (const auto& idx : op.idxs) {
+        ostr << idx->name << ", ";
+    }
+    if (op.idxs.size() > 0) { ostr << "\b\b"; }
+    ostr << ": ";
+
+    ostr << "(";
+    for (const auto& pred : op.preds) {
+        pred->Accept(*this);
+        ostr << " && ";
+    }
+    ostr << "\b\b\b\b";
+    ostr << ") ";
+
+    ostr << "{";
+    for (const auto& output : op.outputs) {
+        output->Accept(*this);
+        ostr << ", ";
+    }
+    ostr << "\b\b";
+    ostr << "}";
+}
+
+void IRPrinter::Visit(Element& elem)
+{
+    elem.vec->Accept(*this);
+    ostr << "[";
+    for (const auto& idx : elem.idxs) {
+        idx->Accept(*this);
+        ostr << ", ";
+    }
+    ostr << "\b\b";
+    ostr << "]";
+}
+
+void IRPrinter::Visit(Reduce& red)
+{
+    auto init_val = red.init();
+    auto val = make_shared<SymNode>("val", red.vec->type.valty());
+    auto state = make_shared<SymNode>("state", init_val->type);
+    auto state2 = red.acc(state, val);
+
+    ostr << REDCLE << " {";
+    red.vec->Accept(*this);
+
+    ostr << ", ";
+    ostr << "state <- ";
+    init_val->Accept(*this);
+
+    ostr << ", ";
+    ostr << "state <- ";
+    state2->Accept(*this);
+    ostr << "}";
 }
 
 void IRPrinter::Visit(Call& call)

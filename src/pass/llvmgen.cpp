@@ -102,6 +102,12 @@ Value* LLVMGen::visit(Cast& e)
     return builder()->CreateCast(op, input_val, dest_type);
 }
 
+Value* LLVMGen::visit(Get& e)
+{
+    auto val = eval(e.val);
+    return builder()->CreateExtractValue(val, e.col);
+}
+
 Value* LLVMGen::visit(NaryExpr& e)
 {
     switch (e.op) {

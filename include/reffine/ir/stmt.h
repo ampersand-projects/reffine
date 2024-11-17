@@ -15,7 +15,7 @@ struct Func : public StmtNode {
         StmtNode(), name(name), output(output), inputs(std::move(inputs)), tbl(std::move(tbl))
     {}
 
-    void Accept(Visitor&) override;
+    void Accept(Visitor&) final;
 };
 
 struct Stmts : public StmtNode {

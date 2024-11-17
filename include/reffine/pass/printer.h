@@ -15,11 +15,10 @@ namespace reffine {
 
 class IRPrinterCtx {
 public:
-    IRPrinterCtx() : indent(0), nesting(0) {}
+    IRPrinterCtx() : indent(0) {}
 
 private:
     size_t indent;
-    size_t nesting;
 
     friend class IRPrinter;
 };
@@ -45,9 +44,13 @@ public:
     void Visit(Exists&) override;
     void Visit(Const&) override;
     void Visit(Cast&) override;
+    void Visit(Get&) override;
     void Visit(NaryExpr&) override;
     void Visit(Read&) override;
     void Visit(Write&) override;
+    void Visit(Op&) override;
+    void Visit(Element&) override;
+    void Visit(Reduce&) override;
     void Visit(Alloc&) override;
     void Visit(Load&) override;
     void Visit(Store&) override;
@@ -58,8 +61,6 @@ public:
     void Visit(NoOp&) override;
 
 private:
-    void enter_op() { ctx.nesting++; }
-    void exit_op() { ctx.nesting--; }
     void enter_block() { ctx.indent++; emitnewline(); }
     void exit_block() { ctx.indent--; emitnewline(); }
 
@@ -97,7 +98,7 @@ private:
             args[i]->Accept(*this);
             ostr << ", ";
         }
-        if (args.size() > 0) { ostr << "\b\b"; };
+        if (args.size() > 0) { ostr << "\b\b"; }
         ostr << ")";
     }
 

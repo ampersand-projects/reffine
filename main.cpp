@@ -14,6 +14,7 @@
 #include "reffine/ir/stmt.h"
 #include "reffine/ir/expr.h"
 #include "reffine/ir/loop.h"
+#include "reffine/ir/op.h"
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
@@ -45,7 +46,7 @@ arrow::Status csv_to_arrow()
     return arrow::Status::OK();
 }
 
-arrow::Status query_arrow_file(void* (*query_fn)(void*, void*))
+arrow::Status query_arrow_file(long (*query_fn)(void*))
 {
     ARROW_ASSIGN_OR_RAISE(auto infile, arrow::io::ReadableFile::Open(
                 "../students.arrow", arrow::default_memory_pool()));
@@ -69,7 +70,7 @@ arrow::Status query_arrow_file(void* (*query_fn)(void*, void*))
     out_array.add_child<Int64Array>(in_array.length);
     out_array.add_child<BooleanArray>(in_array.length);
 
-    query_fn(&in_array, &out_array);
+    cout << "SUM: " << query_fn(&in_array) << endl;
 
     ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(&out_array, &out_schema));
     cout << "Output: " << endl << res->ToString() << endl;
@@ -112,6 +113,27 @@ shared_ptr<Func> vector_fn()
     foo_fn->tbl[idx_addr] = idx_alloc;
     foo_fn->tbl[sum_addr] = sum_alloc;
     foo_fn->tbl[loop_sym] = loop;
+
+    return foo_fn;
+}
+
+shared_ptr<Func> vector_op_fn()
+{
+    auto vec_sym = make_shared<SymNode>("vec", types::VECTOR<1>(vector<DataType>{
+        types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
+
+    auto sum = make_shared<Reduce>(
+        vec_sym,
+        [] () { return make_shared<Const>(BaseType::INT64, 0); },
+        [] (Expr s, Expr v) {
+            auto e = make_shared<Get>(v, 1);
+            return make_shared<Add>(s, e);
+        }
+    );
+    auto sum_sym = make_shared<SymNode>("sum", sum);
+
+    auto foo_fn = make_shared<Func>("foo", sum_sym, vector<Sym>{vec_sym});
+    foo_fn->tbl[sum_sym] = sum;
 
     return foo_fn;
 }
@@ -202,9 +224,10 @@ shared_ptr<Func> transform_fn()
 
 int main()
 {
-    auto fn = transform_fn();
+    auto fn = vector_op_fn();
     CanonPass::Build(fn);
     cout << IRPrinter::Build(fn) << endl;
+    return 0;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
@@ -219,7 +242,7 @@ int main()
     llfile.close();
 
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<void* (*)(void*, void*)>(fn->name);
+    auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
 
     //auto status = csv_to_arrow();
     auto status = query_arrow_file(query_fn);

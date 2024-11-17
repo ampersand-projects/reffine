@@ -35,9 +35,13 @@ protected:
     virtual ValTy visit(Exists&) = 0;
     virtual ValTy visit(Const&) = 0;
     virtual ValTy visit(Cast&) = 0;
+    virtual ValTy visit(Get&) = 0;
     virtual ValTy visit(NaryExpr&) = 0;
     virtual ValTy visit(Read&) = 0;
     virtual ValTy visit(Write&) = 0;
+    virtual ValTy visit(Op&) = 0;
+    virtual ValTy visit(Element&) = 0;
+    virtual ValTy visit(Reduce&) = 0;
     virtual ValTy visit(Call&) = 0;
     virtual void visit(Stmts&) = 0;
     virtual void visit(Func&) = 0;
@@ -55,9 +59,13 @@ protected:
     void Visit(Exists& expr) final { val() = visit(expr); }
     void Visit(Const& expr) final { val() = visit(expr); }
     void Visit(Cast& expr) final { val() = visit(expr); }
+    void Visit(Get& expr) final { val() = visit(expr); }
     void Visit(NaryExpr& expr) final { val() = visit(expr); }
     void Visit(Read& expr) final { val() = visit(expr); }
     void Visit(Write& expr) final { val() = visit(expr); }
+    void Visit(Op& expr) final { val() = visit(expr); }
+    void Visit(Element& expr) final { val() = visit(expr); }
+    void Visit(Reduce& expr) final { val() = visit(expr); }
     void Visit(Call& expr) final { val() = visit(expr); }
     void Visit(Stmts& stmt) final { visit(stmt); val() = nullptr; }
     void Visit(Func& stmt) final { visit(stmt); val() = nullptr; }

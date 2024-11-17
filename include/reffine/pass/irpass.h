@@ -46,6 +46,8 @@ public:
 
     void Visit(Cast& expr) override { eval(expr.arg); }
 
+    void Visit(Get& expr) override { eval(expr.val); }
+
     void Visit(NaryExpr& expr) override
     {
         for (auto& arg : expr.args) {
@@ -64,6 +66,29 @@ public:
         eval(expr.vec);
         eval(expr.idx);
         eval(expr.val);
+    }
+
+    void Visit(Op& expr) override
+    {
+        for (auto& pred : expr.preds) {
+            eval(pred);
+        }
+        for (auto& output : expr.outputs) {
+            eval(output);
+        }
+    }
+
+    void Visit(Element& expr) override
+    {
+        eval(expr.vec);
+        for (auto& idx : expr.idxs) {
+            eval(idx);
+        }
+    }
+
+    void Visit(Reduce& expr) override
+    {
+        eval(expr.vec);
     }
 
     void Visit(Call& expr) override

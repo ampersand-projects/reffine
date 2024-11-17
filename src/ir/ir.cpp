@@ -10,9 +10,13 @@ void IfElse::Accept(Visitor& v) { v.Visit(*this); }
 void Exists::Accept(Visitor& v) { v.Visit(*this); }
 void Const::Accept(Visitor& v) { v.Visit(*this); }
 void Cast::Accept(Visitor& v) { v.Visit(*this); }
+void Get::Accept(Visitor& v) { v.Visit(*this); }
 void NaryExpr::Accept(Visitor& v) { v.Visit(*this); }
 void Read::Accept(Visitor& v) { v.Visit(*this); }
 void Write::Accept(Visitor& v) { v.Visit(*this); }
+void Op::Accept(Visitor& v) { v.Visit(*this); }
+void Element::Accept(Visitor& v) { v.Visit(*this); }
+void Reduce::Accept(Visitor& v) { v.Visit(*this); }
 void Stmts::Accept(Visitor& v) { v.Visit(*this); }
 void Alloc::Accept(Visitor& v) { v.Visit(*this); }
 void Load::Accept(Visitor& v) { v.Visit(*this); }
