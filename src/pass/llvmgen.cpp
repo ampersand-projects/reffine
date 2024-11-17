@@ -456,7 +456,7 @@ void LLVMGen::register_vinstrs()
 llvm::Value* LLVMGen::visit(Sym old_sym, llvm::Value* new_val)
 {
     auto var_addr = builder()->CreateAlloca(new_val->getType(), nullptr);
-    var_addr->setName(old_sym->name + "_addr");
+    var_addr->setName(old_sym->name + "_ref");
     builder()->CreateStore(new_val, var_addr);
     auto var = builder()->CreateLoad(lltype(old_sym), var_addr);
     var->setName(old_sym->name);
@@ -465,8 +465,7 @@ llvm::Value* LLVMGen::visit(Sym old_sym, llvm::Value* new_val)
 
 void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
 {
-    map<llvm::Value*, llvm::Value*> tmp_map;
-    LLVMGenCtx ctx(func->tbl, tmp_map);
+    LLVMGenCtx ctx(func);
     LLVMGen llgen(ctx, llmod);
     func->Accept(llgen);
 }

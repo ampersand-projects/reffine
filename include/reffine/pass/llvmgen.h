@@ -25,10 +25,15 @@ extern const char* vinstr_str;
 
 namespace reffine {
 
+class LLVMGenCtx : public IRGenCtx<llvm::Value*, llvm::Value*> {
+public:
+    LLVMGenCtx(shared_ptr<Func> func, map<llvm::Value*, llvm::Value*> m = {}) :
+        IRGenCtx(func->tbl, m)
+    {}
+};
+
 class LLVMGen : public IRGen<llvm::Value*, llvm::Value*> {
 public:
-    using LLVMGenCtx = IRGenCtx<llvm::Value*, llvm::Value*>;
-
     explicit LLVMGen(LLVMGenCtx& ctx, llvm::Module& llmod) :
         IRGen(std::move(ctx)),
         _llmod(llmod),
