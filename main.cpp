@@ -117,27 +117,6 @@ shared_ptr<Func> vector_fn()
     return foo_fn;
 }
 
-shared_ptr<Func> vector_op_fn()
-{
-    auto vec_sym = make_shared<SymNode>("vec", types::VECTOR<1>(vector<DataType>{
-        types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
-
-    auto sum = make_shared<Reduce>(
-        vec_sym,
-        [] () { return make_shared<Const>(BaseType::INT64, 0); },
-        [] (Expr s, Expr v) {
-            auto e = make_shared<Get>(v, 1);
-            return make_shared<Add>(s, e);
-        }
-    );
-    auto sum_sym = make_shared<SymNode>("sum", sum);
-
-    auto foo_fn = make_shared<Func>("foo", sum_sym, vector<Sym>{vec_sym});
-    foo_fn->tbl[sum_sym] = sum;
-
-    return foo_fn;
-}
-
 shared_ptr<Func> transform_fn()
 {
     auto vec_in_sym = make_shared<SymNode>("vec_in", types::VECTOR<1>(vector<DataType>{
@@ -222,10 +201,39 @@ shared_ptr<Func> transform_fn()
     return foo_fn;
 }
 
+shared_ptr<Func> test_op_fn()
+{
+    auto t_sym = make_shared<SymNode>("t", types::INT64);
+    auto op = make_shared<Op>(
+        vector<Sym>{t_sym},
+        vector<Expr>{
+            make_shared<GreaterThan>(t_sym, make_shared<Const>(BaseType::INT64, 0)),
+            make_shared<LessThan>(t_sym, make_shared<Const>(BaseType::INT64, 10)),
+        },
+        vector<Expr>{t_sym}
+    );
+    auto op_sym = make_shared<SymNode>("op", op);
+
+    auto sum = make_shared<Reduce>(
+        op_sym,
+        [] () { return make_shared<Const>(BaseType::INT64, 0); },
+        [] (Expr s, Expr v) {
+            auto e = make_shared<Get>(v, 0);
+            return make_shared<Add>(s, e);
+        }
+    );
+    auto sum_sym = make_shared<SymNode>("sum", sum);
+
+    auto foo_fn = make_shared<Func>("foo", sum_sym, vector<Sym>{});
+    foo_fn->tbl[op_sym] = op;
+    foo_fn->tbl[sum_sym] = sum;
+
+    return foo_fn;
+}
+
 int main()
 {
-    auto fn = vector_op_fn();
-    CanonPass::Build(fn);
+    auto fn = test_op_fn();
     cout << IRPrinter::Build(fn) << endl;
     return 0;
 
