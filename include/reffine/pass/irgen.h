@@ -11,23 +11,25 @@ using namespace std;
 
 namespace reffine {
 
-template<typename ValTy>
+template<typename SymTy, typename ValTy>
 class IRGenCtx {
 public:
-    IRGenCtx(SymTable& in_sym_tbl) :
-        in_sym_tbl(in_sym_tbl)
+    IRGenCtx(const SymTable& in_sym_tbl, map<SymTy, ValTy>& sym_val_map) :
+        in_sym_tbl(in_sym_tbl), sym_val_map(sym_val_map)
     {}
 
-    SymTable& in_sym_tbl;
-    map<Sym, ValTy> sym_val_map;
-    ValTy val;
+    const SymTable& in_sym_tbl;
+    map<SymTy, ValTy>& sym_val_map;  // mapping from new sym to value
+    map<Sym, SymTy> sym_sym_map;  // mapping from old sym to new sym
 };
 
-template<typename CtxTy, typename ValTy>
+template<typename SymTy, typename ValTy>
 class IRGen : public Visitor {
-protected:
-    virtual CtxTy& ctx() = 0;
+public:
+    IRGen(IRGenCtx<SymTy, ValTy> ctx) : _ctx(std::move(ctx)) {}
 
+protected:
+    virtual ValTy visit(Sym, ValTy) = 0;
     virtual ValTy visit(Select&) = 0;
     virtual void visit(IfElse&) = 0;
     virtual ValTy visit(Exists&) = 0;
@@ -67,10 +69,21 @@ protected:
     void Visit(SetValid& expr) final { val() = visit(expr); }
     void Visit(FetchDataPtr& expr) final { val() = visit(expr); }
     void Visit(NoOp& stmt) final { visit(stmt); val() = nullptr; }
+    void Visit(SymNode& symbol) final
+    {
+        auto old_sym = tmp_sym(symbol);
 
-    CtxTy& switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); return new_ctx; }
+        if (ctx().sym_sym_map.find(old_sym) == ctx().sym_sym_map.end()) {
+            auto new_val = eval(ctx().in_sym_tbl.at(old_sym));
+            auto new_sym = visit(old_sym, new_val);
+            map_sym(old_sym, new_sym);
+            map_val(new_sym, new_val);
+        }
 
-    ValTy& val() { return ctx().val; }
+        val() = ctx().sym_sym_map.at(old_sym);
+    }
+
+    IRGenCtx<SymTy, ValTy>& switch_ctx(IRGenCtx<SymTy, ValTy>& new_ctx) { swap(new_ctx, ctx()); return new_ctx; }
 
     ValTy eval(Stmt stmt)
     {
@@ -83,22 +96,22 @@ protected:
         return new_val;
     }
 
-    void Visit(SymNode& symbol) final
+    virtual void map_val(SymTy new_sym, ValTy val)
     {
-        auto tmp = tmp_sym(symbol);
-
-        if (ctx().sym_val_map.find(tmp) == ctx().sym_val_map.end()) {
-            auto expr = ctx().in_sym_tbl.at(tmp);
-            assign(tmp, eval(expr));
-        }
-
-        val() = ctx().sym_val_map.at(tmp);
+        ctx().sym_val_map[new_sym] = val;
     }
 
-    virtual void assign(Sym sym, ValTy val)
+    virtual void map_sym(Sym old_sym, SymTy new_sym)
     {
-        ctx().sym_val_map[sym] = val;
+        ctx().sym_sym_map[old_sym] = new_sym;
     }
+
+private:
+    ValTy& val() { return _val; }
+    IRGenCtx<SymTy, ValTy>& ctx() { return _ctx; }
+
+    ValTy _val;
+    IRGenCtx<SymTy, ValTy> _ctx;
 };
 
 }  // namespace reffine
