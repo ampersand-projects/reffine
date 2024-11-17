@@ -79,16 +79,6 @@ void IRPrinter::Visit(NaryExpr& e)
     }
 }
 
-void IRPrinter::Visit(Read& read)
-{
-    emitfunc("read<" + std::to_string(read.col) + ">", { read.vec, read.idx });
-}
-
-void IRPrinter::Visit(Write& write)
-{
-    emitfunc("write<" + std::to_string(write.col) + ">", { write.vec, write.idx, write.val });
-}
-
 void IRPrinter::Visit(Op& op)
 {
     ostr << FORALL << " ";

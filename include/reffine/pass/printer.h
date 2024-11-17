@@ -46,8 +46,6 @@ public:
     void Visit(Cast&) override;
     void Visit(Get&) override;
     void Visit(NaryExpr&) override;
-    void Visit(Read&) override;
-    void Visit(Write&) override;
     void Visit(Op&) override;
     void Visit(Element&) override;
     void Visit(Reduce&) override;

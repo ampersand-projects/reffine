@@ -22,8 +22,6 @@ public:
     virtual void Visit(Cast&) = 0;
     virtual void Visit(Get&) = 0;
     virtual void Visit(NaryExpr&) = 0;
-    virtual void Visit(Read&) = 0;
-    virtual void Visit(Write&) = 0;
     virtual void Visit(Op&) = 0;
     virtual void Visit(Element&) = 0;
     virtual void Visit(Reduce&) = 0;

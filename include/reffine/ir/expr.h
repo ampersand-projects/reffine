@@ -213,40 +213,6 @@ struct Pow : public BinaryExpr {
     }
 };
 
-struct Read : public ExprNode {
-    Expr vec;
-    Expr idx;
-    size_t col;
-
-    Read(Expr vec, Expr idx, size_t col) :
-        ExprNode(vec->type.dtypes[col]), vec(vec), idx(idx), col(col)
-    {
-        ASSERT(vec->type.is_vector());
-        ASSERT(idx->type.is_idx());
-        ASSERT(col < vec->type.dtypes.size());
-    }
-
-    void Accept(Visitor&) final;
-};
-
-struct Write : public ExprNode {
-    Expr vec;
-    Expr idx;
-    Expr val;
-    size_t col;
-
-    Write(Expr vec, Expr idx, Expr val, size_t col) :
-        ExprNode(vec->type), vec(vec), idx(idx), val(val), col(col)
-    {
-        ASSERT(val->type.is_val());
-        ASSERT(vec->type.is_vector());
-        ASSERT(vec->type.dtypes[col] == val->type);
-        ASSERT(idx->type.is_idx());
-    }
-
-    void Accept(Visitor&) final;
-};
-
 }  // namespace reffine
 
 #endif  // INCLUDE_REFFINE_IR_EXPR_H_

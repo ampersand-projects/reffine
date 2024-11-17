@@ -34,8 +34,6 @@ private:
     Expr visit(Cast&) final;
     Expr visit(Get&) final;
     Expr visit(NaryExpr&) final;
-    Expr visit(Read&) final { throw runtime_error("Operation not supported"); }
-    Expr visit(Write&) final { throw runtime_error("Operation not supported"); }
     Expr visit(Op&) final { throw runtime_error("Operation not supported"); }
     Expr visit(Element&) final { throw runtime_error("Operation not supported"); }
     Expr visit(Reduce&) final { throw runtime_error("Operation not supported"); }

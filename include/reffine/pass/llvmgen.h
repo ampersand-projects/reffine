@@ -57,8 +57,6 @@ private:
     llvm::Value* visit(Cast&) final;
     llvm::Value* visit(Get&) final;
     llvm::Value* visit(NaryExpr&) final;
-    llvm::Value* visit(Read&) final { throw runtime_error("Operation not supported"); }
-    llvm::Value* visit(Write&) final { throw runtime_error("Operation not supported"); }
     llvm::Value* visit(Op&) final { throw runtime_error("Operation not supported"); }
     llvm::Value* visit(Element&) final { throw runtime_error("Operation not supported"); }
     llvm::Value* visit(Reduce&) final { throw runtime_error("Operation not supported"); }

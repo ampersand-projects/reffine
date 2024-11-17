@@ -55,19 +55,6 @@ public:
         }
     }
 
-    void Visit(Read& expr) override
-    {
-        eval(expr.vec);
-        eval(expr.idx);
-    }
-
-    void Visit(Write& expr) override
-    {
-        eval(expr.vec);
-        eval(expr.idx);
-        eval(expr.val);
-    }
-
     void Visit(Op& expr) override
     {
         for (auto& pred : expr.preds) {
