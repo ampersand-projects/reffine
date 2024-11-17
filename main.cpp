@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <fstream>
 
 #include <arrow/api.h>
 #include <arrow/csv/api.h>
@@ -202,16 +203,20 @@ shared_ptr<Func> transform_fn()
 int main()
 {
     auto fn = transform_fn();
-    cout << IRPrinter::Build(fn) << endl;
     CanonPass::Build(fn);
+    cout << IRPrinter::Build(fn) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
     LLVMGen::Build(fn, *llmod);
-    cout << IRPrinter::Build(*llmod) << endl;
     if (llvm::verifyModule(*llmod)) {
         throw std::runtime_error("LLVM module verification failed!!!");
     }
+
+    // dump llvm IR to .ll file
+    ofstream llfile(llmod->getName().str() + ".ll");
+    llfile << IRPrinter::Build(*llmod);
+    llfile.close();
 
     jit->AddModule(std::move(llmod));
     auto query_fn = jit->Lookup<void* (*)(void*, void*)>(fn->name);
