@@ -25,20 +25,12 @@ extern const char* vinstr_str;
 
 namespace reffine {
 
-class LLVMGenCtx : public IRGenCtx<llvm::Value*> {
+class LLVMGen : public IRGen<llvm::Value*, llvm::Value*> {
 public:
-    LLVMGenCtx(shared_ptr<Func> func) :
-        IRGenCtx(func->tbl)
-    {}
+    using LLVMGenCtx = IRGenCtx<llvm::Value*, llvm::Value*>;
 
-private:
-    friend class LLVMGen;
-};
-
-class LLVMGen : public IRGen<LLVMGenCtx, llvm::Value*> {
-public:
-    explicit LLVMGen(LLVMGenCtx llgenctx, llvm::Module& llmod) :
-        _ctx(std::move(llgenctx)),
+    explicit LLVMGen(LLVMGenCtx& ctx, llvm::Module& llmod) :
+        IRGen(std::move(ctx)),
         _llmod(llmod),
         _builder(make_unique<llvm::IRBuilder<>>(llmod.getContext()))
     {
@@ -48,12 +40,9 @@ public:
     static void Build(shared_ptr<Func>, llvm::Module&);
 
 private:
-    LLVMGenCtx& ctx() override { return _ctx; }
-
     void register_vinstrs();
 
-    void assign(Sym sym, llvm::Value* val) override;
-
+    llvm::Value* visit(Sym, llvm::Value*) final;
     llvm::Value* visit(Call&) final;
     void visit(IfElse&) final;
     void visit(NoOp&) final;
@@ -86,7 +75,6 @@ private:
     llvm::LLVMContext& llctx() { return llmod()->getContext(); }
     llvm::IRBuilder<>* builder() { return _builder.get(); }
 
-    LLVMGenCtx _ctx;
     llvm::Module& _llmod;
     unique_ptr<llvm::IRBuilder<>> _builder;
 };

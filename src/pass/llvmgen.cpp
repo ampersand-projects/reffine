@@ -413,20 +413,13 @@ void LLVMGen::visit(Func& func)
     for (size_t i = 0; i < func.inputs.size(); i++) {
         auto input = func.inputs[i];
         fn->getArg(i)->setName(input->name);
-        IRGen::assign(input, fn->getArg(i));
+        map_sym(input, fn->getArg(i));
     }
 
     auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
 
     builder()->SetInsertPoint(entry_bb);
     builder()->CreateRet(eval(func.output));
-}
-
-void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
-{
-    LLVMGenCtx ctx(func);
-    LLVMGen llgen(std::move(ctx), llmod);
-    func->Accept(llgen);
 }
 
 void LLVMGen::register_vinstrs()
@@ -460,12 +453,20 @@ void LLVMGen::register_vinstrs()
     }
 }
 
-void LLVMGen::assign(Sym sym, llvm::Value* val)
+llvm::Value* LLVMGen::visit(Sym old_sym, llvm::Value* new_val)
 {
-    auto var_addr = builder()->CreateAlloca(val->getType(), nullptr);
-    var_addr->setName(sym->name + "_addr");
-    builder()->CreateStore(val, var_addr);
-    auto var = builder()->CreateLoad(lltype(sym), var_addr);
-    var->setName(sym->name);
-    IRGen::assign(sym, var);
+    auto var_addr = builder()->CreateAlloca(new_val->getType(), nullptr);
+    var_addr->setName(old_sym->name + "_addr");
+    builder()->CreateStore(new_val, var_addr);
+    auto var = builder()->CreateLoad(lltype(old_sym), var_addr);
+    var->setName(old_sym->name);
+    return var;
+}
+
+void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
+{
+    map<llvm::Value*, llvm::Value*> tmp_map;
+    LLVMGenCtx ctx(func->tbl, tmp_map);
+    LLVMGen llgen(ctx, llmod);
+    func->Accept(llgen);
 }
