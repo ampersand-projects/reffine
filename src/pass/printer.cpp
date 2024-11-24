@@ -5,7 +5,7 @@
 using namespace reffine;
 using namespace std;
 
-static const auto EXISTS = "\u2203";
+//static const auto EXISTS = "\u2203";
 static const auto FORALL = "\u2200";
 static const auto REDCLE = "\u2295";
 //static const auto IN = "\u2208";
@@ -14,11 +14,6 @@ static const auto REDCLE = "\u2295";
 void IRPrinter::Visit(SymNode& sym)
 {
     ostr << sym.name;
-}
-
-void IRPrinter::Visit(Exists& exists)
-{
-    emitunary(EXISTS, exists.sym);
 }
 
 void IRPrinter::Visit(Const& cnst)

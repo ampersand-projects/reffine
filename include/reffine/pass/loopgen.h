@@ -29,7 +29,6 @@ private:
     tuple<Sym, Expr> visit(Sym, Expr) final;
     Expr visit(Call&) final;
     Expr visit(Select&) final;
-    Expr visit(Exists&) final;
     Expr visit(Const&) final;
     Expr visit(Cast&) final;
     Expr visit(Get&) final;

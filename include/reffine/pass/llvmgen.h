@@ -52,7 +52,6 @@ private:
     void visit(IfElse&) final;
     void visit(NoOp&) final;
     llvm::Value* visit(Select&) final;
-    llvm::Value* visit(Exists&) final;
     llvm::Value* visit(Const&) final;
     llvm::Value* visit(Cast&) final;
     llvm::Value* visit(Get&) final;

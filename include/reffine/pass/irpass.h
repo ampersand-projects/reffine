@@ -40,8 +40,6 @@ public:
         eval(stmt.false_body);
     }
 
-    void Visit(Exists& expr) override { eval(expr.sym); }
-
     void Visit(Const& expr) override {}
 
     void Visit(Cast& expr) override { eval(expr.arg); }

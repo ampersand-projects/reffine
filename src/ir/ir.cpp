@@ -7,7 +7,6 @@ void Func::Accept(Visitor& v) { v.Visit(*this); }
 void Call::Accept(Visitor& v) { v.Visit(*this); }
 void Select::Accept(Visitor& v) { v.Visit(*this); }
 void IfElse::Accept(Visitor& v) { v.Visit(*this); }
-void Exists::Accept(Visitor& v) { v.Visit(*this); }
 void Const::Accept(Visitor& v) { v.Visit(*this); }
 void Cast::Accept(Visitor& v) { v.Visit(*this); }
 void Get::Accept(Visitor& v) { v.Visit(*this); }

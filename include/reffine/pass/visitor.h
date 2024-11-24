@@ -17,7 +17,6 @@ public:
     virtual void Visit(Func&) = 0;
     virtual void Visit(Call&) = 0;
     virtual void Visit(Select&) = 0;
-    virtual void Visit(Exists&) = 0;
     virtual void Visit(Const&) = 0;
     virtual void Visit(Cast&) = 0;
     virtual void Visit(Get&) = 0;

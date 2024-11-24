@@ -326,11 +326,6 @@ Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
     return data_addr;
 }
 
-Value* LLVMGen::visit(Exists& exists)
-{
-    return builder()->CreateIsNotNull(eval(exists.sym));
-}
-
 Value* LLVMGen::visit(Call& call)
 {
     return llcall(call.name, lltype(call), call.args);

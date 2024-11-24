@@ -29,7 +29,6 @@ private:
     tuple<Sym, Expr> visit(Sym, Expr) override;
     Expr visit(Call&) override;
     Expr visit(Select&) override;
-    Expr visit(Exists&) override;
     Expr visit(Const&) override;
     Expr visit(Cast&) override;
     Expr visit(Get&) override;

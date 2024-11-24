@@ -49,14 +49,6 @@ struct Const : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-struct Exists : public ExprNode {
-    Sym sym;
-
-    explicit Exists(Sym sym) : ExprNode(types::BOOL), sym(sym) {}
-
-    void Accept(Visitor&) final;
-};
-
 struct Cast : public ExprNode {
     Expr arg;
 

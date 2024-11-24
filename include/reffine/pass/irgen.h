@@ -33,7 +33,6 @@ protected:
     virtual tuple<SymTy, ValTy> visit(Sym, Expr) = 0;
     virtual ValTy visit(Select&) = 0;
     virtual void visit(IfElse&) = 0;
-    virtual ValTy visit(Exists&) = 0;
     virtual ValTy visit(Const&) = 0;
     virtual ValTy visit(Cast&) = 0;
     virtual ValTy visit(Get&) = 0;
@@ -55,7 +54,6 @@ protected:
 
     void Visit(Select& expr) final { val() = visit(expr); }
     void Visit(IfElse& stmt) final { visit(stmt); val() = nullptr; }
-    void Visit(Exists& expr) final { val() = visit(expr); }
     void Visit(Const& expr) final { val() = visit(expr); }
     void Visit(Cast& expr) final { val() = visit(expr); }
     void Visit(Get& expr) final { val() = visit(expr); }

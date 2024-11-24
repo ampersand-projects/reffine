@@ -41,7 +41,6 @@ public:
     void Visit(Call&) override;
     void Visit(IfElse&) override;
     void Visit(Select&) override;
-    void Visit(Exists&) override;
     void Visit(Const&) override;
     void Visit(Cast&) override;
     void Visit(Get&) override;
