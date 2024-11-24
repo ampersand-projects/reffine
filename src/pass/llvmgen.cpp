@@ -407,7 +407,6 @@ Value* LLVMGen::visit(Loop& loop)
     return eval(loop.output);
 }
 
-
 void LLVMGen::visit(Func& func)
 {
     // Define function signature

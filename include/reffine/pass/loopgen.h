@@ -7,15 +7,20 @@ namespace reffine {
 
 class LoopGenCtx : public IRGenCtx<Sym, Expr> {
 public:
-    LoopGenCtx(shared_ptr<Func> old_func, shared_ptr<Func> new_func) :
-        IRGenCtx(old_func->tbl, new_func->tbl)
+    LoopGenCtx(shared_ptr<Func> op_func, shared_ptr<Func> loop_func) :
+        IRGenCtx(op_func->tbl, loop_func->tbl), loop_func(loop_func)
     {}
+
+private:
+    shared_ptr<Func> loop_func;
+
+    friend class LoopGen;
 };
 
 class LoopGen : public IRGen<Sym, Expr> {
 public:
     explicit LoopGen(LoopGenCtx& ctx) :
-        IRGen(std::move(ctx))
+        IRGen(ctx), _ctx(ctx)
     {}
 
     static shared_ptr<Func> Build(shared_ptr<Func>);
@@ -23,19 +28,20 @@ public:
 private:
     tuple<Sym, Expr> visit(Sym, Expr) final;
     Expr visit(Call&) final;
-    void visit(IfElse&) final;
-    void visit(NoOp&) final;
     Expr visit(Select&) final;
     Expr visit(Exists&) final;
     Expr visit(Const&) final;
     Expr visit(Cast&) final;
     Expr visit(Get&) final;
     Expr visit(NaryExpr&) final;
-    Expr visit(Op&) final { throw runtime_error("Operation not supported"); }
-    Expr visit(Element&) final { throw runtime_error("Operation not supported"); }
-    Expr visit(Reduce&) final { throw runtime_error("Operation not supported"); }
-    void visit(Stmts&) final;
+    Expr visit(Op&) final;
+    Expr visit(Element&) final;
+    Expr visit(Reduce&) final;
     void visit(Func&) final;
+
+    void visit(Stmts&) final { throw runtime_error("Operation not supported"); }
+    void visit(IfElse&) final { throw runtime_error("Operation not supported"); }
+    void visit(NoOp&) final { throw runtime_error("Operation not supported"); }
     Expr visit(Alloc&) final { throw runtime_error("Operation not supported"); }
     Expr visit(Load&) final { throw runtime_error("Operation not supported"); }
     void visit(Store&) final { throw runtime_error("Operation not supported"); }
@@ -43,6 +49,8 @@ private:
     Expr visit(IsValid&) final { throw runtime_error("Operation not supported"); }
     Expr visit(SetValid&) final { throw runtime_error("Operation not supported"); }
     Expr visit(FetchDataPtr&) final { throw runtime_error("Operation not supported"); }
+
+    LoopGenCtx& _ctx;
 };
 
 }  // namespace reffine
