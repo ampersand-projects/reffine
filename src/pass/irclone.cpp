@@ -109,14 +109,3 @@ tuple<Sym, Expr> IRClone::visit(Sym old_sym, Expr old_val)
 
     return {new_sym, new_val};
 }
-
-shared_ptr<Func> IRClone::Build(shared_ptr<Func> old_func)
-{
-    auto new_func = make_shared<Func>(old_func->name, nullptr, vector<Sym>{});
-
-    IRCloneCtx ctx(old_func, new_func);
-    IRClone irclone(ctx);
-    old_func->Accept(irclone);
-
-    return new_func;
-}

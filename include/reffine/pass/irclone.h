@@ -23,8 +23,6 @@ public:
         IRGen(ctx), _ctx(ctx)
     {}
 
-    static shared_ptr<Func> Build(shared_ptr<Func>);
-
 protected:
     tuple<Sym, Expr> visit(Sym, Expr) override;
     Expr visit(Call&) override;
