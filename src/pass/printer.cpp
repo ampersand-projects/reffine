@@ -115,20 +115,25 @@ void IRPrinter::Visit(Element& elem)
 void IRPrinter::Visit(Reduce& red)
 {
     auto init_val = red.init();
-    auto val = make_shared<SymNode>("val", red.vec->type.valty());
+    auto val = make_shared<SymNode>("val", red.op.type.valty());
     auto state = make_shared<SymNode>("state", init_val->type);
     auto state2 = red.acc(state, val);
 
     ostr << REDCLE << " {";
-    red.vec->Accept(*this);
-
+    enter_block();
+    red.op.Accept(*this);
     ostr << ", ";
+    emitnewline();
+
     ostr << "state <- ";
     init_val->Accept(*this);
-
     ostr << ", ";
+    emitnewline();
+
     ostr << "state <- ";
     state2->Accept(*this);
+
+    exit_block();
     ostr << "}";
 }
 

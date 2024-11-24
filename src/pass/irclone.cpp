@@ -3,22 +3,7 @@
 using namespace std;
 using namespace reffine;
 
-Expr IRClone::visit(Reduce& red)
-{
-    return make_shared<Reduce>(eval(red.vec), red.init, red.acc);
-}
-
-Expr IRClone::visit(Element& elem)
-{
-    vector<Expr> new_idxs;
-    for (auto& old_idx : elem.idxs) {
-        new_idxs.push_back(eval(old_idx));
-    }
-
-    return make_shared<Element>(eval(elem.vec), new_idxs);
-}
-
-Expr IRClone::visit(Op& op)
+shared_ptr<Op> IRClone::visit_op(Op& op)
 {
     vector<Sym> new_idxs;
     for (auto& old_idx : op.idxs) {
@@ -38,6 +23,27 @@ Expr IRClone::visit(Op& op)
     }
 
     return make_shared<Op>(new_idxs, new_preds, new_outputs);
+}
+
+Expr IRClone::visit(Reduce& red)
+{
+    auto new_op = IRClone::visit_op(red.op);
+    return make_shared<Reduce>(*new_op, red.init, red.acc);
+}
+
+Expr IRClone::visit(Op& op)
+{
+    return IRClone::visit_op(op);
+}
+
+Expr IRClone::visit(Element& elem)
+{
+    vector<Expr> new_idxs;
+    for (auto& old_idx : elem.idxs) {
+        new_idxs.push_back(eval(old_idx));
+    }
+
+    return make_shared<Element>(eval(elem.vec), new_idxs);
 }
 
 Expr IRClone::visit(NaryExpr& nexpr)

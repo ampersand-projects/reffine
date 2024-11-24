@@ -25,7 +25,7 @@ public:
 
     static shared_ptr<Func> Build(shared_ptr<Func>);
 
-private:
+protected:
     tuple<Sym, Expr> visit(Sym, Expr) override;
     Expr visit(Call&) override;
     Expr visit(Select&) override;
@@ -48,6 +48,9 @@ private:
     Expr visit(IsValid&) final { throw runtime_error("Operation not supported"); }
     Expr visit(SetValid&) final { throw runtime_error("Operation not supported"); }
     Expr visit(FetchDataPtr&) final { throw runtime_error("Operation not supported"); }
+
+private:
+    shared_ptr<Op> visit_op(Op&);
 
     IRCloneCtx& _ctx;
 };

@@ -73,7 +73,7 @@ public:
 
     void Visit(Reduce& expr) override
     {
-        eval(expr.vec);
+        eval(expr.op);
     }
 
     void Visit(Call& expr) override
@@ -147,6 +147,7 @@ protected:
     CtxTy& switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); return new_ctx; }
 
     void eval(Stmt stmt) { stmt->Accept(*this); }
+    void eval(Op op) { op.Accept(*this); }
 
     void Visit(SymNode& symbol) final
     {

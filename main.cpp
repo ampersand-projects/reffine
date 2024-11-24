@@ -206,7 +206,7 @@ shared_ptr<Func> transform_fn()
 shared_ptr<Func> test_op_fn()
 {
     auto t_sym = make_shared<SymNode>("t", types::INT64);
-    auto op = make_shared<Op>(
+    Op op(
         vector<Sym>{t_sym},
         vector<Expr>{
             make_shared<GreaterThan>(t_sym, make_shared<Const>(BaseType::INT64, 0)),
@@ -214,10 +214,9 @@ shared_ptr<Func> test_op_fn()
         },
         vector<Expr>{t_sym}
     );
-    auto op_sym = make_shared<SymNode>("op", op);
 
     auto sum = make_shared<Reduce>(
-        op_sym,
+        op,
         [] () { return make_shared<Const>(BaseType::INT64, 0); },
         [] (Expr s, Expr v) {
             auto e = make_shared<Get>(v, 0);
@@ -227,7 +226,6 @@ shared_ptr<Func> test_op_fn()
     auto sum_sym = make_shared<SymNode>("sum", sum);
 
     auto foo_fn = make_shared<Func>("foo", sum_sym, vector<Sym>{});
-    foo_fn->tbl[op_sym] = op;
     foo_fn->tbl[sum_sym] = sum;
 
     return foo_fn;
