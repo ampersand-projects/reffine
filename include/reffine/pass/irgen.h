@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <utility>
+#include <tuple>
 
 #include "reffine/pass/visitor.h"
 
@@ -29,15 +30,16 @@ public:
     IRGen(IRGenCtx<SymTy, ValTy> ctx) : _ctx(std::move(ctx)) {}
 
 protected:
-    virtual ValTy visit(Sym, ValTy) = 0;
+    virtual tuple<SymTy, ValTy> visit(Sym, Expr) = 0;
     virtual ValTy visit(Select&) = 0;
     virtual void visit(IfElse&) = 0;
-    virtual ValTy visit(Exists&) = 0;
     virtual ValTy visit(Const&) = 0;
     virtual ValTy visit(Cast&) = 0;
+    virtual ValTy visit(Get&) = 0;
     virtual ValTy visit(NaryExpr&) = 0;
-    virtual ValTy visit(Read&) = 0;
-    virtual ValTy visit(Write&) = 0;
+    virtual ValTy visit(Op&) = 0;
+    virtual ValTy visit(Element&) = 0;
+    virtual ValTy visit(Reduce&) = 0;
     virtual ValTy visit(Call&) = 0;
     virtual void visit(Stmts&) = 0;
     virtual void visit(Func&) = 0;
@@ -52,12 +54,13 @@ protected:
 
     void Visit(Select& expr) final { val() = visit(expr); }
     void Visit(IfElse& stmt) final { visit(stmt); val() = nullptr; }
-    void Visit(Exists& expr) final { val() = visit(expr); }
     void Visit(Const& expr) final { val() = visit(expr); }
     void Visit(Cast& expr) final { val() = visit(expr); }
+    void Visit(Get& expr) final { val() = visit(expr); }
     void Visit(NaryExpr& expr) final { val() = visit(expr); }
-    void Visit(Read& expr) final { val() = visit(expr); }
-    void Visit(Write& expr) final { val() = visit(expr); }
+    void Visit(Op& expr) final { val() = visit(expr); }
+    void Visit(Element& expr) final { val() = visit(expr); }
+    void Visit(Reduce& expr) final { val() = visit(expr); }
     void Visit(Call& expr) final { val() = visit(expr); }
     void Visit(Stmts& stmt) final { visit(stmt); val() = nullptr; }
     void Visit(Func& stmt) final { visit(stmt); val() = nullptr; }
@@ -74,8 +77,8 @@ protected:
         auto old_sym = tmp_sym(symbol);
 
         if (ctx().sym_sym_map.find(old_sym) == ctx().sym_sym_map.end()) {
-            auto new_val = eval(ctx().in_sym_tbl.at(old_sym));
-            auto new_sym = visit(old_sym, new_val);
+            auto old_val = ctx().in_sym_tbl.at(old_sym);
+            auto [new_sym, new_val] = visit(old_sym, old_val);
             map_sym(old_sym, new_sym);
             map_val(new_sym, new_val);
         }

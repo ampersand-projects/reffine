@@ -49,20 +49,24 @@ struct Const : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-struct Exists : public ExprNode {
-    Sym sym;
-
-    explicit Exists(Sym sym) : ExprNode(types::BOOL), sym(sym) {}
-
-    void Accept(Visitor&) final;
-};
-
 struct Cast : public ExprNode {
     Expr arg;
 
     Cast(DataType type, Expr arg) : ExprNode(type), arg(arg)
     {
         ASSERT(!arg->type.is_struct() && !type.is_struct());
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct Get : public ExprNode {
+    Expr val;
+    size_t col;
+
+    Get(Expr val, size_t col) : ExprNode(val->type.dtypes[col]), val(val), col(col)
+    {
+        ASSERT(val->type.is_struct());
     }
 
     void Accept(Visitor&) final;
@@ -199,40 +203,6 @@ struct Pow : public BinaryExpr {
     Pow(Expr a, Expr b) : BinaryExpr(a->type, MathOp::POW, a, b) {
         ASSERT(a->type.is_float());
     }
-};
-
-struct Read : public ExprNode {
-    Expr vec;
-    Expr idx;
-    size_t col;
-
-    Read(Expr vec, Expr idx, size_t col) :
-        ExprNode(vec->type.dtypes[col]), vec(vec), idx(idx), col(col)
-    {
-        ASSERT(vec->type.is_vector());
-        ASSERT(idx->type.is_idx());
-        ASSERT(col < vec->type.dtypes.size());
-    }
-
-    void Accept(Visitor&) final;
-};
-
-struct Write : public ExprNode {
-    Expr vec;
-    Expr idx;
-    Expr val;
-    size_t col;
-
-    Write(Expr vec, Expr idx, Expr val, size_t col) :
-        ExprNode(vec->type), vec(vec), idx(idx), val(val), col(col)
-    {
-        ASSERT(val->type.is_val());
-        ASSERT(vec->type.is_vector());
-        ASSERT(vec->type.dtypes[col] == val->type);
-        ASSERT(idx->type.is_idx());
-    }
-
-    void Accept(Visitor&) final;
 };
 
 }  // namespace reffine

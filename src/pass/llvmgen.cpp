@@ -102,6 +102,12 @@ Value* LLVMGen::visit(Cast& e)
     return builder()->CreateCast(op, input_val, dest_type);
 }
 
+Value* LLVMGen::visit(Get& e)
+{
+    auto val = eval(e.val);
+    return builder()->CreateExtractValue(val, e.col);
+}
+
 Value* LLVMGen::visit(NaryExpr& e)
 {
     switch (e.op) {
@@ -320,11 +326,6 @@ Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
     return data_addr;
 }
 
-Value* LLVMGen::visit(Exists& exists)
-{
-    return builder()->CreateIsNotNull(eval(exists.sym));
-}
-
 Value* LLVMGen::visit(Call& call)
 {
     return llcall(call.name, lltype(call), call.args);
@@ -401,7 +402,6 @@ Value* LLVMGen::visit(Loop& loop)
     return eval(loop.output);
 }
 
-
 void LLVMGen::visit(Func& func)
 {
     // Define function signature
@@ -453,14 +453,17 @@ void LLVMGen::register_vinstrs()
     }
 }
 
-llvm::Value* LLVMGen::visit(Sym old_sym, llvm::Value* new_val)
+tuple<llvm::Value*, llvm::Value*> LLVMGen::visit(Sym old_sym, Expr old_val)
 {
+    auto new_val = eval(old_val);
+
     auto var_addr = builder()->CreateAlloca(new_val->getType(), nullptr);
     var_addr->setName(old_sym->name + "_ref");
     builder()->CreateStore(new_val, var_addr);
     auto var = builder()->CreateLoad(lltype(old_sym), var_addr);
     var->setName(old_sym->name);
-    return var;
+
+    return {var, new_val};
 }
 
 void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)

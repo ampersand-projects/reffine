@@ -40,11 +40,11 @@ public:
         eval(stmt.false_body);
     }
 
-    void Visit(Exists& expr) override { eval(expr.sym); }
-
     void Visit(Const& expr) override {}
 
     void Visit(Cast& expr) override { eval(expr.arg); }
+
+    void Visit(Get& expr) override { eval(expr.val); }
 
     void Visit(NaryExpr& expr) override
     {
@@ -53,17 +53,27 @@ public:
         }
     }
 
-    void Visit(Read& expr) override
+    void Visit(Op& expr) override
     {
-        eval(expr.vec);
-        eval(expr.idx);
+        for (auto& pred : expr.preds) {
+            eval(pred);
+        }
+        for (auto& output : expr.outputs) {
+            eval(output);
+        }
     }
 
-    void Visit(Write& expr) override
+    void Visit(Element& expr) override
     {
         eval(expr.vec);
-        eval(expr.idx);
-        eval(expr.val);
+        for (auto& idx : expr.idxs) {
+            eval(idx);
+        }
+    }
+
+    void Visit(Reduce& expr) override
+    {
+        eval(expr.vec);
     }
 
     void Visit(Call& expr) override

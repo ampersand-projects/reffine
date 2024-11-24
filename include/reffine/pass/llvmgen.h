@@ -47,17 +47,18 @@ public:
 private:
     void register_vinstrs();
 
-    llvm::Value* visit(Sym, llvm::Value*) final;
+    tuple<llvm::Value*, llvm::Value*> visit(Sym, Expr) final;
     llvm::Value* visit(Call&) final;
     void visit(IfElse&) final;
     void visit(NoOp&) final;
     llvm::Value* visit(Select&) final;
-    llvm::Value* visit(Exists&) final;
     llvm::Value* visit(Const&) final;
     llvm::Value* visit(Cast&) final;
+    llvm::Value* visit(Get&) final;
     llvm::Value* visit(NaryExpr&) final;
-    llvm::Value* visit(Read&) final { throw runtime_error("Operation not supported"); }
-    llvm::Value* visit(Write&) final { throw runtime_error("Operation not supported"); }
+    llvm::Value* visit(Op&) final { throw runtime_error("Operation not supported"); }
+    llvm::Value* visit(Element&) final { throw runtime_error("Operation not supported"); }
+    llvm::Value* visit(Reduce&) final { throw runtime_error("Operation not supported"); }
     void visit(Stmts&) final;
     void visit(Func&) final;
     llvm::Value* visit(Alloc&) final;

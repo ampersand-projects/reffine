@@ -14,9 +14,12 @@
 #include "reffine/ir/stmt.h"
 #include "reffine/ir/expr.h"
 #include "reffine/ir/loop.h"
+#include "reffine/ir/op.h"
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
+#include "reffine/pass/irclone.h"
+#include "reffine/pass/loopgen.h"
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
 #include "reffine/arrow/defs.h"
@@ -45,7 +48,7 @@ arrow::Status csv_to_arrow()
     return arrow::Status::OK();
 }
 
-arrow::Status query_arrow_file(void* (*query_fn)(void*, void*))
+arrow::Status query_arrow_file(long (*query_fn)(void*))
 {
     ARROW_ASSIGN_OR_RAISE(auto infile, arrow::io::ReadableFile::Open(
                 "../students.arrow", arrow::default_memory_pool()));
@@ -69,7 +72,7 @@ arrow::Status query_arrow_file(void* (*query_fn)(void*, void*))
     out_array.add_child<Int64Array>(in_array.length);
     out_array.add_child<BooleanArray>(in_array.length);
 
-    query_fn(&in_array, &out_array);
+    cout << "SUM: " << query_fn(&in_array) << endl;
 
     ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(&out_array, &out_schema));
     cout << "Output: " << endl << res->ToString() << endl;
@@ -200,11 +203,43 @@ shared_ptr<Func> transform_fn()
     return foo_fn;
 }
 
+shared_ptr<Func> test_op_fn()
+{
+    auto t_sym = make_shared<SymNode>("t", types::INT64);
+    auto op = make_shared<Op>(
+        vector<Sym>{t_sym},
+        vector<Expr>{
+            make_shared<GreaterThan>(t_sym, make_shared<Const>(BaseType::INT64, 0)),
+            make_shared<LessThan>(t_sym, make_shared<Const>(BaseType::INT64, 10)),
+        },
+        vector<Expr>{t_sym}
+    );
+    auto op_sym = make_shared<SymNode>("op", op);
+
+    auto sum = make_shared<Reduce>(
+        op_sym,
+        [] () { return make_shared<Const>(BaseType::INT64, 0); },
+        [] (Expr s, Expr v) {
+            auto e = make_shared<Get>(v, 0);
+            return make_shared<Add>(s, e);
+        }
+    );
+    auto sum_sym = make_shared<SymNode>("sum", sum);
+
+    auto foo_fn = make_shared<Func>("foo", sum_sym, vector<Sym>{});
+    foo_fn->tbl[op_sym] = op;
+    foo_fn->tbl[sum_sym] = sum;
+
+    return foo_fn;
+}
+
 int main()
 {
-    auto fn = transform_fn();
-    CanonPass::Build(fn);
+    auto fn = test_op_fn();
     cout << IRPrinter::Build(fn) << endl;
+    auto loop = IRClone::Build(fn);
+    cout << IRPrinter::Build(loop) << endl;
+    return 0;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
@@ -219,7 +254,7 @@ int main()
     llfile.close();
 
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<void* (*)(void*, void*)>(fn->name);
+    auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
 
     //auto status = csv_to_arrow();
     auto status = query_arrow_file(query_fn);
