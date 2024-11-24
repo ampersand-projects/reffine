@@ -7,8 +7,8 @@ namespace reffine {
 
 class LoopGenCtx : public IRGenCtx<Sym, Expr> {
 public:
-    LoopGenCtx(shared_ptr<Func> func, map<Sym, Expr> m = {}) :
-        IRGenCtx(func->tbl, m)
+    LoopGenCtx(shared_ptr<Func> old_func, shared_ptr<Func> new_func) :
+        IRGenCtx(old_func->tbl, new_func->tbl)
     {}
 };
 
@@ -21,6 +21,7 @@ public:
     static shared_ptr<Func> Build(shared_ptr<Func>);
 
 private:
+    Sym visit(Sym, Expr) final;
     Expr visit(Call&) final;
     void visit(IfElse&) final;
     void visit(NoOp&) final;

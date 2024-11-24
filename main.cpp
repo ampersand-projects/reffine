@@ -237,6 +237,7 @@ int main()
     auto fn = test_op_fn();
     cout << IRPrinter::Build(fn) << endl;
     auto loop = LoopGen::Build(fn);
+    cout << IRPrinter::Build(loop) << endl;
     return 0;
 
     auto jit = ExecEngine::Get();
