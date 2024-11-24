@@ -5,26 +5,22 @@
 
 namespace reffine {
 
-class LoopGenCtx : public IRGenCtx<Expr> {
+class LoopGenCtx : public IRGenCtx<Sym, Expr> {
 public:
-    LoopGenCtx(shared_ptr<Func> func) :
-        IRGenCtx(func->tbl)
+    LoopGenCtx(shared_ptr<Func> func, map<Sym, Expr> m = {}) :
+        IRGenCtx(func->tbl, m)
     {}
 };
 
-class LoopGen : public IRGen<LoopGenCtx, Expr> {
+class LoopGen : public IRGen<Sym, Expr> {
 public:
-    explicit LoopGen(LoopGenCtx loopgenctx) :
-        _ctx(std::move(loopgenctx))
+    explicit LoopGen(LoopGenCtx& ctx) :
+        IRGen(std::move(ctx))
     {}
 
     static shared_ptr<Func> Build(shared_ptr<Func>);
 
 private:
-    LoopGenCtx& ctx() override { return _ctx; }
-
-    void assign(Sym, Expr) override;
-
     Expr visit(Call&) final;
     void visit(IfElse&) final;
     void visit(NoOp&) final;
@@ -46,8 +42,6 @@ private:
     Expr visit(IsValid&) final { throw runtime_error("Operation not supported"); }
     Expr visit(SetValid&) final { throw runtime_error("Operation not supported"); }
     Expr visit(FetchDataPtr&) final { throw runtime_error("Operation not supported"); }
-
-    LoopGenCtx _ctx;
 };
 
 }  // namespace reffine

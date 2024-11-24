@@ -10,8 +10,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(SRC_FILES
     ir/ir.cpp
     pass/printer.cpp
-    pass/llvmgen.cpp
+    pass/loopgen.cpp
     pass/canonpass.cpp
+    pass/llvmgen.cpp
     engine/engine.cpp
 )
 

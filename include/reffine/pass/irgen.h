@@ -29,7 +29,7 @@ public:
     IRGen(IRGenCtx<SymTy, ValTy> ctx) : _ctx(std::move(ctx)) {}
 
 protected:
-    virtual ValTy visit(Sym, ValTy) = 0;
+    virtual SymTy visit(Sym, ValTy) = 0;
     virtual ValTy visit(Select&) = 0;
     virtual void visit(IfElse&) = 0;
     virtual ValTy visit(Exists&) = 0;
