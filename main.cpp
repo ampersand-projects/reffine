@@ -18,6 +18,7 @@
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
+#include "reffine/pass/irclone.h"
 #include "reffine/pass/loopgen.h"
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
@@ -236,7 +237,7 @@ int main()
 {
     auto fn = test_op_fn();
     cout << IRPrinter::Build(fn) << endl;
-    auto loop = LoopGen::Build(fn);
+    auto loop = IRClone::Build(fn);
     cout << IRPrinter::Build(loop) << endl;
     return 0;
 

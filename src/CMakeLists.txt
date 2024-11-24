@@ -12,6 +12,7 @@ set(SRC_FILES
     pass/printer.cpp
     pass/loopgen.cpp
     pass/canonpass.cpp
+    pass/irclone.cpp
     pass/llvmgen.cpp
     engine/engine.cpp
 )
