@@ -459,14 +459,17 @@ void LLVMGen::register_vinstrs()
     }
 }
 
-llvm::Value* LLVMGen::visit(Sym old_sym, llvm::Value* new_val)
+tuple<llvm::Value*, llvm::Value*> LLVMGen::visit(Sym old_sym, Expr old_val)
 {
+    auto new_val = eval(old_val);
+
     auto var_addr = builder()->CreateAlloca(new_val->getType(), nullptr);
     var_addr->setName(old_sym->name + "_ref");
     builder()->CreateStore(new_val, var_addr);
     auto var = builder()->CreateLoad(lltype(old_sym), var_addr);
     var->setName(old_sym->name);
-    return var;
+
+    return {var, new_val};
 }
 
 void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)

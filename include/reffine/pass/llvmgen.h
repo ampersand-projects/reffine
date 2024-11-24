@@ -47,7 +47,7 @@ public:
 private:
     void register_vinstrs();
 
-    llvm::Value* visit(Sym, llvm::Value*) final;
+    tuple<llvm::Value*, llvm::Value*> visit(Sym, Expr) final;
     llvm::Value* visit(Call&) final;
     void visit(IfElse&) final;
     void visit(NoOp&) final;

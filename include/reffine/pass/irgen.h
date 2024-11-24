@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <utility>
+#include <tuple>
 
 #include "reffine/pass/visitor.h"
 
@@ -29,7 +30,7 @@ public:
     IRGen(IRGenCtx<SymTy, ValTy> ctx) : _ctx(std::move(ctx)) {}
 
 protected:
-    virtual SymTy visit(Sym, ValTy) = 0;
+    virtual tuple<SymTy, ValTy> visit(Sym, Expr) = 0;
     virtual ValTy visit(Select&) = 0;
     virtual void visit(IfElse&) = 0;
     virtual ValTy visit(Exists&) = 0;
@@ -78,8 +79,8 @@ protected:
         auto old_sym = tmp_sym(symbol);
 
         if (ctx().sym_sym_map.find(old_sym) == ctx().sym_sym_map.end()) {
-            auto new_val = eval(ctx().in_sym_tbl.at(old_sym));
-            auto new_sym = visit(old_sym, new_val);
+            auto old_val = ctx().in_sym_tbl.at(old_sym);
+            auto [new_sym, new_val] = visit(old_sym, old_val);
             map_sym(old_sym, new_sym);
             map_val(new_sym, new_val);
         }

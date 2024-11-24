@@ -21,7 +21,7 @@ public:
     static shared_ptr<Func> Build(shared_ptr<Func>);
 
 private:
-    Sym visit(Sym, Expr) final;
+    tuple<Sym, Expr> visit(Sym, Expr) final;
     Expr visit(Call&) final;
     void visit(IfElse&) final;
     void visit(NoOp&) final;
