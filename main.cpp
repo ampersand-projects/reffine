@@ -233,14 +233,14 @@ shared_ptr<Func> test_op_fn()
 int main()
 {
     auto fn = test_op_fn();
-    cout << IRPrinter::Build(fn) << endl;
+    cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto loop = LoopGen::Build(fn);
-    cout << IRPrinter::Build(loop) << endl;
-    return 0;
+    CanonPass::Build(loop);
+    cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(fn, *llmod);
+    LLVMGen::Build(loop, *llmod);
     if (llvm::verifyModule(*llmod)) {
         throw std::runtime_error("LLVM module verification failed!!!");
     }
@@ -251,13 +251,16 @@ int main()
     llfile.close();
 
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
+    auto query_fn = jit->Lookup<long (*)()>(fn->name);
+    cout << "Result: " << query_fn() << endl;
 
     //auto status = csv_to_arrow();
+    /*
     auto status = query_arrow_file(query_fn);
     if (!status.ok()) {
         cerr << status.ToString() << endl;
     }
+    */
 
     return 0;
 }
