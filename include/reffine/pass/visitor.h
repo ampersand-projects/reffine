@@ -20,6 +20,7 @@ public:
     virtual void Visit(Const&) = 0;
     virtual void Visit(Cast&) = 0;
     virtual void Visit(Get&) = 0;
+    virtual void Visit(New&) = 0;
     virtual void Visit(NaryExpr&) = 0;
     virtual void Visit(Op&) = 0;
     virtual void Visit(Element&) = 0;

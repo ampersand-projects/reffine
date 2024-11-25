@@ -72,6 +72,26 @@ struct Get : public ExprNode {
     void Accept(Visitor&) final;
 };
 
+struct New : public ExprNode {
+    vector<Expr> vals;
+
+    explicit New(vector<Expr> vals) :
+        ExprNode(get_new_type(vals)), vals(vals)
+    {}
+
+    void Accept(Visitor&) final;
+
+private:
+    static DataType get_new_type(vector<Expr> vals)
+    {
+        vector<DataType> dtypes;
+        for (const auto& val : vals) {
+            dtypes.push_back(val->type);
+        }
+        return DataType(BaseType::STRUCT, (dtypes));
+    }
+};
+
 struct NaryExpr : public ExprNode {
     MathOp op;
     vector<Expr> args;

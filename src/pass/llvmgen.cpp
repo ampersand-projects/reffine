@@ -108,6 +108,19 @@ Value* LLVMGen::visit(Get& e)
     return builder()->CreateExtractValue(val, e.col);
 }
 
+Value* LLVMGen::visit(New& e)
+{
+    auto new_type = lltype(e);
+    auto ptr = builder()->CreateAlloca(new_type);
+
+    for (size_t i = 0; i < e.vals.size(); i++) {
+        auto val_ptr = builder()->CreateStructGEP(new_type, ptr, i);
+        builder()->CreateStore(eval(e.vals[i]), val_ptr);
+    }
+
+    return builder()->CreateLoad(new_type, ptr);
+}
+
 Value* LLVMGen::visit(NaryExpr& e)
 {
     switch (e.op) {

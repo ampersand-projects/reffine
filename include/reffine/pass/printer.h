@@ -44,6 +44,7 @@ public:
     void Visit(Const&) override;
     void Visit(Cast&) override;
     void Visit(Get&) override;
+    void Visit(New&) override;
     void Visit(NaryExpr&) override;
     void Visit(Op&) override;
     void Visit(Element&) override;

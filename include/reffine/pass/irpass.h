@@ -46,6 +46,13 @@ public:
 
     void Visit(Get& expr) override { eval(expr.val); }
 
+    void Visit(New& expr) override
+    {
+        for (auto& val : expr.vals) {
+            eval(val);
+        }
+    }
+
     void Visit(NaryExpr& expr) override
     {
         for (auto& arg : expr.args) {

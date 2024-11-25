@@ -61,6 +61,16 @@ Expr IRClone::visit(Get& get)
     return make_shared<Get>(eval(get.val), get.col);
 }
 
+Expr IRClone::visit(New& _new)
+{
+    vector<Expr> new_vals;
+    for (auto& val : _new.vals) {
+        new_vals.push_back(eval(val));
+    }
+
+    return make_shared<New>(new_vals);
+}
+
 Expr IRClone::visit(Cast& cast)
 {
     return make_shared<Cast>(cast.type, eval(cast.arg));
@@ -108,15 +118,4 @@ tuple<Sym, Expr> IRClone::visit(Sym old_sym, Expr old_val)
     auto new_sym = make_shared<SymNode>(old_sym->name, old_sym);
 
     return {new_sym, new_val};
-}
-
-shared_ptr<Func> IRClone::Build(shared_ptr<Func> old_func)
-{
-    auto new_func = make_shared<Func>(old_func->name, nullptr, vector<Sym>{});
-
-    IRCloneCtx ctx(old_func, new_func);
-    IRClone irclone(ctx);
-    old_func->Accept(irclone);
-
-    return new_func;
 }

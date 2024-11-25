@@ -36,6 +36,7 @@ protected:
     virtual ValTy visit(Const&) = 0;
     virtual ValTy visit(Cast&) = 0;
     virtual ValTy visit(Get&) = 0;
+    virtual ValTy visit(New&) = 0;
     virtual ValTy visit(NaryExpr&) = 0;
     virtual ValTy visit(Op&) = 0;
     virtual ValTy visit(Element&) = 0;
@@ -57,6 +58,7 @@ protected:
     void Visit(Const& expr) final { val() = visit(expr); }
     void Visit(Cast& expr) final { val() = visit(expr); }
     void Visit(Get& expr) final { val() = visit(expr); }
+    void Visit(New& expr) final { val() = visit(expr); }
     void Visit(NaryExpr& expr) final { val() = visit(expr); }
     void Visit(Op& expr) final { val() = visit(expr); }
     void Visit(Element& expr) final { val() = visit(expr); }
