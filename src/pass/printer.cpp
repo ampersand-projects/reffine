@@ -46,6 +46,16 @@ void IRPrinter::Visit(Get& e)
     emitfunc("get<" + std::to_string(e.col) + ">", { e.val });
 }
 
+void IRPrinter::Visit(New& e)
+{
+    ostr << "{";
+    for (const auto& val : e.vals) {
+        val->Accept(*this);
+        ostr << ", ";
+    }
+    ostr << "}";
+}
+
 void IRPrinter::Visit(NaryExpr& e)
 {
     switch (e.op) {

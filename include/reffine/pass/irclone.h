@@ -30,6 +30,7 @@ protected:
     Expr visit(Const&) override;
     Expr visit(Cast&) override;
     Expr visit(Get&) override;
+    Expr visit(New&) override;
     Expr visit(NaryExpr&) override;
     Expr visit(Op&) override;
     Expr visit(Element&) override;
