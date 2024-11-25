@@ -31,7 +31,8 @@ Expr LoopGen::visit(Reduce& red)
     );
 
     // Loop body statement
-    auto val = make_shared<Cast>(types::INT64, make_shared<Load>(idx_addr_sym));
+    auto idx_val = make_shared<Cast>(types::INT64, make_shared<Load>(idx_addr_sym));
+    auto val = make_shared<New>(vector<Expr>{idx_val});
     auto state = make_shared<Load>(state_addr_sym);
     auto new_state = red.acc(state, val);
     auto body_stmt = make_shared<Store>(state_addr_sym, new_state);
