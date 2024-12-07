@@ -10,6 +10,8 @@
 #include <arrow/status.h>
 #include <arrow/c/bridge.h>
 
+#include <z3++.h>
+
 #include "reffine/ir/node.h"
 #include "reffine/ir/stmt.h"
 #include "reffine/ir/expr.h"
@@ -230,8 +232,32 @@ shared_ptr<Func> test_op_fn()
     return foo_fn;
 }
 
+void demorgan() {
+    cout << "de-Morgan example\n";
+
+    z3::context c;
+
+    auto x = c.bool_const("x");
+    auto y = c.bool_const("y");
+    auto conjecture = (!(x && y)) == (!x || !y);
+
+    z3::solver s(c);
+    // adding the negation of the conjecture as a constraint.
+    s.add(!conjecture);
+    cout << s << "\n";
+    cout << "SMT2\n";
+    cout << s.to_smt2() << "\n";
+    switch (s.check()) {
+        case z3::unsat:   cout << "de-Morgan is valid\n"; break;
+        case z3::sat:     cout << "de-Morgan is not valid\n"; break;
+        case z3::unknown: cout << "unknown\n"; break;
+    }
+}
+
 int main()
 {
+    demorgan();
+
     auto fn = test_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto loop = LoopGen::Build(fn);

@@ -4,3 +4,6 @@
 [submodule "third_party/llvm-project"]
 	path = third_party/llvm-project
 	url = https://github.com/llvm/llvm-project.git
+[submodule "third_party/z3"]
+	path = third_party/z3
+	url = git@github.com:Z3Prover/z3.git
