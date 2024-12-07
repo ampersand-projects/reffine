@@ -18,9 +18,12 @@ set(SRC_FILES
 )
 
 find_package(LLVM REQUIRED CONFIG)
-
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
+find_package(Z3 REQUIRED CONFIG)
+message(STATUS "Found Z3 ${Z3_VERSION_STRING}")
+message(STATUS "Z3_DIR: ${Z3_DIR}")
 
 add_definitions(${LLVM_DEFINITIONS})
 llvm_map_components_to_libnames(llvm_libs core executionengine support native orcjit object)
@@ -36,6 +39,6 @@ add_custom_command(
 )
 add_library(reffine SHARED ${SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp)
 
-target_link_libraries(reffine ${llvm_libs})
-target_include_directories(reffine PUBLIC ${LLVM_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-target_compile_options(reffine PRIVATE -Wall -Wextra -pedantic -Werror -Wno-unused-parameter)
+target_link_libraries(reffine ${llvm_libs} ${Z3_LIBRARIES})
+target_include_directories(reffine PUBLIC ${LLVM_INCLUDE_DIRS} ${Z3_CXX_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+target_compile_options(reffine PRIVATE -Wall -Wextra -pedantic -Werror -Wno-unused-parameter ${Z3_COMPONENT_CXX_FLAGS})
