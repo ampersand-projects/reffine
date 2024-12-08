@@ -54,7 +54,7 @@ protected:
     virtual void visit(NoOp&) = 0;
 
     void Visit(Select& expr) final { val() = visit(expr); }
-    void Visit(IfElse& stmt) final { visit(stmt); val() = nullptr; }
+    void Visit(IfElse& stmt) final { visit(stmt); }
     void Visit(Const& expr) final { val() = visit(expr); }
     void Visit(Cast& expr) final { val() = visit(expr); }
     void Visit(Get& expr) final { val() = visit(expr); }
@@ -64,16 +64,16 @@ protected:
     void Visit(Element& expr) final { val() = visit(expr); }
     void Visit(Reduce& expr) final { val() = visit(expr); }
     void Visit(Call& expr) final { val() = visit(expr); }
-    void Visit(Stmts& stmt) final { visit(stmt); val() = nullptr; }
-    void Visit(Func& stmt) final { visit(stmt); val() = nullptr; }
+    void Visit(Stmts& stmt) final { visit(stmt); }
+    void Visit(Func& stmt) final { visit(stmt); }
     void Visit(Alloc& expr) final { val() = visit(expr); }
     void Visit(Load& expr) final { val() = visit(expr); }
-    void Visit(Store& expr) final { visit(expr); val() = nullptr; }
+    void Visit(Store& expr) final { visit(expr); }
     void Visit(Loop& expr) final { val() = visit(expr); }
     void Visit(IsValid& expr) final { val() = visit(expr); }
     void Visit(SetValid& expr) final { val() = visit(expr); }
     void Visit(FetchDataPtr& expr) final { val() = visit(expr); }
-    void Visit(NoOp& stmt) final { visit(stmt); val() = nullptr; }
+    void Visit(NoOp& stmt) final { visit(stmt); }
     void Visit(SymNode& symbol) final
     {
         auto old_sym = tmp_sym(symbol);
@@ -92,7 +92,7 @@ protected:
 
     ValTy eval(Stmt stmt)
     {
-        ValTy new_val = nullptr;
+        ValTy new_val;
 
         swap(new_val, val());
         stmt->Accept(*this);
