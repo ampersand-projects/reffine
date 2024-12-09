@@ -4,6 +4,7 @@
 #include "reffine/ir/expr.h"
 #include "reffine/ir/stmt.h"
 #include "reffine/ir/loop.h"
+#include "reffine/ir/op.h"
 
 namespace reffine {
 
@@ -16,12 +17,14 @@ public:
     virtual void Visit(Func&) = 0;
     virtual void Visit(Call&) = 0;
     virtual void Visit(Select&) = 0;
-    virtual void Visit(Exists&) = 0;
     virtual void Visit(Const&) = 0;
     virtual void Visit(Cast&) = 0;
+    virtual void Visit(Get&) = 0;
+    virtual void Visit(New&) = 0;
     virtual void Visit(NaryExpr&) = 0;
-    virtual void Visit(Read&) = 0;
-    virtual void Visit(Write&) = 0;
+    virtual void Visit(Op&) = 0;
+    virtual void Visit(Element&) = 0;
+    virtual void Visit(Reduce&) = 0;
 
     /**
      * Loop IR

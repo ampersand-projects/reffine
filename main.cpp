@@ -10,13 +10,17 @@
 #include <arrow/status.h>
 #include <arrow/c/bridge.h>
 
+#include <z3++.h>
+
 #include "reffine/ir/node.h"
 #include "reffine/ir/stmt.h"
 #include "reffine/ir/expr.h"
 #include "reffine/ir/loop.h"
+#include "reffine/ir/op.h"
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
+#include "reffine/pass/loopgen.h"
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
 #include "reffine/arrow/defs.h"
@@ -45,7 +49,7 @@ arrow::Status csv_to_arrow()
     return arrow::Status::OK();
 }
 
-arrow::Status query_arrow_file(void* (*query_fn)(void*, void*))
+arrow::Status query_arrow_file(long (*query_fn)(void*))
 {
     ARROW_ASSIGN_OR_RAISE(auto infile, arrow::io::ReadableFile::Open(
                 "../students.arrow", arrow::default_memory_pool()));
@@ -69,7 +73,7 @@ arrow::Status query_arrow_file(void* (*query_fn)(void*, void*))
     out_array.add_child<Int64Array>(in_array.length);
     out_array.add_child<BooleanArray>(in_array.length);
 
-    query_fn(&in_array, &out_array);
+    cout << "SUM: " << query_fn(&in_array) << endl;
 
     ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(&out_array, &out_schema));
     cout << "Output: " << endl << res->ToString() << endl;
@@ -200,15 +204,69 @@ shared_ptr<Func> transform_fn()
     return foo_fn;
 }
 
+shared_ptr<Func> test_op_fn()
+{
+    auto t_sym = make_shared<SymNode>("t", types::INT64);
+    Op op(
+        vector<Sym>{t_sym},
+        vector<Expr>{
+            make_shared<GreaterThan>(t_sym, make_shared<Const>(BaseType::INT64, 0)),
+            make_shared<LessThan>(t_sym, make_shared<Const>(BaseType::INT64, 10)),
+        },
+        vector<Expr>{t_sym}
+    );
+
+    auto sum = make_shared<Reduce>(
+        op,
+        [] () { return make_shared<Const>(BaseType::INT64, 0); },
+        [] (Expr s, Expr v) {
+            auto e = make_shared<Get>(v, 0);
+            return make_shared<Add>(s, e);
+        }
+    );
+    auto sum_sym = make_shared<SymNode>("sum", sum);
+
+    auto foo_fn = make_shared<Func>("foo", sum_sym, vector<Sym>{});
+    foo_fn->tbl[sum_sym] = sum;
+
+    return foo_fn;
+}
+
+void demorgan() {
+    cout << "de-Morgan example\n";
+
+    z3::context c;
+
+    auto x = c.bool_const("x");
+    auto y = c.bool_const("y");
+    auto conjecture = (!(x && y)) == (!x || !y);
+
+    z3::solver s(c);
+    // adding the negation of the conjecture as a constraint.
+    s.add(!conjecture);
+    cout << s << "\n";
+    cout << "SMT2\n";
+    cout << s.to_smt2() << "\n";
+    switch (s.check()) {
+        case z3::unsat:   cout << "de-Morgan is valid\n"; break;
+        case z3::sat:     cout << "de-Morgan is not valid\n"; break;
+        case z3::unknown: cout << "unknown\n"; break;
+    }
+}
+
 int main()
 {
-    auto fn = transform_fn();
-    CanonPass::Build(fn);
-    cout << IRPrinter::Build(fn) << endl;
+    demorgan();
+
+    auto fn = test_op_fn();
+    cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
+    auto loop = LoopGen::Build(fn);
+    CanonPass::Build(loop);
+    cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(fn, *llmod);
+    LLVMGen::Build(loop, *llmod);
     if (llvm::verifyModule(*llmod)) {
         throw std::runtime_error("LLVM module verification failed!!!");
     }
@@ -219,13 +277,16 @@ int main()
     llfile.close();
 
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<void* (*)(void*, void*)>(fn->name);
+    auto query_fn = jit->Lookup<long (*)()>(fn->name);
+    cout << "Result: " << query_fn() << endl;
 
     //auto status = csv_to_arrow();
+    /*
     auto status = query_arrow_file(query_fn);
     if (!status.ok()) {
         cerr << status.ToString() << endl;
     }
+    */
 
     return 0;
 }
