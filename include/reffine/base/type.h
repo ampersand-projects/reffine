@@ -1,10 +1,10 @@
 #ifndef INCLUDE_REFFINE_BASE_TYPE_H_
 #define INCLUDE_REFFINE_BASE_TYPE_H_
 
-#include <utility>
-#include <vector>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "reffine/base/log.h"
 
@@ -13,7 +13,7 @@ using namespace std;
 namespace reffine {
 
 enum class BaseType {
-    UNKNOWN, // never use this type
+    UNKNOWN,  // never use this type
     BOOL,
     INT8,
     INT16,
@@ -38,11 +38,9 @@ struct DataType {
     const vector<DataType> dtypes;
     const size_t dim;
 
-    explicit DataType(
-        BaseType btype,
-        vector<DataType> dtypes = {},
-        size_t dim = 0) :
-        btype(btype), dtypes(dtypes), dim(dim)
+    explicit DataType(BaseType btype, vector<DataType> dtypes = {},
+                      size_t dim = 0)
+        : btype(btype), dtypes(dtypes), dim(dim)
     {
         switch (btype) {
             case BaseType::STRUCT:
@@ -66,9 +64,8 @@ struct DataType {
 
     bool operator==(const DataType& o) const
     {
-        return (this->btype == o.btype)
-            && (this->dtypes == o.dtypes)
-            && (this->dim == o.dim);
+        return (this->btype == o.btype) && (this->dtypes == o.dtypes) &&
+               (this->dim == o.dim);
     }
 
     bool is_struct() const { return btype == BaseType::STRUCT; }
@@ -76,37 +73,34 @@ struct DataType {
     bool is_idx() const { return btype == BaseType::IDX; }
     bool is_vector() const { return btype == BaseType::VECTOR; }
 
-    bool is_val() const
-    {
-        return !(this->is_vector() || this->is_idx());
-    }
+    bool is_val() const { return !(this->is_vector() || this->is_idx()); }
 
     bool is_float() const
     {
-        return (this->btype == BaseType::FLOAT32)
-            || (this->btype == BaseType::FLOAT64);
+        return (this->btype == BaseType::FLOAT32) ||
+               (this->btype == BaseType::FLOAT64);
     }
 
     bool is_int() const
     {
-        return (this->btype == BaseType::INT8)
-            || (this->btype == BaseType::INT16)
-            || (this->btype == BaseType::INT32)
-            || (this->btype == BaseType::INT64)
-            || (this->btype == BaseType::UINT8)
-            || (this->btype == BaseType::UINT16)
-            || (this->btype == BaseType::UINT32)
-            || (this->btype == BaseType::UINT64);
+        return (this->btype == BaseType::INT8) ||
+               (this->btype == BaseType::INT16) ||
+               (this->btype == BaseType::INT32) ||
+               (this->btype == BaseType::INT64) ||
+               (this->btype == BaseType::UINT8) ||
+               (this->btype == BaseType::UINT16) ||
+               (this->btype == BaseType::UINT32) ||
+               (this->btype == BaseType::UINT64);
     }
 
     bool is_signed() const
     {
-        return (this->btype == BaseType::INT8)
-            || (this->btype == BaseType::INT16)
-            || (this->btype == BaseType::INT32)
-            || (this->btype == BaseType::INT64)
-            || (this->btype == BaseType::FLOAT32)
-            || (this->btype == BaseType::FLOAT64);
+        return (this->btype == BaseType::INT8) ||
+               (this->btype == BaseType::INT16) ||
+               (this->btype == BaseType::INT32) ||
+               (this->btype == BaseType::INT64) ||
+               (this->btype == BaseType::FLOAT32) ||
+               (this->btype == BaseType::FLOAT64);
     }
 
     DataType ptr() const { return DataType(BaseType::PTR, {*this}); }
@@ -120,48 +114,76 @@ struct DataType {
     DataType valty() const
     {
         ASSERT(this->is_vector());
-        return DataType(
-            BaseType::STRUCT,
-            std::vector<DataType>(this->dtypes.begin() + this->dim, this->dtypes.end())
-        );
+        return DataType(BaseType::STRUCT,
+                        std::vector<DataType>(this->dtypes.begin() + this->dim,
+                                              this->dtypes.end()));
     }
 
     string str() const
     {
         switch (btype) {
-            case BaseType::BOOL: return "b";
-            case BaseType::INT8: return "i8";
-            case BaseType::UINT8: return "u8";
-            case BaseType::INT16: return "i16";
-            case BaseType::UINT16: return "u16";
-            case BaseType::INT32: return "i32";
-            case BaseType::UINT32: return "u32";
-            case BaseType::INT64: return "i64";
-            case BaseType::UINT64: return "u64";
-            case BaseType::FLOAT32: return "f32";
-            case BaseType::FLOAT64: return "f64";
-            case BaseType::PTR: return "*" + dtypes[0].str();
+            case BaseType::BOOL:
+                return "b";
+            case BaseType::INT8:
+                return "i8";
+            case BaseType::UINT8:
+                return "u8";
+            case BaseType::INT16:
+                return "i16";
+            case BaseType::UINT16:
+                return "u16";
+            case BaseType::INT32:
+                return "i32";
+            case BaseType::UINT32:
+                return "u32";
+            case BaseType::INT64:
+                return "i64";
+            case BaseType::UINT64:
+                return "u64";
+            case BaseType::FLOAT32:
+                return "f32";
+            case BaseType::FLOAT64:
+                return "f64";
+            case BaseType::PTR:
+                return "*" + dtypes[0].str();
             case BaseType::STRUCT: {
                 string res = "";
-                for (const auto& dtype : dtypes) {
-                    res += dtype.str() + ", ";
-                }
+                for (const auto& dtype : dtypes) { res += dtype.str() + ", "; }
                 res.resize(res.size() - 2);
                 return "{" + res + "}";
             }
-            case BaseType::IDX: return "x";
-            case BaseType::VECTOR: return "~{" + dtypes[0].str() + "}";
-            default: throw std::runtime_error("Invalid type");
+            case BaseType::IDX:
+                return "x";
+            case BaseType::VECTOR:
+                return "~{" + dtypes[0].str() + "}";
+            default:
+                throw std::runtime_error("Invalid type");
         }
     }
 };
 
 enum class MathOp {
-    ADD, SUB, MUL, DIV, MAX, MIN,
-    MOD, SQRT, POW,
-    ABS, NEG, CEIL, FLOOR,
-    LT, LTE, GT, GTE, EQ,
-    NOT, AND, OR,
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    MAX,
+    MIN,
+    MOD,
+    SQRT,
+    POW,
+    ABS,
+    NEG,
+    CEIL,
+    FLOOR,
+    LT,
+    LTE,
+    GT,
+    GTE,
+    EQ,
+    NOT,
+    AND,
+    OR,
 };
 
 }  // namespace reffine
@@ -183,44 +205,83 @@ static const DataType FLOAT64(BaseType::FLOAT64);
 static const DataType CHAR_PTR(BaseType::PTR, {types::INT8});
 static const DataType IDX(BaseType::IDX);
 
-template<typename H> struct Converter { static const BaseType btype = BaseType::UNKNOWN; };
-template<> struct Converter<bool> { static const BaseType btype = BaseType::BOOL; };
-template<> struct Converter<char> { static const BaseType btype = BaseType::INT8; };
-template<> struct Converter<int8_t> { static const BaseType btype = BaseType::INT8; };
-template<> struct Converter<int16_t> { static const BaseType btype = BaseType::INT16; };
-template<> struct Converter<int32_t> { static const BaseType btype = BaseType::INT32; };
-template<> struct Converter<int64_t> { static const BaseType btype = BaseType::INT64; };
-template<> struct Converter<uint8_t> { static const BaseType btype = BaseType::UINT8; };
-template<> struct Converter<uint16_t> { static const BaseType btype = BaseType::UINT16; };
-template<> struct Converter<uint32_t> { static const BaseType btype = BaseType::UINT32; };
-template<> struct Converter<uint64_t> { static const BaseType btype = BaseType::UINT64; };
-template<> struct Converter<float> { static const BaseType btype = BaseType::FLOAT32; };
-template<> struct Converter<double> { static const BaseType btype = BaseType::FLOAT64; };
+template <typename H>
+struct Converter {
+    static const BaseType btype = BaseType::UNKNOWN;
+};
+template <>
+struct Converter<bool> {
+    static const BaseType btype = BaseType::BOOL;
+};
+template <>
+struct Converter<char> {
+    static const BaseType btype = BaseType::INT8;
+};
+template <>
+struct Converter<int8_t> {
+    static const BaseType btype = BaseType::INT8;
+};
+template <>
+struct Converter<int16_t> {
+    static const BaseType btype = BaseType::INT16;
+};
+template <>
+struct Converter<int32_t> {
+    static const BaseType btype = BaseType::INT32;
+};
+template <>
+struct Converter<int64_t> {
+    static const BaseType btype = BaseType::INT64;
+};
+template <>
+struct Converter<uint8_t> {
+    static const BaseType btype = BaseType::UINT8;
+};
+template <>
+struct Converter<uint16_t> {
+    static const BaseType btype = BaseType::UINT16;
+};
+template <>
+struct Converter<uint32_t> {
+    static const BaseType btype = BaseType::UINT32;
+};
+template <>
+struct Converter<uint64_t> {
+    static const BaseType btype = BaseType::UINT64;
+};
+template <>
+struct Converter<float> {
+    static const BaseType btype = BaseType::FLOAT32;
+};
+template <>
+struct Converter<double> {
+    static const BaseType btype = BaseType::FLOAT64;
+};
 
-template<size_t n>
-static void convert(BaseType* btypes) {}
+template <size_t n>
+static void convert(BaseType* btypes)
+{
+}
 
-template<size_t n, typename H, typename... Ts>
+template <size_t n, typename H, typename... Ts>
 static void convert(BaseType* btypes)
 {
     btypes[n - sizeof...(Ts) - 1] = Converter<H>::btype;
     convert<n, Ts...>(btypes);
 }
 
-template<typename... Ts>
+template <typename... Ts>
 DataType STRUCT()
 {
     vector<BaseType> btypes(sizeof...(Ts));
     convert<sizeof...(Ts), Ts...>(btypes.data());
 
     vector<DataType> dtypes;
-    for (const auto& btype : btypes) {
-        dtypes.push_back(DataType(btype));
-    }
+    for (const auto& btype : btypes) { dtypes.push_back(DataType(btype)); }
     return DataType(BaseType::STRUCT, dtypes);
 }
 
-template<size_t dim>
+template <size_t dim>
 DataType VECTOR(vector<DataType> types)
 {
     return DataType(BaseType::VECTOR, types, dim);

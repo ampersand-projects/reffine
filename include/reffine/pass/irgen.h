@@ -3,8 +3,8 @@
 
 #include <map>
 #include <memory>
-#include <utility>
 #include <tuple>
+#include <utility>
 
 #include "reffine/pass/visitor.h"
 
@@ -12,19 +12,20 @@ using namespace std;
 
 namespace reffine {
 
-template<typename SymTy, typename ValTy>
+template <typename SymTy, typename ValTy>
 class IRGenCtx {
 public:
-    IRGenCtx(const SymTable& in_sym_tbl, map<SymTy, ValTy>& sym_val_map) :
-        in_sym_tbl(in_sym_tbl), sym_val_map(sym_val_map)
-    {}
+    IRGenCtx(const SymTable& in_sym_tbl, map<SymTy, ValTy>& sym_val_map)
+        : in_sym_tbl(in_sym_tbl), sym_val_map(sym_val_map)
+    {
+    }
 
     const SymTable& in_sym_tbl;
     map<SymTy, ValTy>& sym_val_map;  // mapping from new sym to value
-    map<Sym, SymTy> sym_sym_map;  // mapping from old sym to new sym
+    map<Sym, SymTy> sym_sym_map;     // mapping from old sym to new sym
 };
 
-template<typename SymTy, typename ValTy>
+template <typename SymTy, typename ValTy>
 class IRGen : public Visitor {
 public:
     IRGen(IRGenCtx<SymTy, ValTy> ctx) : _ctx(std::move(ctx)) {}
@@ -88,7 +89,11 @@ protected:
         val() = ctx().sym_sym_map.at(old_sym);
     }
 
-    IRGenCtx<SymTy, ValTy>& switch_ctx(IRGenCtx<SymTy, ValTy>& new_ctx) { swap(new_ctx, ctx()); return new_ctx; }
+    IRGenCtx<SymTy, ValTy>& switch_ctx(IRGenCtx<SymTy, ValTy>& new_ctx)
+    {
+        swap(new_ctx, ctx());
+        return new_ctx;
+    }
 
     ValTy eval(Stmt stmt)
     {

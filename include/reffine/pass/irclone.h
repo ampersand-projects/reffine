@@ -7,9 +7,10 @@ namespace reffine {
 
 class IRCloneCtx : public IRGenCtx<Sym, Expr> {
 public:
-    IRCloneCtx(shared_ptr<Func> old_func, shared_ptr<Func> new_func) :
-        IRGenCtx(old_func->tbl, new_func->tbl), new_func(new_func)
-    {}
+    IRCloneCtx(shared_ptr<Func> old_func, shared_ptr<Func> new_func)
+        : IRGenCtx(old_func->tbl, new_func->tbl), new_func(new_func)
+    {
+    }
 
 private:
     shared_ptr<Func> new_func;
@@ -19,9 +20,7 @@ private:
 
 class IRClone : public IRGen<Sym, Expr> {
 public:
-    explicit IRClone(IRCloneCtx& ctx) :
-        IRGen(ctx), _ctx(ctx)
-    {}
+    explicit IRClone(IRCloneCtx& ctx) : IRGen(ctx), _ctx(ctx) {}
 
 protected:
     tuple<Sym, Expr> visit(Sym, Expr) override;
@@ -38,15 +37,27 @@ protected:
     void visit(Func&) override;
 
     void visit(Stmts&) final { throw runtime_error("Operation not supported"); }
-    void visit(IfElse&) final { throw runtime_error("Operation not supported"); }
+    void visit(IfElse&) final
+    {
+        throw runtime_error("Operation not supported");
+    }
     void visit(NoOp&) final { throw runtime_error("Operation not supported"); }
     Expr visit(Alloc&) final { throw runtime_error("Operation not supported"); }
     Expr visit(Load&) final { throw runtime_error("Operation not supported"); }
     void visit(Store&) final { throw runtime_error("Operation not supported"); }
     Expr visit(Loop&) final { throw runtime_error("Operation not supported"); }
-    Expr visit(IsValid&) final { throw runtime_error("Operation not supported"); }
-    Expr visit(SetValid&) final { throw runtime_error("Operation not supported"); }
-    Expr visit(FetchDataPtr&) final { throw runtime_error("Operation not supported"); }
+    Expr visit(IsValid&) final
+    {
+        throw runtime_error("Operation not supported");
+    }
+    Expr visit(SetValid&) final
+    {
+        throw runtime_error("Operation not supported");
+    }
+    Expr visit(FetchDataPtr&) final
+    {
+        throw runtime_error("Operation not supported");
+    }
 
 private:
     shared_ptr<Op> visit_op(Op&);

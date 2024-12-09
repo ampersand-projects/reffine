@@ -3,9 +3,9 @@
 
 #include <map>
 #include <memory>
-#include <vector>
-#include <utility>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "reffine/ir/expr.h"
 
@@ -18,8 +18,8 @@ struct IsValid : public ExprNode {
     Expr idx;
     size_t col;
 
-    IsValid(Expr vec, Expr idx, size_t col) :
-        ExprNode(types::BOOL), vec(vec), idx(idx), col(col)
+    IsValid(Expr vec, Expr idx, size_t col)
+        : ExprNode(types::BOOL), vec(vec), idx(idx), col(col)
     {
         ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
@@ -35,8 +35,12 @@ struct SetValid : public ExprNode {
     Expr validity;
     size_t col;
 
-    SetValid(Expr vec, Expr idx, Expr validity, size_t col) :
-        ExprNode(types::BOOL), vec(vec), idx(idx), validity(validity), col(col)
+    SetValid(Expr vec, Expr idx, Expr validity, size_t col)
+        : ExprNode(types::BOOL),
+          vec(vec),
+          idx(idx),
+          validity(validity),
+          col(col)
     {
         ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
@@ -52,8 +56,8 @@ struct FetchDataPtr : public ExprNode {
     Expr idx;
     size_t col;
 
-    FetchDataPtr(Expr vec, Expr idx, size_t col) :
-        ExprNode(vec->type.dtypes[col].ptr()), vec(vec), idx(idx), col(col)
+    FetchDataPtr(Expr vec, Expr idx, size_t col)
+        : ExprNode(vec->type.dtypes[col].ptr()), vec(vec), idx(idx), col(col)
     {
         ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
@@ -66,8 +70,8 @@ struct FetchDataPtr : public ExprNode {
 struct Alloc : public ExprNode {
     Expr size;
 
-    Alloc(DataType type, Expr size = make_shared<Const>(BaseType::UINT32, 1)) :
-        ExprNode(type.ptr()), size(size)
+    Alloc(DataType type, Expr size = make_shared<Const>(BaseType::UINT32, 1))
+        : ExprNode(type.ptr()), size(size)
     {
         ASSERT(size->type.is_int() && !size->type.is_signed());
     }

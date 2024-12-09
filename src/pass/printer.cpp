@@ -1,37 +1,45 @@
-#include <unordered_set>
-
 #include "reffine/pass/printer.h"
+
+#include <unordered_set>
 
 using namespace reffine;
 using namespace std;
 
-//static const auto EXISTS = "\u2203";
+// static const auto EXISTS = "\u2203";
 static const auto FORALL = "\u2200";
 static const auto REDCLE = "\u2295";
-//static const auto IN = "\u2208";
-//static const auto PHI = "\u0278";
+// static const auto IN = "\u2208";
+// static const auto PHI = "\u0278";
 
-void IRPrinter::Visit(SymNode& sym)
-{
-    ostr << sym.name;
-}
+void IRPrinter::Visit(SymNode& sym) { ostr << sym.name; }
 
 void IRPrinter::Visit(Const& cnst)
 {
     switch (cnst.type.btype) {
-        case BaseType::BOOL: ostr << (cnst.val ? "true" : "false"); break;
+        case BaseType::BOOL:
+            ostr << (cnst.val ? "true" : "false");
+            break;
         case BaseType::INT8:
         case BaseType::INT16:
         case BaseType::INT32:
-        case BaseType::INT64: ostr << cnst.val << "i"; break;
+        case BaseType::INT64:
+            ostr << cnst.val << "i";
+            break;
         case BaseType::UINT8:
         case BaseType::UINT16:
         case BaseType::UINT32:
-        case BaseType::UINT64: ostr << cnst.val << "u"; break;
+        case BaseType::UINT64:
+            ostr << cnst.val << "u";
+            break;
         case BaseType::FLOAT32:
-        case BaseType::FLOAT64: ostr << cnst.val << "f"; break;
-        case BaseType::IDX: ostr << cnst.val << "x"; break;
-        default: throw std::runtime_error("Invalid constant type");
+        case BaseType::FLOAT64:
+            ostr << cnst.val << "f";
+            break;
+        case BaseType::IDX:
+            ostr << cnst.val << "x";
+            break;
+        default:
+            throw std::runtime_error("Invalid constant type");
     }
 }
 
@@ -43,7 +51,7 @@ void IRPrinter::Visit(Cast& e)
 
 void IRPrinter::Visit(Get& e)
 {
-    emitfunc("get<" + std::to_string(e.col) + ">", { e.val });
+    emitfunc("get<" + std::to_string(e.col) + ">", {e.val});
 }
 
 void IRPrinter::Visit(New& e)
@@ -59,37 +67,80 @@ void IRPrinter::Visit(New& e)
 void IRPrinter::Visit(NaryExpr& e)
 {
     switch (e.op) {
-        case MathOp::ADD: emitbinary(e.arg(0), "+", e.arg(1)); break;
-        case MathOp::SUB: emitbinary(e.arg(0), "-", e.arg(1)); break;
-        case MathOp::MUL: emitbinary(e.arg(0), "*", e.arg(1)); break;
-        case MathOp::DIV: emitbinary(e.arg(0), "/", e.arg(1)); break;
-        case MathOp::MAX: emitfunc("max", {e.arg(0), e.arg(1)}); break;
-        case MathOp::MIN: emitfunc("min", {e.arg(0), e.arg(1)}); break;
-        case MathOp::MOD: emitbinary(e.arg(0), "%", e.arg(1)); break;
-        case MathOp::ABS: ostr << "|"; e.arg(0)->Accept(*this); ostr << "|"; break;
-        case MathOp::NEG: emitunary("-", {e.arg(0)}); break;
-        case MathOp::SQRT: emitfunc("sqrt", {e.arg(0)}); break;
-        case MathOp::POW: emitfunc("pow", {e.arg(0), e.arg(1)}); break;
-        case MathOp::CEIL: emitfunc("ceil", {e.arg(0)}); break;
-        case MathOp::FLOOR: emitfunc("floor", {e.arg(0)}); break;
-        case MathOp::EQ: emitbinary(e.arg(0), "==", e.arg(1)); break;
-        case MathOp::NOT: emitunary("!", e.arg(0)); break;
-        case MathOp::AND: emitbinary(e.arg(0), "&&", e.arg(1)); break;
-        case MathOp::OR: emitbinary(e.arg(0), "||", e.arg(1)); break;
-        case MathOp::LT: emitbinary(e.arg(0), "<", e.arg(1)); break;
-        case MathOp::LTE: emitbinary(e.arg(0), "<=", e.arg(1)); break;
-        case MathOp::GT: emitbinary(e.arg(0), ">", e.arg(1)); break;
-        case MathOp::GTE: emitbinary(e.arg(0), ">=", e.arg(1)); break;
-        default: throw std::runtime_error("Invalid math operation");
+        case MathOp::ADD:
+            emitbinary(e.arg(0), "+", e.arg(1));
+            break;
+        case MathOp::SUB:
+            emitbinary(e.arg(0), "-", e.arg(1));
+            break;
+        case MathOp::MUL:
+            emitbinary(e.arg(0), "*", e.arg(1));
+            break;
+        case MathOp::DIV:
+            emitbinary(e.arg(0), "/", e.arg(1));
+            break;
+        case MathOp::MAX:
+            emitfunc("max", {e.arg(0), e.arg(1)});
+            break;
+        case MathOp::MIN:
+            emitfunc("min", {e.arg(0), e.arg(1)});
+            break;
+        case MathOp::MOD:
+            emitbinary(e.arg(0), "%", e.arg(1));
+            break;
+        case MathOp::ABS:
+            ostr << "|";
+            e.arg(0)->Accept(*this);
+            ostr << "|";
+            break;
+        case MathOp::NEG:
+            emitunary("-", {e.arg(0)});
+            break;
+        case MathOp::SQRT:
+            emitfunc("sqrt", {e.arg(0)});
+            break;
+        case MathOp::POW:
+            emitfunc("pow", {e.arg(0), e.arg(1)});
+            break;
+        case MathOp::CEIL:
+            emitfunc("ceil", {e.arg(0)});
+            break;
+        case MathOp::FLOOR:
+            emitfunc("floor", {e.arg(0)});
+            break;
+        case MathOp::EQ:
+            emitbinary(e.arg(0), "==", e.arg(1));
+            break;
+        case MathOp::NOT:
+            emitunary("!", e.arg(0));
+            break;
+        case MathOp::AND:
+            emitbinary(e.arg(0), "&&", e.arg(1));
+            break;
+        case MathOp::OR:
+            emitbinary(e.arg(0), "||", e.arg(1));
+            break;
+        case MathOp::LT:
+            emitbinary(e.arg(0), "<", e.arg(1));
+            break;
+        case MathOp::LTE:
+            emitbinary(e.arg(0), "<=", e.arg(1));
+            break;
+        case MathOp::GT:
+            emitbinary(e.arg(0), ">", e.arg(1));
+            break;
+        case MathOp::GTE:
+            emitbinary(e.arg(0), ">=", e.arg(1));
+            break;
+        default:
+            throw std::runtime_error("Invalid math operation");
     }
 }
 
 void IRPrinter::Visit(Op& op)
 {
     ostr << FORALL << " ";
-    for (const auto& idx : op.idxs) {
-        ostr << idx->name << ", ";
-    }
+    for (const auto& idx : op.idxs) { ostr << idx->name << ", "; }
     if (op.idxs.size() > 0) { ostr << "\b\b"; }
     ostr << ": ";
 
@@ -147,10 +198,7 @@ void IRPrinter::Visit(Reduce& red)
     ostr << "}";
 }
 
-void IRPrinter::Visit(Call& call)
-{
-    emitfunc(call.name, call.args);
-}
+void IRPrinter::Visit(Call& call) { emitfunc(call.name, call.args); }
 
 void IRPrinter::Visit(IfElse& ifelse)
 {
@@ -171,10 +219,7 @@ void IRPrinter::Visit(IfElse& ifelse)
     emitnewline();
 }
 
-void IRPrinter::Visit(NoOp&)
-{
-    ostr << "noop";
-}
+void IRPrinter::Visit(NoOp&) { ostr << "noop"; }
 
 void IRPrinter::Visit(Select& select)
 {
@@ -190,9 +235,7 @@ void IRPrinter::Visit(Select& select)
 void IRPrinter::Visit(Func& fn)
 {
     ostr << "def " << fn.name << "(";
-    for (auto& input : fn.inputs) {
-        ostr << input->name << ", ";
-    }
+    for (auto& input : fn.inputs) { ostr << input->name << ", "; }
     ostr << (fn.inputs.size() > 0 ? "\b\b" : "") << ") {";
 
     enter_block();
@@ -223,10 +266,7 @@ void IRPrinter::Visit(Alloc& alloc)
     ostr << "alloc " << alloc.type.deref().str();
 }
 
-void IRPrinter::Visit(Load& load)
-{
-    emitfunc("load", vector<Expr>{load.addr});
-}
+void IRPrinter::Visit(Load& load) { emitfunc("load", vector<Expr>{load.addr}); }
 
 void IRPrinter::Visit(Store& store)
 {
@@ -298,17 +338,20 @@ void IRPrinter::Visit(Loop& loop)
 
 void IRPrinter::Visit(IsValid& is_valid)
 {
-    emitfunc("is_valid<" + std::to_string(is_valid.col) + ">", { is_valid.vec, is_valid.idx });
+    emitfunc("is_valid<" + std::to_string(is_valid.col) + ">",
+             {is_valid.vec, is_valid.idx});
 }
 
 void IRPrinter::Visit(SetValid& set_valid)
 {
-    emitfunc("set_valid<" + std::to_string(set_valid.col) + ">", { set_valid.vec, set_valid.idx, set_valid.validity });
+    emitfunc("set_valid<" + std::to_string(set_valid.col) + ">",
+             {set_valid.vec, set_valid.idx, set_valid.validity});
 }
 
 void IRPrinter::Visit(FetchDataPtr& fetch_data_ptr)
 {
-    emitfunc("fetch_data_ptr<" + std::to_string(fetch_data_ptr.col) + ">", { fetch_data_ptr.vec, fetch_data_ptr.idx });
+    emitfunc("fetch_data_ptr<" + std::to_string(fetch_data_ptr.col) + ">",
+             {fetch_data_ptr.vec, fetch_data_ptr.idx});
 }
 
 string IRPrinter::Build(Stmt stmt)

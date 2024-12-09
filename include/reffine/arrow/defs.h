@@ -3,7 +3,7 @@
 /*
  * Schema definitions
  */
-template<char fmt>
+template <char fmt>
 struct GenArrowSchema : public ArrowSchema2 {
     GenArrowSchema(std::string name) : ArrowSchema2(name, std::string{fmt}) {}
 };

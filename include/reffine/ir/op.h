@@ -15,15 +15,19 @@ struct Op : public ExprNode {
     vector<Expr> preds;
     vector<Expr> outputs;
 
-    Op(vector<Sym> idxs, vector<Expr> preds, vector<Expr> outputs) :
-        ExprNode(extract_type(idxs, outputs)),
-        idxs(std::move(idxs)), preds(std::move(preds)), outputs(std::move(outputs))
-    {}
+    Op(vector<Sym> idxs, vector<Expr> preds, vector<Expr> outputs)
+        : ExprNode(extract_type(idxs, outputs)),
+          idxs(std::move(idxs)),
+          preds(std::move(preds)),
+          outputs(std::move(outputs))
+    {
+    }
 
     void Accept(Visitor&) final;
 
 private:
-    static DataType extract_type(const vector<Sym>& idxs, const vector<Expr>& outputs)
+    static DataType extract_type(const vector<Sym>& idxs,
+                                 const vector<Expr>& outputs)
     {
         vector<DataType> dtypes;
 
@@ -44,15 +48,17 @@ struct Element : public ExprNode {
     Expr vec;
     vector<Expr> idxs;
 
-    Element(Expr vec, vector<Expr> idxs) :
-        ExprNode(DataType(BaseType::STRUCT, vec->type.dtypes)), vec(vec), idxs(std::move(idxs))
+    Element(Expr vec, vector<Expr> idxs)
+        : ExprNode(DataType(BaseType::STRUCT, vec->type.dtypes)),
+          vec(vec),
+          idxs(std::move(idxs))
     {
         const auto& vtype = vec->type;
 
         // Indexing to a subspace in the vector is not supported yet.
         ASSERT(vtype.dim == idxs.size());
 
-        for (size_t i=0; i<idxs.size(); i++) {
+        for (size_t i = 0; i < idxs.size(); i++) {
             ASSERT(vtype.dtypes[i] == idxs[i]->type);
         }
     }
@@ -60,7 +66,7 @@ struct Element : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-typedef function<Expr()> InitFnTy;  // () -> state
+typedef function<Expr()> InitFnTy;           // () -> state
 typedef function<Expr(Expr, Expr)> AccFnTy;  // (state, val) -> state
 
 struct Reduce : public ExprNode {
@@ -68,8 +74,8 @@ struct Reduce : public ExprNode {
     InitFnTy init;
     AccFnTy acc;
 
-    Reduce(Op op, InitFnTy init, AccFnTy acc) :
-        ExprNode(init()->type), op(std::move(op)), init(init), acc(acc)
+    Reduce(Op op, InitFnTy init, AccFnTy acc)
+        : ExprNode(init()->type), op(std::move(op)), init(init), acc(acc)
     {
         auto tmp_state = init();
         auto tmp_val = make_shared<SymNode>("tmp_val", op.type.valty());

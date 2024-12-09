@@ -1,11 +1,11 @@
 #ifndef INCLUDE_REFFINE_IR_EXPR_H_
 #define INCLUDE_REFFINE_IR_EXPR_H_
 
-#include <string>
-#include <memory>
-#include <vector>
 #include <map>
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "reffine/ir/node.h"
 
@@ -17,9 +17,10 @@ struct Call : public ExprNode {
     string name;
     vector<Expr> args;
 
-    Call(string name, DataType type, vector<Expr> args) :
-        ExprNode(type), name(name), args(std::move(args))
-    {}
+    Call(string name, DataType type, vector<Expr> args)
+        : ExprNode(type), name(name), args(std::move(args))
+    {
+    }
 
     void Accept(Visitor&) final;
 };
@@ -29,8 +30,11 @@ struct Select : public ExprNode {
     Expr true_body;
     Expr false_body;
 
-    Select(Expr cond, Expr true_body, Expr false_body) :
-        ExprNode(true_body->type), cond(cond), true_body(true_body), false_body(false_body)
+    Select(Expr cond, Expr true_body, Expr false_body)
+        : ExprNode(true_body->type),
+          cond(cond),
+          true_body(true_body),
+          false_body(false_body)
     {
         ASSERT(cond->type == types::BOOL);
         ASSERT(true_body->type == false_body->type);
@@ -42,9 +46,7 @@ struct Select : public ExprNode {
 struct Const : public ExprNode {
     const double val;
 
-    Const(BaseType btype, double val) :
-        ExprNode(DataType(btype)), val(val)
-    {}
+    Const(BaseType btype, double val) : ExprNode(DataType(btype)), val(val) {}
 
     void Accept(Visitor&) final;
 };
@@ -64,7 +66,8 @@ struct Get : public ExprNode {
     Expr val;
     size_t col;
 
-    Get(Expr val, size_t col) : ExprNode(val->type.dtypes[col]), val(val), col(col)
+    Get(Expr val, size_t col)
+        : ExprNode(val->type.dtypes[col]), val(val), col(col)
     {
         ASSERT(val->type.is_struct());
     }
@@ -75,9 +78,9 @@ struct Get : public ExprNode {
 struct New : public ExprNode {
     vector<Expr> vals;
 
-    explicit New(vector<Expr> vals) :
-        ExprNode(get_new_type(vals)), vals(vals)
-    {}
+    explicit New(vector<Expr> vals) : ExprNode(get_new_type(vals)), vals(vals)
+    {
+    }
 
     void Accept(Visitor&) final;
 
@@ -85,9 +88,7 @@ private:
     static DataType get_new_type(vector<Expr> vals)
     {
         vector<DataType> dtypes;
-        for (const auto& val : vals) {
-            dtypes.push_back(val->type);
-        }
+        for (const auto& val : vals) { dtypes.push_back(val->type); }
         return DataType(BaseType::STRUCT, (dtypes));
     }
 };
@@ -96,8 +97,8 @@ struct NaryExpr : public ExprNode {
     MathOp op;
     vector<Expr> args;
 
-    NaryExpr(DataType type, MathOp op, vector<Expr> args) :
-        ExprNode(type), op(op), args(std::move(args))
+    NaryExpr(DataType type, MathOp op, vector<Expr> args)
+        : ExprNode(type), op(op), args(std::move(args))
     {
         ASSERT(!arg(0)->type.is_ptr() && !arg(0)->type.is_struct());
     }
@@ -112,7 +113,8 @@ struct NaryExpr : public ExprNode {
 struct UnaryExpr : public NaryExpr {
     UnaryExpr(DataType type, MathOp op, Expr input)
         : NaryExpr(type, op, vector<Expr>{input})
-    {}
+    {
+    }
 };
 
 struct BinaryExpr : public NaryExpr {
@@ -143,13 +145,15 @@ struct Sqrt : public UnaryExpr {
 };
 
 struct Ceil : public UnaryExpr {
-    explicit Ceil(Expr a) : UnaryExpr(a->type, MathOp::CEIL, a) {
+    explicit Ceil(Expr a) : UnaryExpr(a->type, MathOp::CEIL, a)
+    {
         ASSERT(a->type.is_float());
     }
 };
 
 struct Floor : public UnaryExpr {
-    explicit Floor(Expr a) : UnaryExpr(a->type, MathOp::FLOOR, a) {
+    explicit Floor(Expr a) : UnaryExpr(a->type, MathOp::FLOOR, a)
+    {
         ASSERT(a->type.is_float());
     }
 };
@@ -181,11 +185,16 @@ struct GreaterThan : public BinaryExpr {
 };
 
 struct LessThanEqual : public BinaryExpr {
-    LessThanEqual(Expr a, Expr b) : BinaryExpr(types::BOOL, MathOp::LTE, a, b) {}
+    LessThanEqual(Expr a, Expr b) : BinaryExpr(types::BOOL, MathOp::LTE, a, b)
+    {
+    }
 };
 
 struct GreaterThanEqual : public BinaryExpr {
-    GreaterThanEqual(Expr a, Expr b) : BinaryExpr(types::BOOL, MathOp::GTE, a, b) {}
+    GreaterThanEqual(Expr a, Expr b)
+        : BinaryExpr(types::BOOL, MathOp::GTE, a, b)
+    {
+    }
 };
 
 struct Add : public BinaryExpr {
@@ -220,7 +229,8 @@ struct Mod : public BinaryExpr {
 };
 
 struct Pow : public BinaryExpr {
-    Pow(Expr a, Expr b) : BinaryExpr(a->type, MathOp::POW, a, b) {
+    Pow(Expr a, Expr b) : BinaryExpr(a->type, MathOp::POW, a, b)
+    {
         ASSERT(a->type.is_float());
     }
 };

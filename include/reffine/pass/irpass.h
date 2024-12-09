@@ -1,8 +1,8 @@
 #ifndef INCLUDE_REFFINE_PASS_IRPASS_H_
 #define INCLUDE_REFFINE_PASS_IRPASS_H_
 
-#include <set>
 #include <memory>
+#include <set>
 #include <utility>
 
 #include "reffine/pass/visitor.h"
@@ -13,15 +13,13 @@ namespace reffine {
 
 class IRPassCtx {
 public:
-    IRPassCtx(SymTable& in_sym_tbl) :
-        in_sym_tbl(in_sym_tbl)
-    {}
+    IRPassCtx(SymTable& in_sym_tbl) : in_sym_tbl(in_sym_tbl) {}
 
     SymTable& in_sym_tbl;
     set<Sym> sym_set;
 };
 
-template<typename CtxTy>
+template <typename CtxTy>
 class IRPass : public Visitor {
 public:
     explicit IRPass(CtxTy ctx) : _ctx(std::move(ctx)) {}
@@ -48,60 +46,41 @@ public:
 
     void Visit(New& expr) override
     {
-        for (auto& val : expr.vals) {
-            eval(val);
-        }
+        for (auto& val : expr.vals) { eval(val); }
     }
 
     void Visit(NaryExpr& expr) override
     {
-        for (auto& arg : expr.args) {
-            eval(arg);
-        }
+        for (auto& arg : expr.args) { eval(arg); }
     }
 
     void Visit(Op& expr) override
     {
-        for (auto& pred : expr.preds) {
-            eval(pred);
-        }
-        for (auto& output : expr.outputs) {
-            eval(output);
-        }
+        for (auto& pred : expr.preds) { eval(pred); }
+        for (auto& output : expr.outputs) { eval(output); }
     }
 
     void Visit(Element& expr) override
     {
         eval(expr.vec);
-        for (auto& idx : expr.idxs) {
-            eval(idx);
-        }
+        for (auto& idx : expr.idxs) { eval(idx); }
     }
 
-    void Visit(Reduce& expr) override
-    {
-        eval(expr.op);
-    }
+    void Visit(Reduce& expr) override { eval(expr.op); }
 
     void Visit(Call& expr) override
     {
-        for (auto& arg : expr.args) {
-            eval(arg);
-        }
+        for (auto& arg : expr.args) { eval(arg); }
     }
 
     void Visit(Stmts& stmt) override
     {
-        for (auto& stmt : stmt.stmts) {
-            eval(stmt);
-        }
+        for (auto& stmt : stmt.stmts) { eval(stmt); }
     }
 
     void Visit(Func& stmt) override
     {
-        for (auto& input : stmt.inputs) {
-            assign(input);
-        }
+        for (auto& input : stmt.inputs) { assign(input); }
 
         eval(stmt.output);
     }
@@ -151,7 +130,11 @@ public:
 protected:
     virtual CtxTy& ctx() { return _ctx; }
 
-    CtxTy& switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); return new_ctx; }
+    CtxTy& switch_ctx(CtxTy& new_ctx)
+    {
+        swap(new_ctx, ctx());
+        return new_ctx;
+    }
 
     void eval(Stmt stmt) { stmt->Accept(*this); }
     void eval(Op op) { op.Accept(*this); }
@@ -166,10 +149,7 @@ protected:
         }
     }
 
-    virtual void assign(Sym sym)
-    {
-        ctx().sym_set.insert(sym);
-    }
+    virtual void assign(Sym sym) { ctx().sym_set.insert(sym); }
 
 private:
     CtxTy _ctx;

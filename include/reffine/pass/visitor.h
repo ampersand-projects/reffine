@@ -2,9 +2,9 @@
 #define INCLUDE_REFFINE_PASS_VISITOR_H_
 
 #include "reffine/ir/expr.h"
-#include "reffine/ir/stmt.h"
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
+#include "reffine/ir/stmt.h"
 
 namespace reffine {
 
@@ -43,10 +43,10 @@ public:
 protected:
     Sym tmp_sym(SymNode& symbol)
     {
-        shared_ptr<SymNode> tmp_sym(const_cast<SymNode*>(&symbol), [](SymNode*) {});
+        shared_ptr<SymNode> tmp_sym(const_cast<SymNode*>(&symbol),
+                                    [](SymNode*) {});
         return tmp_sym;
     }
-
 };
 
 }  // namespace reffine

@@ -6,8 +6,11 @@
 #define LOG(severity) \
     std::cerr << "[" << __FILE__ << ":" << __LINE__ << "] [" #severity "] "
 
-#define CHECK(EXPR, MSG) \
-    if (!(EXPR)) { LOG(FATAL) << "Check failed: `" #EXPR "` " MSG << std::endl; std::abort(); }
+#define CHECK(EXPR, MSG)                                             \
+    if (!(EXPR)) {                                                   \
+        LOG(FATAL) << "Check failed: `" #EXPR "` " MSG << std::endl; \
+        std::abort();                                                \
+    }
 
 #define ASSERT(EXPR) CHECK(EXPR, "")
 

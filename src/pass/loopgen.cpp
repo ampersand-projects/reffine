@@ -9,7 +9,8 @@ Expr LoopGen::visit(Reduce& red)
     auto idx_addr = make_shared<Alloc>(types::IDX);
     auto idx_addr_sym = make_shared<SymNode>("idx_addr", idx_addr);
     map_val(idx_addr_sym, idx_addr);
-    auto idx_init_stmt = make_shared<Store>(idx_addr_sym, make_shared<Const>(BaseType::IDX, 0));
+    auto idx_init_stmt =
+        make_shared<Store>(idx_addr_sym, make_shared<Const>(BaseType::IDX, 0));
 
     // State allocation and initialization
     auto state_addr = make_shared<Alloc>(red.type);
@@ -18,20 +19,17 @@ Expr LoopGen::visit(Reduce& red)
     auto state_init_stmt = make_shared<Store>(state_addr_sym, red.init());
 
     // Loop increment
-    auto new_idx = make_shared<Add>(
-        make_shared<Load>(idx_addr_sym),
-        make_shared<Const>(BaseType::IDX, 1)
-    );
+    auto new_idx = make_shared<Add>(make_shared<Load>(idx_addr_sym),
+                                    make_shared<Const>(BaseType::IDX, 1));
     auto incr_stmt = make_shared<Store>(idx_addr_sym, new_idx);
 
     // Loop exit condition expression
     auto exit_cond_expr = make_shared<GreaterThanEqual>(
-        make_shared<Load>(idx_addr_sym),
-        make_shared<Const>(BaseType::IDX, 10)
-    );
+        make_shared<Load>(idx_addr_sym), make_shared<Const>(BaseType::IDX, 10));
 
     // Loop body statement
-    auto idx_val = make_shared<Cast>(types::INT64, make_shared<Load>(idx_addr_sym));
+    auto idx_val =
+        make_shared<Cast>(types::INT64, make_shared<Load>(idx_addr_sym));
     auto val = make_shared<New>(vector<Expr>{idx_val});
     auto state = make_shared<Load>(state_addr_sym);
     auto new_state = red.acc(state, val);
