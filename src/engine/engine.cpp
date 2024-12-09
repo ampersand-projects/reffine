@@ -64,6 +64,6 @@ void ExecEngine::register_symbols()
 {
     cantFail(jd.define(absoluteSymbols(SymbolMap({
         //{ mangler("get_vector_len"), { ExecutorAddr::fromPtr(&get_vector_len),
-        //JITSymbolFlags::Callable } }
+        // JITSymbolFlags::Callable } }
     }))));
 }
