@@ -1,2 +1,1 @@
-find src -type f -name "*.cpp" | xargs -i clang-format -i {}
-find include -type f -name "*.h" | xargs -i clang-format -i {}
+find include/ src/ -type f -name "*.cpp" -o -name "*.h" | xargs -i clang-format -i {}
