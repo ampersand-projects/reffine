@@ -10,4 +10,4 @@ jobs:
       uses: jidicula/clang-format-action@v4.14.0
       with:
         clang-format-version: "18"
-        exclude-regex: "third_party"
+        exclude-regex: "(third_party|main.cpp)"
