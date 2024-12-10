@@ -1,16 +1,14 @@
 #ifndef INCLUDE_REFFINE_PASS_CANONPASS_H_
 #define INCLUDE_REFFINE_PASS_CANONPASS_H_
 
-#include "reffine/pass/irpass.h"
 #include "reffine/ir/loop.h"
+#include "reffine/pass/irpass.h"
 
 namespace reffine {
 
 class CanonPass : public IRPass<IRPassCtx> {
 public:
-    explicit CanonPass(shared_ptr<Func> func) :
-        IRPass(IRPassCtx(func->tbl))
-    {}
+    explicit CanonPass(shared_ptr<Func> func) : IRPass(IRPassCtx(func->tbl)) {}
 
     static void Build(shared_ptr<Func>);
 

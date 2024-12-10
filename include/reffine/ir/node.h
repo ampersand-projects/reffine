@@ -1,11 +1,11 @@
 #ifndef INCLUDE_REFFINE_IR_NODE_H_
 #define INCLUDE_REFFINE_IR_NODE_H_
 
-#include <memory>
 #include <map>
-#include <vector>
-#include <utility>
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "reffine/base/type.h"
 

@@ -24,21 +24,21 @@ int64_t set_vector_len(ArrowArray* arr, int64_t len)
 REFFINE_VINSTR_ATTR
 static bool is_valid(ArrowArray* arr, int64_t idx)
 {
-    auto bitmap = (char*) arr->buffers[0];
+    auto bitmap = (char*)arr->buffers[0];
     return (arr->null_count == 0) || (bitmap[idx / 8] & (1 << (idx % 8)));
 }
 
 REFFINE_VINSTR_ATTR
 static void set_valid(ArrowArray* arr, int64_t idx)
 {
-    auto bitmap = (char*) arr->buffers[0];
+    auto bitmap = (char*)arr->buffers[0];
     bitmap[idx / 8] |= (1 << (idx % 8));
 }
 
 REFFINE_VINSTR_ATTR
 static void set_invalid(ArrowArray* arr, int64_t idx)
 {
-    auto bitmap = (char*) arr->buffers[0];
+    auto bitmap = (char*)arr->buffers[0];
     bitmap[idx / 8] &= ~(1 << (idx % 8));
     arr->null_count++;
 }
@@ -50,7 +50,8 @@ bool get_vector_null_bit(ArrowArray* arr, int64_t idx, uint32_t col)
 }
 
 REFFINE_VINSTR_ATTR
-bool set_vector_null_bit(ArrowArray* arr, int64_t idx, bool validity, uint32_t col)
+bool set_vector_null_bit(ArrowArray* arr, int64_t idx, bool validity,
+                         uint32_t col)
 {
     // only setting the bitmap of children as arrow::ImportRecordBatch
     // disallows struct-level positive null count
@@ -66,7 +67,7 @@ bool set_vector_null_bit(ArrowArray* arr, int64_t idx, bool validity, uint32_t c
 REFFINE_VINSTR_ATTR
 void* get_vector_data_buf(ArrowArray* arr, uint32_t col)
 {
-    return (void*) arr->children[col]->buffers[1];
+    return (void*)arr->children[col]->buffers[1];
 }
 
 }  // extern "C"

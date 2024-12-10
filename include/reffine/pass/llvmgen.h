@@ -1,23 +1,22 @@
 #ifndef INCLUDE_REFFINE_PASS_CODEGEN_LLVMGEN_H_
 #define INCLUDE_REFFINE_PASS_CODEGEN_LLVMGEN_H_
 
-#include <memory>
-#include <utility>
-#include <string>
-#include <vector>
 #include <cstdlib>
 #include <fstream>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include "reffine/pass/irgen.h"
-
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Linker/Linker.h"
 #include "llvm/IRReader/IRReader.h"
-#include "llvm/Support/SourceMgr.h"
+#include "llvm/Linker/Linker.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/SourceMgr.h"
+#include "reffine/pass/irgen.h"
 
 using namespace std;
 
@@ -27,17 +26,18 @@ namespace reffine {
 
 class LLVMGenCtx : public IRGenCtx<llvm::Value*, llvm::Value*> {
 public:
-    LLVMGenCtx(shared_ptr<Func> func, map<llvm::Value*, llvm::Value*> m = {}) :
-        IRGenCtx(func->tbl, m)
-    {}
+    LLVMGenCtx(shared_ptr<Func> func, map<llvm::Value*, llvm::Value*> m = {})
+        : IRGenCtx(func->tbl, m)
+    {
+    }
 };
 
 class LLVMGen : public IRGen<llvm::Value*, llvm::Value*> {
 public:
-    explicit LLVMGen(LLVMGenCtx& ctx, llvm::Module& llmod) :
-        IRGen(std::move(ctx)),
-        _llmod(llmod),
-        _builder(make_unique<llvm::IRBuilder<>>(llmod.getContext()))
+    explicit LLVMGen(LLVMGenCtx& ctx, llvm::Module& llmod)
+        : IRGen(std::move(ctx)),
+          _llmod(llmod),
+          _builder(make_unique<llvm::IRBuilder<>>(llmod.getContext()))
     {
         register_vinstrs();
     }
@@ -57,9 +57,18 @@ private:
     llvm::Value* visit(Get&) final;
     llvm::Value* visit(New&) final;
     llvm::Value* visit(NaryExpr&) final;
-    llvm::Value* visit(Op&) final { throw runtime_error("Operation not supported"); }
-    llvm::Value* visit(Element&) final { throw runtime_error("Operation not supported"); }
-    llvm::Value* visit(Reduce&) final { throw runtime_error("Operation not supported"); }
+    llvm::Value* visit(Op&) final
+    {
+        throw runtime_error("Operation not supported");
+    }
+    llvm::Value* visit(Element&) final
+    {
+        throw runtime_error("Operation not supported");
+    }
+    llvm::Value* visit(Reduce&) final
+    {
+        throw runtime_error("Operation not supported");
+    }
     void visit(Stmts&) final;
     void visit(Func&) final;
     llvm::Value* visit(Alloc&) final;

@@ -1,20 +1,22 @@
-#include "reffine/base/type.h"
 #include "reffine/pass/llvmgen.h"
 
-#include "llvm/IR/Function.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
+#include "reffine/base/type.h"
 
 using namespace reffine;
 using namespace llvm;
 
-Function* LLVMGen::llfunc(const string name, llvm::Type* ret_type, vector<llvm::Type*> arg_types)
+Function* LLVMGen::llfunc(const string name, llvm::Type* ret_type,
+                          vector<llvm::Type*> arg_types)
 {
     auto fn_type = FunctionType::get(ret_type, arg_types, false);
     return Function::Create(fn_type, Function::ExternalLinkage, name, llmod());
 }
 
-Value* LLVMGen::llcall(const string name, llvm::Type* ret_type, vector<Value*> arg_vals)
+Value* LLVMGen::llcall(const string name, llvm::Type* ret_type,
+                       vector<Value*> arg_vals)
 {
     vector<llvm::Type*> arg_types;
     for (const auto& arg_val : arg_vals) {
@@ -26,12 +28,11 @@ Value* LLVMGen::llcall(const string name, llvm::Type* ret_type, vector<Value*> a
     return builder()->CreateCall(fn, arg_vals);
 }
 
-Value* LLVMGen::llcall(const string name, llvm::Type* ret_type, vector<Expr> args)
+Value* LLVMGen::llcall(const string name, llvm::Type* ret_type,
+                       vector<Expr> args)
 {
     vector<Value*> arg_vals;
-    for (const auto& arg : args) {
-        arg_vals.push_back(eval(arg));
-    }
+    for (const auto& arg : args) { arg_vals.push_back(eval(arg)); }
 
     return llcall(name, ret_type, arg_vals);
 }
@@ -60,15 +61,15 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
             return llvm::Type::getDoubleTy(llctx());
         case BaseType::STRUCT: {
             vector<llvm::Type*> lltypes;
-            for (auto dt : type.dtypes) {
-                lltypes.push_back(lltype(dt));
-            }
+            for (auto dt : type.dtypes) { lltypes.push_back(lltype(dt)); }
             return StructType::get(llctx(), lltypes);
         }
         case BaseType::PTR:
             return PointerType::get(lltype(type.dtypes[0]), 0);
         case BaseType::VECTOR:
-            return PointerType::get(llvm::StructType::getTypeByName(llctx(), "struct.ArrowArray"), 0);
+            return PointerType::get(
+                llvm::StructType::getTypeByName(llctx(), "struct.ArrowArray"),
+                0);
         case BaseType::UNKNOWN:
         default:
             throw std::runtime_error("Invalid type");
@@ -87,10 +88,14 @@ Value* LLVMGen::visit(Const& cnst)
         case BaseType::UINT16:
         case BaseType::UINT32:
         case BaseType::UINT64:
-        case BaseType::IDX: return ConstantInt::get(lltype(cnst), cnst.val);
+        case BaseType::IDX:
+            return ConstantInt::get(lltype(cnst), cnst.val);
         case BaseType::FLOAT32:
-        case BaseType::FLOAT64: return ConstantFP::get(lltype(cnst), cnst.val);
-        default: throw std::runtime_error("Invalid constant type"); break;
+        case BaseType::FLOAT64:
+            return ConstantFP::get(lltype(cnst), cnst.val);
+        default:
+            throw std::runtime_error("Invalid constant type");
+            break;
     }
 }
 
@@ -98,7 +103,8 @@ Value* LLVMGen::visit(Cast& e)
 {
     auto input_val = eval(e.arg);
     auto dest_type = lltype(e);
-    auto op = CastInst::getCastOpcode(input_val, e.arg->type.is_signed(), dest_type, e.type.is_signed());
+    auto op = CastInst::getCastOpcode(input_val, e.arg->type.is_signed(),
+                                      dest_type, e.type.is_signed());
     return builder()->CreateCast(op, input_val, dest_type);
 }
 
@@ -193,15 +199,18 @@ Value* LLVMGen::visit(NaryExpr& e)
             auto input = eval(e.arg(0));
 
             if (e.type.is_float()) {
-                return builder()->CreateIntrinsic(Intrinsic::fabs, {lltype(e.arg(0))}, {input});
+                return builder()->CreateIntrinsic(Intrinsic::fabs,
+                                                  {lltype(e.arg(0))}, {input});
             } else {
                 auto neg = builder()->CreateNeg(input);
 
                 Value* cond;
                 if (e.type.is_signed()) {
-                    cond = builder()->CreateICmpSGE(input, ConstantInt::get(lltype(types::INT32), 0));
+                    cond = builder()->CreateICmpSGE(
+                        input, ConstantInt::get(lltype(types::INT32), 0));
                 } else {
-                    cond = builder()->CreateICmpUGE(input, ConstantInt::get(lltype(types::UINT32), 0));
+                    cond = builder()->CreateICmpUGE(
+                        input, ConstantInt::get(lltype(types::UINT32), 0));
                 }
                 return builder()->CreateSelect(cond, input, neg);
             }
@@ -213,11 +222,19 @@ Value* LLVMGen::visit(NaryExpr& e)
                 return builder()->CreateNeg(eval(e.arg(0)));
             }
         }
-        case MathOp::SQRT: return builder()->CreateIntrinsic(Intrinsic::sqrt, {lltype(e.arg(0))}, {eval(e.arg(0))});
-        case MathOp::POW: return builder()->CreateIntrinsic(
-            Intrinsic::pow, {lltype(e.arg(0))}, {eval(e.arg(0)), eval(e.arg(1))});
-        case MathOp::CEIL: return builder()->CreateIntrinsic(Intrinsic::ceil, {lltype(e.arg(0))}, {eval(e.arg(0))});
-        case MathOp::FLOOR: return builder()->CreateIntrinsic(Intrinsic::floor, {lltype(e.arg(0))}, {eval(e.arg(0))});
+        case MathOp::SQRT:
+            return builder()->CreateIntrinsic(
+                Intrinsic::sqrt, {lltype(e.arg(0))}, {eval(e.arg(0))});
+        case MathOp::POW:
+            return builder()->CreateIntrinsic(Intrinsic::pow,
+                                              {lltype(e.arg(0))},
+                                              {eval(e.arg(0)), eval(e.arg(1))});
+        case MathOp::CEIL:
+            return builder()->CreateIntrinsic(
+                Intrinsic::ceil, {lltype(e.arg(0))}, {eval(e.arg(0))});
+        case MathOp::FLOOR:
+            return builder()->CreateIntrinsic(
+                Intrinsic::floor, {lltype(e.arg(0))}, {eval(e.arg(0))});
         case MathOp::EQ: {
             if (e.arg(0)->type.is_float()) {
                 return builder()->CreateFCmpOEQ(eval(e.arg(0)), eval(e.arg(1)));
@@ -261,14 +278,19 @@ Value* LLVMGen::visit(NaryExpr& e)
                 return builder()->CreateICmpUGE(eval(e.arg(0)), eval(e.arg(1)));
             }
         }
-        case MathOp::NOT: return builder()->CreateNot(eval(e.arg(0)));
-        case MathOp::AND: return builder()->CreateAnd(eval(e.arg(0)), eval(e.arg(1)));
-        case MathOp::OR: return builder()->CreateOr(eval(e.arg(0)), eval(e.arg(1)));
-        default: throw std::runtime_error("Invalid math operation"); break;
+        case MathOp::NOT:
+            return builder()->CreateNot(eval(e.arg(0)));
+        case MathOp::AND:
+            return builder()->CreateAnd(eval(e.arg(0)), eval(e.arg(1)));
+        case MathOp::OR:
+            return builder()->CreateOr(eval(e.arg(0)), eval(e.arg(1)));
+        default:
+            throw std::runtime_error("Invalid math operation");
+            break;
     }
 }
 
-Value* LLVMGen::visit(Select& select) 
+Value* LLVMGen::visit(Select& select)
 {
     auto cond = eval(select.cond);
     auto true_val = eval(select.true_body);
@@ -314,7 +336,8 @@ Value* LLVMGen::visit(IsValid& is_valid)
     auto idx_val = eval(is_valid.idx);
     auto col_val = ConstantInt::get(lltype(types::UINT32), is_valid.col);
 
-    return llcall("get_vector_null_bit", lltype(is_valid), { vec_val, idx_val, col_val });
+    return llcall("get_vector_null_bit", lltype(is_valid),
+                  {vec_val, idx_val, col_val});
 }
 
 Value* LLVMGen::visit(SetValid& set_valid)
@@ -324,7 +347,8 @@ Value* LLVMGen::visit(SetValid& set_valid)
     auto validity_val = eval(set_valid.validity);
     auto col_val = ConstantInt::get(lltype(types::UINT32), set_valid.col);
 
-    return llcall("set_vector_null_bit", lltype(set_valid), { vec_val, idx_val, validity_val, col_val });
+    return llcall("set_vector_null_bit", lltype(set_valid),
+                  {vec_val, idx_val, validity_val, col_val});
 }
 
 Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
@@ -333,8 +357,10 @@ Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
     auto idx_val = eval(fetch_data_ptr.idx);
     auto col_val = ConstantInt::get(lltype(types::UINT32), fetch_data_ptr.col);
 
-    auto buf_addr = llcall("get_vector_data_buf", lltype(fetch_data_ptr), {vec_val, col_val});
-    auto data_addr = builder()->CreateGEP(lltype(fetch_data_ptr.type.deref()), buf_addr, idx_val);
+    auto buf_addr = llcall("get_vector_data_buf", lltype(fetch_data_ptr),
+                           {vec_val, col_val});
+    auto data_addr = builder()->CreateGEP(lltype(fetch_data_ptr.type.deref()),
+                                          buf_addr, idx_val);
 
     return data_addr;
 }
@@ -346,9 +372,7 @@ Value* LLVMGen::visit(Call& call)
 
 void LLVMGen::visit(Stmts& stmts)
 {
-    for (auto& stmt : stmts.stmts) {
-        eval(stmt);
-    }
+    for (auto& stmt : stmts.stmts) { eval(stmt); }
 }
 
 Value* LLVMGen::visit(Alloc& alloc)
@@ -372,7 +396,8 @@ void LLVMGen::visit(Store& store)
 
 Value* LLVMGen::visit(Loop& loop)
 {
-    // Loop body condition and incr needs to be merged into loop body before code generation
+    // Loop body condition and incr needs to be merged into loop body before
+    // code generation
     ASSERT(loop.body_cond == nullptr);
     ASSERT(loop.incr == nullptr);
     // Loop must have a body
@@ -437,10 +462,12 @@ void LLVMGen::visit(Func& func)
 
 void LLVMGen::register_vinstrs()
 {
-    const auto buffer = llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(vinstr_str));
+    const auto buffer =
+        llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(vinstr_str));
 
     llvm::SMDiagnostic error;
-    std::unique_ptr<llvm::Module> vinstr_mod = llvm::parseIR(*buffer, error, llctx());
+    std::unique_ptr<llvm::Module> vinstr_mod =
+        llvm::parseIR(*buffer, error, llctx());
     if (!vinstr_mod) {
         throw std::runtime_error("Failed to parse vinstr bitcode");
     }
@@ -454,15 +481,15 @@ void LLVMGen::register_vinstrs()
     // linkage to them after linking the modules
     std::vector<string> vinstr_names;
     for (const auto& function : vinstr_mod->functions()) {
-        if (function.isDeclaration()) {
-            continue;
-        }
+        if (function.isDeclaration()) { continue; }
         vinstr_names.push_back(function.getName().str());
     }
 
     llvm::Linker::linkModules(*llmod(), std::move(vinstr_mod));
     for (const auto& name : vinstr_names) {
-        llmod()->getFunction(name.c_str())->setLinkage(llvm::Function::InternalLinkage);
+        llmod()
+            ->getFunction(name.c_str())
+            ->setLinkage(llvm::Function::InternalLinkage);
     }
 }
 

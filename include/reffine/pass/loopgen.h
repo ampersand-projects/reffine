@@ -9,9 +9,7 @@ using LoopGenCtx = IRCloneCtx;
 
 class LoopGen : public IRClone {
 public:
-    explicit LoopGen(LoopGenCtx& ctx) :
-        IRClone(ctx)
-    {}
+    explicit LoopGen(LoopGenCtx& ctx) : IRClone(ctx) {}
 
     static shared_ptr<Func> Build(shared_ptr<Func>);
 

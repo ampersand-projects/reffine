@@ -41,7 +41,6 @@ struct ArrowArray {
     // Opaque producer-specific data
     void* private_data;
 };
-
 }
 
 #endif  // ARROW_C_DATA_INTERFACE

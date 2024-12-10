@@ -28,9 +28,10 @@ public:
     IRPrinter() : IRPrinter(IRPrinterCtx()) {}
     explicit IRPrinter(IRPrinterCtx ctx) : IRPrinter(std::move(ctx), 2) {}
 
-    IRPrinter(IRPrinterCtx ctx, size_t tabstop) :
-        ctx(std::move(ctx)), tabstop(tabstop)
-    {}
+    IRPrinter(IRPrinterCtx ctx, size_t tabstop)
+        : ctx(std::move(ctx)), tabstop(tabstop)
+    {
+    }
 
     static string Build(Stmt);
     static string Build(llvm::Module&);
@@ -59,8 +60,16 @@ public:
     void Visit(NoOp&) override;
 
 private:
-    void enter_block() { ctx.indent++; emitnewline(); }
-    void exit_block() { ctx.indent--; emitnewline(); }
+    void enter_block()
+    {
+        ctx.indent++;
+        emitnewline();
+    }
+    void exit_block()
+    {
+        ctx.indent--;
+        emitnewline();
+    }
 
     void emittab() { ostr << string(1 << tabstop, ' '); }
     void emitnewline() { ostr << endl << string(ctx.indent << tabstop, ' '); }

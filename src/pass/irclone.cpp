@@ -13,9 +13,7 @@ shared_ptr<Op> IRClone::visit_op(Op& op)
     }
 
     vector<Expr> new_preds;
-    for (auto& old_pred : op.preds) {
-        new_preds.push_back(eval(old_pred));
-    }
+    for (auto& old_pred : op.preds) { new_preds.push_back(eval(old_pred)); }
 
     vector<Expr> new_outputs;
     for (auto& old_output : op.outputs) {
@@ -31,17 +29,12 @@ Expr IRClone::visit(Reduce& red)
     return make_shared<Reduce>(*new_op, red.init, red.acc);
 }
 
-Expr IRClone::visit(Op& op)
-{
-    return IRClone::visit_op(op);
-}
+Expr IRClone::visit(Op& op) { return IRClone::visit_op(op); }
 
 Expr IRClone::visit(Element& elem)
 {
     vector<Expr> new_idxs;
-    for (auto& old_idx : elem.idxs) {
-        new_idxs.push_back(eval(old_idx));
-    }
+    for (auto& old_idx : elem.idxs) { new_idxs.push_back(eval(old_idx)); }
 
     return make_shared<Element>(eval(elem.vec), new_idxs);
 }
@@ -49,9 +42,7 @@ Expr IRClone::visit(Element& elem)
 Expr IRClone::visit(NaryExpr& nexpr)
 {
     vector<Expr> new_args;
-    for (auto& old_arg : nexpr.args) {
-        new_args.push_back(eval(old_arg));
-    }
+    for (auto& old_arg : nexpr.args) { new_args.push_back(eval(old_arg)); }
 
     return make_shared<NaryExpr>(nexpr.type, nexpr.op, new_args);
 }
@@ -64,9 +55,7 @@ Expr IRClone::visit(Get& get)
 Expr IRClone::visit(New& _new)
 {
     vector<Expr> new_vals;
-    for (auto& val : _new.vals) {
-        new_vals.push_back(eval(val));
-    }
+    for (auto& val : _new.vals) { new_vals.push_back(eval(val)); }
 
     return make_shared<New>(new_vals);
 }
@@ -83,19 +72,14 @@ Expr IRClone::visit(Const& cnst)
 
 Expr IRClone::visit(Select& select)
 {
-    return make_shared<Select>(
-        eval(select.cond),
-        eval(select.true_body),
-        eval(select.false_body)
-    );
+    return make_shared<Select>(eval(select.cond), eval(select.true_body),
+                               eval(select.false_body));
 }
 
 Expr IRClone::visit(Call& call)
 {
     vector<Expr> new_args;
-    for (auto& old_arg : call.args) {
-        new_args.push_back(eval(old_arg));
-    }
+    for (auto& old_arg : call.args) { new_args.push_back(eval(old_arg)); }
 
     return make_shared<Call>(call.name, call.type, new_args);
 }
