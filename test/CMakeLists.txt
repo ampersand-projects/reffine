@@ -1,7 +1,7 @@
 set(TEST_FILES
     src/test_utils.cpp
-    src/test_query.cpp
-    src/test_base.cpp
+    src/test_reduce.cpp
+    src/test_transform.cpp
     src/basic_tests.cpp
 )
 

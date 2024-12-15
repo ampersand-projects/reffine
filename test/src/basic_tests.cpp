@@ -1,6 +1,5 @@
 #include "test_base.h"
 
-TEST(BasicTests, FooTest) { foo_test(); }
 TEST(BasicTests, ReduceTest) { aggregate_test(); }
 TEST(BasicTests, TransformTest) { transform_test(); }
 
