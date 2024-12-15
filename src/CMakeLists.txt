@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(SRC_FILES
+    arrow/base.cpp
     ir/ir.cpp
     pass/printer.cpp
     pass/loopgen.cpp
