@@ -31,28 +31,28 @@ public:
     IRGen(IRGenCtx<SymTy, ValTy> ctx) : _ctx(std::move(ctx)) {}
 
 protected:
-    virtual tuple<SymTy, ValTy> visit(Sym, Expr) = 0;
-    virtual ValTy visit(Select&) = 0;
-    virtual void visit(IfElse&) = 0;
-    virtual ValTy visit(Const&) = 0;
-    virtual ValTy visit(Cast&) = 0;
-    virtual ValTy visit(Get&) = 0;
-    virtual ValTy visit(New&) = 0;
-    virtual ValTy visit(NaryExpr&) = 0;
-    virtual ValTy visit(Op&) = 0;
-    virtual ValTy visit(Element&) = 0;
-    virtual ValTy visit(Reduce&) = 0;
-    virtual ValTy visit(Call&) = 0;
-    virtual void visit(Stmts&) = 0;
-    virtual void visit(Func&) = 0;
-    virtual ValTy visit(Alloc&) = 0;
-    virtual ValTy visit(Load&) = 0;
-    virtual void visit(Store&) = 0;
-    virtual ValTy visit(Loop&) = 0;
-    virtual ValTy visit(IsValid&) = 0;
-    virtual ValTy visit(SetValid&) = 0;
-    virtual ValTy visit(FetchDataPtr&) = 0;
-    virtual void visit(NoOp&) = 0;
+    virtual tuple<SymTy, ValTy> visit(Sym, Expr) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Select&) { throw runtime_error("Operation not supported"); }
+    virtual void visit(IfElse&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Const&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Cast&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Get&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(New&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(NaryExpr&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Op&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Element&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Reduce&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Call&) { throw runtime_error("Operation not supported"); }
+    virtual void visit(Stmts&) { throw runtime_error("Operation not supported"); }
+    virtual void visit(Func&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Alloc&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Load&) { throw runtime_error("Operation not supported"); }
+    virtual void visit(Store&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Loop&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(IsValid&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(SetValid&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(FetchDataPtr&) { throw runtime_error("Operation not supported"); }
+    virtual void visit(NoOp&) { throw runtime_error("Operation not supported"); }
 
     void Visit(Select& expr) final { val() = visit(expr); }
     void Visit(IfElse& stmt) final { visit(stmt); }

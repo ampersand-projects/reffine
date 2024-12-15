@@ -36,28 +36,28 @@ public:
     static string Build(Stmt);
     static string Build(llvm::Module&);
 
-    void Visit(SymNode&) override;
-    void Visit(Stmts&) override;
-    void Visit(Func&) override;
-    void Visit(Call&) override;
-    void Visit(IfElse&) override;
-    void Visit(Select&) override;
-    void Visit(Const&) override;
-    void Visit(Cast&) override;
-    void Visit(Get&) override;
-    void Visit(New&) override;
-    void Visit(NaryExpr&) override;
-    void Visit(Op&) override;
-    void Visit(Element&) override;
-    void Visit(Reduce&) override;
-    void Visit(Alloc&) override;
-    void Visit(Load&) override;
-    void Visit(Store&) override;
-    void Visit(Loop&) override;
-    void Visit(IsValid&) override;
-    void Visit(SetValid&) override;
-    void Visit(FetchDataPtr&) override;
-    void Visit(NoOp&) override;
+    void Visit(SymNode&) final;
+    void Visit(Stmts&) final;
+    void Visit(Func&) final;
+    void Visit(Call&) final;
+    void Visit(IfElse&) final;
+    void Visit(Select&) final;
+    void Visit(Const&) final;
+    void Visit(Cast&) final;
+    void Visit(Get&) final;
+    void Visit(New&) final;
+    void Visit(NaryExpr&) final;
+    void Visit(Op&) final;
+    void Visit(Element&) final;
+    void Visit(Reduce&) final;
+    void Visit(Alloc&) final;
+    void Visit(Load&) final;
+    void Visit(Store&) final;
+    void Visit(Loop&) final;
+    void Visit(IsValid&) final;
+    void Visit(SetValid&) final;
+    void Visit(FetchDataPtr&) final;
+    void Visit(NoOp&) final;
 
 private:
     void enter_block()
