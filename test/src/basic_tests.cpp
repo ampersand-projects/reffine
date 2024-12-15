@@ -2,6 +2,7 @@
 
 TEST(BasicTests, ReduceTest) { aggregate_test(); }
 TEST(BasicTests, TransformTest) { transform_test(); }
+TEST(BasicTests, Z3SolverTest) { z3solver_test(); }
 
 int main(int argc, char **argv)
 {

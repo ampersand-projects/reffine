@@ -10,5 +10,6 @@
 
 void aggregate_test();
 void transform_test();
+void z3solver_test();
 
 #endif  // TEST_INCLUDE_TEST_BASE_H_
