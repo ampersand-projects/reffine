@@ -13,32 +13,89 @@ public:
     /**
      * Reffine IR
      */
-    virtual void Visit(SymNode&) = 0;
-    virtual void Visit(Func&) = 0;
-    virtual void Visit(Call&) = 0;
-    virtual void Visit(Select&) = 0;
-    virtual void Visit(Const&) = 0;
-    virtual void Visit(Cast&) = 0;
-    virtual void Visit(Get&) = 0;
-    virtual void Visit(New&) = 0;
-    virtual void Visit(NaryExpr&) = 0;
-    virtual void Visit(Op&) = 0;
-    virtual void Visit(Element&) = 0;
-    virtual void Visit(Reduce&) = 0;
+    virtual void Visit(SymNode&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Func&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Call&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Select&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Const&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Cast&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Get&) { throw runtime_error("Operation not supported"); }
+    virtual void Visit(New&) { throw runtime_error("Operation not supported"); }
+    virtual void Visit(NaryExpr&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Op&) { throw runtime_error("Operation not supported"); }
+    virtual void Visit(Element&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Reduce&)
+    {
+        throw runtime_error("Operation not supported");
+    }
 
     /**
      * Loop IR
      */
-    virtual void Visit(IsValid&) = 0;
-    virtual void Visit(SetValid&) = 0;
-    virtual void Visit(FetchDataPtr&) = 0;
-    virtual void Visit(Stmts&) = 0;
-    virtual void Visit(Alloc&) = 0;
-    virtual void Visit(Load&) = 0;
-    virtual void Visit(Store&) = 0;
-    virtual void Visit(IfElse&) = 0;
-    virtual void Visit(NoOp&) = 0;
-    virtual void Visit(Loop&) = 0;
+    virtual void Visit(IsValid&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(SetValid&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(FetchDataPtr&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Stmts&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Alloc&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Load&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Store&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(IfElse&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(NoOp&)
+    {
+        throw runtime_error("Operation not supported");
+    }
+    virtual void Visit(Loop&)
+    {
+        throw runtime_error("Operation not supported");
+    }
 
 protected:
     Sym tmp_sym(SymNode& symbol)

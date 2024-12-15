@@ -36,29 +36,6 @@ protected:
     Expr visit(Reduce&) override;
     void visit(Func&) override;
 
-    void visit(Stmts&) final { throw runtime_error("Operation not supported"); }
-    void visit(IfElse&) final
-    {
-        throw runtime_error("Operation not supported");
-    }
-    void visit(NoOp&) final { throw runtime_error("Operation not supported"); }
-    Expr visit(Alloc&) final { throw runtime_error("Operation not supported"); }
-    Expr visit(Load&) final { throw runtime_error("Operation not supported"); }
-    void visit(Store&) final { throw runtime_error("Operation not supported"); }
-    Expr visit(Loop&) final { throw runtime_error("Operation not supported"); }
-    Expr visit(IsValid&) final
-    {
-        throw runtime_error("Operation not supported");
-    }
-    Expr visit(SetValid&) final
-    {
-        throw runtime_error("Operation not supported");
-    }
-    Expr visit(FetchDataPtr&) final
-    {
-        throw runtime_error("Operation not supported");
-    }
-
 private:
     shared_ptr<Op> visit_op(Op&);
 
