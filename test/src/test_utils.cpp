@@ -16,8 +16,8 @@ arrow::Result<ArrowTable> get_input_vector()
     return ArrowTable(schema, array);
 }
 
-std::string print_output_vector(ArrowSchema schema, ArrowArray array)
+std::string print_output_vector(ArrowSchema* schema, ArrowArray* array)
 {
-    auto res = *arrow::ImportRecordBatch(&array, &schema);
+    auto res = *arrow::ImportRecordBatch(array, schema);
     return res->ToString();
 }
