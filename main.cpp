@@ -21,6 +21,7 @@
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/loopgen.h"
+#include "reffine/pass/z3solver.h"
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
 #include "reffine/arrow/defs.h"
@@ -232,31 +233,33 @@ shared_ptr<Func> test_op_fn()
     return foo_fn;
 }
 
-void demorgan() {
-    cout << "de-Morgan example\n";
+void demorgan_test()
+{
+    auto x = make_shared<SymNode>("x", types::BOOL);
+    auto y = make_shared<SymNode>("y", types::BOOL);
 
-    z3::context c;
+    auto not_x = make_shared<Not>(x);
+    auto not_y = make_shared<Not>(y);
+    auto not_x_or_not_y = make_shared<Or>(not_x, not_y);
 
-    auto x = c.bool_const("x");
-    auto y = c.bool_const("y");
-    auto conjecture = (!(x && y)) == (!x || !y);
+    auto x_and_y = make_shared<And>(x, y);
+    auto not_x_and_y = make_shared<Not>(x_and_y);
 
-    z3::solver s(c);
-    // adding the negation of the conjecture as a constraint.
-    s.add(!conjecture);
-    cout << s << "\n";
-    cout << "SMT2\n";
-    cout << s.to_smt2() << "\n";
-    switch (s.check()) {
-        case z3::unsat:   cout << "de-Morgan is valid\n"; break;
-        case z3::sat:     cout << "de-Morgan is not valid\n"; break;
-        case z3::unknown: cout << "unknown\n"; break;
+    auto conjecture = make_shared<Not>(make_shared<Equals>(not_x_and_y, not_x_or_not_y));
+
+    Z3Solver s;
+    auto check = s.Check(conjecture);
+
+    switch (check) {
+        case z3::unsat: cout << "de-Morgan is valid" << endl; break;
+        case z3::sat: cout << "de-Morgan is not valid" << endl; break;
+        case z3::unknown: cout << "unknown" << endl; break;
     }
 }
 
 int main()
 {
-    demorgan();
+    demorgan_test();
 
     auto fn = test_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;

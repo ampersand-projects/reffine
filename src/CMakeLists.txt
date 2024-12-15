@@ -14,6 +14,7 @@ set(SRC_FILES
     pass/loopgen.cpp
     pass/canonpass.cpp
     pass/irclone.cpp
+    pass/z3solver.cpp
     pass/llvmgen.cpp
     engine/engine.cpp
 )
