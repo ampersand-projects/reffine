@@ -1,7 +1,8 @@
 set(TEST_FILES
-    src/basic_tests.cpp
     src/test_utils.cpp
+    src/test_query.cpp
     src/test_base.cpp
+    src/basic_tests.cpp
 )
 
 find_package(Arrow REQUIRED)
