@@ -1,6 +1,7 @@
 #include "test_base.h"
 
 TEST(BasicTests, FooTest) { foo_test(); }
+TEST(BasicTests, ReduceTest) { aggregate_test(); }
 
 int main(int argc, char **argv)
 {

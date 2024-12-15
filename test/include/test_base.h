@@ -4,5 +4,6 @@
 #include "gtest/gtest.h"
 
 void foo_test();
+void aggregate_test();
 
 #endif  // TEST_INCLUDE_TEST_BASE_H_
