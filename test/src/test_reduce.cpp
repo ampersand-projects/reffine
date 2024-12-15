@@ -5,10 +5,13 @@ using namespace reffine;
 
 shared_ptr<Func> vector_loop()
 {
-    auto vec_sym = make_shared<SymNode>("vec", types::VECTOR<1>(vector<DataType>{
-        types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
+    auto vec_sym = make_shared<SymNode>(
+        "vec", types::VECTOR<1>(vector<DataType>{
+                   types::INT64, types::INT64, types::INT64, types::INT64,
+                   types::INT64, types::INT8, types::INT64}));
 
-    auto len = make_shared<Call>("get_vector_len", types::IDX, vector<Expr>{vec_sym});
+    auto len =
+        make_shared<Call>("get_vector_len", types::IDX, vector<Expr>{vec_sym});
     auto len_sym = make_shared<SymNode>("len", len);
 
     auto idx_alloc = make_shared<Alloc>(types::IDX);
@@ -30,7 +33,9 @@ shared_ptr<Func> vector_loop()
     loop->exit_cond = make_shared<GreaterThanEqual>(idx, len_sym);
     loop->body = make_shared<Stmts>(vector<Stmt>{
         make_shared<Store>(sum_addr, make_shared<Add>(sum, val)),
-        make_shared<Store>(idx_addr, make_shared<Add>(idx, make_shared<Const>(BaseType::IDX, 1))),
+        make_shared<Store>(
+            idx_addr,
+            make_shared<Add>(idx, make_shared<Const>(BaseType::IDX, 1))),
     });
 
     auto foo_fn = make_shared<Func>("foo", loop_sym, vector<Sym>{vec_sym});

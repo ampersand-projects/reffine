@@ -2,9 +2,11 @@
 
 arrow::Result<ArrowTable> get_input_vector()
 {
-    ARROW_ASSIGN_OR_RAISE(auto infile, arrow::io::ReadableFile::Open(
-                "../../students.arrow", arrow::default_memory_pool()));
-    ARROW_ASSIGN_OR_RAISE(auto ipc_reader, arrow::ipc::RecordBatchFileReader::Open(infile));
+    ARROW_ASSIGN_OR_RAISE(
+        auto infile, arrow::io::ReadableFile::Open(
+                         "../../students.arrow", arrow::default_memory_pool()));
+    ARROW_ASSIGN_OR_RAISE(auto ipc_reader,
+                          arrow::ipc::RecordBatchFileReader::Open(infile));
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
 
     ArrowSchema schema;

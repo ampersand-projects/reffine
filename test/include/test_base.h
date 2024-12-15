@@ -4,9 +4,9 @@
 #include <gtest/gtest.h>
 
 #include "reffine/arrow/defs.h"
-#include "reffine/ir/stmt.h"
-#include "reffine/ir/op.h"
 #include "reffine/ir/loop.h"
+#include "reffine/ir/op.h"
+#include "reffine/ir/stmt.h"
 
 void aggregate_test();
 void transform_test();
