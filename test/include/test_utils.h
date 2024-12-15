@@ -22,13 +22,13 @@ struct ArrowTable {
     ArrowArray array;
 
     ArrowTable(ArrowSchema schema, ArrowArray array)
-        : schema(schema), array(array)
+        : schema(std::move(schema)), array(std::move(array))
     {
     }
 };
 
 arrow::Result<ArrowTable> get_input_vector();
-std::string print_output_vector(ArrowSchema, ArrowArray);
+std::string print_output_vector(ArrowSchema*, ArrowArray*);
 
 template <typename T>
 T compile_loop(std::shared_ptr<reffine::Func> loop)
