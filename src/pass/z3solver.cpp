@@ -123,12 +123,13 @@ z3::expr Z3Solver::eval(Expr expr)
     return new_val;
 }
 
-z3::check_result Z3Solver::Check(Expr expr)
+z3::solver Z3Solver::solve(Expr expr)
 {
     auto z3expr = eval(expr);
 
     z3::solver s(ctx());
     s.add(z3expr);
+    s.check();
 
-    return s.check();
+    return s;
 }

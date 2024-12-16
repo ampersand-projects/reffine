@@ -235,31 +235,20 @@ shared_ptr<Func> test_op_fn()
 
 void demorgan_test()
 {
-    auto x = make_shared<SymNode>("x", types::BOOL);
-    auto y = make_shared<SymNode>("y", types::BOOL);
+    auto t = make_shared<SymNode>("t", types::INT64);
+    auto zero = make_shared<Const>(BaseType::INT64, 0);
+    auto gt = make_shared<GreaterThan>(t, zero);
 
-    auto not_x = make_shared<Not>(x);
-    auto not_y = make_shared<Not>(y);
-    auto not_x_or_not_y = make_shared<Or>(not_x, not_y);
-
-    auto x_and_y = make_shared<And>(x, y);
-    auto not_x_and_y = make_shared<Not>(x_and_y);
-
-    auto conjecture = make_shared<Not>(make_shared<Equals>(not_x_and_y, not_x_or_not_y));
-
-    Z3Solver s;
-    auto check = s.Check(conjecture);
-
-    switch (check) {
-        case z3::unsat: cout << "de-Morgan is valid" << endl; break;
-        case z3::sat: cout << "de-Morgan is not valid" << endl; break;
-        case z3::unknown: cout << "unknown" << endl; break;
-    }
+    Z3Solver z3s;
+    auto s = z3s.solve(gt);
+    cout << s.check() << endl;
+    cout << s.get_model() << endl;
 }
 
 int main()
 {
     demorgan_test();
+    return 0;
 
     auto fn = test_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;

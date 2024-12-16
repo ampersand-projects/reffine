@@ -25,9 +25,10 @@ Expr demorgan_expr()
 
 void z3solver_test()
 {
-    Z3Solver s;
+    Z3Solver z3s;
     auto conjecture = demorgan_expr();
-    auto check = s.Check(conjecture);
+    auto s = z3s.solve(conjecture);
+    auto check = s.check();
 
     ASSERT_EQ(check, z3::unsat);
 }
