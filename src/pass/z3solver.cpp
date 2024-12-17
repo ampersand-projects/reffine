@@ -107,6 +107,15 @@ void Z3Solver::Visit(NaryExpr& e)
         case MathOp::OR:
             assign(eval(e.arg(0)) || eval(e.arg(1)));
             break;
+        case MathOp::IMPLIES:
+            assign(z3::implies(eval(e.arg(0)), eval(e.arg(1))));
+            break;
+        case MathOp::FORALL:
+            assign(z3::forall(eval(e.arg(0)), eval(e.arg(1))));
+            break;
+        case MathOp::EXISTS:
+            assign(z3::exists(eval(e.arg(0)), eval(e.arg(1))));
+            break;
         default:
             throw std::runtime_error("Invalid math operation");
     }
@@ -123,12 +132,16 @@ z3::expr Z3Solver::eval(Expr expr)
     return new_val;
 }
 
-z3::check_result Z3Solver::Check(Expr expr)
+z3::check_result Z3Solver::check(Expr conj)
 {
-    auto z3expr = eval(expr);
+    s().add(eval(conj));
+    return s().check();
+}
 
-    z3::solver s(ctx());
-    s.add(z3expr);
+z3::expr Z3Solver::get(Expr val) { return s().get_model().eval(eval(val)); }
 
-    return s.check();
+z3::expr Z3Solver::solve(Expr conj, Expr val)
+{
+    check(conj);
+    return get(val);
 }

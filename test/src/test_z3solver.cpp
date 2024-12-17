@@ -5,29 +5,36 @@
 
 using namespace reffine;
 
-Expr demorgan_expr()
+tuple<Expr, Expr> lower_bound_expr(int lb)
 {
-    auto x = make_shared<SymNode>("x", types::BOOL);
-    auto y = make_shared<SymNode>("y", types::BOOL);
+    auto t = make_shared<SymNode>("t", types::INT64);
+    auto zero = make_shared<Const>(BaseType::INT64, lb);
+    auto pred = make_shared<GreaterThanEqual>(t, zero);
 
-    auto not_x = make_shared<Not>(x);
-    auto not_y = make_shared<Not>(y);
-    auto not_x_or_not_y = make_shared<Or>(not_x, not_y);
+    auto p = make_shared<SymNode>("p", t);
+    auto forall = make_shared<ForAll>(
+        t, make_shared<And>(
+               make_shared<Implies>(make_shared<GreaterThanEqual>(t, p), pred),
+               make_shared<Implies>(make_shared<LessThan>(t, p),
+                                    make_shared<Not>(pred))));
+    return {forall, p};
+}
 
-    auto x_and_y = make_shared<And>(x, y);
-    auto not_x_and_y = make_shared<Not>(x_and_y);
+void run_lower_bound_check(int lb)
+{
+    Z3Solver z3s;
 
-    auto conjecture =
-        make_shared<Not>(make_shared<Equals>(not_x_and_y, not_x_or_not_y));
+    auto [conj, val] = lower_bound_expr(lb);
+    auto s = z3s.solve(conj, val).as_int64();
 
-    return conjecture;
+    ASSERT_EQ(s, lb);
 }
 
 void z3solver_test()
 {
-    Z3Solver s;
-    auto conjecture = demorgan_expr();
-    auto check = s.Check(conjecture);
-
-    ASSERT_EQ(check, z3::unsat);
+    run_lower_bound_check(10);
+    run_lower_bound_check(133);
+    run_lower_bound_check(55);
+    run_lower_bound_check(0);
+    run_lower_bound_check(-543);
 }
