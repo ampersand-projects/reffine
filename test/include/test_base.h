@@ -8,7 +8,8 @@
 #include "reffine/ir/op.h"
 #include "reffine/ir/stmt.h"
 
-void aggregate_test();
+void aggregate_loop_test();
+void aggregate_op_test();
 void transform_test();
 void z3solver_test();
 
