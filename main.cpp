@@ -254,9 +254,6 @@ void demorgan_test()
 
 int main()
 {
-    demorgan_test();
-    return 0;
-
     auto fn = test_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto loop = LoopGen::Build(fn);
