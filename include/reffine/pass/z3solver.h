@@ -8,7 +8,7 @@ namespace reffine {
 
 class Z3Solver : public Visitor {
 public:
-    z3::solver solve(Expr);
+    z3::expr solve(Expr, Expr);
 
 private:
     void Visit(SymNode&) final;
@@ -16,8 +16,8 @@ private:
     void Visit(NaryExpr&) final;
 
     z3::expr eval(Expr expr);
-    z3::context& ctx() { return _ctx; }
     z3::expr& val() { return _val; }
+    z3::context& ctx() { return _ctx; }
     void assign(z3::expr e) { swap(e, val()); }
 
     z3::context _ctx;

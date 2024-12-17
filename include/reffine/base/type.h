@@ -184,6 +184,9 @@ enum class MathOp {
     NOT,
     AND,
     OR,
+    IMPLIES,
+    FORALL,
+    EXISTS,
 };
 
 }  // namespace reffine
