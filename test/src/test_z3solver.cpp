@@ -12,12 +12,11 @@ tuple<Expr, Expr> lower_bound_expr(int lb)
     auto pred = make_shared<GreaterThanEqual>(t, zero);
 
     auto p = make_shared<SymNode>("p", t);
-    auto forall = make_shared<ForAll>(t,
-            make_shared<And>(
-                make_shared<Implies>(make_shared<GreaterThanEqual>(t, p), pred),
-                make_shared<Implies>(make_shared<LessThan>(t, p), make_shared<Not>(pred))
-                )
-            );
+    auto forall = make_shared<ForAll>(
+        t, make_shared<And>(
+               make_shared<Implies>(make_shared<GreaterThanEqual>(t, p), pred),
+               make_shared<Implies>(make_shared<LessThan>(t, p),
+                                    make_shared<Not>(pred))));
     return {forall, p};
 }
 

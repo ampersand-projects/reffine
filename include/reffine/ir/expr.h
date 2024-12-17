@@ -185,14 +185,16 @@ struct Implies : public BinaryExpr {
 };
 
 struct ForAll : public NaryExpr {
-    ForAll(Sym a, Expr b) : NaryExpr(types::BOOL, MathOp::FORALL, vector<Expr>{a, b})
+    ForAll(Sym a, Expr b)
+        : NaryExpr(types::BOOL, MathOp::FORALL, vector<Expr>{a, b})
     {
         ASSERT(b->type == types::BOOL);
     }
 };
 
 struct Exists : public NaryExpr {
-    Exists(Sym a, Expr b) : NaryExpr(types::BOOL, MathOp::EXISTS, vector<Expr>{a, b})
+    Exists(Sym a, Expr b)
+        : NaryExpr(types::BOOL, MathOp::EXISTS, vector<Expr>{a, b})
     {
         ASSERT(b->type == types::BOOL);
     }

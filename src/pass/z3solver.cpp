@@ -138,10 +138,7 @@ z3::check_result Z3Solver::check(Expr conj)
     return s().check();
 }
 
-z3::expr Z3Solver::get(Expr val)
-{
-    return s().get_model().eval(eval(val));
-}
+z3::expr Z3Solver::get(Expr val) { return s().get_model().eval(eval(val)); }
 
 z3::expr Z3Solver::solve(Expr conj, Expr val)
 {
