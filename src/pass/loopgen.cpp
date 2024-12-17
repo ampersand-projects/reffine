@@ -1,4 +1,5 @@
 #include "reffine/pass/loopgen.h"
+
 #include "reffine/pass/z3solver.h"
 
 using namespace std;
@@ -8,12 +9,12 @@ Expr get_init_val(Sym idx, vector<Expr> preds)
 {
     for (auto pred : preds) {
         auto p = make_shared<SymNode>(idx->name + "_p", idx);
-        auto forall = make_shared<ForAll>(idx,
-                make_shared<And>(
-                    make_shared<Implies>(make_shared<GreaterThanEqual>(idx, p), pred),
-                    make_shared<Implies>(make_shared<LessThan>(idx, p), make_shared<Not>(pred))
-                    )
-                );
+        auto forall = make_shared<ForAll>(
+            idx,
+            make_shared<And>(make_shared<Implies>(
+                                 make_shared<GreaterThanEqual>(idx, p), pred),
+                             make_shared<Implies>(make_shared<LessThan>(idx, p),
+                                                  make_shared<Not>(pred))));
 
         Z3Solver solver;
         if (solver.check(forall) == z3::sat) {
@@ -29,12 +30,12 @@ Expr get_exit_val(Sym idx, vector<Expr> preds)
 {
     for (auto pred : preds) {
         auto p = make_shared<SymNode>(idx->name + "_p", idx);
-        auto forall = make_shared<ForAll>(idx,
-                make_shared<And>(
-                    make_shared<Implies>(make_shared<LessThanEqual>(idx, p), pred),
-                    make_shared<Implies>(make_shared<GreaterThan>(idx, p), make_shared<Not>(pred))
-                    )
-                );
+        auto forall = make_shared<ForAll>(
+            idx,
+            make_shared<And>(
+                make_shared<Implies>(make_shared<LessThanEqual>(idx, p), pred),
+                make_shared<Implies>(make_shared<GreaterThan>(idx, p),
+                                     make_shared<Not>(pred))));
 
         Z3Solver solver;
         if (solver.check(forall) == z3::sat) {
@@ -71,7 +72,8 @@ Expr LoopGen::visit(Reduce& red)
 
     // Loop exit condition expression
     auto exit_val = get_exit_val(idx, red.op.preds);
-    auto exit_cond_expr = make_shared<GreaterThan>(make_shared<Load>(idx_addr_sym), exit_val);
+    auto exit_cond_expr =
+        make_shared<GreaterThan>(make_shared<Load>(idx_addr_sym), exit_val);
 
     // Loop body statement
     auto idx_val =
