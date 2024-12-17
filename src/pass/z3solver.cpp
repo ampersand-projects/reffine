@@ -132,14 +132,19 @@ z3::expr Z3Solver::eval(Expr expr)
     return new_val;
 }
 
+z3::check_result Z3Solver::check(Expr conj)
+{
+    s().add(eval(conj));
+    return s().check();
+}
+
+z3::expr Z3Solver::get(Expr val)
+{
+    return s().get_model().eval(eval(val));
+}
+
 z3::expr Z3Solver::solve(Expr conj, Expr val)
 {
-    auto z3_conj = eval(conj);
-    auto z3_val = eval(val);
-
-    z3::solver s(ctx());
-    s.add(z3_conj);
-    s.check();
-
-    return s.get_model().eval(z3_val);
+    check(conj);
+    return get(val);
 }
