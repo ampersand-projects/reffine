@@ -51,7 +51,9 @@ void IRPrinter::Visit(Cast& e)
 
 void IRPrinter::Visit(Get& e)
 {
-    emitfunc("get<" + std::to_string(e.col) + ">", {e.val});
+    ostr << "(";
+    e.val->Accept(*this);
+    ostr << ")._" << e.col;
 }
 
 void IRPrinter::Visit(New& e)
