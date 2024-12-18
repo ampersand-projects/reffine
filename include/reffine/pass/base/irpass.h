@@ -67,6 +67,11 @@ public:
         for (auto& idx : expr.idxs) { idx->Accept(*this); }
     }
 
+    void Visit(NotNull& expr) override
+    {
+        expr.elem->Accept(*this);
+    }
+
     void Visit(Reduce& expr) override { expr.op.Accept(*this); }
 
     void Visit(Call& expr) override

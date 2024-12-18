@@ -66,6 +66,14 @@ struct Element : public ExprNode {
     void Accept(Visitor&) final;
 };
 
+struct NotNull : public ExprNode {
+    Expr elem;
+
+    NotNull(Expr elem) : ExprNode(types::BOOL), elem(elem) {}
+
+    void Accept(Visitor&) final;
+};
+
 typedef function<Expr()> InitFnTy;           // () -> state
 typedef function<Expr(Expr, Expr)> AccFnTy;  // (state, val) -> state
 
