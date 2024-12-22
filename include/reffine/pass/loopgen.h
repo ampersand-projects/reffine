@@ -25,7 +25,8 @@ public:
 private:
     Expr visit(Op&) override;
 
-    Sym idx;
+    Sym op_idx;
+    Sym loop_idx;
     Expr lower_bound;
     Expr upper_bound;
     Expr next_idx;

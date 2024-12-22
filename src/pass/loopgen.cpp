@@ -49,12 +49,19 @@ Expr get_exit_val(Sym idx, vector<Expr> preds)
 
 Expr OpToLoop::visit(Op& op)
 {
+    // Index allocation
+    this->op_idx = op.idxs[0];
+    auto loop_idx_addr = make_shared<Alloc>(this->op_idx->type);
+    this->loop_idx = make_shared<SymNode>("idx_addr", loop_idx_addr);
+    map_val(this->loop_idx, loop_idx_addr);
+
     return nullptr;
 }
 
 Expr LoopGen::visit(Reduce& red)
 {
     OpToLoop op_to_loop(ctx());
+    red.op.Accept(op_to_loop);
 
     // State allocation and initialization
     auto state_addr = make_shared<Alloc>(red.type);
