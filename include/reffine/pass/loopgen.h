@@ -33,8 +33,6 @@ private:
     Expr visit(Reduce&) final;
 };
 
-
-
 }  // namespace reffine
 
 #endif  // INCLUDE_REFFINE_PASS_LOOPGEN_H_
