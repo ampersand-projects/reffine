@@ -5,7 +5,22 @@
 
 namespace reffine {
 
-using LoopGenCtx = IRCloneCtx;
+class LoopGenCtx : public IRCloneCtx {
+public:
+    LoopGenCtx(shared_ptr<Func> old_func, shared_ptr<Func> new_func)
+        : IRCloneCtx(old_func, new_func)
+    {
+    }
+};
+
+struct OpToLoop {
+    Sym op_idx;
+    Sym loop_idx_addr;
+    Expr lower_bound;
+    Expr upper_bound;
+    Expr next_loop_idx;
+    Expr output;
+};
 
 class LoopGen : public IRClone {
 public:
@@ -14,23 +29,11 @@ public:
     static shared_ptr<Func> Build(shared_ptr<Func>);
 
 private:
+    OpToLoop op_to_loop(Op&);
     Expr visit(Reduce&) final;
 };
 
 
-class OpToLoop : public IRGen<Sym, Expr> {
-public:
-    explicit OpToLoop(IRGenCtx<Sym, Expr>& ctx) : IRGen(ctx) {}
-
-private:
-    Expr visit(Op&) override;
-
-    Sym op_idx;
-    Sym loop_idx;
-    Expr lower_bound;
-    Expr upper_bound;
-    Expr next_idx;
-};
 
 }  // namespace reffine
 
