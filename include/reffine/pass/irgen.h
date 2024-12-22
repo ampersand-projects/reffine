@@ -179,10 +179,11 @@ protected:
         ctx().sym_sym_map[old_sym] = new_sym;
     }
 
-private:
+protected:
     ValTy& val() { return _val; }
     IRGenCtx<SymTy, ValTy>& ctx() { return _ctx; }
 
+private:
     ValTy _val;
     IRGenCtx<SymTy, ValTy> _ctx;
 };

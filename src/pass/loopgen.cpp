@@ -47,8 +47,15 @@ Expr get_exit_val(Sym idx, vector<Expr> preds)
     return nullptr;
 }
 
+Expr OpToLoop::visit(Op& op)
+{
+    return nullptr;
+}
+
 Expr LoopGen::visit(Reduce& red)
 {
+    OpToLoop op_to_loop(ctx());
+
     // State allocation and initialization
     auto state_addr = make_shared<Alloc>(red.type);
     auto state_addr_sym = make_shared<SymNode>("state_addr", state_addr);
