@@ -130,10 +130,7 @@ public:
 protected:
     CtxTy& ctx() { return _ctx; }
 
-    void switch_ctx(CtxTy& new_ctx)
-    {
-        swap(new_ctx, ctx());
-    }
+    void switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); }
 
     void Visit(SymNode& symbol) override
     {

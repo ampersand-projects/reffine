@@ -27,7 +27,10 @@ public:
 template <typename SymTy, typename ValTy>
 class IRGen : public IRPass<IRGenCtx<SymTy, ValTy>> {
 public:
-    IRGen(IRGenCtx<SymTy, ValTy> ctx) : IRPass<IRGenCtx<SymTy, ValTy>>(std::move(ctx)) {}
+    IRGen(IRGenCtx<SymTy, ValTy> ctx)
+        : IRPass<IRGenCtx<SymTy, ValTy>>(std::move(ctx))
+    {
+    }
 
 protected:
     virtual tuple<SymTy, ValTy> visit(Sym, Expr)
@@ -62,10 +65,7 @@ protected:
     {
         throw runtime_error("Operation not supported");
     }
-    virtual ValTy visit(Op&)
-    {
-        throw runtime_error("Operation not supported");
-    }
+    virtual ValTy visit(Op&) { throw runtime_error("Operation not supported"); }
     virtual ValTy visit(Element&)
     {
         throw runtime_error("Operation not supported");
@@ -144,7 +144,8 @@ protected:
     {
         auto old_sym = this->tmp_sym(symbol);
 
-        if (this->ctx().sym_sym_map.find(old_sym) == this->ctx().sym_sym_map.end()) {
+        if (this->ctx().sym_sym_map.find(old_sym) ==
+            this->ctx().sym_sym_map.end()) {
             auto old_val = this->ctx().in_sym_tbl.at(old_sym);
             auto [new_sym, new_val] = visit(old_sym, old_val);
             map_sym(old_sym, new_sym);
