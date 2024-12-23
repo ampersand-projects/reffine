@@ -1,4 +1,4 @@
-#include "reffine/pass/visitor.h"
+#include "reffine/pass/base/visitor.h"
 
 using namespace reffine;
 

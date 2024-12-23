@@ -2,7 +2,7 @@
 #define INCLUDE_REFFINE_PASS_CANONPASS_H_
 
 #include "reffine/ir/loop.h"
-#include "reffine/pass/irpass.h"
+#include "reffine/pass/base/irpass.h"
 
 namespace reffine {
 

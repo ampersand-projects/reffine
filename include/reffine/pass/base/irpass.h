@@ -1,11 +1,11 @@
-#ifndef INCLUDE_REFFINE_PASS_IRPASS_H_
-#define INCLUDE_REFFINE_PASS_IRPASS_H_
+#ifndef INCLUDE_REFFINE_PASS_BASE_IRPASS_H_
+#define INCLUDE_REFFINE_PASS_BASE_IRPASS_H_
 
 #include <memory>
 #include <set>
 #include <utility>
 
-#include "reffine/pass/visitor.h"
+#include "reffine/pass/base/visitor.h"
 
 using namespace std;
 
@@ -157,4 +157,4 @@ private:
 
 }  // namespace reffine
 
-#endif  // INCLUDE_REFFINE_PASS_IRPASS_H_
+#endif  // INCLUDE_REFFINE_PASS_BASE_IRPASS_H_

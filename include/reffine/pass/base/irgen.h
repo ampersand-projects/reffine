@@ -1,12 +1,12 @@
-#ifndef INCLUDE_REFFINE_PASS_IRGEN_H_
-#define INCLUDE_REFFINE_PASS_IRGEN_H_
+#ifndef INCLUDE_REFFINE_PASS_BASE_IRGEN_H_
+#define INCLUDE_REFFINE_PASS_BASE_IRGEN_H_
 
 #include <map>
 #include <memory>
 #include <tuple>
 #include <utility>
 
-#include "reffine/pass/irpass.h"
+#include "reffine/pass/base/irpass.h"
 
 using namespace std;
 
@@ -185,4 +185,4 @@ private:
 
 }  // namespace reffine
 
-#endif  // INCLUDE_REFFINE_PASS_IRGEN_H_
+#endif  // INCLUDE_REFFINE_PASS_BASE_IRGEN_H_

@@ -1,5 +1,5 @@
-#ifndef INCLUDE_REFFINE_PASS_VISITOR_H_
-#define INCLUDE_REFFINE_PASS_VISITOR_H_
+#ifndef INCLUDE_REFFINE_PASS_BASE_VISITOR_H_
+#define INCLUDE_REFFINE_PASS_BASE_VISITOR_H_
 
 #include "reffine/ir/expr.h"
 #include "reffine/ir/loop.h"
@@ -100,4 +100,4 @@ public:
 
 }  // namespace reffine
 
-#endif  // INCLUDE_REFFINE_PASS_VISITOR_H_
+#endif  // INCLUDE_REFFINE_PASS_BASE_VISITOR_H_
