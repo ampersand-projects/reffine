@@ -50,21 +50,28 @@ Expr get_exit_val(Sym idx, vector<Expr> preds)
 OpToLoop LoopGen::op_to_loop(Op& op)
 {
     OpToLoop otl;
-    otl.op_idx = op.idxs[0];
+
+    // Only support single indexed operations
+    ASSERT(op.idxs.size() == 1);
 
     // Loop index allocation
-    auto idx_addr = make_shared<Alloc>(otl.op_idx->type);
-    otl.loop_idx_addr = make_shared<SymNode>("idx_addr", idx_addr);
-    map_val(otl.loop_idx_addr, idx_addr);
+    auto loop_idx_addr_expr = make_shared<Alloc>(types::IDX);
+    otl.loop_idx_addr = make_shared<SymNode>("loop_idx_addr", loop_idx_addr_expr);
+    map_val(otl.loop_idx_addr, loop_idx_addr_expr);
+    auto load_loop_idx_expr = make_shared<Load>(otl.loop_idx_addr);
+
+    // Map op idx to loop idx
+    otl.op_idx = make_shared<SymNode>(op.idxs[0]->name, op.idxs[0]);
+    map_sym(op.idxs[0], otl.op_idx);
+    auto loop_idx_to_op_idx_expr = make_shared<Cast>(otl.op_idx->type, load_loop_idx_expr);
+    map_val(otl.op_idx, loop_idx_to_op_idx_expr);
 
     // Loop index bound expressions
-    otl.lower_bound = get_init_val(otl.op_idx, op.preds);
-    otl.upper_bound = get_exit_val(otl.op_idx, op.preds);
+    otl.lower_bound = make_shared<Cast>(types::IDX, get_init_val(op.idxs[0], op.preds));
+    otl.upper_bound = make_shared<Cast>(types::IDX, get_exit_val(op.idxs[0], op.preds));
 
     // Loop index increment expression
-    otl.next_loop_idx =
-        make_shared<Add>(make_shared<Load>(otl.loop_idx_addr),
-                         make_shared<Const>(otl.op_idx->type.btype, 1));
+    otl.next_loop_idx = make_shared<Add>(load_loop_idx_expr, make_shared<Const>(BaseType::IDX, 1));
 
     return otl;
 }
@@ -77,25 +84,27 @@ Expr LoopGen::visit(Reduce& red)
     auto state_addr_expr = make_shared<Alloc>(red.type);
     auto state_addr = make_shared<SymNode>("state_addr", state_addr_expr);
     map_val(state_addr, state_addr_expr);
+    auto load_state_expr = make_shared<Load>(state_addr);
 
-    // Loop body statement
-    auto val =
-        make_shared<New>(vector<Expr>{make_shared<Load>(otl.loop_idx_addr)});
-    auto state = make_shared<Load>(state_addr);
-    auto new_state = red.acc(state, val);
-    auto body_stmt = make_shared<Store>(state_addr, new_state);
+    // Loop body expression
+    vector<Expr> op_outputs;
+    for (auto output : red.op.outputs) {
+        op_outputs.push_back(eval(output));
+    }
+    auto val = make_shared<New>(op_outputs);
 
     // Loop definition
-    auto red_loop = make_shared<Loop>(make_shared<Load>(state_addr));
+    auto red_loop = make_shared<Loop>(load_state_expr);
     red_loop->init = make_shared<Stmts>(vector<Stmt>{
         make_shared<Store>(otl.loop_idx_addr, otl.lower_bound),
         make_shared<Store>(state_addr, red.init()),
     });
     red_loop->incr = make_shared<Store>(otl.loop_idx_addr, otl.next_loop_idx);
     red_loop->exit_cond = make_shared<GreaterThan>(
-        make_shared<Load>(otl.loop_idx_addr), otl.upper_bound);
+        make_shared<Load>(otl.loop_idx_addr), otl.upper_bound
+    );
     red_loop->body_cond = nullptr;
-    red_loop->body = body_stmt;
+    red_loop->body = make_shared<Store>(state_addr, red.acc(load_state_expr, val));
     red_loop->post = nullptr;
 
     return red_loop;
