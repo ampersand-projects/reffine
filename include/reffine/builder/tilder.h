@@ -99,7 +99,7 @@ REGISTER_EXPR(_loop, Loop)
 
 // Statements
 REGISTER_EXPR(_func, Func)
-REGISTER_EXPR(_stmts, Stmt)
+REGISTER_EXPR(_stmts, Stmts)
 REGISTER_EXPR(_ifelse, IfElse)
 REGISTER_EXPR(_noop, NoOp)
 
@@ -117,6 +117,7 @@ REGISTER_EXPR(_new, New)
 REGISTER_EXPR(_nary, NaryExpr)
 REGISTER_EXPR(_unary, UnaryExpr)
 REGISTER_EXPR(_binary, BinaryExpr)
+REGISTER_EXPR(_sym, SymNode)
 
 #undef REGISTER_EXPR
 
