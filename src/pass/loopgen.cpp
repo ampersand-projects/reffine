@@ -56,33 +56,33 @@ OpToLoop LoopGen::op_to_loop(Op& op)
 
     // Loop index allocation
     auto loop_idx_addr_expr = make_shared<Alloc>(types::IDX);
-    otl.loop_idx_addr = make_shared<SymNode>("loop_idx_addr", loop_idx_addr_expr);
+    otl.loop_idx_addr =
+        make_shared<SymNode>("loop_idx_addr", loop_idx_addr_expr);
     map_val(otl.loop_idx_addr, loop_idx_addr_expr);
     auto load_loop_idx_expr = make_shared<Load>(otl.loop_idx_addr);
 
     // Map op idx to loop idx
     otl.op_idx = make_shared<SymNode>(op.idxs[0]->name, op.idxs[0]);
     map_sym(op.idxs[0], otl.op_idx);
-    auto loop_idx_to_op_idx_expr = make_shared<Cast>(otl.op_idx->type, load_loop_idx_expr);
+    auto loop_idx_to_op_idx_expr =
+        make_shared<Cast>(otl.op_idx->type, load_loop_idx_expr);
     map_val(otl.op_idx, loop_idx_to_op_idx_expr);
 
     // Loop init statement
     otl.init = make_shared<Store>(
         otl.loop_idx_addr,
-        make_shared<Cast>(types::IDX, get_init_val(op.idxs[0], op.preds))
-    );
+        make_shared<Cast>(types::IDX, get_init_val(op.idxs[0], op.preds)));
 
     // Loop exit condition
     otl.exit_cond = make_shared<GreaterThan>(
         make_shared<Load>(otl.loop_idx_addr),
-        make_shared<Cast>(types::IDX, get_exit_val(op.idxs[0], op.preds))
-    );
+        make_shared<Cast>(types::IDX, get_exit_val(op.idxs[0], op.preds)));
 
     // Loop index increment expression
     otl.incr = make_shared<Store>(
         otl.loop_idx_addr,
-        make_shared<Add>(load_loop_idx_expr, make_shared<Const>(BaseType::IDX, 1))
-    );
+        make_shared<Add>(load_loop_idx_expr,
+                         make_shared<Const>(BaseType::IDX, 1)));
 
     return otl;
 }
@@ -99,9 +99,7 @@ Expr LoopGen::visit(Reduce& red)
 
     // Loop body expression
     vector<Expr> op_outputs;
-    for (auto output : red.op.outputs) {
-        op_outputs.push_back(eval(output));
-    }
+    for (auto output : red.op.outputs) { op_outputs.push_back(eval(output)); }
     auto val = make_shared<New>(op_outputs);
 
     // Loop definition
@@ -113,7 +111,8 @@ Expr LoopGen::visit(Reduce& red)
     red_loop->incr = otl.incr;
     red_loop->exit_cond = otl.exit_cond;
     red_loop->body_cond = nullptr;
-    red_loop->body = make_shared<Store>(state_addr, red.acc(load_state_expr, val));
+    red_loop->body =
+        make_shared<Store>(state_addr, red.acc(load_state_expr, val));
     red_loop->post = nullptr;
 
     return red_loop;
