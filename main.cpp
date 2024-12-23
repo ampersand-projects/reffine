@@ -257,8 +257,9 @@ int main()
     auto fn = test_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto loop = LoopGen::Build(fn);
+    cout << "Loop IR (before canon):" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
-    cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
+    cout << "Loop IR (after canon):" << endl << IRPrinter::Build(loop) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
