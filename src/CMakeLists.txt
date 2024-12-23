@@ -17,6 +17,7 @@ set(SRC_FILES
     pass/z3solver.cpp
     pass/llvmgen.cpp
     engine/engine.cpp
+    builder/tilder.cpp
 )
 
 find_package(LLVM REQUIRED CONFIG)
