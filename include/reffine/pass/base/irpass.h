@@ -56,6 +56,7 @@ public:
 
     void Visit(Op& expr) override
     {
+        for (auto& idx : expr.idxs) { assign(idx); }
         for (auto& pred : expr.preds) { pred->Accept(*this); }
         for (auto& output : expr.outputs) { output->Accept(*this); }
     }
