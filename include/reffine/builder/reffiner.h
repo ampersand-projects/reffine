@@ -2,13 +2,13 @@
 #define INCLUDE_REFFINE_BUILDER_REFFINER_H_
 
 #include "reffine/ir/expr.h"
-#include "reffine/ir/stmt.h"
-#include "reffine/ir/op.h"
 #include "reffine/ir/loop.h"
+#include "reffine/ir/op.h"
+#include "reffine/ir/stmt.h"
 
 namespace reffine::reffiner {
 
-template<typename T>
+template <typename T>
 struct _expr;
 
 _expr<Add> _expr_add(Expr, Expr);
@@ -27,7 +27,7 @@ _expr<And> _expr_and(Expr, Expr);
 _expr<Or> _expr_or(Expr, Expr);
 _expr<Get> _expr_get(Expr, size_t);
 
-template<typename T>
+template <typename T>
 struct _expr : public shared_ptr<T> {
     explicit _expr(shared_ptr<T>&& ptr) : shared_ptr<T>(std::move(ptr)) {}
 
@@ -38,9 +38,15 @@ struct _expr : public shared_ptr<T> {
     _expr<Neg> operator-() const { return _expr_neg(*this); }
     _expr<Mod> operator%(Expr o) const { return _expr_mod(*this, o); }
     _expr<LessThan> operator<(Expr o) const { return _expr_lt(*this, o); }
-    _expr<LessThanEqual> operator<=(Expr o) const { return _expr_lte(*this, o); }
+    _expr<LessThanEqual> operator<=(Expr o) const
+    {
+        return _expr_lte(*this, o);
+    }
     _expr<GreaterThan> operator>(Expr o) const { return _expr_gt(*this, o); }
-    _expr<GreaterThanEqual> operator>=(Expr o) const { return _expr_gte(*this, o); }
+    _expr<GreaterThanEqual> operator>=(Expr o) const
+    {
+        return _expr_gte(*this, o);
+    }
     _expr<Equals> operator==(Expr o) const { return _expr_eq(*this, o); }
     _expr<Not> operator!() const { return _expr_not(*this); }
     _expr<And> operator&&(Expr o) const { return _expr_and(*this, o); }
@@ -48,12 +54,14 @@ struct _expr : public shared_ptr<T> {
     _expr<Get> operator<<(size_t n) const { return _expr_get(*this, n); }
 };
 
-#define REGISTER_EXPR(NAME, EXPR) \
-    template<typename... Args> \
-    struct NAME : public _expr<EXPR> { \
-        explicit NAME(Args... args) : \
-            _expr<EXPR>(std::move(make_shared<EXPR>(std::forward<Args>(args)...))) \
-        {} \
+#define REGISTER_EXPR(NAME, EXPR)                                            \
+    template <typename... Args>                                              \
+    struct NAME : public _expr<EXPR> {                                       \
+        explicit NAME(Args... args)                                          \
+            : _expr<EXPR>(                                                   \
+                  std::move(make_shared<EXPR>(std::forward<Args>(args)...))) \
+        {                                                                    \
+        }                                                                    \
     };
 
 // Arithmetic expressions

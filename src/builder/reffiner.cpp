@@ -1,5 +1,6 @@
-#include "reffine/base/type.h"
 #include "reffine/builder/reffiner.h"
+
+#include "reffine/base/type.h"
 
 namespace reffine::reffiner {
 
