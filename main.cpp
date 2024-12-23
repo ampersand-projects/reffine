@@ -10,22 +10,26 @@
 #include <arrow/status.h>
 #include <arrow/c/bridge.h>
 
+#include <z3++.h>
+
 #include "reffine/ir/node.h"
 #include "reffine/ir/stmt.h"
 #include "reffine/ir/expr.h"
 #include "reffine/ir/loop.h"
+#include "reffine/ir/op.h"
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
+#include "reffine/pass/loopgen.h"
+#include "reffine/pass/z3solver.h"
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
 #include "reffine/arrow/defs.h"
-
 #include "reffine/builder/tilder.h"
 
 using namespace reffine;
-using namespace reffine::tilder;
 using namespace std;
+using namespace reffine::tilder;
 
 arrow::Status csv_to_arrow()
 {
@@ -48,7 +52,7 @@ arrow::Status csv_to_arrow()
     return arrow::Status::OK();
 }
 
-arrow::Status query_arrow_file(void* (*query_fn)(void*, void*))
+arrow::Status query_arrow_file(long (*query_fn)(void*))
 {
     ARROW_ASSIGN_OR_RAISE(auto infile, arrow::io::ReadableFile::Open(
                 "../students.arrow", arrow::default_memory_pool()));
@@ -72,7 +76,7 @@ arrow::Status query_arrow_file(void* (*query_fn)(void*, void*))
     out_array.add_child<Int64Array>(in_array.length);
     out_array.add_child<BooleanArray>(in_array.length);
 
-    query_fn(&in_array, &out_array);
+    cout << "SUM: " << query_fn(&in_array) << endl;
 
     ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(&out_array, &out_schema));
     cout << "Output: " << endl << res->ToString() << endl;
@@ -80,55 +84,19 @@ arrow::Status query_arrow_file(void* (*query_fn)(void*, void*))
     return arrow::Status::OK();
 }
 
-arrow::Status benchmark_vector_fn(int (*query_fn)(void*))
-{
-    ARROW_ASSIGN_OR_RAISE(auto infile, arrow::io::ReadableFile::Open(
-                "../students.arrow", arrow::default_memory_pool()));
-
-    ARROW_ASSIGN_OR_RAISE(auto ipc_reader, arrow::ipc::RecordBatchFileReader::Open(infile));
-
-    ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
-
-    // cout << rbatch->ToString() << endl;
-
-    ArrowSchema in_schema;
-    ArrowArray in_array;
-
-    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &in_array, &in_schema));
-    // arrow_print_schema(&in_schema);
-    // arrow_print_array(&in_array);
-    
-    int res;
-    auto iter = 10;
-    double total_duration = 0.0;
-    for (int i = 0; i < iter; i++) {
-        clock_t start = clock();
-        res = query_fn(&in_array);
-        clock_t end = clock();
-
-        total_duration = total_duration + double(end - start) / CLOCKS_PER_SEC;
-    }
-    double av_duration = total_duration / iter;
-    std::cout << "Execution time: " << av_duration << " seconds" << std::endl;
-    
-    cout << "Result: " << res << endl;
-
-    return arrow::Status::OK();
-}
-
 shared_ptr<Func> vector_fn()
 {
-    auto vec_sym = make_shared<SymNode>("vec", types::VECTOR<1>(vector<DataType>{
-        types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
+    auto vec_sym = _sym("vec", types::VECTOR<1>(vector<DataType>{
+        _i64_t, _i64_t, _i64_t, _i64_t, _i64_t, _i8_t, _i64_t }));
 
-    auto len = _call("get_vector_len", types::IDX, vector<Expr>{vec_sym});
-    auto len_sym = make_shared<SymNode>("len", len);
+    auto len = _call("get_vector_len", _idx_t, vector<Expr>{vec_sym});
+    auto len_sym = _sym("len", len);
 
-    auto idx_alloc = _alloc(types::IDX);
-    auto idx_addr = make_shared<SymNode>("idx_addr", idx_alloc);
+    auto idx_alloc = _alloc(_idx_t);
+    auto idx_addr = _sym("idx_addr", idx_alloc);
     auto idx = _load(idx_addr);
-    auto sum_alloc = _alloc(types::INT64);
-    auto sum_addr = make_shared<SymNode>("sum_addr", sum_alloc);
+    auto sum_alloc = _alloc(_i64_t);
+    auto sum_addr = _sym("sum_addr", sum_alloc);
     auto sum = _load(sum_addr);
 
     auto val_ptr = _fetchptr(vec_sym, idx, 1);
@@ -330,7 +298,7 @@ int main()
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(fn, *llmod);
+    LLVMGen::Build(loop, *llmod);
     if (llvm::verifyModule(*llmod)) {
         throw std::runtime_error("LLVM module verification failed!!!");
     }
@@ -341,16 +309,16 @@ int main()
     llfile.close();
 
     jit->AddModule(std::move(llmod));
-    // auto query_fn = jit->Lookup<void* (*)(void*, void*)>(fn->name);
+    auto query_fn = jit->Lookup<long (*)()>(fn->name);
+    cout << "Result: " << query_fn() << endl;
 
-    auto query_fn_test = jit->Lookup<int (*)(void*)>(fn->name);
-    auto status = benchmark_vector_fn(query_fn_test);
-
-    // auto status = csv_to_arrow();
-    // auto status = query_arrow_file(query_fn);
+    //auto status = csv_to_arrow();
+    /*
+    auto status = query_arrow_file(query_fn);
     if (!status.ok()) {
         cerr << status.ToString() << endl;
     }
+    */
 
     return 0;
 }
