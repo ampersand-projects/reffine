@@ -137,19 +137,19 @@ _expr<Const> _idx(int64_t);
 _expr<Const> _true();
 _expr<Const> _false();
 
-DataType _i8();
-DataType _i16();
-DataType _i32();
-DataType _i64();
-DataType _u8();
-DataType _u16();
-DataType _u32();
-DataType _u64();
-DataType _f32();
-DataType _f64();
-DataType _ch();
-DataType _idx();
-DataType _bool();
+const DataType _i8_t = types::INT8;
+const DataType _i16_t = types::INT16;
+const DataType _i32_t = types::INT32;
+const DataType _i64_t = types::INT64;
+const DataType _u8_t = types::UINT8;
+const DataType _u16_t = types::UINT16;
+const DataType _u32_t = types::UINT32;
+const DataType _u64_t = types::UINT64;
+const DataType _f32_t = types::FLOAT32;
+const DataType _f64_t = types::FLOAT64;
+const DataType _ch_t = types::CHAR_PTR;
+const DataType _idx_t = types::IDX;
+const DataType _bool_t = types::BOOL;
 
 }  // namespace reffine::tilder
 

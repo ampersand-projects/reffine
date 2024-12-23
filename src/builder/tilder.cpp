@@ -34,18 +34,18 @@ _expr<Const> _true() { return _const(BaseType::BOOL, 1); }
 _expr<Const> _false() { return _const(BaseType::BOOL, 0); }
 
 
-DataType _i8() {return types::INT8; }
-DataType _i16() {return types::INT16; }
-DataType _i32() {return types::INT32; }
-DataType _i64() {return types::INT64; }
-DataType _u8() {return types::UINT8; }
-DataType _u16() {return types::UINT16; };
-DataType _u32() {return types::UINT32; };
-DataType _u64() {return types::UINT64; };
-DataType _f32() {return types::FLOAT32; };
-DataType _f64() {return types::FLOAT64; };
-DataType _ch() {return types::CHAR_PTR; };
-DataType _idx() {return types::IDX; };
-DataType _bool() {return types::BOOL; };
+// DataType _i8() {return types::INT8; }
+// DataType _i16() {return types::INT16; }
+// DataType _i32() {return types::INT32; }
+// DataType _i64() {return types::INT64; }
+// DataType _u8() {return types::UINT8; }
+// DataType _u16() {return types::UINT16; };
+// DataType _u32() {return types::UINT32; };
+// DataType _u64() {return types::UINT64; };
+// DataType _f32() {return types::FLOAT32; };
+// DataType _f64() {return types::FLOAT64; };
+// DataType _ch() {return types::CHAR_PTR; };
+// DataType _idx() {return types::IDX; };
+// DataType _bool() {return types::BOOL; };
 
 }  // namespace reffine::tilder
