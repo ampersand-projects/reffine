@@ -66,12 +66,23 @@ OpToLoop LoopGen::op_to_loop(Op& op)
     auto loop_idx_to_op_idx_expr = make_shared<Cast>(otl.op_idx->type, load_loop_idx_expr);
     map_val(otl.op_idx, loop_idx_to_op_idx_expr);
 
-    // Loop index bound expressions
-    otl.lower_bound = make_shared<Cast>(types::IDX, get_init_val(op.idxs[0], op.preds));
-    otl.upper_bound = make_shared<Cast>(types::IDX, get_exit_val(op.idxs[0], op.preds));
+    // Loop init statement
+    otl.init = make_shared<Store>(
+        otl.loop_idx_addr,
+        make_shared<Cast>(types::IDX, get_init_val(op.idxs[0], op.preds))
+    );
+
+    // Loop exit condition
+    otl.exit_cond = make_shared<GreaterThan>(
+        make_shared<Load>(otl.loop_idx_addr),
+        make_shared<Cast>(types::IDX, get_exit_val(op.idxs[0], op.preds))
+    );
 
     // Loop index increment expression
-    otl.next_loop_idx = make_shared<Add>(load_loop_idx_expr, make_shared<Const>(BaseType::IDX, 1));
+    otl.incr = make_shared<Store>(
+        otl.loop_idx_addr,
+        make_shared<Add>(load_loop_idx_expr, make_shared<Const>(BaseType::IDX, 1))
+    );
 
     return otl;
 }
@@ -96,13 +107,11 @@ Expr LoopGen::visit(Reduce& red)
     // Loop definition
     auto red_loop = make_shared<Loop>(load_state_expr);
     red_loop->init = make_shared<Stmts>(vector<Stmt>{
-        make_shared<Store>(otl.loop_idx_addr, otl.lower_bound),
+        otl.init,
         make_shared<Store>(state_addr, red.init()),
     });
-    red_loop->incr = make_shared<Store>(otl.loop_idx_addr, otl.next_loop_idx);
-    red_loop->exit_cond = make_shared<GreaterThan>(
-        make_shared<Load>(otl.loop_idx_addr), otl.upper_bound
-    );
+    red_loop->incr = otl.incr;
+    red_loop->exit_cond = otl.exit_cond;
     red_loop->body_cond = nullptr;
     red_loop->body = make_shared<Store>(state_addr, red.acc(load_state_expr, val));
     red_loop->post = nullptr;

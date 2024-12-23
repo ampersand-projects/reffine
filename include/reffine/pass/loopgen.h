@@ -16,10 +16,9 @@ public:
 struct OpToLoop {
     Sym op_idx;
     Sym loop_idx_addr;
-    Expr lower_bound;
-    Expr upper_bound;
-    Expr next_loop_idx;
-    Expr output;
+    Stmt init;
+    Expr exit_cond;
+    Stmt incr;
 };
 
 class LoopGen : public IRClone {
