@@ -25,11 +25,11 @@
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
 #include "reffine/arrow/defs.h"
-#include "reffine/builder/tilder.h"
+#include "reffine/builder/reffiner.h"
 
 using namespace reffine;
 using namespace std;
-using namespace reffine::tilder;
+using namespace reffine::reffiner;
 
 arrow::Status csv_to_arrow()
 {
