@@ -16,7 +16,7 @@
 #include "llvm/Linker/Linker.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
-#include "reffine/pass/irgen.h"
+#include "reffine/pass/base/irgen.h"
 
 using namespace std;
 

@@ -1,7 +1,7 @@
 #ifndef INCLUDE_REFFINE_PASS_IRCLONE_H_
 #define INCLUDE_REFFINE_PASS_IRCLONE_H_
 
-#include "reffine/pass/irgen.h"
+#include "reffine/pass/base/irgen.h"
 
 namespace reffine {
 

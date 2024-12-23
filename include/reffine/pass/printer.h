@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "llvm/IR/Module.h"
-#include "reffine/pass/visitor.h"
+#include "reffine/pass/base/visitor.h"
 
 using namespace std;
 
