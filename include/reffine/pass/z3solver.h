@@ -1,7 +1,7 @@
 #ifndef INCLUDE_REFFINE_PASS_Z3SOLVER_H_
 #define INCLUDE_REFFINE_PASS_Z3SOLVER_H_
 
-#include "reffine/pass/visitor.h"
+#include "reffine/pass/base/visitor.h"
 #include "z3++.h"
 
 namespace reffine {

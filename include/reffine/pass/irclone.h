@@ -1,7 +1,7 @@
 #ifndef INCLUDE_REFFINE_PASS_IRCLONE_H_
 #define INCLUDE_REFFINE_PASS_IRCLONE_H_
 
-#include "reffine/pass/irgen.h"
+#include "reffine/pass/base/irgen.h"
 
 namespace reffine {
 
@@ -33,6 +33,7 @@ protected:
     Expr visit(NaryExpr&) override;
     Expr visit(Op&) override;
     Expr visit(Element&) override;
+    Expr visit(NotNull&) override;
     Expr visit(Reduce&) override;
     void visit(Func&) override;
 

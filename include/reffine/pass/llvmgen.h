@@ -16,7 +16,7 @@
 #include "llvm/Linker/Linker.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
-#include "reffine/pass/irgen.h"
+#include "reffine/pass/base/irgen.h"
 
 using namespace std;
 
@@ -35,7 +35,7 @@ public:
 class LLVMGen : public IRGen<llvm::Value*, llvm::Value*> {
 public:
     explicit LLVMGen(LLVMGenCtx& ctx, llvm::Module& llmod)
-        : IRGen(std::move(ctx)),
+        : IRGen(ctx),
           _llmod(llmod),
           _builder(make_unique<llvm::IRBuilder<>>(llmod.getContext()))
     {

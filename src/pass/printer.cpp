@@ -5,11 +5,11 @@
 using namespace reffine;
 using namespace std;
 
-// static const auto EXISTS = "\u2203";
 static const auto FORALL = "\u2200";
 static const auto REDCLE = "\u2295";
-// static const auto IN = "\u2208";
-// static const auto PHI = "\u0278";
+static const auto AND = "\u2227";
+// static const auto OR = "\u2228";
+static const auto PHI = "\u0278";
 
 void IRPrinter::Visit(SymNode& sym) { ostr << sym.name; }
 
@@ -51,7 +51,9 @@ void IRPrinter::Visit(Cast& e)
 
 void IRPrinter::Visit(Get& e)
 {
-    emitfunc("get<" + std::to_string(e.col) + ">", {e.val});
+    ostr << "(";
+    e.val->Accept(*this);
+    ostr << ")._" << e.col;
 }
 
 void IRPrinter::Visit(New& e)
@@ -147,9 +149,9 @@ void IRPrinter::Visit(Op& op)
     ostr << "(";
     for (const auto& pred : op.preds) {
         pred->Accept(*this);
-        ostr << " && ";
+        ostr << " " << AND << " ";
     }
-    ostr << "\b\b\b\b";
+    ostr << "\b\b\b";
     ostr << ") ";
 
     ostr << "{";
@@ -171,6 +173,12 @@ void IRPrinter::Visit(Element& elem)
     }
     ostr << "\b\b";
     ostr << "]";
+}
+
+void IRPrinter::Visit(NotNull& expr)
+{
+    expr.elem->Accept(*this);
+    ostr << "!=" << PHI;
 }
 
 void IRPrinter::Visit(Reduce& red)

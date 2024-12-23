@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "llvm/IR/Module.h"
-#include "reffine/pass/visitor.h"
+#include "reffine/pass/base/visitor.h"
 
 using namespace std;
 
@@ -49,6 +49,7 @@ public:
     void Visit(NaryExpr&) final;
     void Visit(Op&) final;
     void Visit(Element&) final;
+    void Visit(NotNull&) final;
     void Visit(Reduce&) final;
     void Visit(Alloc&) final;
     void Visit(Load&) final;
