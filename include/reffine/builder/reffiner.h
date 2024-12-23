@@ -1,16 +1,12 @@
-#ifndef INCLUDE_REFFINE_BUILDER_TILDER_H_
-#define INCLUDE_REFFINE_BUILDER_TILDER_H_
-
-#include <memory>
-#include <utility>
-#include <string>
+#ifndef INCLUDE_REFFINE_BUILDER_REFFINER_H_
+#define INCLUDE_REFFINE_BUILDER_REFFINER_H_
 
 #include "reffine/ir/expr.h"
 #include "reffine/ir/stmt.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/loop.h"
 
-namespace reffine::tilder {
+namespace reffine::reffiner {
 
 template<typename T>
 struct _expr;
@@ -121,7 +117,6 @@ REGISTER_EXPR(_sym, SymNode)
 
 #undef REGISTER_EXPR
 
-
 _expr<Const> _i8(int8_t);
 _expr<Const> _i16(int16_t);
 _expr<Const> _i32(int32_t);
@@ -151,6 +146,6 @@ const DataType _ch_t = types::CHAR_PTR;
 const DataType _idx_t = types::IDX;
 const DataType _bool_t = types::BOOL;
 
-}  // namespace reffine::tilder
+}  // namespace reffine::reffiner
 
-#endif  // INCLUDE_REFFINE_BUILDER_TILDER_H_
+#endif  // INCLUDE_REFFINE_BUILDER_REFFINER_H_
