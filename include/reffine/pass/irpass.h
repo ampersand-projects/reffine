@@ -13,9 +13,9 @@ namespace reffine {
 
 class IRPassCtx {
 public:
-    IRPassCtx(SymTable& in_sym_tbl) : in_sym_tbl(in_sym_tbl) {}
+    IRPassCtx(const SymTable& in_sym_tbl) : in_sym_tbl(in_sym_tbl) {}
 
-    SymTable& in_sym_tbl;
+    const SymTable& in_sym_tbl;
     set<Sym> sym_set;
 };
 
@@ -26,130 +26,133 @@ public:
 
     void Visit(Select& expr) override
     {
-        eval(expr.cond);
-        eval(expr.true_body);
-        eval(expr.false_body);
+        expr.cond->Accept(*this);
+        expr.true_body->Accept(*this);
+        expr.false_body->Accept(*this);
     }
 
     void Visit(IfElse& stmt) override
     {
-        eval(stmt.cond);
-        eval(stmt.true_body);
-        eval(stmt.false_body);
+        stmt.cond->Accept(*this);
+        stmt.true_body->Accept(*this);
+        stmt.false_body->Accept(*this);
     }
 
     void Visit(Const& expr) override {}
 
-    void Visit(Cast& expr) override { eval(expr.arg); }
+    void Visit(Cast& expr) override { expr.arg->Accept(*this); }
 
-    void Visit(Get& expr) override { eval(expr.val); }
+    void Visit(Get& expr) override { expr.val->Accept(*this); }
 
     void Visit(New& expr) override
     {
-        for (auto& val : expr.vals) { eval(val); }
+        for (auto& val : expr.vals) { val->Accept(*this); }
     }
 
     void Visit(NaryExpr& expr) override
     {
-        for (auto& arg : expr.args) { eval(arg); }
+        for (auto& arg : expr.args) { arg->Accept(*this); }
     }
 
     void Visit(Op& expr) override
     {
-        for (auto& pred : expr.preds) { eval(pred); }
-        for (auto& output : expr.outputs) { eval(output); }
+        for (auto& pred : expr.preds) { pred->Accept(*this); }
+        for (auto& output : expr.outputs) { output->Accept(*this); }
     }
 
     void Visit(Element& expr) override
     {
-        eval(expr.vec);
-        for (auto& idx : expr.idxs) { eval(idx); }
+        expr.vec->Accept(*this);
+        for (auto& idx : expr.idxs) { idx->Accept(*this); }
     }
 
-    void Visit(Reduce& expr) override { eval(expr.op); }
+    void Visit(Reduce& expr) override { expr.op.Accept(*this); }
 
     void Visit(Call& expr) override
     {
-        for (auto& arg : expr.args) { eval(arg); }
+        for (auto& arg : expr.args) { arg->Accept(*this); }
     }
 
     void Visit(Stmts& stmt) override
     {
-        for (auto& stmt : stmt.stmts) { eval(stmt); }
+        for (auto& stmt : stmt.stmts) { stmt->Accept(*this); }
     }
 
     void Visit(Func& stmt) override
     {
         for (auto& input : stmt.inputs) { assign(input); }
 
-        eval(stmt.output);
+        stmt.output->Accept(*this);
     }
 
-    void Visit(Alloc& expr) override { eval(expr.size); }
+    void Visit(Alloc& expr) override { expr.size->Accept(*this); }
 
-    void Visit(Load& expr) override { eval(expr.addr); }
+    void Visit(Load& expr) override { expr.addr->Accept(*this); }
 
     void Visit(Store& expr) override
     {
-        eval(expr.addr);
-        eval(expr.val);
+        expr.addr->Accept(*this);
+        expr.val->Accept(*this);
     }
 
     void Visit(Loop& expr) override
     {
-        if (expr.init) { eval(expr.init); }
-        if (expr.incr) { eval(expr.incr); }
-        eval(expr.exit_cond);
-        if (expr.body_cond) { eval(expr.body_cond); }
-        eval(expr.body);
-        if (expr.post) { eval(expr.post); }
-        eval(expr.output);
+        if (expr.init) { expr.init->Accept(*this); }
+        if (expr.incr) { expr.incr->Accept(*this); }
+        expr.exit_cond->Accept(*this);
+        if (expr.body_cond) { expr.body_cond->Accept(*this); }
+        expr.body->Accept(*this);
+        if (expr.post) { expr.post->Accept(*this); }
+        expr.output->Accept(*this);
     }
 
     void Visit(IsValid& expr) override
     {
-        eval(expr.vec);
-        eval(expr.idx);
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
     }
 
     void Visit(SetValid& expr) override
     {
-        eval(expr.vec);
-        eval(expr.idx);
-        eval(expr.validity);
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
+        expr.validity->Accept(*this);
     }
 
     void Visit(FetchDataPtr& expr) override
     {
-        eval(expr.vec);
-        eval(expr.idx);
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
     }
 
     void Visit(NoOp& stmt) override {}
 
 protected:
-    virtual CtxTy& ctx() { return _ctx; }
+    CtxTy& ctx() { return _ctx; }
 
-    CtxTy& switch_ctx(CtxTy& new_ctx)
+    void switch_ctx(CtxTy& new_ctx)
     {
         swap(new_ctx, ctx());
-        return new_ctx;
     }
 
-    void eval(Stmt stmt) { stmt->Accept(*this); }
-    void eval(Op op) { op.Accept(*this); }
-
-    void Visit(SymNode& symbol) final
+    void Visit(SymNode& symbol) override
     {
         auto tmp = tmp_sym(symbol);
 
         if (ctx().sym_set.find(tmp) == ctx().sym_set.end()) {
-            eval(ctx().in_sym_tbl.at(tmp));
+            ctx().in_sym_tbl.at(tmp)->Accept(*this);
             assign(tmp);
         }
     }
 
-    virtual void assign(Sym sym) { ctx().sym_set.insert(sym); }
+    void assign(Sym sym) { ctx().sym_set.insert(sym); }
+
+    Sym tmp_sym(SymNode& symbol)
+    {
+        shared_ptr<SymNode> tmp_sym(const_cast<SymNode*>(&symbol),
+                                    [](SymNode*) {});
+        return tmp_sym;
+    }
 
 private:
     CtxTy _ctx;
