@@ -15,6 +15,7 @@ void CanonPass::Visit(Loop& loop)
 
 void CanonPass::Build(shared_ptr<Func> func)
 {
-    CanonPass pass(func);
+    IRPassCtx ctx(func->tbl);
+    CanonPass pass(ctx);
     func->Accept(pass);
 }

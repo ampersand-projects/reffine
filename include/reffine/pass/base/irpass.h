@@ -22,7 +22,7 @@ public:
 template <typename CtxTy>
 class IRPass : public Visitor {
 public:
-    explicit IRPass(CtxTy ctx) : _ctx(std::move(ctx)) {}
+    explicit IRPass(CtxTy& ctx) : _ctx(ctx) {}
 
     void Visit(Select& expr) override
     {
@@ -153,7 +153,7 @@ protected:
     }
 
 private:
-    CtxTy _ctx;
+    CtxTy& _ctx;
 };
 
 }  // namespace reffine

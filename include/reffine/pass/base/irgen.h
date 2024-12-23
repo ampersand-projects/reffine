@@ -27,8 +27,8 @@ public:
 template <typename SymTy, typename ValTy>
 class IRGen : public IRPass<IRGenCtx<SymTy, ValTy>> {
 public:
-    IRGen(IRGenCtx<SymTy, ValTy> ctx)
-        : IRPass<IRGenCtx<SymTy, ValTy>>(std::move(ctx))
+    IRGen(IRGenCtx<SymTy, ValTy>& ctx)
+        : IRPass<IRGenCtx<SymTy, ValTy>>(ctx)
     {
     }
 
