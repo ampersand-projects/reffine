@@ -56,12 +56,20 @@ struct Element : public ExprNode {
         const auto& vtype = vec->type;
 
         // Indexing to a subspace in the vector is not supported yet.
-        ASSERT(vtype.dim == idxs.size());
+        ASSERT(vtype.dim == this->idxs.size());
 
-        for (size_t i = 0; i < idxs.size(); i++) {
-            ASSERT(vtype.dtypes[i] == idxs[i]->type);
+        for (size_t i = 0; i < this->idxs.size(); i++) {
+            ASSERT(vtype.dtypes[i] == this->idxs[i]->type);
         }
     }
+
+    void Accept(Visitor&) final;
+};
+
+struct NotNull : public ExprNode {
+    Expr elem;
+
+    NotNull(Expr elem) : ExprNode(types::BOOL), elem(elem) {}
 
     void Accept(Visitor&) final;
 };

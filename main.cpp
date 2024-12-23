@@ -252,10 +252,43 @@ void demorgan_test()
     cout << "p = " << res << endl;
 }
 
+shared_ptr<Func> reduce_op_fn()
+{
+    auto t_sym = make_shared<SymNode>("t", types::INT64);
+    auto vec_in_sym = make_shared<SymNode>("vec_in", types::VECTOR<1>(vector<DataType>{
+        types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
+    Op op(
+        vector<Sym>{t_sym},
+        vector<Expr>{
+            make_shared<NotNull>(make_shared<Element>(vec_in_sym, vector<Expr>{t_sym}))
+        },
+        vector<Expr>{
+            make_shared<Get>(make_shared<Element>(vec_in_sym, vector<Expr>{t_sym}), 1)
+        }
+    );
+
+    auto sum = make_shared<Reduce>(
+        op,
+        [] () { return make_shared<Const>(BaseType::INT64, 0); },
+        [] (Expr s, Expr v) {
+            auto e = make_shared<Get>(v, 0);
+            return make_shared<Add>(s, e);
+        }
+    );
+    auto sum_sym = make_shared<SymNode>("sum", sum);
+
+    auto foo_fn = make_shared<Func>("foo", sum_sym, vector<Sym>{});
+    foo_fn->tbl[sum_sym] = sum;
+
+    return foo_fn;
+}
+
 int main()
 {
-    auto fn = test_op_fn();
+    auto fn = reduce_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
+    return 0;
+
     auto loop = LoopGen::Build(fn);
     cout << "Loop IR (before canon):" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
