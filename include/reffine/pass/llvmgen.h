@@ -35,7 +35,7 @@ public:
 class LLVMGen : public IRGen<llvm::Value*, llvm::Value*> {
 public:
     explicit LLVMGen(LLVMGenCtx& ctx, llvm::Module& llmod)
-        : IRGen(std::move(ctx)),
+        : IRGen(ctx),
           _llmod(llmod),
           _builder(make_unique<llvm::IRBuilder<>>(llmod.getContext()))
     {
