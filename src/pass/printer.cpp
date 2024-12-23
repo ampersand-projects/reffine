@@ -8,7 +8,7 @@ using namespace std;
 static const auto FORALL = "\u2200";
 static const auto REDCLE = "\u2295";
 static const auto AND = "\u2227";
-//static const auto OR = "\u2228";
+// static const auto OR = "\u2228";
 static const auto PHI = "\u0278";
 
 void IRPrinter::Visit(SymNode& sym) { ostr << sym.name; }
