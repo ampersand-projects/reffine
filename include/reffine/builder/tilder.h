@@ -137,6 +137,20 @@ _expr<Const> _idx(int64_t);
 _expr<Const> _true();
 _expr<Const> _false();
 
+DataType _i8();
+DataType _i16();
+DataType _i32();
+DataType _i64();
+DataType _u8();
+DataType _u16();
+DataType _u32();
+DataType _u64();
+DataType _f32();
+DataType _f64();
+DataType _ch();
+DataType _idx();
+DataType _bool();
+
 }  // namespace reffine::tilder
 
 #endif  // INCLUDE_REFFINE_BUILDER_TILDER_H_
