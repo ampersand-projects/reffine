@@ -25,9 +25,11 @@
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
 #include "reffine/arrow/defs.h"
+#include "reffine/builder/reffiner.h"
 
 using namespace reffine;
 using namespace std;
+using namespace reffine::reffiner;
 
 arrow::Status csv_to_arrow()
 {
@@ -84,35 +86,35 @@ arrow::Status query_arrow_file(long (*query_fn)(void*))
 
 shared_ptr<Func> vector_fn()
 {
-    auto vec_sym = make_shared<SymNode>("vec", types::VECTOR<1>(vector<DataType>{
-        types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
+    auto vec_sym = _sym("vec", types::VECTOR<1>(vector<DataType>{
+        _i64_t, _i64_t, _i64_t, _i64_t, _i64_t, _i8_t, _i64_t }));
 
-    auto len = make_shared<Call>("get_vector_len", types::IDX, vector<Expr>{vec_sym});
-    auto len_sym = make_shared<SymNode>("len", len);
+    auto len = _call("get_vector_len", _idx_t, vector<Expr>{vec_sym});
+    auto len_sym = _sym("len", len);
 
-    auto idx_alloc = make_shared<Alloc>(types::IDX);
-    auto idx_addr = make_shared<SymNode>("idx_addr", idx_alloc);
-    auto idx = make_shared<Load>(idx_addr);
-    auto sum_alloc = make_shared<Alloc>(types::INT64);
-    auto sum_addr = make_shared<SymNode>("sum_addr", sum_alloc);
-    auto sum = make_shared<Load>(sum_addr);
+    auto idx_alloc = _alloc(_idx_t);
+    auto idx_addr = _sym("idx_addr", idx_alloc);
+    auto idx = _load(idx_addr);
+    auto sum_alloc = _alloc(_i64_t);
+    auto sum_addr = _sym("sum_addr", sum_alloc);
+    auto sum = _load(sum_addr);
 
-    auto val_ptr = make_shared<FetchDataPtr>(vec_sym, idx, 1);
-    auto val = make_shared<Load>(val_ptr);
+    auto val_ptr = _fetchptr(vec_sym, idx, 1);
+    auto val = _load(val_ptr);
 
-    auto loop = make_shared<Loop>(make_shared<Load>(sum_addr));
-    auto loop_sym = make_shared<SymNode>("loop", loop);
-    loop->init = make_shared<Stmts>(vector<Stmt>{
-        make_shared<Store>(idx_addr, make_shared<Const>(BaseType::IDX, 0)),
-        make_shared<Store>(sum_addr, make_shared<Const>(BaseType::INT64, 0)),
+    auto loop = _loop(_load(sum_addr));
+    auto loop_sym = _sym("loop", loop);
+    loop->init = _stmts(vector<Stmt>{
+        _store(idx_addr, _idx(0)),
+        _store(sum_addr, _i64(0)),
     });
-    loop->exit_cond = make_shared<GreaterThanEqual>(idx, len_sym);
-    loop->body = make_shared<Stmts>(vector<Stmt>{
-        make_shared<Store>(sum_addr, make_shared<Add>(sum, val)),
-        make_shared<Store>(idx_addr, make_shared<Add>(idx, make_shared<Const>(BaseType::IDX, 1))),
+    loop->exit_cond = _gte(idx, len_sym);
+    loop->body = _stmts(vector<Stmt>{
+        _store(sum_addr, sum + val),
+        _store(idx_addr, idx + _idx(1)),
     });
 
-    auto foo_fn = make_shared<Func>("foo", loop_sym, vector<Sym>{vec_sym});
+    auto foo_fn = _func("foo", loop_sym, vector<Sym>{vec_sym});
     foo_fn->tbl[len_sym] = len;
     foo_fn->tbl[idx_addr] = idx_alloc;
     foo_fn->tbl[sum_addr] = sum_alloc;
