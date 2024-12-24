@@ -110,8 +110,8 @@ shared_ptr<Func> vector_fn()
     });
     loop->exit_cond = _gte(idx, len_sym);
     loop->body = _stmts(vector<Stmt>{
-        _store(sum_addr, _add(sum, val)),
-        _store(idx_addr, _add(idx, _idx(1))),
+        _store(sum_addr, sum + val),
+        _store(idx_addr, idx + _idx(1)),
     });
 
     auto foo_fn = _func("foo", loop_sym, vector<Sym>{vec_sym});
