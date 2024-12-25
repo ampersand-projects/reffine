@@ -27,7 +27,9 @@ public:
 template <typename SymTy, typename ValTy>
 class IRGen : public IRPassBase<IRGenCtx<SymTy, ValTy>> {
 public:
-    IRGen(IRGenCtx<SymTy, ValTy>& ctx) : IRPassBase<IRGenCtx<SymTy, ValTy>>(ctx) {}
+    IRGen(IRGenCtx<SymTy, ValTy>& ctx) : IRPassBase<IRGenCtx<SymTy, ValTy>>(ctx)
+    {
+    }
 
 protected:
     virtual tuple<SymTy, ValTy> visit(Sym, Expr)

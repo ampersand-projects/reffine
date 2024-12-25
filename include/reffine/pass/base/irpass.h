@@ -51,7 +51,6 @@ private:
     CtxTy& _ctx;
 };
 
-
 template <typename CtxTy>
 class IRPass : public IRPassBase<CtxTy> {
 public:
@@ -164,10 +163,7 @@ public:
     void Visit(NoOp& stmt) override {}
 
 protected:
-    void Visit(SymNode& sym) final
-    {
-        IRPassBase<CtxTy>::Visit(sym);
-    }
+    void Visit(SymNode& sym) final { IRPassBase<CtxTy>::Visit(sym); }
 };
 
 }  // namespace reffine
