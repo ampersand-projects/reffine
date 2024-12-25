@@ -20,9 +20,42 @@ public:
 };
 
 template <typename CtxTy>
-class IRPass : public Visitor {
+class IRPassBase : public Visitor {
 public:
-    explicit IRPass(CtxTy& ctx) : _ctx(ctx) {}
+    explicit IRPassBase(CtxTy& ctx) : _ctx(ctx) {}
+
+    void Visit(SymNode& symbol) override
+    {
+        auto tmp = tmp_sym(symbol);
+
+        if (ctx().sym_set.find(tmp) == ctx().sym_set.end()) {
+            ctx().in_sym_tbl.at(tmp)->Accept(*this);
+            this->assign(tmp);
+        }
+    }
+
+protected:
+    CtxTy& ctx() { return _ctx; }
+
+    void switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); }
+    void assign(Sym sym) { ctx().sym_set.insert(sym); }
+
+    Sym tmp_sym(SymNode& symbol)
+    {
+        shared_ptr<SymNode> tmp_sym(const_cast<SymNode*>(&symbol),
+                                    [](SymNode*) {});
+        return tmp_sym;
+    }
+
+private:
+    CtxTy& _ctx;
+};
+
+
+template <typename CtxTy>
+class IRPass : public IRPassBase<CtxTy> {
+public:
+    explicit IRPass(CtxTy& ctx) : IRPassBase<CtxTy>(ctx) {}
 
     void Visit(Select& expr) override
     {
@@ -56,7 +89,7 @@ public:
 
     void Visit(Op& expr) override
     {
-        for (auto& idx : expr.idxs) { assign(idx); }
+        for (auto& idx : expr.idxs) { this->assign(idx); }
         for (auto& pred : expr.preds) { pred->Accept(*this); }
         for (auto& output : expr.outputs) { output->Accept(*this); }
     }
@@ -83,7 +116,7 @@ public:
 
     void Visit(Func& stmt) override
     {
-        for (auto& input : stmt.inputs) { assign(input); }
+        for (auto& input : stmt.inputs) { this->assign(input); }
 
         stmt.output->Accept(*this);
     }
@@ -131,31 +164,10 @@ public:
     void Visit(NoOp& stmt) override {}
 
 protected:
-    CtxTy& ctx() { return _ctx; }
-
-    void switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); }
-
-    void Visit(SymNode& symbol) override
+    void Visit(SymNode& sym) final
     {
-        auto tmp = tmp_sym(symbol);
-
-        if (ctx().sym_set.find(tmp) == ctx().sym_set.end()) {
-            ctx().in_sym_tbl.at(tmp)->Accept(*this);
-            assign(tmp);
-        }
+        IRPassBase<CtxTy>::Visit(sym);
     }
-
-    void assign(Sym sym) { ctx().sym_set.insert(sym); }
-
-    Sym tmp_sym(SymNode& symbol)
-    {
-        shared_ptr<SymNode> tmp_sym(const_cast<SymNode*>(&symbol),
-                                    [](SymNode*) {});
-        return tmp_sym;
-    }
-
-private:
-    CtxTy& _ctx;
 };
 
 }  // namespace reffine
