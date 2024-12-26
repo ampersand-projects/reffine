@@ -101,10 +101,7 @@ void IRClone::visit(Func& func)
     _ctx.new_func->output = eval(func.output);
 }
 
-tuple<Sym, Expr> IRClone::visit(Sym old_sym, Expr old_val)
+Expr IRClone::visit(Sym old_sym)
 {
-    auto new_val = eval(old_val);
-    auto new_sym = make_shared<SymNode>(old_sym->name, old_sym);
-
-    return {new_sym, new_val};
+    return make_shared<SymNode>(old_sym->name, old_sym);
 }

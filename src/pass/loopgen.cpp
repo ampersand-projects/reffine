@@ -58,15 +58,15 @@ OpToLoop LoopGen::op_to_loop(Op& op)
     auto loop_idx_addr_expr = make_shared<Alloc>(types::IDX);
     otl.loop_idx_addr =
         make_shared<SymNode>("loop_idx_addr", loop_idx_addr_expr);
-    map_val(otl.loop_idx_addr, loop_idx_addr_expr);
+    this->assign(otl.loop_idx_addr, loop_idx_addr_expr);
     auto load_loop_idx_expr = make_shared<Load>(otl.loop_idx_addr);
 
     // Map op idx to loop idx
     otl.op_idx = make_shared<SymNode>(op.idxs[0]->name, op.idxs[0]);
-    map_sym(op.idxs[0], otl.op_idx);
+    this->map_sym(op.idxs[0], otl.op_idx);
     auto loop_idx_to_op_idx_expr =
         make_shared<Cast>(otl.op_idx->type, load_loop_idx_expr);
-    map_val(otl.op_idx, loop_idx_to_op_idx_expr);
+    this->assign(otl.op_idx, loop_idx_to_op_idx_expr);
 
     // Loop init statement
     otl.init = make_shared<Store>(
@@ -94,7 +94,7 @@ Expr LoopGen::visit(Reduce& red)
     // State allocation and initialization
     auto state_addr_expr = make_shared<Alloc>(red.type);
     auto state_addr = make_shared<SymNode>("state_addr", state_addr_expr);
-    map_val(state_addr, state_addr_expr);
+    this->assign(state_addr, state_addr_expr);
     auto load_state_expr = make_shared<Load>(state_addr);
 
     // Loop body expression

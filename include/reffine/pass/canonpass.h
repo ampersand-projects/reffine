@@ -6,7 +6,7 @@
 
 namespace reffine {
 
-class CanonPass : public IRPass<IRPassCtx> {
+class CanonPass : public IRPass {
 public:
     explicit CanonPass(IRPassCtx& ctx) : IRPass(ctx) {}
 

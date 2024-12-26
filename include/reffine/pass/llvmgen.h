@@ -24,18 +24,18 @@ extern const char* vinstr_str;
 
 namespace reffine {
 
-class LLVMGenCtx : public IRGenCtx<llvm::Value*, llvm::Value*> {
+class LLVMGenCtx : public IRPassBaseCtx<llvm::Value*> {
 public:
-    LLVMGenCtx(shared_ptr<Func> func, map<llvm::Value*, llvm::Value*> m = {})
-        : IRGenCtx(func->tbl, m)
-    {
-    }
+    LLVMGenCtx(shared_ptr<Func> func, map<Sym, llvm::Value*> m = {})
+        : IRPassBaseCtx<llvm::Value*>(func->tbl, m)
+        {
+        }
 };
 
-class LLVMGen : public IRGen<llvm::Value*, llvm::Value*> {
+class LLVMGen : public IRGenBase<llvm::Value*> {
 public:
     explicit LLVMGen(LLVMGenCtx& ctx, llvm::Module& llmod)
-        : IRGen(ctx),
+        : IRGenBase(ctx),
           _llmod(llmod),
           _builder(make_unique<llvm::IRBuilder<>>(llmod.getContext()))
     {
@@ -47,7 +47,7 @@ public:
 private:
     void register_vinstrs();
 
-    tuple<llvm::Value*, llvm::Value*> visit(Sym, Expr) final;
+    llvm::Value* visit(Sym) final;
     llvm::Value* visit(Call&) final;
     void visit(IfElse&) final;
     void visit(NoOp&) final;
