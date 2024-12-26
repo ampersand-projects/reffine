@@ -28,8 +28,8 @@ class LLVMGenCtx : public IRPassBaseCtx<llvm::Value*> {
 public:
     LLVMGenCtx(shared_ptr<Func> func, map<Sym, llvm::Value*> m = {})
         : IRPassBaseCtx<llvm::Value*>(func->tbl, m)
-        {
-        }
+    {
+    }
 };
 
 class LLVMGen : public IRGenBase<llvm::Value*> {

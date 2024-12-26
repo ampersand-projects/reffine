@@ -15,15 +15,10 @@ namespace reffine {
 template <typename ValTy>
 class IRGenBase : public IRPassBase<ValTy> {
 public:
-    IRGenBase(IRPassBaseCtx<ValTy>& ctx) : IRPassBase<ValTy>(ctx)
-    {
-    }
+    IRGenBase(IRPassBaseCtx<ValTy>& ctx) : IRPassBase<ValTy>(ctx) {}
 
 protected:
-    virtual ValTy visit(Sym)
-    {
-        throw runtime_error("Operation not supported");
-    }
+    virtual ValTy visit(Sym) { throw runtime_error("Operation not supported"); }
     virtual ValTy visit(Select&)
     {
         throw runtime_error("Operation not supported");
@@ -162,7 +157,6 @@ private:
     ValTy _val;
 };
 
-
 class IRGenCtx : public IRPassBaseCtx<Expr> {
 public:
     IRGenCtx(const SymTable& in_sym_tbl, map<Sym, Expr>& out_sym_tbl)
@@ -170,14 +164,12 @@ public:
     {
     }
 
-    map<Sym, Sym> sym_sym_map;     // mapping from old sym to new sym
+    map<Sym, Sym> sym_sym_map;  // mapping from old sym to new sym
 };
 
 class IRGen : public IRGenBase<Expr> {
 public:
-    IRGen(IRGenCtx& ctx) : IRGenBase<Expr>(ctx), _irgenctx(ctx)
-    {
-    }
+    IRGen(IRGenCtx& ctx) : IRGenBase<Expr>(ctx), _irgenctx(ctx) {}
 
 protected:
     void Visit(SymNode& symbol) final

@@ -11,16 +11,19 @@ using namespace std;
 
 namespace reffine {
 
-template<typename ValTy>
+template <typename ValTy>
 class IRPassBaseCtx {
 public:
-    IRPassBaseCtx(const SymTable& in_sym_tbl, map<Sym, ValTy>& out_sym_tbl) : in_sym_tbl(in_sym_tbl), out_sym_tbl(out_sym_tbl) {}
+    IRPassBaseCtx(const SymTable& in_sym_tbl, map<Sym, ValTy>& out_sym_tbl)
+        : in_sym_tbl(in_sym_tbl), out_sym_tbl(out_sym_tbl)
+    {
+    }
 
     const SymTable& in_sym_tbl;
     map<Sym, ValTy>& out_sym_tbl;
 };
 
-template<typename ValTy>
+template <typename ValTy>
 class IRPassBase : public Visitor {
 public:
     explicit IRPassBase(IRPassBaseCtx<ValTy>& ctx) : _ctx(ctx) {}
@@ -43,7 +46,10 @@ private:
 
 class IRPassCtx : public IRPassBaseCtx<Sym> {
 public:
-    IRPassCtx(const SymTable& in_sym_tbl, map<Sym, Sym> m = {}) : IRPassBaseCtx<Sym>(in_sym_tbl, m) {}
+    IRPassCtx(const SymTable& in_sym_tbl, map<Sym, Sym> m = {})
+        : IRPassBaseCtx<Sym>(in_sym_tbl, m)
+    {
+    }
 };
 
 class IRPass : public IRPassBase<Sym> {
