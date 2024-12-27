@@ -8,7 +8,7 @@ using namespace std;
 static const auto FORALL = "\u2200";
 static const auto REDCLE = "\u2295";
 static const auto AND = "\u2227";
-// static const auto OR = "\u2228";
+static const auto OR = "\u2228";
 static const auto PHI = "\u0278";
 
 void IRPrinter::Visit(SymNode& sym) { ostr << sym.name; }
@@ -117,10 +117,10 @@ void IRPrinter::Visit(NaryExpr& e)
             emitunary("!", e.arg(0));
             break;
         case MathOp::AND:
-            emitbinary(e.arg(0), "&&", e.arg(1));
+            emitbinary(e.arg(0), AND, e.arg(1));
             break;
         case MathOp::OR:
-            emitbinary(e.arg(0), "||", e.arg(1));
+            emitbinary(e.arg(0), OR, e.arg(1));
             break;
         case MathOp::LT:
             emitbinary(e.arg(0), "<", e.arg(1));
@@ -146,13 +146,7 @@ void IRPrinter::Visit(Op& op)
     if (op.idxs.size() > 0) { ostr << "\b\b"; }
     ostr << ": ";
 
-    ostr << "(";
-    for (const auto& pred : op.preds) {
-        pred->Accept(*this);
-        ostr << " " << AND << " ";
-    }
-    ostr << "\b\b\b";
-    ostr << ") ";
+    op.pred->Accept(*this);
 
     ostr << "{";
     for (const auto& output : op.outputs) {

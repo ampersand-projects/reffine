@@ -12,13 +12,13 @@ namespace reffine {
 
 struct Op : public ExprNode {
     vector<Sym> idxs;
-    vector<Expr> preds;
+    Expr pred;
     vector<Expr> outputs;
 
-    Op(vector<Sym> idxs, vector<Expr> preds, vector<Expr> outputs)
+    Op(vector<Sym> idxs, Expr pred, vector<Expr> outputs)
         : ExprNode(extract_type(idxs, outputs)),
           idxs(std::move(idxs)),
-          preds(std::move(preds)),
+          pred(pred),
           outputs(std::move(outputs))
     {
     }

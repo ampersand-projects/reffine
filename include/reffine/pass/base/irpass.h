@@ -89,7 +89,7 @@ public:
     void Visit(Op& expr) override
     {
         for (auto& idx : expr.idxs) { this->assign(idx); }
-        for (auto& pred : expr.preds) { pred->Accept(*this); }
+        expr.pred->Accept(*this);
         for (auto& output : expr.outputs) { output->Accept(*this); }
     }
 

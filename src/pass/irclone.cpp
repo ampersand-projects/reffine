@@ -12,15 +12,14 @@ shared_ptr<Op> IRClone::visit_op(Op& op)
         map_sym(old_idx, new_idx);
     }
 
-    vector<Expr> new_preds;
-    for (auto& old_pred : op.preds) { new_preds.push_back(eval(old_pred)); }
+    auto new_pred = eval(op.pred);
 
     vector<Expr> new_outputs;
     for (auto& old_output : op.outputs) {
         new_outputs.push_back(eval(old_output));
     }
 
-    return make_shared<Op>(new_idxs, new_preds, new_outputs);
+    return make_shared<Op>(new_idxs, new_pred, new_outputs);
 }
 
 Expr IRClone::visit(Reduce& red)

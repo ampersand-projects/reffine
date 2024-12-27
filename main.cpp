@@ -212,10 +212,10 @@ shared_ptr<Func> test_op_fn()
     auto t_sym = make_shared<SymNode>("t", types::INT64);
     Op op(
         vector<Sym>{t_sym},
-        vector<Expr>{
+        make_shared<And>(
             make_shared<GreaterThan>(t_sym, make_shared<Const>(BaseType::INT64, 0)),
-            make_shared<LessThan>(t_sym, make_shared<Const>(BaseType::INT64, 10)),
-        },
+            make_shared<LessThan>(t_sym, make_shared<Const>(BaseType::INT64, 10))
+        ),
         vector<Expr>{t_sym}
     );
 
@@ -261,9 +261,7 @@ shared_ptr<Func> reduce_op_fn()
         types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
     Op op(
         vector<Sym>{t_sym},
-        vector<Expr>{
-            make_shared<NotNull>(make_shared<Element>(vec_in_sym, vector<Expr>{t_sym}))
-        },
+        make_shared<NotNull>(make_shared<Element>(vec_in_sym, vector<Expr>{t_sym})),
         vector<Expr>{
             make_shared<Get>(make_shared<Element>(vec_in_sym, vector<Expr>{t_sym}), 1)
         }
