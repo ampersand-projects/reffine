@@ -14,10 +14,10 @@ public:
 };
 
 struct OpToLoop {
-    Sym op_idx;
     Sym loop_idx_addr;
     Stmt init;
     Expr exit_cond;
+    Expr body_cond;
     Stmt incr;
 };
 
