@@ -41,7 +41,7 @@ Expr get_exit_val(Sym idx, Expr pred)
     return nullptr;
 }
 
-IterSpace ReffinePass::Build(Op& op)
+IterSpace ReffinePass::visit(NaryExpr& expr)
 {
     IterSpace ispace;
 
@@ -59,4 +59,14 @@ IterSpace ReffinePass::Build(Op& op)
     };
 
     return ispace;
+}
+
+IterSpace ReffinePass::Build(Op& op)
+{
+    ReffinePassCtx ctx;
+    ReffinePass rpass(ctx);
+
+    op.pred->Accept(rpass);
+
+    return rpass.val();
 }

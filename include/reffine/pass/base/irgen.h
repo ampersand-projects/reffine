@@ -157,6 +157,28 @@ private:
     ValTy _val;
 };
 
+template<typename ValTy>
+class ValGenCtx : public IRPassBaseCtx<ValTy> {
+public:
+    ValGenCtx(SymTable tmp1 = {}, map<Sym, ValTy> tmp2 = {})
+        : IRPassBaseCtx<ValTy>(tmp1, tmp2)
+        {
+        }
+};
+
+template<typename ValTy>
+class ValGen : public IRGenBase<ValTy> {
+public:
+    ValGen(ValGenCtx<ValTy>& ctx) : IRGenBase<ValTy>(ctx) {}
+
+protected:
+    void Visit(SymNode& symbol) final
+    {
+        auto sym = this->tmp_sym(symbol);
+        this->val() = this->visit(sym);
+    }
+};
+
 class IRGenCtx : public IRPassBaseCtx<Expr> {
 public:
     IRGenCtx(const SymTable& in_sym_tbl, map<Sym, Expr>& out_sym_tbl)

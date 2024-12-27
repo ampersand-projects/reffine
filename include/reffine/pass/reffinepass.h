@@ -16,20 +16,13 @@ struct IterSpace {
     std::function<Expr(Expr)> idx_incr;
 };
 
-class ReffineCtx : public IRPassBaseCtx<IterSpace> {
-public:
-    ReffineCtx(const SymTable& in_sym_tbl, map<Sym, IterSpace> m = {})
-        : IRPassBaseCtx<IterSpace>(in_sym_tbl, m)
-    {
-    }
-};
+using ReffinePassCtx = ValGenCtx<IterSpace>;
 
-class ReffinePass : public IRGenBase<IterSpace> {
+class ReffinePass : public ValGen<IterSpace> {
 public:
-    ReffinePass(ReffineCtx& ctx) : IRGenBase<IterSpace>(ctx) {}
+    ReffinePass(ReffinePassCtx& ctx) : ValGen<IterSpace>(ctx) {}
 
     static IterSpace Build(Op&);
-
 private:
     IterSpace visit(NaryExpr&) final;
 };
