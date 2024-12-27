@@ -20,7 +20,9 @@ private:
 
 class IRClone : public IRGen {
 public:
-    explicit IRClone(IRCloneCtx& ctx) : IRGen(ctx), _ctx(ctx) {}
+    explicit IRClone(IRCloneCtx& ctx) : IRGen(ctx), _irclonectx(ctx) {}
+
+    static shared_ptr<Func> Build(shared_ptr<Func> func);
 
 protected:
     Expr visit(Sym) override;
@@ -40,7 +42,7 @@ protected:
 private:
     shared_ptr<Op> visit_op(Op&);
 
-    IRCloneCtx& _ctx;
+    IRCloneCtx& _irclonectx;
 };
 
 }  // namespace reffine
