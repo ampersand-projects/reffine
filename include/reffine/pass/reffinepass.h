@@ -18,7 +18,10 @@ struct IterSpace {
 
 class ReffineCtx : public IRPassBaseCtx<IterSpace> {
 public:
-    ReffineCtx(const SymTable& in_sym_tbl, map<Sym, IterSpace> m = {}) : IRPassBaseCtx<IterSpace>(in_sym_tbl, m) {}
+    ReffineCtx(const SymTable& in_sym_tbl, map<Sym, IterSpace> m = {})
+        : IRPassBaseCtx<IterSpace>(in_sym_tbl, m)
+    {
+    }
 };
 
 class ReffinePass : public IRGenBase<IterSpace> {

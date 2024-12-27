@@ -1,4 +1,5 @@
 #include "reffine/pass/loopgen.h"
+
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/z3solver.h"
 
@@ -28,22 +29,16 @@ OpToLoop LoopGen::op_to_loop(Op& op)
     this->assign(op_iter, loop_idx_to_op_idx_expr);
 
     // Loop init statement
-    otl.init = make_shared<Store>(
-        otl.loop_idx_addr,
-        ispace.iter_to_idx(ispace.lower_bound)
-    );
+    otl.init = make_shared<Store>(otl.loop_idx_addr,
+                                  ispace.iter_to_idx(ispace.lower_bound));
 
     // Loop exit condition
     otl.exit_cond = make_shared<GreaterThan>(
-        load_loop_idx_expr,
-        ispace.iter_to_idx(ispace.upper_bound)
-    );
+        load_loop_idx_expr, ispace.iter_to_idx(ispace.upper_bound));
 
     // Loop index increment expression
-    otl.incr = make_shared<Store>(
-        otl.loop_idx_addr,
-        ispace.idx_incr(load_loop_idx_expr)
-    );
+    otl.incr = make_shared<Store>(otl.loop_idx_addr,
+                                  ispace.idx_incr(load_loop_idx_expr));
 
     // Loop body condition
     otl.body_cond = ispace.body_cond;

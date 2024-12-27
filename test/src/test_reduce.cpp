@@ -63,12 +63,10 @@ shared_ptr<Func> vector_op()
 {
     auto t_sym = make_shared<SymNode>("t", types::INT64);
     Op op(vector<Sym>{t_sym},
-          make_shared<And>(
-              make_shared<GreaterThan>(t_sym,
-                                       make_shared<Const>(BaseType::INT64, 0)),
-              make_shared<LessThan>(t_sym,
-                                    make_shared<Const>(BaseType::INT64, 10))
-          ),
+          make_shared<And>(make_shared<GreaterThan>(
+                               t_sym, make_shared<Const>(BaseType::INT64, 0)),
+                           make_shared<LessThan>(
+                               t_sym, make_shared<Const>(BaseType::INT64, 10))),
           vector<Expr>{t_sym});
 
     auto sum = make_shared<Reduce>(
