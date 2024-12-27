@@ -94,17 +94,25 @@ void IRClone::visit(Func& func)
     // Populate loop function inputs
     for (auto& old_input : func.inputs) {
         auto new_input = make_shared<SymNode>(old_input->name, old_input);
-        _ctx.new_func->inputs.push_back(new_input);
-        map_sym(old_input, new_input);
+        _irclonectx.new_func->inputs.push_back(new_input);
+        this->map_sym(old_input, new_input);
     }
 
-    _ctx.new_func->output = eval(func.output);
+    _irclonectx.new_func->output = eval(func.output);
 }
 
-tuple<Sym, Expr> IRClone::visit(Sym old_sym, Expr old_val)
+Expr IRClone::visit(Sym old_sym)
 {
-    auto new_val = eval(old_val);
-    auto new_sym = make_shared<SymNode>(old_sym->name, old_sym);
+    return make_shared<SymNode>(old_sym->name, old_sym);
+}
 
-    return {new_sym, new_val};
+shared_ptr<Func> IRClone::Build(shared_ptr<Func> func)
+{
+    auto new_func = make_shared<Func>(func->name, nullptr, vector<Sym>{});
+
+    IRCloneCtx ctx(func, new_func);
+    IRClone irclone(ctx);
+    func->Accept(irclone);
+
+    return new_func;
 }

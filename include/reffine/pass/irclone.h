@@ -5,7 +5,7 @@
 
 namespace reffine {
 
-class IRCloneCtx : public IRGenCtx<Sym, Expr> {
+class IRCloneCtx : public IRGenCtx {
 public:
     IRCloneCtx(shared_ptr<Func> old_func, shared_ptr<Func> new_func)
         : IRGenCtx(old_func->tbl, new_func->tbl), new_func(new_func)
@@ -18,12 +18,14 @@ private:
     friend class IRClone;
 };
 
-class IRClone : public IRGen<Sym, Expr> {
+class IRClone : public IRGen {
 public:
-    explicit IRClone(IRCloneCtx& ctx) : IRGen(ctx), _ctx(ctx) {}
+    explicit IRClone(IRCloneCtx& ctx) : IRGen(ctx), _irclonectx(ctx) {}
+
+    static shared_ptr<Func> Build(shared_ptr<Func> func);
 
 protected:
-    tuple<Sym, Expr> visit(Sym, Expr) override;
+    Expr visit(Sym) override;
     Expr visit(Call&) override;
     Expr visit(Select&) override;
     Expr visit(Const&) override;
@@ -40,7 +42,7 @@ protected:
 private:
     shared_ptr<Op> visit_op(Op&);
 
-    IRCloneCtx& _ctx;
+    IRCloneCtx& _irclonectx;
 };
 
 }  // namespace reffine

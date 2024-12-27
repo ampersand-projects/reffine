@@ -11,34 +11,27 @@ using namespace std;
 
 namespace reffine {
 
-class IRPassCtx {
+template <typename ValTy>
+class IRPassBaseCtx {
 public:
-    IRPassCtx(const SymTable& in_sym_tbl) : in_sym_tbl(in_sym_tbl) {}
-
-    const SymTable& in_sym_tbl;
-    set<Sym> sym_set;
-};
-
-template <typename CtxTy>
-class IRPassBase : public Visitor {
-public:
-    explicit IRPassBase(CtxTy& ctx) : _ctx(ctx) {}
-
-    void Visit(SymNode& symbol) override
+    IRPassBaseCtx(const SymTable& in_sym_tbl, map<Sym, ValTy>& out_sym_tbl)
+        : in_sym_tbl(in_sym_tbl), out_sym_tbl(out_sym_tbl)
     {
-        auto tmp = tmp_sym(symbol);
-
-        if (ctx().sym_set.find(tmp) == ctx().sym_set.end()) {
-            ctx().in_sym_tbl.at(tmp)->Accept(*this);
-            this->assign(tmp);
-        }
     }
 
-protected:
-    CtxTy& ctx() { return _ctx; }
+    const SymTable& in_sym_tbl;
+    map<Sym, ValTy>& out_sym_tbl;
+};
 
-    void switch_ctx(CtxTy& new_ctx) { swap(new_ctx, ctx()); }
-    void assign(Sym sym) { ctx().sym_set.insert(sym); }
+template <typename ValTy>
+class IRPassBase : public Visitor {
+public:
+    explicit IRPassBase(IRPassBaseCtx<ValTy>& ctx) : _ctx(ctx) {}
+
+protected:
+    IRPassBaseCtx<ValTy>& ctx() { return _ctx; }
+
+    void assign(Sym sym, ValTy val) { ctx().out_sym_tbl[sym] = val; }
 
     Sym tmp_sym(SymNode& symbol)
     {
@@ -48,13 +41,20 @@ protected:
     }
 
 private:
-    CtxTy& _ctx;
+    IRPassBaseCtx<ValTy>& _ctx;
 };
 
-template <typename CtxTy>
-class IRPass : public IRPassBase<CtxTy> {
+class IRPassCtx : public IRPassBaseCtx<Sym> {
 public:
-    explicit IRPass(CtxTy& ctx) : IRPassBase<CtxTy>(ctx) {}
+    IRPassCtx(const SymTable& in_sym_tbl, map<Sym, Sym> m = {})
+        : IRPassBaseCtx<Sym>(in_sym_tbl, m)
+    {
+    }
+};
+
+class IRPass : public IRPassBase<Sym> {
+public:
+    explicit IRPass(IRPassCtx& ctx) : IRPassBase(ctx) {}
 
     void Visit(Select& expr) override
     {
@@ -163,7 +163,17 @@ public:
     void Visit(NoOp& stmt) override {}
 
 protected:
-    void Visit(SymNode& sym) final { IRPassBase<CtxTy>::Visit(sym); }
+    void Visit(SymNode& symbol) override
+    {
+        auto tmp = tmp_sym(symbol);
+
+        if (ctx().out_sym_tbl.find(tmp) == ctx().out_sym_tbl.end()) {
+            ctx().in_sym_tbl.at(tmp)->Accept(*this);
+            this->assign(tmp);
+        }
+    }
+
+    void assign(Sym sym) { IRPassBase<Sym>::assign(sym, sym); }
 };
 
 }  // namespace reffine

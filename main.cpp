@@ -279,7 +279,7 @@ shared_ptr<Func> reduce_op_fn()
     );
     auto sum_sym = make_shared<SymNode>("sum", sum);
 
-    auto foo_fn = make_shared<Func>("foo", sum_sym, vector<Sym>{});
+    auto foo_fn = make_shared<Func>("foo", sum_sym, vector<Sym>{vec_in_sym});
     foo_fn->tbl[sum_sym] = sum;
 
     return foo_fn;
@@ -289,6 +289,9 @@ int main()
 {
     auto fn = reduce_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
+    auto fn2 = IRClone::Build(fn);
+    cout << "Reffine IR 2:" << endl << IRPrinter::Build(fn2) << endl;
+
     return 0;
 
     auto loop = LoopGen::Build(fn);

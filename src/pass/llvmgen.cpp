@@ -451,7 +451,7 @@ void LLVMGen::visit(Func& func)
     for (size_t i = 0; i < func.inputs.size(); i++) {
         auto input = func.inputs[i];
         fn->getArg(i)->setName(input->name);
-        map_sym(input, fn->getArg(i));
+        this->assign(input, fn->getArg(i));
     }
 
     auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
@@ -493,8 +493,9 @@ void LLVMGen::register_vinstrs()
     }
 }
 
-tuple<llvm::Value*, llvm::Value*> LLVMGen::visit(Sym old_sym, Expr old_val)
+llvm::Value* LLVMGen::visit(Sym old_sym)
 {
+    auto old_val = this->ctx().in_sym_tbl.at(old_sym);
     auto new_val = eval(old_val);
 
     auto var_addr = builder()->CreateAlloca(new_val->getType(), nullptr);
@@ -503,7 +504,7 @@ tuple<llvm::Value*, llvm::Value*> LLVMGen::visit(Sym old_sym, Expr old_val)
     auto var = builder()->CreateLoad(lltype(old_sym), var_addr);
     var->setName(old_sym->name);
 
-    return {var, new_val};
+    return var;
 }
 
 void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
