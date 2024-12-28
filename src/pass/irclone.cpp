@@ -5,11 +5,11 @@ using namespace reffine;
 
 shared_ptr<Op> IRClone::visit_op(Op& op)
 {
-    vector<Sym> new_idxs;
-    for (auto& old_idx : op.idxs) {
-        auto new_idx = make_shared<SymNode>(old_idx->name, old_idx);
-        new_idxs.push_back(new_idx);
-        map_sym(old_idx, new_idx);
+    vector<Sym> new_iters;
+    for (auto& old_iter : op.iters) {
+        auto new_iter = make_shared<SymNode>(old_iter->name, old_iter);
+        new_iters.push_back(new_iter);
+        map_sym(old_iter, new_iter);
     }
 
     auto new_pred = eval(op.pred);
@@ -19,7 +19,7 @@ shared_ptr<Op> IRClone::visit_op(Op& op)
         new_outputs.push_back(eval(old_output));
     }
 
-    return make_shared<Op>(new_idxs, new_pred, new_outputs);
+    return make_shared<Op>(new_iters, new_pred, new_outputs);
 }
 
 Expr IRClone::visit(Reduce& red)
@@ -32,15 +32,17 @@ Expr IRClone::visit(Op& op) { return IRClone::visit_op(op); }
 
 Expr IRClone::visit(Element& elem)
 {
-    vector<Expr> new_idxs;
-    for (auto& old_idx : elem.idxs) { new_idxs.push_back(eval(old_idx)); }
+    vector<Expr> new_iters;
+    for (auto& old_iter : elem.iters) { new_iters.push_back(eval(old_iter)); }
 
-    return make_shared<Element>(eval(elem.vec), new_idxs);
+    return make_shared<Element>(eval(elem.vec), new_iters);
 }
 
-Expr IRClone::visit(NotNull& expr)
+Expr IRClone::visit(In& expr)
 {
-    return make_shared<NotNull>(eval(expr.elem));
+    vector<Expr> new_iters;
+    for (auto& iter : expr.iters) { new_iters.push_back(eval(iter)); }
+    return make_shared<In>(new_iters, eval(expr.vec));
 }
 
 Expr IRClone::visit(NaryExpr& nexpr)

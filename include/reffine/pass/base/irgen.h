@@ -52,7 +52,7 @@ protected:
     {
         throw runtime_error("Operation not supported");
     }
-    virtual ValTy visit(NotNull&)
+    virtual ValTy visit(In&)
     {
         throw runtime_error("Operation not supported");
     }
@@ -114,7 +114,7 @@ protected:
     void Visit(NaryExpr& expr) final { val() = visit(expr); }
     void Visit(Op& expr) final { val() = visit(expr); }
     void Visit(Element& expr) final { val() = visit(expr); }
-    void Visit(NotNull& expr) final { val() = visit(expr); }
+    void Visit(In& expr) final { val() = visit(expr); }
     void Visit(Reduce& expr) final { val() = visit(expr); }
     void Visit(Call& expr) final { val() = visit(expr); }
     void Visit(Stmts& stmt) final { visit(stmt); }

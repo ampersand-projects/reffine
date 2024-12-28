@@ -9,7 +9,8 @@ static const auto FORALL = "\u2200";
 static const auto REDCLE = "\u2295";
 static const auto AND = "\u2227";
 static const auto OR = "\u2228";
-static const auto PHI = "\u0278";
+//static const auto PHI = "\u0278";
+static const auto IN = "\u2208";
 
 void IRPrinter::Visit(SymNode& sym) { ostr << sym.name; }
 
@@ -142,11 +143,13 @@ void IRPrinter::Visit(NaryExpr& e)
 void IRPrinter::Visit(Op& op)
 {
     ostr << FORALL << " ";
-    for (const auto& idx : op.idxs) { ostr << idx->name << ", "; }
-    if (op.idxs.size() > 0) { ostr << "\b\b"; }
+    for (const auto& iter : op.iters) { ostr << iter->name << ", "; }
+    if (op.iters.size() > 0) { ostr << "\b\b"; }
     ostr << ": ";
 
+    ostr << "(";
     op.pred->Accept(*this);
+    ostr << ")";
 
     ostr << "{";
     for (const auto& output : op.outputs) {
@@ -161,18 +164,22 @@ void IRPrinter::Visit(Element& elem)
 {
     elem.vec->Accept(*this);
     ostr << "[";
-    for (const auto& idx : elem.idxs) {
-        idx->Accept(*this);
+    for (const auto& iter : elem.iters) {
+        iter->Accept(*this);
         ostr << ", ";
     }
     ostr << "\b\b";
     ostr << "]";
 }
 
-void IRPrinter::Visit(NotNull& expr)
+void IRPrinter::Visit(In& expr)
 {
-    expr.elem->Accept(*this);
-    ostr << "!=" << PHI;
+    ostr << "(";
+    for (const auto& iter : expr.iters) {
+        iter->Accept(*this);
+    }
+    ostr << ") " << IN << " ";
+    expr.vec->Accept(*this);
 }
 
 void IRPrinter::Visit(Reduce& red)

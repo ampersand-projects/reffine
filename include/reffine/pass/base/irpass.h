@@ -88,7 +88,7 @@ public:
 
     void Visit(Op& expr) override
     {
-        for (auto& idx : expr.idxs) { this->assign(idx); }
+        for (auto& iter : expr.iters) { this->assign(iter); }
         expr.pred->Accept(*this);
         for (auto& output : expr.outputs) { output->Accept(*this); }
     }
@@ -96,10 +96,15 @@ public:
     void Visit(Element& expr) override
     {
         expr.vec->Accept(*this);
-        for (auto& idx : expr.idxs) { idx->Accept(*this); }
+        for (auto& iter : expr.iters) { iter->Accept(*this); }
     }
 
-    void Visit(NotNull& expr) override { expr.elem->Accept(*this); }
+    void Visit(In& expr) override {
+        for (const auto& iter : expr.iters) {
+        iter->Accept(*this);
+        }
+        expr.vec->Accept(*this);
+       }
 
     void Visit(Reduce& expr) override { expr.op.Accept(*this); }
 

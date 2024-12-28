@@ -48,7 +48,7 @@ public:
     {
         throw runtime_error("Operation not supported");
     }
-    virtual void Visit(NotNull&)
+    virtual void Visit(In&)
     {
         throw runtime_error("Operation not supported");
     }

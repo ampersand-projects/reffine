@@ -11,7 +11,7 @@ OpToLoop LoopGen::op_to_loop(Op& op)
     OpToLoop otl;
 
     // Only support single indexed operations
-    ASSERT(op.idxs.size() == 1);
+    ASSERT(op.iters.size() == 1);
 
     auto ispace = ReffinePass::Build(op);
 
@@ -23,8 +23,8 @@ OpToLoop LoopGen::op_to_loop(Op& op)
     auto load_loop_idx_expr = make_shared<Load>(otl.loop_idx_addr);
 
     // Map op idx to loop idx
-    auto op_iter = make_shared<SymNode>(op.idxs[0]->name, op.idxs[0]);
-    this->map_sym(op.idxs[0], op_iter);
+    auto op_iter = make_shared<SymNode>(op.iters[0]->name, op.iters[0]);
+    this->map_sym(op.iters[0], op_iter);
     auto loop_idx_to_op_idx_expr = ispace.idx_to_iter(load_loop_idx_expr);
     this->assign(op_iter, loop_idx_to_op_idx_expr);
 
