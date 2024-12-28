@@ -117,11 +117,36 @@ IterSpace ReffinePass::visit(Sym sym)
         ispace.idx_incr = [](Expr idx) {
             return make_shared<Add>(idx, make_shared<Const>(BaseType::IDX, 1));
         };
+    } else if (sym->type.is_vector()) {
+        ispace.space = sym;
+        ispace.lower_bound = make_shared<Call>("vector_lookup", sym->type.dtypes[0], vector<Expr>{sym, make_shared<Const>(BaseType::IDX, 0)});
+
+        auto len = make_shared<Call>("get_vector_len", types::IDX, vector<Expr>{sym});
+        auto last_idx = make_shared<Sub>(len, make_shared<Const>(BaseType::IDX, 1));
+        ispace.upper_bound = make_shared<Call>("vector_lookup", sym->type.dtypes[0], vector<Expr>{sym, last_idx});
+        ispace.body_cond = make_shared<Const>(BaseType::BOOL, 1);
+        ispace.idx_to_iter = [sym](Expr idx) {
+            return make_shared<Call>("vector_lookup", sym->type.dtypes[0], vector<Expr>{sym, idx});
+        };
+        ispace.iter_to_idx = [sym](Expr iter) {
+            return make_shared<Call>("vector_locate", types::IDX, vector<Expr>{sym, iter});
+        };
+        ispace.idx_incr = [](Expr idx) {
+            return make_shared<Add>(idx, make_shared<Const>(BaseType::IDX, 1));
+        };
     } else {
         throw runtime_error("Something went wrong");
     }
 
     return ispace;
+}
+
+IterSpace ReffinePass::visit(In& in)
+{
+    auto iter_ispace = eval(in.iters[0]);
+    auto vec_isapce = eval(in.vec);
+
+    return intersect(vec_isapce, iter_ispace);
 }
 
 IterSpace ReffinePass::Build(Op& op)

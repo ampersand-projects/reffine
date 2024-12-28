@@ -28,6 +28,7 @@ public:
 private:
     IterSpace visit(NaryExpr&) final;
     IterSpace visit(Sym) final;
+    IterSpace visit(In&) final;
 
     Op& op() { return _op; }
 
