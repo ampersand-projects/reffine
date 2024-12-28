@@ -105,8 +105,8 @@ IterSpace ReffinePass::visit(Sym sym)
 
     if (sym == op().iters[0]) {
         ispace.space = sym;
-        ispace.lower_bound = make_shared<Const>(sym->type.btype, -10000); // -Inf
-        ispace.upper_bound = make_shared<Const>(sym->type.btype, 10000); // +Inf
+        ispace.lower_bound = make_shared<Const>(sym->type.btype, -INF);
+        ispace.upper_bound = make_shared<Const>(sym->type.btype, INF);
         ispace.body_cond = make_shared<Const>(BaseType::BOOL, 1);
         ispace.idx_to_iter = [sym](Expr idx) {
             return make_shared<Cast>(sym->type, idx);
