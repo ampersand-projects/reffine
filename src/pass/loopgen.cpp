@@ -20,28 +20,34 @@ OpToLoop LoopGen::op_to_loop(Op& op)
     otl.loop_idx_addr =
         make_shared<SymNode>("loop_idx_addr", loop_idx_addr_expr);
     this->assign(otl.loop_idx_addr, loop_idx_addr_expr);
+    this->map_sym(otl.loop_idx_addr, otl.loop_idx_addr);
+
+    // Loop idx symbol
     auto load_loop_idx_expr = make_shared<Load>(otl.loop_idx_addr);
+    auto loop_idx = make_shared<SymNode>("loop_idx", load_loop_idx_expr);
+    this->assign(loop_idx, load_loop_idx_expr);
+    this->map_sym(loop_idx, loop_idx);
 
     // Map op idx to loop idx
     auto op_iter = make_shared<SymNode>(op.iters[0]->name, op.iters[0]);
     this->map_sym(op.iters[0], op_iter);
-    auto loop_idx_to_op_idx_expr = ispace.idx_to_iter(load_loop_idx_expr);
+    auto loop_idx_to_op_idx_expr = eval(ispace.idx_to_iter(loop_idx));
     this->assign(op_iter, loop_idx_to_op_idx_expr);
 
     // Loop init statement
-    otl.init = make_shared<Store>(otl.loop_idx_addr,
-                                  ispace.iter_to_idx(ispace.lower_bound));
+    auto lb_expr = eval(ispace.iter_to_idx(ispace.lower_bound));
+    otl.init = make_shared<Store>(otl.loop_idx_addr, lb_expr);
 
     // Loop exit condition
-    otl.exit_cond = make_shared<GreaterThan>(
-        load_loop_idx_expr, ispace.iter_to_idx(ispace.upper_bound));
+    auto ub_expr = eval(ispace.iter_to_idx(ispace.upper_bound));
+    otl.exit_cond = make_shared<GreaterThan>(load_loop_idx_expr, ub_expr);
 
     // Loop index increment expression
-    otl.incr = make_shared<Store>(otl.loop_idx_addr,
-                                  ispace.idx_incr(load_loop_idx_expr));
+    auto incr_expr = eval(ispace.idx_incr(loop_idx));
+    otl.incr = make_shared<Store>(otl.loop_idx_addr, incr_expr);
 
     // Loop body condition
-    otl.body_cond = ispace.body_cond;
+    otl.body_cond = nullptr;
 
     return otl;
 }

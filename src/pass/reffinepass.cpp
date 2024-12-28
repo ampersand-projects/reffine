@@ -154,12 +154,5 @@ IterSpace Reffine::Build(Op& op)
     ReffineCtx ctx;
     Reffine rpass(ctx, op);
 
-    op.pred->Accept(rpass);
-
-    auto ispace = rpass.val();
-
-    // Removing body_cond for now
-    ispace.body_cond = nullptr;
-
-    return ispace;
+    return rpass.eval(op.pred);
 }

@@ -290,8 +290,8 @@ int main()
 
     auto loop = LoopGen::Build(fn);
     cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
-    return 0;
     CanonPass::Build(loop);
+    return 0;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
