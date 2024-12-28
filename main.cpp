@@ -209,19 +209,19 @@ shared_ptr<Func> transform_fn()
 
 shared_ptr<Func> test_op_fn()
 {
-    auto t_sym = make_shared<SymNode>("t", types::INT64);
+    auto t_sym = make_shared<SymNode>("t", types::INT32);
     Op op(
         vector<Sym>{t_sym},
         make_shared<And>(
-            make_shared<GreaterThan>(t_sym, make_shared<Const>(BaseType::INT64, 0)),
-            make_shared<LessThan>(t_sym, make_shared<Const>(BaseType::INT64, 10))
+            make_shared<GreaterThan>(t_sym, make_shared<Const>(BaseType::INT32, 0)),
+            make_shared<LessThan>(t_sym, make_shared<Const>(BaseType::INT32, 10))
         ),
         vector<Expr>{t_sym}
     );
 
     auto sum = make_shared<Reduce>(
         op,
-        [] () { return make_shared<Const>(BaseType::INT64, 0); },
+        [] () { return make_shared<Const>(BaseType::INT32, 0); },
         [] (Expr s, Expr v) {
             auto e = make_shared<Get>(v, 0);
             return make_shared<Add>(s, e);
@@ -285,17 +285,12 @@ shared_ptr<Func> reduce_op_fn()
 
 int main()
 {
-    auto fn = reduce_op_fn();
+    auto fn = test_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
-    auto fn2 = IRClone::Build(fn);
-    cout << "Reffine IR 2:" << endl << IRPrinter::Build(fn2) << endl;
-
-    return 0;
 
     auto loop = LoopGen::Build(fn);
-    cout << "Loop IR (before canon):" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
-    cout << "Loop IR (after canon):" << endl << IRPrinter::Build(loop) << endl;
+    cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
