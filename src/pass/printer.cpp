@@ -9,7 +9,7 @@ static const auto FORALL = "\u2200";
 static const auto REDCLE = "\u2295";
 static const auto AND = "\u2227";
 static const auto OR = "\u2228";
-//static const auto PHI = "\u0278";
+// static const auto PHI = "\u0278";
 static const auto IN = "\u2208";
 
 void IRPrinter::Visit(SymNode& sym) { ostr << sym.name; }
@@ -175,9 +175,7 @@ void IRPrinter::Visit(Element& elem)
 void IRPrinter::Visit(In& expr)
 {
     ostr << "(";
-    for (const auto& iter : expr.iters) {
-        iter->Accept(*this);
-    }
+    for (const auto& iter : expr.iters) { iter->Accept(*this); }
     ostr << ") " << IN << " ";
     expr.vec->Accept(*this);
 }

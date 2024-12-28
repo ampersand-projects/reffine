@@ -52,10 +52,7 @@ protected:
     {
         throw runtime_error("Operation not supported");
     }
-    virtual ValTy visit(In&)
-    {
-        throw runtime_error("Operation not supported");
-    }
+    virtual ValTy visit(In&) { throw runtime_error("Operation not supported"); }
     virtual ValTy visit(Reduce&)
     {
         throw runtime_error("Operation not supported");
@@ -157,16 +154,16 @@ private:
     ValTy _val;
 };
 
-template<typename ValTy>
+template <typename ValTy>
 class ValGenCtx : public IRPassBaseCtx<ValTy> {
 public:
     ValGenCtx(SymTable tmp1 = {}, map<Sym, ValTy> tmp2 = {})
         : IRPassBaseCtx<ValTy>(tmp1, tmp2)
-        {
-        }
+    {
+    }
 };
 
-template<typename ValTy>
+template <typename ValTy>
 class ValGen : public IRGenBase<ValTy> {
 public:
     ValGen(ValGenCtx<ValTy>& ctx) : IRGenBase<ValTy>(ctx) {}

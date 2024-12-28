@@ -48,10 +48,7 @@ public:
     {
         throw runtime_error("Operation not supported");
     }
-    virtual void Visit(In&)
-    {
-        throw runtime_error("Operation not supported");
-    }
+    virtual void Visit(In&) { throw runtime_error("Operation not supported"); }
     virtual void Visit(Reduce&)
     {
         throw runtime_error("Operation not supported");

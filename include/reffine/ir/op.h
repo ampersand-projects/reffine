@@ -55,9 +55,7 @@ struct Element : public ExprNode {
     {
         const auto& vtype = vec->type;
 
-        for (const auto& iter : iters) {
-            ASSERT(iter->type.is_val());
-        }
+        for (const auto& iter : iters) { ASSERT(iter->type.is_val()); }
         ASSERT(vtype.is_vector());
 
         // Indexing to a subspace in the vector is not supported yet.
@@ -75,13 +73,12 @@ struct In : public ExprNode {
     vector<Expr> iters;
     Expr vec;
 
-    In(vector<Expr> iters, Expr vec) : ExprNode(types::BOOL), iters(iters), vec(vec)
+    In(vector<Expr> iters, Expr vec)
+        : ExprNode(types::BOOL), iters(iters), vec(vec)
     {
         const auto& vtype = vec->type;
 
-        for (const auto& iter : iters) {
-            ASSERT(iter->type.is_val());
-        }
+        for (const auto& iter : iters) { ASSERT(iter->type.is_val()); }
         ASSERT(vtype.is_vector());
 
         // Indexing to a subspace in the vector is not supported yet.
