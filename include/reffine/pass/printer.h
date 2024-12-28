@@ -49,7 +49,6 @@ public:
     void Visit(NaryExpr&) final;
     void Visit(Op&) final;
     void Visit(Element&) final;
-    void Visit(In&) final;
     void Visit(Reduce&) final;
     void Visit(Alloc&) final;
     void Visit(Load&) final;

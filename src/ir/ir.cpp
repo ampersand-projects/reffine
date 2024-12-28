@@ -14,7 +14,6 @@ void New::Accept(Visitor& v) { v.Visit(*this); }
 void NaryExpr::Accept(Visitor& v) { v.Visit(*this); }
 void Op::Accept(Visitor& v) { v.Visit(*this); }
 void Element::Accept(Visitor& v) { v.Visit(*this); }
-void In::Accept(Visitor& v) { v.Visit(*this); }
 void Reduce::Accept(Visitor& v) { v.Visit(*this); }
 void Stmts::Accept(Visitor& v) { v.Visit(*this); }
 void Alloc::Accept(Visitor& v) { v.Visit(*this); }

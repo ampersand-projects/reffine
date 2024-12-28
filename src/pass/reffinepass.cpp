@@ -141,10 +141,10 @@ IterSpace Reffine::visit(Sym sym)
     return ispace;
 }
 
-IterSpace Reffine::visit(In& in)
+IterSpace Reffine::visit(Element& elem)
 {
-    auto iter_ispace = eval(in.iters[0]);
-    auto vec_isapce = eval(in.vec);
+    auto iter_ispace = eval(elem.iters[0]);
+    auto vec_isapce = eval(elem.vec);
 
     return intersect(vec_isapce, iter_ispace);
 }

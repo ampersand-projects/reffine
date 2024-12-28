@@ -69,29 +69,6 @@ struct Element : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-struct In : public ExprNode {
-    vector<Expr> iters;
-    Expr vec;
-
-    In(vector<Expr> iters, Expr vec)
-        : ExprNode(types::BOOL), iters(iters), vec(vec)
-    {
-        const auto& vtype = vec->type;
-
-        for (const auto& iter : iters) { ASSERT(iter->type.is_val()); }
-        ASSERT(vtype.is_vector());
-
-        // Indexing to a subspace in the vector is not supported yet.
-        ASSERT(vtype.dim == this->iters.size());
-
-        for (size_t i = 0; i < this->iters.size(); i++) {
-            ASSERT(vtype.dtypes[i] == this->iters[i]->type);
-        }
-    }
-
-    void Accept(Visitor&) final;
-};
-
 typedef function<Expr()> InitFnTy;           // () -> state
 typedef function<Expr(Expr, Expr)> AccFnTy;  // (state, val) -> state
 
