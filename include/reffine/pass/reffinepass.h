@@ -20,11 +20,16 @@ using ReffinePassCtx = ValGenCtx<IterSpace>;
 
 class ReffinePass : public ValGen<IterSpace> {
 public:
-    ReffinePass(ReffinePassCtx& ctx) : ValGen<IterSpace>(ctx) {}
+    ReffinePass(ReffinePassCtx& ctx, Op& op) : ValGen<IterSpace>(ctx), _op(op) {}
 
     static IterSpace Build(Op&);
 private:
     IterSpace visit(NaryExpr&) final;
+    IterSpace visit(Sym) final;
+
+    Op& op() {  return _op; }
+
+    Op& _op;
 };
 
 }  // namespace reffine
