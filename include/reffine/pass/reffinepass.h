@@ -6,7 +6,6 @@
 namespace reffine {
 
 struct IterSpace {
-    Sym iter;
     Sym space;
     Expr lower_bound;
     Expr upper_bound;

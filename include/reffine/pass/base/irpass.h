@@ -40,6 +40,12 @@ protected:
         return tmp_sym;
     }
 
+    Expr tmp_expr(ExprNode& expr)
+    {
+        Expr tmp_expr(const_cast<ExprNode*>(&expr), [](ExprNode*) {});
+        return tmp_expr;
+    }
+
 private:
     IRPassBaseCtx<ValTy>& _ctx;
 };
