@@ -40,7 +40,7 @@ OpToLoop LoopGen::op_to_loop(Op& op)
 
     // Loop exit condition
     auto ub_expr = eval(ispace.iter_to_idx(ispace.upper_bound));
-    otl.exit_cond = make_shared<GreaterThan>(load_loop_idx_expr, ub_expr);
+    otl.exit_cond = make_shared<GreaterThan>(loop_idx, ub_expr);
 
     // Loop index increment expression
     auto incr_expr = eval(ispace.idx_incr(loop_idx));
