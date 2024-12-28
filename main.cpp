@@ -285,12 +285,13 @@ shared_ptr<Func> reduce_op_fn()
 
 int main()
 {
-    auto fn = test_op_fn();
+    auto fn = reduce_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
 
     auto loop = LoopGen::Build(fn);
-    CanonPass::Build(loop);
     cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
+    return 0;
+    CanonPass::Build(loop);
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
