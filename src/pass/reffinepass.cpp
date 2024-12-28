@@ -84,7 +84,7 @@ IterSpace intersect(IterSpace a, IterSpace b)
     return ispace;
 }
 
-IterSpace ReffinePass::visit(NaryExpr& e)
+IterSpace Reffine::visit(NaryExpr& e)
 {
     switch (e.op) {
         case MathOp::AND:
@@ -95,11 +95,11 @@ IterSpace ReffinePass::visit(NaryExpr& e)
         case MathOp::GTE:
             return apply_bounds(eval(e.arg(0)), this->tmp_expr(e));
         default:
-            throw runtime_error("Operator not supported by ReffinePass");
+            throw runtime_error("Operator not supported by Reffine");
     }
 }
 
-IterSpace ReffinePass::visit(Sym sym)
+IterSpace Reffine::visit(Sym sym)
 {
     IterSpace ispace;
 
@@ -141,7 +141,7 @@ IterSpace ReffinePass::visit(Sym sym)
     return ispace;
 }
 
-IterSpace ReffinePass::visit(In& in)
+IterSpace Reffine::visit(In& in)
 {
     auto iter_ispace = eval(in.iters[0]);
     auto vec_isapce = eval(in.vec);
@@ -149,10 +149,10 @@ IterSpace ReffinePass::visit(In& in)
     return intersect(vec_isapce, iter_ispace);
 }
 
-IterSpace ReffinePass::Build(Op& op)
+IterSpace Reffine::Build(Op& op)
 {
-    ReffinePassCtx ctx;
-    ReffinePass rpass(ctx, op);
+    ReffineCtx ctx;
+    Reffine rpass(ctx, op);
 
     op.pred->Accept(rpass);
 

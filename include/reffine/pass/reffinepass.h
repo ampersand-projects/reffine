@@ -15,11 +15,11 @@ struct IterSpace {
     std::function<Expr(Expr)> idx_incr;
 };
 
-using ReffinePassCtx = ValGenCtx<IterSpace>;
+using ReffineCtx = ValGenCtx<IterSpace>;
 
-class ReffinePass : public ValGen<IterSpace> {
+class Reffine : public ValGen<IterSpace> {
 public:
-    ReffinePass(ReffinePassCtx& ctx, Op& op) : ValGen<IterSpace>(ctx), _op(op)
+    Reffine(ReffineCtx& ctx, Op& op) : ValGen<IterSpace>(ctx), _op(op)
     {
     }
 

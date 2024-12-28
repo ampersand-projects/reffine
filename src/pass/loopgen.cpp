@@ -13,7 +13,7 @@ OpToLoop LoopGen::op_to_loop(Op& op)
     // Only support single indexed operations
     ASSERT(op.iters.size() == 1);
 
-    auto ispace = ReffinePass::Build(op);
+    auto ispace = Reffine::Build(op);
 
     // Loop index allocation
     auto loop_idx_addr_expr = make_shared<Alloc>(types::IDX);
