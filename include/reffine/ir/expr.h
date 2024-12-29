@@ -46,7 +46,10 @@ struct Select : public ExprNode {
 struct Const : public ExprNode {
     const double val;
 
-    Const(BaseType btype, double val) : ExprNode(DataType(btype)), val(val) {}
+    Const(DataType type, double val) : ExprNode(type), val(val)
+    {
+        ASSERT(type.is_primitive());
+    }
 
     void Accept(Visitor&) final;
 };

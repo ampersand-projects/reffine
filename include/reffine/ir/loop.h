@@ -70,7 +70,7 @@ struct FetchDataPtr : public ExprNode {
 struct Alloc : public ExprNode {
     Expr size;
 
-    Alloc(DataType type, Expr size = make_shared<Const>(BaseType::UINT32, 1))
+    Alloc(DataType type, Expr size = make_shared<Const>(types::UINT32, 1))
         : ExprNode(type.ptr()), size(size)
     {
         ASSERT(size->type.is_int() && !size->type.is_signed());

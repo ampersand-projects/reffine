@@ -71,7 +71,7 @@ Expr IRClone::visit(Cast& cast)
 
 Expr IRClone::visit(Const& cnst)
 {
-    return make_shared<Const>(cnst.type.btype, cnst.val);
+    return make_shared<Const>(cnst.type, cnst.val);
 }
 
 Expr IRClone::visit(Select& select)

@@ -17,7 +17,7 @@ Expr get_lower_bound(Sym iter, Expr pred)
     Z3Solver solver;
     if (solver.check(forall) == z3::sat) {
         auto p_val = solver.get(p).as_int64();
-        return make_shared<Const>(iter->type.btype, p_val);
+        return make_shared<Const>(iter->type, p_val);
     }
 
     return nullptr;
@@ -36,7 +36,7 @@ Expr get_upper_bound(Sym iter, Expr pred)
     Z3Solver solver;
     if (solver.check(forall) == z3::sat) {
         auto p_val = solver.get(p).as_int64();
-        return make_shared<Const>(iter->type.btype, p_val);
+        return make_shared<Const>(iter->type, p_val);
     }
 
     return nullptr;
@@ -109,9 +109,9 @@ IterSpace Reffine::visit(Sym sym)
 
     if (sym == op().iters[0]) {
         ispace.space = sym;
-        ispace.lower_bound = make_shared<Const>(sym->type.btype, -INF);
-        ispace.upper_bound = make_shared<Const>(sym->type.btype, INF);
-        ispace.body_cond = make_shared<Const>(BaseType::BOOL, 1);
+        ispace.lower_bound = make_shared<Const>(sym->type, -INF);
+        ispace.upper_bound = make_shared<Const>(sym->type, INF);
+        ispace.body_cond = make_shared<Const>(types::BOOL, 1);
         ispace.idx_to_iter = [sym](Expr idx) {
             return make_shared<Cast>(sym->type, idx);
         };
@@ -119,21 +119,21 @@ IterSpace Reffine::visit(Sym sym)
             return make_shared<Cast>(types::IDX, iter);
         };
         ispace.idx_incr = [](Expr idx) {
-            return make_shared<Add>(idx, make_shared<Const>(BaseType::IDX, 1));
+            return make_shared<Add>(idx, make_shared<Const>(types::IDX, 1));
         };
     } else if (sym->type.is_vector()) {
         ispace.space = sym;
         ispace.lower_bound = make_shared<Call>(
             "vector_lookup", sym->type.dtypes[0],
-            vector<Expr>{sym, make_shared<Const>(BaseType::IDX, 0)});
+            vector<Expr>{sym, make_shared<Const>(types::IDX, 0)});
 
         auto len =
             make_shared<Call>("get_vector_len", types::IDX, vector<Expr>{sym});
         auto last_idx =
-            make_shared<Sub>(len, make_shared<Const>(BaseType::IDX, 1));
+            make_shared<Sub>(len, make_shared<Const>(types::IDX, 1));
         ispace.upper_bound = make_shared<Call>(
             "vector_lookup", sym->type.dtypes[0], vector<Expr>{sym, last_idx});
-        ispace.body_cond = make_shared<Const>(BaseType::BOOL, 1);
+        ispace.body_cond = make_shared<Const>(types::BOOL, 1);
         ispace.idx_to_iter = [sym](Expr idx) {
             return make_shared<Call>("vector_lookup", sym->type.dtypes[0],
                                      vector<Expr>{sym, idx});
@@ -143,7 +143,7 @@ IterSpace Reffine::visit(Sym sym)
                                      vector<Expr>{sym, iter});
         };
         ispace.idx_incr = [](Expr idx) {
-            return make_shared<Add>(idx, make_shared<Const>(BaseType::IDX, 1));
+            return make_shared<Add>(idx, make_shared<Const>(types::IDX, 1));
         };
     } else {
         throw runtime_error("Something went wrong");

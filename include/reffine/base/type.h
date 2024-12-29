@@ -81,6 +81,11 @@ struct DataType {
                (this->btype == BaseType::FLOAT64);
     }
 
+    bool is_primitive() const
+    {
+        return (this->is_int() || this->is_float() || this->is_idx() || this->btype == BaseType::BOOL);
+    }
+
     bool is_int() const
     {
         return (this->btype == BaseType::INT8) ||

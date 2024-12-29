@@ -17,13 +17,13 @@ shared_ptr<Func> transform_loop()
                                  vector<Expr>{vec_in_sym});
     auto len_sym = make_shared<SymNode>("len", len);
 
-    auto zero = make_shared<Const>(BaseType::IDX, 0);
-    auto one = make_shared<Const>(BaseType::IDX, 1);
-    auto eight = make_shared<Const>(BaseType::INT64, 8);
-    auto sixty = make_shared<Const>(BaseType::INT64, 60);
-    auto twenty = make_shared<Const>(BaseType::INT64, 20);
-    auto _true = make_shared<Const>(BaseType::BOOL, 1);
-    auto _false = make_shared<Const>(BaseType::BOOL, 0);
+    auto zero = make_shared<Const>(types::IDX, 0);
+    auto one = make_shared<Const>(types::IDX, 1);
+    auto eight = make_shared<Const>(types::INT64, 8);
+    auto sixty = make_shared<Const>(types::INT64, 60);
+    auto twenty = make_shared<Const>(types::INT64, 20);
+    auto _true = make_shared<Const>(types::BOOL, 1);
+    auto _false = make_shared<Const>(types::BOOL, 0);
 
     auto idx_alloc = make_shared<Alloc>(types::IDX);
     auto idx_addr = make_shared<SymNode>("idx_addr", idx_alloc);
@@ -72,8 +72,8 @@ shared_ptr<Func> transform_loop()
         make_shared<Store>(
             out_sleep_data_ptr,
             make_shared<Select>(make_shared<LessThan>(hours_slept_data, eight),
-                                make_shared<Const>(BaseType::INT8, 0),
-                                make_shared<Const>(BaseType::INT8, 1))),
+                                make_shared<Const>(types::INT8, 0),
+                                make_shared<Const>(types::INT8, 1))),
         make_shared<SetValid>(vec_out_sym, idx, _true, 2)});
     loop->post = make_shared<Call>(
         "set_vector_len", types::INT64,

@@ -133,13 +133,13 @@ shared_ptr<Func> transform_fn()
     auto len = make_shared<Call>("get_vector_len", types::IDX, vector<Expr>{vec_in_sym});
     auto len_sym = make_shared<SymNode>("len", len);
 
-    auto zero = make_shared<Const>(BaseType::IDX, 0);
-    auto one = make_shared<Const>(BaseType::IDX, 1);
-    auto eight = make_shared<Const>(BaseType::INT64, 8);
-    auto sixty = make_shared<Const>(BaseType::INT64, 60);
-    auto twenty = make_shared<Const>(BaseType::INT64, 20);
-    auto _true = make_shared<Const>(BaseType::BOOL, 1);
-    auto _false = make_shared<Const>(BaseType::BOOL, 0);
+    auto zero = make_shared<Const>(types::IDX, 0);
+    auto one = make_shared<Const>(types::IDX, 1);
+    auto eight = make_shared<Const>(types::INT64, 8);
+    auto sixty = make_shared<Const>(types::INT64, 60);
+    auto twenty = make_shared<Const>(types::INT64, 20);
+    auto _true = make_shared<Const>(types::BOOL, 1);
+    auto _false = make_shared<Const>(types::BOOL, 0);
 
     auto idx_alloc = make_shared<Alloc>(types::IDX);
     auto idx_addr = make_shared<SymNode>("idx_addr", idx_alloc);
@@ -189,8 +189,8 @@ shared_ptr<Func> transform_fn()
             out_sleep_data_ptr,
             make_shared<Select>(
                 make_shared<LessThan>(hours_slept_data, eight),
-		make_shared<Const>(BaseType::INT8, 0),
-		make_shared<Const>(BaseType::INT8, 1)
+		make_shared<Const>(types::INT8, 0),
+		make_shared<Const>(types::INT8, 1)
 	    )
         ),
         make_shared<SetValid>(vec_out_sym, idx, _true, 2)
@@ -213,15 +213,15 @@ shared_ptr<Func> test_op_fn()
     Op op(
         vector<Sym>{t_sym},
         make_shared<And>(
-            make_shared<GreaterThan>(t_sym, make_shared<Const>(BaseType::INT32, 0)),
-            make_shared<LessThan>(t_sym, make_shared<Const>(BaseType::INT32, 10))
+            make_shared<GreaterThan>(t_sym, make_shared<Const>(types::INT32, 0)),
+            make_shared<LessThan>(t_sym, make_shared<Const>(types::INT32, 10))
         ),
         vector<Expr>{t_sym}
     );
 
     auto sum = make_shared<Reduce>(
         op,
-        [] () { return make_shared<Const>(BaseType::INT32, 0); },
+        [] () { return make_shared<Const>(types::INT32, 0); },
         [] (Expr s, Expr v) {
             auto e = make_shared<Get>(v, 0);
             return make_shared<Add>(s, e);
@@ -238,7 +238,7 @@ shared_ptr<Func> test_op_fn()
 void demorgan_test()
 {
     auto t = make_shared<SymNode>("t", types::INT64);
-    auto lb = make_shared<Const>(BaseType::INT64, 10);
+    auto lb = make_shared<Const>(types::INT64, 10);
     auto pred = make_shared<GreaterThanEqual>(t, lb);
 
     auto p = make_shared<SymNode>("p", t);
@@ -264,9 +264,9 @@ shared_ptr<Func> reduce_op_fn()
         make_shared<And>(
             make_shared<And>(
                 make_shared<NotNull>(make_shared<Element>(vec_in_sym, vector<Expr>{t_sym})),
-                make_shared<LessThanEqual>(t_sym, make_shared<Const>(BaseType::INT64, 20))
+                make_shared<LessThanEqual>(t_sym, make_shared<Const>(types::INT64, 20))
                 ),
-            make_shared<GreaterThanEqual>(t_sym, make_shared<Const>(BaseType::INT64, 10))
+            make_shared<GreaterThanEqual>(t_sym, make_shared<Const>(types::INT64, 10))
         ),
         vector<Expr>{
             make_shared<Get>(make_shared<Element>(vec_in_sym, vector<Expr>{t_sym}), 1)
@@ -275,7 +275,7 @@ shared_ptr<Func> reduce_op_fn()
 
     auto sum = make_shared<Reduce>(
         op,
-        [] () { return make_shared<Const>(BaseType::INT64, 0); },
+        [] () { return make_shared<Const>(types::INT64, 0); },
         [] (Expr s, Expr v) {
             auto e = make_shared<Get>(v, 0);
             return make_shared<Add>(s, e);

@@ -8,7 +8,7 @@ using namespace reffine;
 tuple<Expr, Expr> lower_bound_expr(int lb)
 {
     auto t = make_shared<SymNode>("t", types::INT64);
-    auto zero = make_shared<Const>(BaseType::INT64, lb);
+    auto zero = make_shared<Const>(types::INT64, lb);
     auto pred = make_shared<GreaterThanEqual>(t, zero);
 
     auto p = make_shared<SymNode>("p", t);
