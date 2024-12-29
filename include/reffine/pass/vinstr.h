@@ -73,17 +73,15 @@ void* get_vector_data_buf(ArrowArray* arr, uint32_t col)
 REFFINE_VINSTR_ATTR
 int64_t vector_lookup(ArrowArray* arr, int64_t idx)
 {
-    auto buf = (int64_t*) get_vector_data_buf(arr, 0);
+    auto buf = (int64_t*)get_vector_data_buf(arr, 0);
     return buf[idx];
 }
 
 REFFINE_VINSTR_ATTR
 int64_t vector_locate(ArrowArray* arr, int64_t t)
 {
-    for (int i=0; i<get_vector_len(arr); i++) {
-        if (vector_lookup(arr, i) == t) {
-            return i;
-        }
+    for (int i = 0; i < get_vector_len(arr); i++) {
+        if (vector_lookup(arr, i) == t) { return i; }
     }
     return -1;
 }

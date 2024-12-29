@@ -19,9 +19,7 @@ using ReffineCtx = ValGenCtx<IterSpace>;
 
 class Reffine : public ValGen<IterSpace> {
 public:
-    Reffine(ReffineCtx& ctx, Op& op) : ValGen<IterSpace>(ctx), _op(op)
-    {
-    }
+    Reffine(ReffineCtx& ctx, Op& op) : ValGen<IterSpace>(ctx), _op(op) {}
 
     static IterSpace Build(Op&);
 

@@ -37,13 +37,22 @@ public:
     {
         throw runtime_error("Cast operation not supported");
     }
-    virtual void Visit(Get&) { throw runtime_error("Get operation not supported"); }
-    virtual void Visit(New&) { throw runtime_error("New operation not supported"); }
+    virtual void Visit(Get&)
+    {
+        throw runtime_error("Get operation not supported");
+    }
+    virtual void Visit(New&)
+    {
+        throw runtime_error("New operation not supported");
+    }
     virtual void Visit(NaryExpr&)
     {
         throw runtime_error("NaryExpr operation not supported");
     }
-    virtual void Visit(Op&) { throw runtime_error("Op operation not supported"); }
+    virtual void Visit(Op&)
+    {
+        throw runtime_error("Op operation not supported");
+    }
     virtual void Visit(Element&)
     {
         throw runtime_error("Element operation not supported");

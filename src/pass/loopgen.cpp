@@ -11,12 +11,13 @@ Expr LoopGen::visit(Element& elem)
     auto vec = eval(elem.vec);
     auto iter = eval(elem.iters[0]);
 
-    auto idx_expr = make_shared<Call>("vector_locate", types::IDX, vector<Expr>{vec, iter});
+    auto idx_expr =
+        make_shared<Call>("vector_locate", types::IDX, vector<Expr>{vec, iter});
     auto idx = make_shared<SymNode>("elem_idx", idx_expr);
     this->assign(idx, idx_expr);
 
     vector<Expr> vals;
-    for (size_t i=0; i<vec->type.dtypes.size(); i++) {
+    for (size_t i = 0; i < vec->type.dtypes.size(); i++) {
         auto data_ptr = make_shared<FetchDataPtr>(vec, idx, i);
         auto data = make_shared<Load>(data_ptr);
         vals.push_back(data);
