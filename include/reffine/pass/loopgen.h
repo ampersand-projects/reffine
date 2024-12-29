@@ -31,6 +31,7 @@ private:
     OpToLoop op_to_loop(Op&);
     Expr visit(Reduce&) final;
     Expr visit(Element&) final;
+    Expr visit(NotNull&) final { throw runtime_error("NotNull visit not supported"); }
 };
 
 }  // namespace reffine

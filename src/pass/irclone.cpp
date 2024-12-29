@@ -38,6 +38,11 @@ Expr IRClone::visit(Element& elem)
     return make_shared<Element>(eval(elem.vec), new_iters);
 }
 
+Expr IRClone::visit(NotNull& not_null)
+{
+    return make_shared<NotNull>(eval(not_null.elem));
+}
+
 Expr IRClone::visit(NaryExpr& nexpr)
 {
     vector<Expr> new_args;
