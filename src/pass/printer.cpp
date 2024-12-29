@@ -2,8 +2,11 @@
 
 #include <unordered_set>
 
-using namespace reffine;
+#include "reffine/builder/reffiner.h"
+
 using namespace std;
+using namespace reffine;
+using namespace reffine::reffiner;
 
 static const auto FORALL = "\u2200";
 static const auto REDCLE = "\u2295";
@@ -181,8 +184,8 @@ void IRPrinter::Visit(NotNull& not_null)
 void IRPrinter::Visit(Reduce& red)
 {
     auto init_val = red.init();
-    auto val = make_shared<SymNode>("val", red.op.type.valty());
-    auto state = make_shared<SymNode>("state", init_val->type);
+    auto val = _sym("val", red.op.type.valty());
+    auto state = _sym("state", init_val->type);
     auto state2 = red.acc(state, val);
 
     ostr << REDCLE << " {";

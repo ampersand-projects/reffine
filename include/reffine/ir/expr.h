@@ -22,6 +22,11 @@ struct Call : public ExprNode {
     {
     }
 
+    Call(string name, DataType type, std::initializer_list<Expr> args)
+        : Call(name, type, vector<Expr>(args))
+    {
+    }
+
     void Accept(Visitor&) final;
 };
 
@@ -84,6 +89,7 @@ struct New : public ExprNode {
     explicit New(vector<Expr> vals) : ExprNode(get_new_type(vals)), vals(vals)
     {
     }
+    explicit New(std::initializer_list<Expr> vals) : New(vector<Expr>(vals)) {}
 
     void Accept(Visitor&) final;
 

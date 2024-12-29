@@ -298,6 +298,17 @@ DataType VECTOR(vector<DataType> types)
     return DataType(BaseType::VECTOR, types, dim);
 }
 
+template <size_t dim, typename... Ts>
+DataType VEC()
+{
+    vector<BaseType> btypes(sizeof...(Ts));
+    convert<sizeof...(Ts), Ts...>(btypes.data());
+
+    vector<DataType> dtypes;
+    for (const auto& btype : btypes) { dtypes.push_back(DataType(btype)); }
+    return DataType(BaseType::VECTOR, dtypes, dim);
+}
+
 }  // namespace reffine::types
 
 #endif  // INCLUDE_REFFINE_BASE_TYPE_H_

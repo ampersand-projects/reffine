@@ -9,6 +9,11 @@
 namespace reffine::reffiner {
 
 template <typename T>
+struct _stmt : public shared_ptr<T> {
+    explicit _stmt(shared_ptr<T>&& ptr) : shared_ptr<T>(std::move(ptr)) {}
+};
+
+template <typename T>
 struct _expr;
 
 _expr<Add> _expr_add(Expr, Expr);
@@ -26,6 +31,8 @@ _expr<Not> _expr_not(Expr);
 _expr<And> _expr_and(Expr, Expr);
 _expr<Or> _expr_or(Expr, Expr);
 _expr<Get> _expr_get(Expr, size_t);
+_expr<Element> _expr_elem(Expr, vector<Expr>);
+_expr<NotNull> _expr_notnull(Expr);
 
 template <typename T>
 struct _expr : public shared_ptr<T> {
@@ -51,7 +58,12 @@ struct _expr : public shared_ptr<T> {
     _expr<Not> operator!() const { return _expr_not(*this); }
     _expr<And> operator&&(Expr o) const { return _expr_and(*this, o); }
     _expr<Or> operator||(Expr o) const { return _expr_or(*this, o); }
-    _expr<Get> operator<<(size_t n) const { return _expr_get(*this, n); }
+    _expr<Get> operator[](size_t n) const { return _expr_get(*this, n); }
+    _expr<Element> operator[](std::initializer_list<Expr> iters) const
+    {
+        return _expr_elem(*this, iters);
+    }
+    _expr<NotNull> operator~() const { return _expr_notnull(*this); }
 };
 
 #define REGISTER_EXPR(NAME, EXPR)                                            \
@@ -88,6 +100,9 @@ REGISTER_EXPR(_eq, Equals)
 REGISTER_EXPR(_not, Not)
 REGISTER_EXPR(_and, And)
 REGISTER_EXPR(_or, Or)
+REGISTER_EXPR(_forall, ForAll)
+REGISTER_EXPR(_implies, Implies)
+REGISTER_EXPR(_exists, Exists)
 
 // Constant expressions
 REGISTER_EXPR(_const, Const)
@@ -95,22 +110,16 @@ REGISTER_EXPR(_const, Const)
 // Loop expressions
 REGISTER_EXPR(_isval, IsValid)
 REGISTER_EXPR(_setval, SetValid)
-REGISTER_EXPR(_fetchptr, FetchDataPtr)
+REGISTER_EXPR(_fetch, FetchDataPtr)
 REGISTER_EXPR(_alloc, Alloc)
 REGISTER_EXPR(_load, Load)
-REGISTER_EXPR(_store, Store)
 REGISTER_EXPR(_loop, Loop)
-
-// Statements
-REGISTER_EXPR(_func, Func)
-REGISTER_EXPR(_stmts, Stmts)
-REGISTER_EXPR(_ifelse, IfElse)
-REGISTER_EXPR(_noop, NoOp)
 
 // Ops
 REGISTER_EXPR(_elem, Element)
 REGISTER_EXPR(_op, Op)
 REGISTER_EXPR(_red, Reduce)
+REGISTER_EXPR(_notnull, NotNull)
 
 // Misc expressions
 REGISTER_EXPR(_call, Call)
@@ -122,8 +131,25 @@ REGISTER_EXPR(_nary, NaryExpr)
 REGISTER_EXPR(_unary, UnaryExpr)
 REGISTER_EXPR(_binary, BinaryExpr)
 REGISTER_EXPR(_sym, SymNode)
-
 #undef REGISTER_EXPR
+
+#define REGISTER_STMT(NAME, STMT)                                            \
+    template <typename... Args>                                              \
+    struct NAME : public _stmt<STMT> {                                       \
+        explicit NAME(Args... args)                                          \
+            : _stmt<STMT>(                                                   \
+                  std::move(make_shared<STMT>(std::forward<Args>(args)...))) \
+        {                                                                    \
+        }                                                                    \
+    };
+
+// Statements
+REGISTER_STMT(_func, Func)
+REGISTER_STMT(_stmts, Stmts)
+REGISTER_STMT(_ifelse, IfElse)
+REGISTER_STMT(_noop, NoOp)
+REGISTER_STMT(_store, Store)
+#undef REGISTER_STMT
 
 _expr<Const> _i8(int8_t);
 _expr<Const> _i16(int16_t);
@@ -153,6 +179,18 @@ const DataType _f64_t = types::FLOAT64;
 const DataType _ch_t = types::INT8;
 const DataType _idx_t = types::IDX;
 const DataType _bool_t = types::BOOL;
+
+template <size_t dim, typename... Ts>
+DataType _vec_t()
+{
+    return types::VEC<dim, Ts...>();
+}
+
+template <typename... Ts>
+DataType _struct_t()
+{
+    return types::STRUCT<Ts...>();
+}
 
 }  // namespace reffine::reffiner
 

@@ -99,7 +99,7 @@ shared_ptr<Func> vector_fn()
     auto sum_addr = _sym("sum_addr", sum_alloc);
     auto sum = _load(sum_addr);
 
-    auto val_ptr = _fetchptr(vec_sym, idx, 1);
+    auto val_ptr = _fetch(vec_sym, idx, 1);
     auto val = _load(val_ptr);
 
     auto loop = _loop(_load(sum_addr));
@@ -256,34 +256,25 @@ void demorgan_test()
 
 shared_ptr<Func> reduce_op_fn()
 {
-    auto t_sym = make_shared<SymNode>("t", types::INT64);
-    auto vec_in_sym = make_shared<SymNode>("vec_in", types::VECTOR<1>(vector<DataType>{
-        types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
+    auto t_sym = _sym("t", _i64_t);
+    auto vec_in_sym = _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t, int8_t, int64_t>());
     Op op(
-        vector<Sym>{t_sym},
-        make_shared<And>(
-            make_shared<And>(
-                make_shared<NotNull>(make_shared<Element>(vec_in_sym, vector<Expr>{t_sym})),
-                make_shared<LessThanEqual>(t_sym, make_shared<Const>(types::INT64, 20))
-                ),
-            make_shared<GreaterThanEqual>(t_sym, make_shared<Const>(types::INT64, 10))
-        ),
-        vector<Expr>{
-            make_shared<Get>(make_shared<Element>(vec_in_sym, vector<Expr>{t_sym}), 1)
-        }
+        { t_sym },
+        ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(20)) &&  _gte(t_sym, _i64(10)),
+        { vec_in_sym[{t_sym}][1] }
     );
 
-    auto sum = make_shared<Reduce>(
+    auto sum = _red(
         op,
-        [] () { return make_shared<Const>(types::INT64, 0); },
+        [] () { return _i64(0); },
         [] (Expr s, Expr v) {
-            auto e = make_shared<Get>(v, 0);
-            return make_shared<Add>(s, e);
+            auto e = _get(v, 0);
+            return _add(s, e);
         }
     );
-    auto sum_sym = make_shared<SymNode>("sum", sum);
+    auto sum_sym = _sym("sum", sum);
 
-    auto foo_fn = make_shared<Func>("foo", sum_sym, vector<Sym>{vec_in_sym});
+    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
     foo_fn->tbl[sum_sym] = sum;
 
     return foo_fn;
