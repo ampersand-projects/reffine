@@ -291,7 +291,6 @@ int main()
     auto loop = LoopGen::Build(fn);
     cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
-    return 0;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
@@ -306,16 +305,13 @@ int main()
     llfile.close();
 
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<long (*)()>(fn->name);
-    cout << "Result: " << query_fn() << endl;
+    auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
 
     //auto status = csv_to_arrow();
-    /*
     auto status = query_arrow_file(query_fn);
     if (!status.ok()) {
         cerr << status.ToString() << endl;
     }
-    */
 
     return 0;
 }

@@ -30,6 +30,7 @@ public:
 private:
     OpToLoop op_to_loop(Op&);
     Expr visit(Reduce&) final;
+    Expr visit(Element&) final;
 };
 
 }  // namespace reffine
