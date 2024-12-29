@@ -26,6 +26,7 @@ _expr<Not> _expr_not(Expr);
 _expr<And> _expr_and(Expr, Expr);
 _expr<Or> _expr_or(Expr, Expr);
 _expr<Get> _expr_get(Expr, size_t);
+_expr<Element> _expr_elem(Expr, vector<Expr>);
 
 template <typename T>
 struct _expr : public shared_ptr<T> {
@@ -52,6 +53,10 @@ struct _expr : public shared_ptr<T> {
     _expr<And> operator&&(Expr o) const { return _expr_and(*this, o); }
     _expr<Or> operator||(Expr o) const { return _expr_or(*this, o); }
     _expr<Get> operator<<(size_t n) const { return _expr_get(*this, n); }
+    _expr<Element> operator[](vector<Expr> iters) const
+    {
+        return _expr_elem(*this, iters);
+    }
 };
 
 #define REGISTER_EXPR(NAME, EXPR)                                            \
@@ -111,6 +116,7 @@ REGISTER_EXPR(_noop, NoOp)
 REGISTER_EXPR(_elem, Element)
 REGISTER_EXPR(_op, Op)
 REGISTER_EXPR(_red, Reduce)
+REGISTER_EXPR(_notnull, NotNull)
 
 // Misc expressions
 REGISTER_EXPR(_call, Call)
@@ -154,13 +160,13 @@ const DataType _ch_t = types::INT8;
 const DataType _idx_t = types::IDX;
 const DataType _bool_t = types::BOOL;
 
-template<size_t dim, typename... Ts>
+template <size_t dim, typename... Ts>
 DataType _vec_t()
 {
     return types::VEC<dim, Ts...>();
 }
 
-template<typename... Ts>
+template <typename... Ts>
 DataType _struct_t()
 {
     return types::STRUCT<Ts...>();
