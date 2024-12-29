@@ -154,6 +154,18 @@ const DataType _ch_t = types::INT8;
 const DataType _idx_t = types::IDX;
 const DataType _bool_t = types::BOOL;
 
+template<size_t dim, typename... Ts>
+DataType _vec_t()
+{
+    return types::VECTOR<dim, Ts...>();
+}
+
+template<typename... Ts>
+DataType _struct_t()
+{
+    return types::STRUCT<Ts...>();
+}
+
 }  // namespace reffine::reffiner
 
 #endif  // INCLUDE_REFFINE_BUILDER_REFFINER_H_
