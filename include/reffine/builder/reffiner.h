@@ -9,6 +9,11 @@
 namespace reffine::reffiner {
 
 template <typename T>
+struct _stmt : public shared_ptr<T> {
+    explicit _stmt(shared_ptr<T>&& ptr) : shared_ptr<T>(std::move(ptr)) {}
+};
+
+template <typename T>
 struct _expr;
 
 _expr<Add> _expr_add(Expr, Expr);
@@ -105,14 +110,7 @@ REGISTER_EXPR(_setval, SetValid)
 REGISTER_EXPR(_fetchptr, FetchDataPtr)
 REGISTER_EXPR(_alloc, Alloc)
 REGISTER_EXPR(_load, Load)
-REGISTER_EXPR(_store, Store)
 REGISTER_EXPR(_loop, Loop)
-
-// Statements
-REGISTER_EXPR(_func, Func)
-REGISTER_EXPR(_stmts, Stmts)
-REGISTER_EXPR(_ifelse, IfElse)
-REGISTER_EXPR(_noop, NoOp)
 
 // Ops
 REGISTER_EXPR(_elem, Element)
@@ -130,8 +128,25 @@ REGISTER_EXPR(_nary, NaryExpr)
 REGISTER_EXPR(_unary, UnaryExpr)
 REGISTER_EXPR(_binary, BinaryExpr)
 REGISTER_EXPR(_sym, SymNode)
-
 #undef REGISTER_EXPR
+
+#define REGISTER_STMT(NAME, STMT)                                            \
+    template <typename... Args>                                              \
+    struct NAME : public _stmt<STMT> {                                       \
+        explicit NAME(Args... args)                                          \
+            : _stmt<STMT>(                                                   \
+                  std::move(make_shared<STMT>(std::forward<Args>(args)...))) \
+        {                                                                    \
+        }                                                                    \
+    };
+
+// Statements
+REGISTER_STMT(_func, Func)
+REGISTER_STMT(_stmts, Stmts)
+REGISTER_STMT(_ifelse, IfElse)
+REGISTER_STMT(_noop, NoOp)
+REGISTER_STMT(_store, Store)
+#undef REGISTER_STMT
 
 _expr<Const> _i8(int8_t);
 _expr<Const> _i16(int16_t);
