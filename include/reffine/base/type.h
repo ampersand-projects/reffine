@@ -83,7 +83,8 @@ struct DataType {
 
     bool is_primitive() const
     {
-        return (this->is_int() || this->is_float() || this->is_idx() || this->btype == BaseType::BOOL);
+        return (this->is_int() || this->is_float() || this->is_idx() ||
+                this->btype == BaseType::BOOL);
     }
 
     bool is_int() const

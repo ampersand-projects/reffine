@@ -35,8 +35,7 @@ shared_ptr<Func> vector_loop()
     loop->body = make_shared<Stmts>(vector<Stmt>{
         make_shared<Store>(sum_addr, make_shared<Add>(sum, val)),
         make_shared<Store>(
-            idx_addr,
-            make_shared<Add>(idx, make_shared<Const>(types::IDX, 1))),
+            idx_addr, make_shared<Add>(idx, make_shared<Const>(types::IDX, 1))),
     });
 
     auto foo_fn = make_shared<Func>("foo", loop_sym, vector<Sym>{vec_sym});
@@ -66,17 +65,17 @@ shared_ptr<Func> vector_op()
         "vec_in", types::VECTOR<1>(vector<DataType>{
                       types::INT64, types::INT64, types::INT64, types::INT64,
                       types::INT64, types::INT8, types::INT64}));
-    Op op(vector<Sym>{t_sym},
-          make_shared<And>(
-              make_shared<And>(
-                  make_shared<NotNull>(
-                      make_shared<Element>(vec_in_sym, vector<Expr>{t_sym})),
-                  make_shared<LessThanEqual>(
-                      t_sym, make_shared<Const>(types::INT64, 48))),
-              make_shared<GreaterThanEqual>(
-                  t_sym, make_shared<Const>(types::INT64, 10))),
-          vector<Expr>{make_shared<Get>(
-              make_shared<Element>(vec_in_sym, vector<Expr>{t_sym}), 1)});
+    Op op(
+        vector<Sym>{t_sym},
+        make_shared<And>(
+            make_shared<And>(make_shared<NotNull>(make_shared<Element>(
+                                 vec_in_sym, vector<Expr>{t_sym})),
+                             make_shared<LessThanEqual>(
+                                 t_sym, make_shared<Const>(types::INT64, 48))),
+            make_shared<GreaterThanEqual>(
+                t_sym, make_shared<Const>(types::INT64, 10))),
+        vector<Expr>{make_shared<Get>(
+            make_shared<Element>(vec_in_sym, vector<Expr>{t_sym}), 1)});
 
     auto sum = make_shared<Reduce>(
         op, []() { return make_shared<Const>(types::INT64, 0); },
