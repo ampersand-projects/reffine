@@ -261,7 +261,13 @@ shared_ptr<Func> reduce_op_fn()
         types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
     Op op(
         vector<Sym>{t_sym},
-        make_shared<Element>(vec_in_sym, vector<Expr>{t_sym}),
+        make_shared<And>(
+            make_shared<And>(
+                make_shared<NotNull>(make_shared<Element>(vec_in_sym, vector<Expr>{t_sym})),
+                make_shared<LessThanEqual>(t_sym, make_shared<Const>(BaseType::INT64, 20))
+                ),
+            make_shared<GreaterThanEqual>(t_sym, make_shared<Const>(BaseType::INT64, 10))
+        ),
         vector<Expr>{
             make_shared<Get>(make_shared<Element>(vec_in_sym, vector<Expr>{t_sym}), 1)
         }
