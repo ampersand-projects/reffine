@@ -1,50 +1,29 @@
 #include "reffine/pass/loopgen.h"
 
+#include "reffine/pass/reffinepass.h"
 #include "reffine/pass/z3solver.h"
 
 using namespace std;
 using namespace reffine;
 
-Expr get_init_val(Sym idx, vector<Expr> preds)
+Expr LoopGen::visit(Element& elem)
 {
-    for (auto pred : preds) {
-        auto p = make_shared<SymNode>(idx->name + "_p", idx);
-        auto forall = make_shared<ForAll>(
-            idx,
-            make_shared<And>(make_shared<Implies>(
-                                 make_shared<GreaterThanEqual>(idx, p), pred),
-                             make_shared<Implies>(make_shared<LessThan>(idx, p),
-                                                  make_shared<Not>(pred))));
+    auto vec = eval(elem.vec);
+    auto iter = eval(elem.iters[0]);
 
-        Z3Solver solver;
-        if (solver.check(forall) == z3::sat) {
-            auto p_val = solver.get(p).as_int64();
-            return make_shared<Const>(idx->type.btype, p_val);
-        }
+    auto idx_expr =
+        make_shared<Call>("vector_locate", types::IDX, vector<Expr>{vec, iter});
+    auto idx = make_shared<SymNode>("elem_idx", idx_expr);
+    this->assign(idx, idx_expr);
+
+    vector<Expr> vals;
+    for (size_t i = 0; i < vec->type.dtypes.size(); i++) {
+        auto data_ptr = make_shared<FetchDataPtr>(vec, idx, i);
+        auto data = make_shared<Load>(data_ptr);
+        vals.push_back(data);
     }
 
-    return nullptr;
-}
-
-Expr get_exit_val(Sym idx, vector<Expr> preds)
-{
-    for (auto pred : preds) {
-        auto p = make_shared<SymNode>(idx->name + "_p", idx);
-        auto forall = make_shared<ForAll>(
-            idx,
-            make_shared<And>(
-                make_shared<Implies>(make_shared<LessThanEqual>(idx, p), pred),
-                make_shared<Implies>(make_shared<GreaterThan>(idx, p),
-                                     make_shared<Not>(pred))));
-
-        Z3Solver solver;
-        if (solver.check(forall) == z3::sat) {
-            auto p_val = solver.get(p).as_int64();
-            return make_shared<Const>(idx->type.btype, p_val);
-        }
-    }
-
-    return nullptr;
+    return make_shared<New>(vals);
 }
 
 OpToLoop LoopGen::op_to_loop(Op& op)
@@ -52,37 +31,43 @@ OpToLoop LoopGen::op_to_loop(Op& op)
     OpToLoop otl;
 
     // Only support single indexed operations
-    ASSERT(op.idxs.size() == 1);
+    ASSERT(op.iters.size() == 1);
+
+    auto ispace = Reffine::Build(op);
 
     // Loop index allocation
     auto loop_idx_addr_expr = make_shared<Alloc>(types::IDX);
     otl.loop_idx_addr =
         make_shared<SymNode>("loop_idx_addr", loop_idx_addr_expr);
     this->assign(otl.loop_idx_addr, loop_idx_addr_expr);
+    this->map_sym(otl.loop_idx_addr, otl.loop_idx_addr);
+
+    // Loop idx symbol
     auto load_loop_idx_expr = make_shared<Load>(otl.loop_idx_addr);
+    auto loop_idx = make_shared<SymNode>("loop_idx", load_loop_idx_expr);
+    this->assign(loop_idx, load_loop_idx_expr);
+    this->map_sym(loop_idx, loop_idx);
 
     // Map op idx to loop idx
-    otl.op_idx = make_shared<SymNode>(op.idxs[0]->name, op.idxs[0]);
-    this->map_sym(op.idxs[0], otl.op_idx);
-    auto loop_idx_to_op_idx_expr =
-        make_shared<Cast>(otl.op_idx->type, load_loop_idx_expr);
-    this->assign(otl.op_idx, loop_idx_to_op_idx_expr);
+    auto op_iter = make_shared<SymNode>(op.iters[0]->name, op.iters[0]);
+    this->map_sym(op.iters[0], op_iter);
+    auto loop_idx_to_op_idx_expr = eval(ispace.idx_to_iter(loop_idx));
+    this->assign(op_iter, loop_idx_to_op_idx_expr);
 
     // Loop init statement
-    otl.init = make_shared<Store>(
-        otl.loop_idx_addr,
-        make_shared<Cast>(types::IDX, get_init_val(op.idxs[0], op.preds)));
+    auto lb_expr = eval(ispace.iter_to_idx(ispace.lower_bound));
+    otl.init = make_shared<Store>(otl.loop_idx_addr, lb_expr);
 
     // Loop exit condition
-    otl.exit_cond = make_shared<GreaterThan>(
-        make_shared<Load>(otl.loop_idx_addr),
-        make_shared<Cast>(types::IDX, get_exit_val(op.idxs[0], op.preds)));
+    auto ub_expr = eval(ispace.iter_to_idx(ispace.upper_bound));
+    otl.exit_cond = make_shared<GreaterThan>(loop_idx, ub_expr);
 
     // Loop index increment expression
-    otl.incr = make_shared<Store>(
-        otl.loop_idx_addr,
-        make_shared<Add>(load_loop_idx_expr,
-                         make_shared<Const>(BaseType::IDX, 1)));
+    auto incr_expr = eval(ispace.idx_incr(loop_idx));
+    otl.incr = make_shared<Store>(otl.loop_idx_addr, incr_expr);
+
+    // Loop body condition
+    otl.body_cond = nullptr;
 
     return otl;
 }
@@ -110,7 +95,7 @@ Expr LoopGen::visit(Reduce& red)
     });
     red_loop->incr = otl.incr;
     red_loop->exit_cond = otl.exit_cond;
-    red_loop->body_cond = nullptr;
+    red_loop->body_cond = otl.body_cond;
     red_loop->body =
         make_shared<Store>(state_addr, red.acc(load_state_expr, val));
     red_loop->post = nullptr;

@@ -11,14 +11,14 @@ using namespace std;
 namespace reffine {
 
 struct Op : public ExprNode {
-    vector<Sym> idxs;
-    vector<Expr> preds;
+    vector<Sym> iters;
+    Expr pred;
     vector<Expr> outputs;
 
-    Op(vector<Sym> idxs, vector<Expr> preds, vector<Expr> outputs)
-        : ExprNode(extract_type(idxs, outputs)),
-          idxs(std::move(idxs)),
-          preds(std::move(preds)),
+    Op(vector<Sym> iters, Expr pred, vector<Expr> outputs)
+        : ExprNode(extract_type(iters, outputs)),
+          iters(std::move(iters)),
+          pred(pred),
           outputs(std::move(outputs))
     {
     }
@@ -26,40 +26,43 @@ struct Op : public ExprNode {
     void Accept(Visitor&) final;
 
 private:
-    static DataType extract_type(const vector<Sym>& idxs,
+    static DataType extract_type(const vector<Sym>& iters,
                                  const vector<Expr>& outputs)
     {
         vector<DataType> dtypes;
 
-        for (const auto& idx : idxs) {
-            ASSERT(idx->type.is_val());
-            dtypes.push_back(idx->type);
+        for (const auto& iter : iters) {
+            ASSERT(iter->type.is_val());
+            dtypes.push_back(iter->type);
         }
         for (const auto& output : outputs) {
             ASSERT(output->type.is_val());
             dtypes.push_back(output->type);
         }
 
-        return DataType(BaseType::VECTOR, std::move(dtypes), idxs.size());
+        return DataType(BaseType::VECTOR, std::move(dtypes), iters.size());
     }
 };
 
 struct Element : public ExprNode {
     Expr vec;
-    vector<Expr> idxs;
+    vector<Expr> iters;
 
-    Element(Expr vec, vector<Expr> idxs)
+    Element(Expr vec, vector<Expr> iters)
         : ExprNode(DataType(BaseType::STRUCT, vec->type.dtypes)),
           vec(vec),
-          idxs(std::move(idxs))
+          iters(std::move(iters))
     {
         const auto& vtype = vec->type;
 
-        // Indexing to a subspace in the vector is not supported yet.
-        ASSERT(vtype.dim == this->idxs.size());
+        for (const auto& iter : iters) { ASSERT(iter->type.is_val()); }
+        ASSERT(vtype.is_vector());
 
-        for (size_t i = 0; i < this->idxs.size(); i++) {
-            ASSERT(vtype.dtypes[i] == this->idxs[i]->type);
+        // Indexing to a subspace in the vector is not supported yet.
+        ASSERT(vtype.dim == this->iters.size());
+
+        for (size_t i = 0; i < this->iters.size(); i++) {
+            ASSERT(vtype.dtypes[i] == this->iters[i]->type);
         }
     }
 

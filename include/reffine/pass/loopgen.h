@@ -14,10 +14,10 @@ public:
 };
 
 struct OpToLoop {
-    Sym op_idx;
     Sym loop_idx_addr;
     Stmt init;
     Expr exit_cond;
+    Expr body_cond;
     Stmt incr;
 };
 
@@ -30,6 +30,11 @@ public:
 private:
     OpToLoop op_to_loop(Op&);
     Expr visit(Reduce&) final;
+    Expr visit(Element&) final;
+    Expr visit(NotNull&) final
+    {
+        throw runtime_error("NotNull visit not supported");
+    }
 };
 
 }  // namespace reffine

@@ -18,91 +18,91 @@ public:
     IRGenBase(IRPassBaseCtx<ValTy>& ctx) : IRPassBase<ValTy>(ctx) {}
 
 protected:
-    virtual ValTy visit(Sym) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Sym) { throw runtime_error("Sym visit not supported"); }
     virtual ValTy visit(Select&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Select visit not supported");
     }
     virtual void visit(IfElse&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("IfElse visit not supported");
     }
     virtual ValTy visit(Const&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Const visit not supported");
     }
     virtual ValTy visit(Cast&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Cast visit not supported");
     }
     virtual ValTy visit(Get&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Get visit not supported");
     }
     virtual ValTy visit(New&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("New visit not supported");
     }
     virtual ValTy visit(NaryExpr&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("NaryExpr visit not supported");
     }
-    virtual ValTy visit(Op&) { throw runtime_error("Operation not supported"); }
+    virtual ValTy visit(Op&) { throw runtime_error("Op visit not supported"); }
     virtual ValTy visit(Element&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Element visit not supported");
     }
     virtual ValTy visit(NotNull&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("NotNull visit not supported");
     }
     virtual ValTy visit(Reduce&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Reduce visit not supported");
     }
     virtual ValTy visit(Call&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Call visit not supported");
     }
     virtual void visit(Stmts&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Stmts visit not supported");
     }
     virtual void visit(Func&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Func visit not supported");
     }
     virtual ValTy visit(Alloc&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Alloc visit not supported");
     }
     virtual ValTy visit(Load&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Load visit not supported");
     }
     virtual void visit(Store&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Store visit not supported");
     }
     virtual ValTy visit(Loop&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("Loop visit not supported");
     }
     virtual ValTy visit(IsValid&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("IsValid visit not supported");
     }
     virtual ValTy visit(SetValid&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("SetValid visit not supported");
     }
     virtual ValTy visit(FetchDataPtr&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("FetchDataPtr visit not supported");
     }
     virtual void visit(NoOp&)
     {
-        throw runtime_error("Operation not supported");
+        throw runtime_error("NoOp visit not supported");
     }
 
     void Visit(Select& expr) final { val() = visit(expr); }
@@ -155,6 +155,28 @@ protected:
 
 private:
     ValTy _val;
+};
+
+template <typename ValTy>
+class ValGenCtx : public IRPassBaseCtx<ValTy> {
+public:
+    ValGenCtx(SymTable tmp1 = {}, map<Sym, ValTy> tmp2 = {})
+        : IRPassBaseCtx<ValTy>(tmp1, tmp2)
+    {
+    }
+};
+
+template <typename ValTy>
+class ValGen : public IRGenBase<ValTy> {
+public:
+    ValGen(ValGenCtx<ValTy>& ctx) : IRGenBase<ValTy>(ctx) {}
+
+protected:
+    void Visit(SymNode& symbol) final
+    {
+        auto sym = this->tmp_sym(symbol);
+        this->val() = this->visit(sym);
+    }
 };
 
 class IRGenCtx : public IRPassBaseCtx<Expr> {

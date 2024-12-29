@@ -40,6 +40,12 @@ protected:
         return tmp_sym;
     }
 
+    Expr tmp_expr(ExprNode& expr)
+    {
+        Expr tmp_expr(const_cast<ExprNode*>(&expr), [](ExprNode*) {});
+        return tmp_expr;
+    }
+
 private:
     IRPassBaseCtx<ValTy>& _ctx;
 };
@@ -88,15 +94,15 @@ public:
 
     void Visit(Op& expr) override
     {
-        for (auto& idx : expr.idxs) { this->assign(idx); }
-        for (auto& pred : expr.preds) { pred->Accept(*this); }
+        for (auto& iter : expr.iters) { this->assign(iter); }
+        expr.pred->Accept(*this);
         for (auto& output : expr.outputs) { output->Accept(*this); }
     }
 
     void Visit(Element& expr) override
     {
         expr.vec->Accept(*this);
-        for (auto& idx : expr.idxs) { idx->Accept(*this); }
+        for (auto& iter : expr.iters) { iter->Accept(*this); }
     }
 
     void Visit(NotNull& expr) override { expr.elem->Accept(*this); }

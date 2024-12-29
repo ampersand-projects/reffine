@@ -189,6 +189,8 @@ enum class MathOp {
     EXISTS,
 };
 
+static const double INF = 100000;
+
 }  // namespace reffine
 
 namespace reffine::types {
