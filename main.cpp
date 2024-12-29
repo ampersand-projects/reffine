@@ -99,7 +99,7 @@ shared_ptr<Func> vector_fn()
     auto sum_addr = _sym("sum_addr", sum_alloc);
     auto sum = _load(sum_addr);
 
-    auto val_ptr = _fetchptr(vec_sym, idx, 1);
+    auto val_ptr = _fetch(vec_sym, idx, 1);
     auto val = _load(val_ptr);
 
     auto loop = _loop(_load(sum_addr));

@@ -100,6 +100,9 @@ REGISTER_EXPR(_eq, Equals)
 REGISTER_EXPR(_not, Not)
 REGISTER_EXPR(_and, And)
 REGISTER_EXPR(_or, Or)
+REGISTER_EXPR(_forall, ForAll)
+REGISTER_EXPR(_implies, Implies)
+REGISTER_EXPR(_exists, Exists)
 
 // Constant expressions
 REGISTER_EXPR(_const, Const)
@@ -107,7 +110,7 @@ REGISTER_EXPR(_const, Const)
 // Loop expressions
 REGISTER_EXPR(_isval, IsValid)
 REGISTER_EXPR(_setval, SetValid)
-REGISTER_EXPR(_fetchptr, FetchDataPtr)
+REGISTER_EXPR(_fetch, FetchDataPtr)
 REGISTER_EXPR(_alloc, Alloc)
 REGISTER_EXPR(_load, Load)
 REGISTER_EXPR(_loop, Loop)
