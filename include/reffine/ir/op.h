@@ -22,6 +22,11 @@ struct Op : public ExprNode {
           outputs(std::move(outputs))
     {
     }
+    Op(std::initializer_list<Sym> iters, Expr pred,
+       std::initializer_list<Expr> outputs)
+        : Op(vector<Sym>(iters), pred, vector<Expr>(outputs))
+    {
+    }
 
     void Accept(Visitor&) final;
 
@@ -64,6 +69,10 @@ struct Element : public ExprNode {
         for (size_t i = 0; i < this->iters.size(); i++) {
             ASSERT(vtype.dtypes[i] == this->iters[i]->type);
         }
+    }
+    Element(Expr vec, std::initializer_list<Expr> iters)
+        : Element(vec, vector<Expr>(iters))
+    {
     }
 
     void Accept(Visitor&) final;

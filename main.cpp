@@ -259,11 +259,9 @@ shared_ptr<Func> reduce_op_fn()
     auto t_sym = _sym("t", _i64_t);
     auto vec_in_sym = _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t, int8_t, int64_t>());
     Op op(
-        vector<Sym>{t_sym},
+        { t_sym },
         _notnull(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(20)) &&  _gte(t_sym, _i64(10)),
-        vector<Expr>{
-            _get(_elem(vec_in_sym, vector<Expr>{t_sym}), 1)
-        }
+        { _get(_elem(vec_in_sym, vector<Expr>{t_sym}), 1) }
     );
 
     auto sum = _red(
