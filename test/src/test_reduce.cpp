@@ -62,21 +62,20 @@ void aggregate_loop_test()
 shared_ptr<Func> vector_op()
 {
     auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym = _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t, int8_t, int64_t>());
-    Op op(
-        { t_sym },
-        ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(48)) &&  _gte(t_sym, _i64(10)),
-        { vec_in_sym[{t_sym}][1] }
-    );
+    auto vec_in_sym =
+        _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
+                              int8_t, int64_t>());
+    Op op({t_sym},
+          ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(48)) &&
+              _gte(t_sym, _i64(10)),
+          {vec_in_sym[{t_sym}][1]});
 
     auto sum = _red(
-        op,
-        [] () { return _i64(0); },
-        [] (Expr s, Expr v) {
+        op, []() { return _i64(0); },
+        [](Expr s, Expr v) {
             auto e = _get(v, 0);
             return _add(s, e);
-        }
-    );
+        });
     auto sum_sym = _sym("sum", sum);
 
     auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
@@ -84,7 +83,6 @@ shared_ptr<Func> vector_op()
 
     return foo_fn;
 }
-
 
 void aggregate_op_test()
 {
