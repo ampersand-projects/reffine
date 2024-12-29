@@ -1,6 +1,7 @@
+#include "reffine/pass/printer.h"
+
 #include <unordered_set>
 
-#include "reffine/pass/printer.h"
 #include "reffine/builder/reffiner.h"
 
 using namespace std;

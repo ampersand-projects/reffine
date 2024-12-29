@@ -1,5 +1,6 @@
-#include "reffine/builder/reffiner.h"
 #include "reffine/pass/irclone.h"
+
+#include "reffine/builder/reffiner.h"
 
 using namespace std;
 using namespace reffine;
@@ -40,10 +41,7 @@ Expr IRClone::visit(Element& elem)
     return _elem(eval(elem.vec), new_iters);
 }
 
-Expr IRClone::visit(NotNull& not_null)
-{
-    return _notnull(eval(not_null.elem));
-}
+Expr IRClone::visit(NotNull& not_null) { return _notnull(eval(not_null.elem)); }
 
 Expr IRClone::visit(NaryExpr& nexpr)
 {
@@ -53,10 +51,7 @@ Expr IRClone::visit(NaryExpr& nexpr)
     return _nary(nexpr.type, nexpr.op, new_args);
 }
 
-Expr IRClone::visit(Get& get)
-{
-    return _get(eval(get.val), get.col);
-}
+Expr IRClone::visit(Get& get) { return _get(eval(get.val), get.col); }
 
 Expr IRClone::visit(New& new_expr)
 {
@@ -66,19 +61,14 @@ Expr IRClone::visit(New& new_expr)
     return _new(new_vals);
 }
 
-Expr IRClone::visit(Cast& cast)
-{
-    return _cast(cast.type, eval(cast.arg));
-}
+Expr IRClone::visit(Cast& cast) { return _cast(cast.type, eval(cast.arg)); }
 
-Expr IRClone::visit(Const& cnst)
-{
-    return _const(cnst.type, cnst.val);
-}
+Expr IRClone::visit(Const& cnst) { return _const(cnst.type, cnst.val); }
 
 Expr IRClone::visit(Select& select)
 {
-    return _sel(eval(select.cond), eval(select.true_body), eval(select.false_body));
+    return _sel(eval(select.cond), eval(select.true_body),
+                eval(select.false_body));
 }
 
 Expr IRClone::visit(Call& call)
@@ -101,10 +91,7 @@ void IRClone::visit(Func& func)
     _irclonectx.new_func->output = eval(func.output);
 }
 
-Expr IRClone::visit(Sym old_sym)
-{
-    return _sym(old_sym->name, old_sym);
-}
+Expr IRClone::visit(Sym old_sym) { return _sym(old_sym->name, old_sym); }
 
 shared_ptr<Func> IRClone::Build(shared_ptr<Func> func)
 {
