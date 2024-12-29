@@ -160,10 +160,7 @@ IterSpace Reffine::visit(Element& elem)
     return intersect(vec_isapce, iter_ispace);
 }
 
-IterSpace Reffine::visit(NotNull& not_null)
-{
-    return eval(not_null.elem);
-}
+IterSpace Reffine::visit(NotNull& not_null) { return eval(not_null.elem); }
 
 IterSpace Reffine::Build(Op& op)
 {

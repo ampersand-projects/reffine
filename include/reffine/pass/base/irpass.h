@@ -105,10 +105,7 @@ public:
         for (auto& iter : expr.iters) { iter->Accept(*this); }
     }
 
-    void Visit(NotNull& expr) override
-    {
-        expr.elem->Accept(*this);
-    }
+    void Visit(NotNull& expr) override { expr.elem->Accept(*this); }
 
     void Visit(Reduce& expr) override { expr.op.Accept(*this); }
 
