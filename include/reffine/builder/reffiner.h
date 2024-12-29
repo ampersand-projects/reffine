@@ -157,7 +157,7 @@ const DataType _bool_t = types::BOOL;
 template<size_t dim, typename... Ts>
 DataType _vec_t()
 {
-    return types::VECTOR<dim, Ts...>();
+    return types::VEC<dim, Ts...>();
 }
 
 template<typename... Ts>

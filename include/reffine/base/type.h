@@ -292,8 +292,14 @@ DataType STRUCT()
     return DataType(BaseType::STRUCT, dtypes);
 }
 
+template<size_t dim>
+DataType VECTOR(vector<DataType> types)
+{
+    return DataType(BaseType::VECTOR, types, dim);
+}
+
 template <size_t dim, typename... Ts>
-DataType VECTOR()
+DataType VEC()
 {
     vector<BaseType> btypes(sizeof...(Ts));
     convert<sizeof...(Ts), Ts...>(btypes.data());
