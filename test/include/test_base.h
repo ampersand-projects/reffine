@@ -4,9 +4,7 @@
 #include <gtest/gtest.h>
 
 #include "reffine/arrow/defs.h"
-#include "reffine/ir/loop.h"
-#include "reffine/ir/op.h"
-#include "reffine/ir/stmt.h"
+#include "reffine/builder/reffiner.h"
 
 void aggregate_loop_test();
 void aggregate_op_test();

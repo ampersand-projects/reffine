@@ -23,6 +23,7 @@ _expr<Element> _expr_elem(Expr a, vector<Expr> iters)
 {
     return _elem(a, iters);
 }
+_expr<NotNull> _expr_notnull(Expr a) { return _notnull(a); }
 
 _expr<Const> _i8(int8_t v) { return _const(types::INT8, v); }
 _expr<Const> _i16(int16_t v) { return _const(types::INT16, v); }

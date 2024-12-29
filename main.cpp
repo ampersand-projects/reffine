@@ -260,8 +260,8 @@ shared_ptr<Func> reduce_op_fn()
     auto vec_in_sym = _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t, int8_t, int64_t>());
     Op op(
         { t_sym },
-        _notnull(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(20)) &&  _gte(t_sym, _i64(10)),
-        { _get(_elem(vec_in_sym, vector<Expr>{t_sym}), 1) }
+        ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(20)) &&  _gte(t_sym, _i64(10)),
+        { vec_in_sym[{t_sym}][1] }
     );
 
     auto sum = _red(
