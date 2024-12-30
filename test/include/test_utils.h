@@ -15,6 +15,7 @@
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/llvmgen.h"
 #include "reffine/pass/loopgen.h"
+#include "reffine/pass/reffinepass.h"
 #include "reffine/pass/printer.h"
 
 struct ArrowTable {
@@ -49,7 +50,8 @@ T compile_loop(std::shared_ptr<reffine::Func> loop)
 template <typename T>
 T compile_op(std::shared_ptr<reffine::Func> op)
 {
-    auto loop = reffine::LoopGen::Build(op);
+    auto op_to_loop = reffine::OpToLoop::Build(op);
+    auto loop = reffine::LoopGen::Build(op_to_loop);
     return compile_loop<T>(loop);
 }
 
