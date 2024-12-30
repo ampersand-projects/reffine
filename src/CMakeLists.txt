@@ -12,7 +12,6 @@ set(SRC_FILES
     ir/ir.cpp
     pass/printer.cpp
     pass/loopgen.cpp
-    pass/op_to_loop.cpp
     pass/reffinepass.cpp
     pass/canonpass.cpp
     pass/irclone.cpp

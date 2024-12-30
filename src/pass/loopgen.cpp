@@ -27,54 +27,49 @@ Expr LoopGen::visit(Element& elem)
     return _new(vals);
 }
 
-OpToLoop2 LoopGen::op_to_loop(Op& op)
+shared_ptr<Loop> LoopGen::build_loop(Op& op)
 {
-    OpToLoop2 otl;
-
-    // Only support single indexed operations
     ASSERT(op.iters.size() == 1);
-
-    auto ispace = Reffine::Build(op);
+    ASSERT(op._lower != nullptr);
+    ASSERT(op._upper != nullptr);
+    ASSERT(op._incr != nullptr);
 
     // Loop index allocation
-    auto loop_idx_addr_expr = _alloc(_idx_t);
-    otl.loop_idx_addr = _sym("loop_idx_addr", loop_idx_addr_expr);
-    this->assign(otl.loop_idx_addr, loop_idx_addr_expr);
-    this->map_sym(otl.loop_idx_addr, otl.loop_idx_addr);
-
-    // Loop idx symbol
-    auto load_loop_idx_expr = _load(otl.loop_idx_addr);
-    auto loop_idx = _sym("loop_idx", load_loop_idx_expr);
-    this->assign(loop_idx, load_loop_idx_expr);
-    this->map_sym(loop_idx, loop_idx);
+    auto idx_alloc = _alloc(_idx_t);
+    auto idx_addr = _sym(op.iters[0]->name + "_addr", idx_alloc);
+    this->assign(idx_addr, idx_alloc);
 
     // Map op idx to loop idx
-    auto op_iter = _sym(op.iters[0]->name, op.iters[0]);
-    this->map_sym(op.iters[0], op_iter);
-    auto loop_idx_to_op_idx_expr = eval(ispace.idx_to_iter(loop_idx));
-    this->assign(op_iter, loop_idx_to_op_idx_expr);
+    auto idx_load = _load(idx_addr);
+    auto idx = _sym(op.iters[0]->name, idx_load);
+    this->map_sym(op.iters[0], idx);
+    this->assign(idx, idx_load);
 
-    // Loop init statement
-    auto lb_expr = eval(ispace.iter_to_idx(ispace.lower_bound));
-    otl.init = _store(otl.loop_idx_addr, lb_expr);
+    // Loop bound and increment
+    auto lb_expr = eval(op._lower);
+    auto ub_expr = eval(op._upper);
+    auto incr_expr = eval(op._incr);
+    auto cond_expr = eval(op.pred);
 
-    // Loop exit condition
-    auto ub_expr = eval(ispace.iter_to_idx(ispace.upper_bound));
-    otl.exit_cond = _gt(loop_idx, ub_expr);
+    // Loop output
+    vector<Expr> outputs;
+    for (auto output : op.outputs) { outputs.push_back(eval(output)); }
 
-    // Loop index increment expression
-    auto incr_expr = eval(ispace.idx_incr(loop_idx));
-    otl.incr = _store(otl.loop_idx_addr, incr_expr);
+    // Loop definition
+    auto loop = _loop(_new(outputs));
+    loop->init = _store(idx_addr, lb_expr);
+    loop->incr = _store(idx_addr, incr_expr);
+    loop->exit_cond = _gt(idx, ub_expr);
+    loop->body_cond = nullptr;
+    loop->body = nullptr;
+    loop->post = nullptr;
 
-    // Loop body condition
-    otl.body_cond = nullptr;
-
-    return otl;
+    return loop;
 }
 
 Expr LoopGen::visit(Reduce& red)
 {
-    auto otl = op_to_loop(red.op);
+    auto red_loop = this->build_loop(red.op);
 
     // State allocation and initialization
     auto state_addr_expr = _alloc(red.type);
@@ -82,22 +77,12 @@ Expr LoopGen::visit(Reduce& red)
     this->assign(state_addr, state_addr_expr);
     auto load_state_expr = _load(state_addr);
 
-    // Loop body expression
-    vector<Expr> op_outputs;
-    for (auto output : red.op.outputs) { op_outputs.push_back(eval(output)); }
-    auto val = _new(op_outputs);
-
-    // Loop definition
-    auto red_loop = _loop(load_state_expr);
+    // Finalize loop
     red_loop->init = _stmts(vector<Stmt>{
-        otl.init,
+        red_loop->init,
         _store(state_addr, red.init()),
     });
-    red_loop->incr = otl.incr;
-    red_loop->exit_cond = otl.exit_cond;
-    red_loop->body_cond = otl.body_cond;
-    red_loop->body = _store(state_addr, red.acc(load_state_expr, val));
-    red_loop->post = nullptr;
+    red_loop->body = _store(state_addr, red.acc(load_state_expr, red_loop->output));
 
     return red_loop;
 }

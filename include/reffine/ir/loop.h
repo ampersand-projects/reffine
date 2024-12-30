@@ -13,26 +13,6 @@ using namespace std;
 
 namespace reffine {
 
-enum class LoopMetaOp {
-    LB,
-    UB,
-    INCR,
-};
-
-struct LoopMeta : public ExprNode {
-    LoopMetaOp lmop;
-    Sym idx;
-    Expr expr;
-
-    LoopMeta(LoopMetaOp lmop, Sym idx, Expr expr) : ExprNode(types::BOOL), lmop(lmop), idx(idx), expr(expr)
-    {
-        ASSERT(idx->type.is_idx());
-        ASSERT(expr->type.is_idx());
-    }
-
-    void Accept(Visitor&) final;
-};
-
 struct IsValid : public ExprNode {
     Expr vec;
     Expr idx;

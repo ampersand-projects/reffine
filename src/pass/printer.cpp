@@ -151,6 +151,21 @@ void IRPrinter::Visit(Op& op)
     ostr << ": ";
 
     ostr << "(";
+    if (op._lower) {
+        ostr << " >= ";
+        op._lower->Accept(*this);
+        ostr << "; ";
+    }
+    if (op._upper) {
+        ostr << " <= ";
+        op._upper->Accept(*this);
+        ostr << "; ";
+    }
+    if (op._incr) {
+        ostr << " <- ";
+        op._incr->Accept(*this);
+        ostr << "; ";
+    }
     op.pred->Accept(*this);
     ostr << ")";
 
@@ -279,27 +294,6 @@ void IRPrinter::Visit(Load& load) { emitfunc("load", vector<Expr>{load.addr}); }
 void IRPrinter::Visit(Store& store)
 {
     emitfunc("store", vector<Expr>{store.addr, store.val});
-}
-
-void IRPrinter::Visit(LoopMeta& meta)
-{
-    meta.idx->Accept(*this);
-
-    switch(meta.lmop) {
-        case LoopMetaOp::LB:
-            ostr << ">=";
-            break;
-        case LoopMetaOp::UB:
-            ostr << "<=";
-            break;
-        case LoopMetaOp::INCR:
-            ostr << "<-";
-            break;
-        default:
-            throw runtime_error("LoopMetaOp not supported");
-    }
-
-    meta.expr->Accept(*this);
 }
 
 void IRPrinter::Visit(Loop& loop)

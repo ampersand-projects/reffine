@@ -1,5 +1,4 @@
 #include "reffine/pass/reffinepass.h"
-
 #include "reffine/builder/reffiner.h"
 #include "reffine/pass/z3solver.h"
 
@@ -148,4 +147,59 @@ IterSpace Reffine::Build(Op& op)
     Reffine rpass(ctx, op);
 
     return rpass.eval(op.pred);
+}
+
+shared_ptr<Op> OpToLoop::reffine(Op& op)
+{
+    // Only support single iterator for now
+    ASSERT(op.iters.size() == 1)
+
+    auto ispace = Reffine::Build(op);
+
+    // Map iter to idx
+    auto iter = _sym(op.iters[0]->name, op.iters[0]);
+    auto idx = _sym(iter->name + "_idx", _idx_t);
+    this->map_sym(op.iters[0], iter);
+    this->map_sym(idx, idx);
+    this->assign(iter, eval(ispace.idx_to_iter(idx)));
+
+    // Bounds and increment
+    auto lb = eval(ispace.iter_to_idx(ispace.lower_bound));
+    auto ub = eval(ispace.iter_to_idx(ispace.upper_bound));
+    auto incr = eval(ispace.idx_incr(idx));
+    auto body_cond = eval(ispace.body_cond);
+
+    vector<Expr> new_outputs;
+    for (auto& output : op.outputs) {
+        new_outputs.push_back(eval(output));
+    }
+
+    auto new_op = _op(vector<Sym>{idx}, body_cond, new_outputs);
+    new_op->_lower = lb;
+    new_op->_upper = ub;
+    new_op->_incr = incr;
+
+    return new_op;
+}
+
+Expr OpToLoop::visit(Op& op)
+{
+    return this->reffine(op);
+}
+
+Expr OpToLoop::visit(Reduce& red)
+{
+    auto op = this->reffine(red.op);
+    return _red(*op, red.init, red.acc);
+}
+
+shared_ptr<Func> OpToLoop::Build(shared_ptr<Func> func)
+{
+    auto new_func = _func(func->name, nullptr, vector<Sym>{});
+
+    OpToLoopCtx ctx(func, new_func);
+    OpToLoop optoloop(ctx);
+    func->Accept(optoloop);
+
+    return new_func;
 }
