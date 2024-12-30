@@ -35,7 +35,6 @@ private:
     Op& _op;
 };
 
-
 using OpToLoopCtx = IRCloneCtx;
 
 class OpToLoop : public IRClone {

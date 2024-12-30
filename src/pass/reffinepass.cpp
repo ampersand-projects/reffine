@@ -1,4 +1,5 @@
 #include "reffine/pass/reffinepass.h"
+
 #include "reffine/builder/reffiner.h"
 #include "reffine/pass/z3solver.h"
 
@@ -170,9 +171,7 @@ shared_ptr<Op> OpToLoop::reffine(Op& op)
     auto body_cond = eval(ispace.body_cond);
 
     vector<Expr> new_outputs;
-    for (auto& output : op.outputs) {
-        new_outputs.push_back(eval(output));
-    }
+    for (auto& output : op.outputs) { new_outputs.push_back(eval(output)); }
 
     auto new_op = _op(vector<Sym>{idx}, body_cond, new_outputs);
     new_op->_lower = lb;
@@ -182,10 +181,7 @@ shared_ptr<Op> OpToLoop::reffine(Op& op)
     return new_op;
 }
 
-Expr OpToLoop::visit(Op& op)
-{
-    return this->reffine(op);
-}
+Expr OpToLoop::visit(Op& op) { return this->reffine(op); }
 
 Expr OpToLoop::visit(Reduce& red)
 {

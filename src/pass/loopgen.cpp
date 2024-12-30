@@ -82,7 +82,8 @@ Expr LoopGen::visit(Reduce& red)
         red_loop->init,
         _store(state_addr, red.init()),
     });
-    red_loop->body = _store(state_addr, red.acc(load_state_expr, red_loop->output));
+    red_loop->body =
+        _store(state_addr, red.acc(load_state_expr, red_loop->output));
     red_loop->output = load_state_expr;
 
     return red_loop;
