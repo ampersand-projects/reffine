@@ -151,6 +151,21 @@ void IRPrinter::Visit(Op& op)
     ostr << ": ";
 
     ostr << "(";
+    if (op._lower) {
+        ostr << " >= ";
+        op._lower->Accept(*this);
+        ostr << "; ";
+    }
+    if (op._upper) {
+        ostr << " <= ";
+        op._upper->Accept(*this);
+        ostr << "; ";
+    }
+    if (op._incr) {
+        ostr << " <- ";
+        op._incr->Accept(*this);
+        ostr << "; ";
+    }
     op.pred->Accept(*this);
     ostr << ")";
 

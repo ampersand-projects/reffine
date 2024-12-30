@@ -15,6 +15,11 @@ struct Op : public ExprNode {
     Expr pred;
     vector<Expr> outputs;
 
+    /* internal use only */
+    Expr _lower;
+    Expr _upper;
+    Expr _incr;
+
     Op(vector<Sym> iters, Expr pred, vector<Expr> outputs)
         : ExprNode(extract_type(iters, outputs)),
           iters(std::move(iters)),

@@ -2,6 +2,7 @@
 #define INCLUDE_REFFINE_PASS_REFFINEPASS_H_
 
 #include "reffine/pass/base/irgen.h"
+#include "reffine/pass/irclone.h"
 
 namespace reffine {
 
@@ -32,6 +33,20 @@ private:
     Op& op() { return _op; }
 
     Op& _op;
+};
+
+using OpToLoopCtx = IRCloneCtx;
+
+class OpToLoop : public IRClone {
+public:
+    explicit OpToLoop(OpToLoopCtx& ctx) : IRClone(ctx) {}
+
+    static shared_ptr<Func> Build(shared_ptr<Func>);
+
+private:
+    shared_ptr<Op> reffine(Op&);
+    Expr visit(Op&) final;
+    Expr visit(Reduce&) final;
 };
 
 }  // namespace reffine

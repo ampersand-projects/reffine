@@ -73,7 +73,7 @@ struct DataType {
     bool is_idx() const { return btype == BaseType::IDX; }
     bool is_vector() const { return btype == BaseType::VECTOR; }
 
-    bool is_val() const { return !(this->is_vector() || this->is_idx()); }
+    bool is_val() const { return !(this->is_vector()); }
 
     bool is_float() const
     {

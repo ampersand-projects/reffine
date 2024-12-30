@@ -20,6 +20,7 @@
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
+#include "reffine/pass/reffinepass.h"
 #include "reffine/pass/loopgen.h"
 #include "reffine/pass/z3solver.h"
 #include "reffine/pass/llvmgen.h"
@@ -284,22 +285,25 @@ int main()
 {
     auto fn = reduce_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
+    auto fn2 = OpToLoop::Build(fn);
+    cout << "OpToLoop IR: " << IRPrinter::Build(fn2) << endl;
 
-    auto loop = LoopGen::Build(fn);
+    auto loop = LoopGen::Build(fn2);
     cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
     LLVMGen::Build(loop, *llmod);
-    if (llvm::verifyModule(*llmod)) {
-        throw std::runtime_error("LLVM module verification failed!!!");
-    }
 
     // dump llvm IR to .ll file
     ofstream llfile(llmod->getName().str() + ".ll");
     llfile << IRPrinter::Build(*llmod);
     llfile.close();
+
+    if (llvm::verifyModule(*llmod)) {
+        throw std::runtime_error("LLVM module verification failed!!!");
+    }
 
     jit->AddModule(std::move(llmod));
     auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
