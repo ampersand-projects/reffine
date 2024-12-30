@@ -19,6 +19,7 @@
 #include "reffine/ir/op.h"
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
+#include "reffine/pass/op_to_loop.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/loopgen.h"
 #include "reffine/pass/z3solver.h"

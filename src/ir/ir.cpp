@@ -20,6 +20,7 @@ void Stmts::Accept(Visitor& v) { v.Visit(*this); }
 void Alloc::Accept(Visitor& v) { v.Visit(*this); }
 void Load::Accept(Visitor& v) { v.Visit(*this); }
 void Store::Accept(Visitor& v) { v.Visit(*this); }
+void LoopMeta::Accept(Visitor& v) { v.Visit(*this); }
 void Loop::Accept(Visitor& v) { v.Visit(*this); }
 void IsValid::Accept(Visitor& v) { v.Visit(*this); }
 void SetValid::Accept(Visitor& v) { v.Visit(*this); }

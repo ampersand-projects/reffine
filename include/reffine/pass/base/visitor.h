@@ -105,6 +105,10 @@ public:
     {
         throw runtime_error("NoOp operation not supported");
     }
+    virtual void Visit(LoopMeta&)
+    {
+        throw runtime_error("LoopMeta operation not supported");
+    }
     virtual void Visit(Loop&)
     {
         throw runtime_error("Loop operation not supported");

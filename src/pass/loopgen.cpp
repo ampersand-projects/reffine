@@ -27,9 +27,9 @@ Expr LoopGen::visit(Element& elem)
     return _new(vals);
 }
 
-OpToLoop LoopGen::op_to_loop(Op& op)
+OpToLoop2 LoopGen::op_to_loop(Op& op)
 {
-    OpToLoop otl;
+    OpToLoop2 otl;
 
     // Only support single indexed operations
     ASSERT(op.iters.size() == 1);
