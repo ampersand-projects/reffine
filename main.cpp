@@ -286,7 +286,7 @@ int main()
     auto fn = reduce_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto fn2 = OpToLoop::Build(fn);
-    cout << "OpToLoop IR: " << IRPrinter::Build(fn2) << endl;
+    cout << "OpToLoop IR: " << endl << IRPrinter::Build(fn2) << endl;
 
     auto loop = LoopGen::Build(fn2);
     cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
