@@ -13,7 +13,7 @@ public:
     }
 };
 
-struct OpToLoop {
+struct OpToLoop2 {
     Sym loop_idx_addr;
     Stmt init;
     Expr exit_cond;
@@ -28,7 +28,7 @@ public:
     static shared_ptr<Func> Build(shared_ptr<Func>);
 
 private:
-    OpToLoop op_to_loop(Op&);
+    OpToLoop2 op_to_loop(Op&);
     Expr visit(Reduce&) final;
     Expr visit(Element&) final;
     Expr visit(NotNull&) final
