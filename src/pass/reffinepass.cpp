@@ -83,9 +83,11 @@ IterSpace intersect(IterSpace a, IterSpace b)
     IterSpace ispace;
 
     ispace.space = left->space;
-    ispace.lower_bound = apply_op(MathOp::MAX, left->lower_bound, right->lower_bound);
-    ispace.upper_bound = apply_op(MathOp::MIN, left->upper_bound, right->upper_bound);
-    ispace.body_cond =  apply_op(MathOp::AND, left->body_cond, right->body_cond);
+    ispace.lower_bound =
+        apply_op(MathOp::MAX, left->lower_bound, right->lower_bound);
+    ispace.upper_bound =
+        apply_op(MathOp::MIN, left->upper_bound, right->upper_bound);
+    ispace.body_cond = apply_op(MathOp::AND, left->body_cond, right->body_cond);
     ispace.iter_to_idx = left->iter_to_idx;
     ispace.idx_to_iter = left->idx_to_iter;
     ispace.idx_incr = left->idx_incr;
