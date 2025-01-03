@@ -1,4 +1,9 @@
-#include "base2.h"
+#ifndef INCLUDE_REFFINE_ARROW_DEFS_H_
+#define INCLUDE_REFFINE_ARROW_DEFS_H_
+
+#include "reffine/arrow/base2.h"
+
+namespace reffine {
 
 /*
  * Schema definitions
@@ -36,3 +41,7 @@ using FloatArray = PrimArray<float>;
 using DoubleArray = PrimArray<double>;
 using BooleanArray = PrimArray<int8_t>;
 using VectorArray = StructArray;
+
+} // namespace reffine
+
+#endif // INCLUDE_REFFINE_ARROW_DEFS_H_

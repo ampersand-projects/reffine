@@ -9,6 +9,16 @@
 
 extern "C" {
 
+struct ArrowTable {
+    ArrowSchema schema;
+    ArrowArray array;
+
+    ArrowTable(ArrowSchema schema, ArrowArray array)
+        : schema(std::move(schema)), array(std::move(array))
+        {
+        }
+};
+
 void arrow_print_schema(ArrowSchema*);
 void arrow_release_schema(ArrowSchema*);
 void arrow_make_schema(ArrowSchema*);

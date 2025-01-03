@@ -1,6 +1,11 @@
+#ifndef INCLUDE_REFFINE_ARROW_BASE2_H_
+#define INCLUDE_REFFINE_ARROW_BASE2_H_
+
 #include <cstring>
 
-#include "base.h"
+#include "reffine/arrow/base.h"
+
+namespace reffine {
 
 struct ArrowSchema2;
 struct ArrowArray2;
@@ -129,3 +134,7 @@ struct PrimArray : public NullableArray {
 
     T* get_val_buf() { return this->get_buffer<T>(1); }
 };
+
+} // namespace reffine
+
+#endif // INCLUDE_REFFINE_ARROW_BASE2_H_
