@@ -162,11 +162,11 @@ struct DataType {
                 return "x";
             case BaseType::VECTOR: {
                 string res = "<";
-                for (size_t i=0; i<dim; i++) {
+                for (size_t i = 0; i < dim; i++) {
                     res += dtypes[i].str() + ", ";
                 }
                 res += "> {";
-                for (size_t i=dim; i<dtypes.size(); i++) {
+                for (size_t i = dim; i < dtypes.size(); i++) {
                     res += dtypes[i].str() + ", ";
                 }
                 res += "}";

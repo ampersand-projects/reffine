@@ -133,7 +133,7 @@ struct ArrowTable {
     {
         vector<DataType> dtypes;
 
-        for (size_t i=0; i<this->schema.n_children; i++) {
+        for (size_t i = 0; i < this->schema.n_children; i++) {
             auto child = schema.children[i];
             auto fmt = std::string(child->format);
 
