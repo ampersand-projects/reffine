@@ -65,7 +65,7 @@ dtypes = {
 
 # Table store_sales
 df = pd.read_csv(
-    "/home/anandj/data/code/reffine/benchmark/tpcds-data/store_sales_1_10.dat",
+    "tpcds-data/store_sales_1_10.dat",
     delimiter="|",
     engine="pyarrow",
     names=list(dtypes.keys()),
