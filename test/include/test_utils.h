@@ -19,7 +19,7 @@
 #include "reffine/pass/printer.h"
 #include "reffine/pass/reffinepass.h"
 
-arrow::Result<ArrowTable> get_input_vector();
+arrow::Result<reffine::ArrowTable> get_input_vector();
 std::string print_output_vector(ArrowSchema*, ArrowArray*);
 
 template <typename T>

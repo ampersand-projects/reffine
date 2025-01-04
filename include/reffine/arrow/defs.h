@@ -29,6 +29,22 @@ using VectorSchema = StructSchema;
 /*
  * Array definitions
  */
+struct NullableArray : public ArrowArray2 {
+    NullableArray(size_t len) : ArrowArray2()
+    {
+        this->add_buffer<char>(len / 8 + 1);
+    }
+
+    char* get_bit_buf() { return this->get_buffer<char>(0); }
+};
+
+template <typename T>
+struct PrimArray : public NullableArray {
+    PrimArray(size_t len) : NullableArray(len) { this->add_buffer<T>(len); }
+
+    T* get_val_buf() { return this->get_buffer<T>(1); }
+};
+
 struct StructArray : public NullableArray {
     StructArray(size_t len) : NullableArray(len) {}
 };
@@ -42,6 +58,6 @@ using DoubleArray = PrimArray<double>;
 using BooleanArray = PrimArray<int8_t>;
 using VectorArray = StructArray;
 
-} // namespace reffine
+}  // namespace reffine
 
-#endif // INCLUDE_REFFINE_ARROW_DEFS_H_
+#endif  // INCLUDE_REFFINE_ARROW_DEFS_H_

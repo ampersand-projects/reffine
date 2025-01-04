@@ -4,11 +4,10 @@
 #include <cstring>
 
 #include "reffine/arrow/base.h"
+#include "reffine/base/log.h"
+#include "reffine/base/type.h"
 
 namespace reffine {
-
-struct ArrowSchema2;
-struct ArrowArray2;
 
 struct PrivateData {
     int count;
@@ -119,22 +118,46 @@ struct ArrowArray2 : public ArrowArray {
     }
 };
 
-struct NullableArray : public ArrowArray2 {
-    NullableArray(size_t len) : ArrowArray2()
+struct ArrowTable {
+    ArrowSchema schema;
+    ArrowArray array;
+
+    ArrowTable(ArrowSchema schema, ArrowArray array)
+        : schema(std::move(schema)), array(std::move(array))
     {
-        this->add_buffer<char>(len / 8 + 1);
+        auto fmt = std::string(schema.format);
+        ASSERT(fmt == "+s");
     }
 
-    char* get_bit_buf() { return this->get_buffer<char>(0); }
+    DataType get_data_type()
+    {
+        vector<DataType> dtypes;
+
+        for (size_t i=0; i<this->schema.n_children; i++) {
+            auto child = schema.children[i];
+            auto fmt = std::string(child->format);
+
+            if (fmt == "c") {
+                dtypes.push_back(types::INT8);
+            } else if (fmt == "s") {
+                dtypes.push_back(types::INT16);
+            } else if (fmt == "i") {
+                dtypes.push_back(types::INT32);
+            } else if (fmt == "l") {
+                dtypes.push_back(types::INT64);
+            } else if (fmt == "f") {
+                dtypes.push_back(types::FLOAT32);
+            } else if (fmt == "g") {
+                dtypes.push_back(types::FLOAT64);
+            } else {
+                throw std::runtime_error("schema type not supported");
+            }
+        }
+
+        return DataType(BaseType::STRUCT, dtypes);
+    }
 };
 
-template <typename T>
-struct PrimArray : public NullableArray {
-    PrimArray(size_t len) : NullableArray(len) { this->add_buffer<T>(len); }
+}  // namespace reffine
 
-    T* get_val_buf() { return this->get_buffer<T>(1); }
-};
-
-} // namespace reffine
-
-#endif // INCLUDE_REFFINE_ARROW_BASE2_H_
+#endif  // INCLUDE_REFFINE_ARROW_BASE2_H_
