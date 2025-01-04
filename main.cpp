@@ -315,7 +315,7 @@ int main()
 
     //auto status = csv_to_arrow();
     auto table = load_arrow_file("../benchmark/store_sales.arrow");
-    cout << "TYPE: " << table->get_data_type().str() << endl;
+    cout << "TYPE: " << table->get_data_type(2).str() << endl;
     return 0;
     auto status = query_arrow_file(*table, query_fn);
     if (!status.ok()) {

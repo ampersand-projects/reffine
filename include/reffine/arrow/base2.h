@@ -129,7 +129,7 @@ struct ArrowTable {
         ASSERT(fmt == "+s");
     }
 
-    DataType get_data_type()
+    DataType get_data_type(size_t dim)
     {
         vector<DataType> dtypes;
 
@@ -154,7 +154,7 @@ struct ArrowTable {
             }
         }
 
-        return DataType(BaseType::STRUCT, dtypes);
+        return DataType(BaseType::VECTOR, dtypes, dim);
     }
 };
 
