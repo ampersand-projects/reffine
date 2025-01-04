@@ -11,6 +11,7 @@
 
 #include <string>
 
+#include "reffine/arrow/defs.h"
 #include "reffine/engine/engine.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/llvmgen.h"
@@ -18,18 +19,8 @@
 #include "reffine/pass/printer.h"
 #include "reffine/pass/reffinepass.h"
 
-struct ArrowTable {
-    ArrowSchema schema;
-    ArrowArray array;
-
-    ArrowTable(ArrowSchema schema, ArrowArray array)
-        : schema(std::move(schema)), array(std::move(array))
-    {
-    }
-};
-
-arrow::Result<ArrowTable> get_input_vector();
-std::string print_output_vector(ArrowSchema*, ArrowArray*);
+arrow::Result<reffine::ArrowTable> get_input_vector();
+std::string print_arrow_table(reffine::ArrowTable&);
 
 template <typename T>
 T compile_loop(std::shared_ptr<reffine::Func> loop)

@@ -1,6 +1,6 @@
 #include "test_utils.h"
 
-arrow::Result<ArrowTable> get_input_vector()
+arrow::Result<reffine::ArrowTable> get_input_vector()
 {
     ARROW_ASSIGN_OR_RAISE(
         auto infile, arrow::io::ReadableFile::Open(
@@ -13,11 +13,14 @@ arrow::Result<ArrowTable> get_input_vector()
     ArrowArray array;
     ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &array, &schema));
 
-    return ArrowTable(schema, array);
+    return reffine::ArrowTable(schema, array);
 }
 
-std::string print_output_vector(ArrowSchema* schema, ArrowArray* array)
+std::string print_arrow_table(reffine::ArrowTable& tbl)
 {
-    auto res = *arrow::ImportRecordBatch(array, schema);
+    auto& schema = tbl.schema;
+    auto& array = tbl.array;
+    auto res = *arrow::ImportRecordBatch(&array, &schema);
+
     return res->ToString();
 }

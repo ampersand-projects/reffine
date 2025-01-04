@@ -160,8 +160,18 @@ struct DataType {
             }
             case BaseType::IDX:
                 return "x";
-            case BaseType::VECTOR:
-                return "~{" + dtypes[0].str() + "}";
+            case BaseType::VECTOR: {
+                string res = "<";
+                for (size_t i = 0; i < dim; i++) {
+                    res += dtypes[i].str() + ", ";
+                }
+                res += "> {";
+                for (size_t i = dim; i < dtypes.size(); i++) {
+                    res += dtypes[i].str() + ", ";
+                }
+                res += "}";
+                return res;
+            }
             default:
                 throw std::runtime_error("Invalid type");
         }

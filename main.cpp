@@ -53,20 +53,25 @@ arrow::Status csv_to_arrow()
     return arrow::Status::OK();
 }
 
-arrow::Status query_arrow_file(long (*query_fn)(void*))
+arrow::Result<ArrowTable> load_arrow_file(string filename)
 {
-    ARROW_ASSIGN_OR_RAISE(auto infile, arrow::io::ReadableFile::Open(
-                "../students.arrow", arrow::default_memory_pool()));
+    ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(
+                filename, arrow::default_memory_pool()));
 
-    ARROW_ASSIGN_OR_RAISE(auto ipc_reader, arrow::ipc::RecordBatchFileReader::Open(infile));
+    ARROW_ASSIGN_OR_RAISE(auto ipc_reader, arrow::ipc::RecordBatchFileReader::Open(file));
 
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
 
-    cout << "Input: " << endl << rbatch->ToString() << endl;
+    ArrowSchema schema;
+    ArrowArray array;
+    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &array, &schema));
 
-    ArrowSchema in_schema;
-    ArrowArray in_array;
-    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &in_array, &in_schema));
+    return ArrowTable(std::move(schema), std::move(array));
+}
+
+arrow::Status query_arrow_file(ArrowTable& in_table, long (*query_fn)(void*))
+{
+    auto& in_array = in_table.array;
 
     VectorSchema out_schema("output");
     VectorArray out_array(in_array.length);
@@ -281,10 +286,40 @@ shared_ptr<Func> reduce_op_fn()
     return foo_fn;
 }
 
+shared_ptr<Func> tpcds_query9(ArrowTable& table)
+{
+    auto vec_in_sym = _sym("vec_in", table.get_data_type(2));
+    /*
+    auto idx = _sym("idx", _idx_t);
+    Op op(
+        {idx},
+        ~(vec_in_sym[{idx}]),
+        { vec_in_sym[{idx}][10] }
+    );
+    auto sum = _red(
+        op,
+        []() { return _i64(0); },
+        [](Expr s, Expr v) {
+            auto e = _get(v, 0);
+            return _add(s, e);
+        }
+    );
+    auto sum_sym = _sym("sum", sum);
+    */
+
+    auto foo_fn = _func("foo", vec_in_sym, vector<Sym>{vec_in_sym});
+    //foo_fn->tbl[sum_sym] = sum;
+
+    return foo_fn;
+}
+
 int main()
 {
-    auto fn = reduce_op_fn();
+    auto table = load_arrow_file("../benchmark/store_sales.arrow");
+
+    auto fn = tpcds_query9(*table);
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
+    return 0;
     auto fn2 = OpToLoop::Build(fn);
     cout << "OpToLoop IR: " << IRPrinter::Build(fn2) << endl;
 
@@ -309,7 +344,7 @@ int main()
     auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
 
     //auto status = csv_to_arrow();
-    auto status = query_arrow_file(query_fn);
+    auto status = query_arrow_file(*table, query_fn);
     if (!status.ok()) {
         cerr << status.ToString() << endl;
     }
