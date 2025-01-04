@@ -106,7 +106,5 @@ void transform_test()
 
     auto res = query_fn(&in_array, &out_array);
 
-    // std::cout << print_output_vector(&out_schema, &out_array);
-
     ASSERT_EQ(1, 1);
 }

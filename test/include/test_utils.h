@@ -20,7 +20,7 @@
 #include "reffine/pass/reffinepass.h"
 
 arrow::Result<reffine::ArrowTable> get_input_vector();
-std::string print_output_vector(ArrowSchema*, ArrowArray*);
+std::string print_arrow_table(reffine::ArrowTable&);
 
 template <typename T>
 T compile_loop(std::shared_ptr<reffine::Func> loop)

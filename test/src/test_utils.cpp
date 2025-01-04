@@ -16,8 +16,11 @@ arrow::Result<reffine::ArrowTable> get_input_vector()
     return reffine::ArrowTable(schema, array);
 }
 
-std::string print_output_vector(ArrowSchema* schema, ArrowArray* array)
+std::string print_arrow_table(reffine::ArrowTable& tbl)
 {
-    auto res = *arrow::ImportRecordBatch(array, schema);
+    auto& schema = tbl.schema;
+    auto& array = tbl.array;
+    auto res = *arrow::ImportRecordBatch(&array, &schema);
+
     return res->ToString();
 }
