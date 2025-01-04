@@ -286,10 +286,40 @@ shared_ptr<Func> reduce_op_fn()
     return foo_fn;
 }
 
+shared_ptr<Func> tpcds_query9(ArrowTable& table)
+{
+    auto vec_in_sym = _sym("vec_in", table.get_data_type(2));
+    /*
+    auto idx = _sym("idx", _idx_t);
+    Op op(
+        {idx},
+        ~(vec_in_sym[{idx}]),
+        { vec_in_sym[{idx}][10] }
+    );
+    auto sum = _red(
+        op,
+        []() { return _i64(0); },
+        [](Expr s, Expr v) {
+            auto e = _get(v, 0);
+            return _add(s, e);
+        }
+    );
+    auto sum_sym = _sym("sum", sum);
+    */
+
+    auto foo_fn = _func("foo", vec_in_sym, vector<Sym>{vec_in_sym});
+    //foo_fn->tbl[sum_sym] = sum;
+
+    return foo_fn;
+}
+
 int main()
 {
-    auto fn = reduce_op_fn();
+    auto table = load_arrow_file("../benchmark/store_sales.arrow");
+
+    auto fn = tpcds_query9(*table);
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
+    return 0;
     auto fn2 = OpToLoop::Build(fn);
     cout << "OpToLoop IR: " << IRPrinter::Build(fn2) << endl;
 
@@ -314,9 +344,6 @@ int main()
     auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
 
     //auto status = csv_to_arrow();
-    auto table = load_arrow_file("../benchmark/store_sales.arrow");
-    cout << "TYPE: " << table->get_data_type(2).str() << endl;
-    return 0;
     auto status = query_arrow_file(*table, query_fn);
     if (!status.ok()) {
         cerr << status.ToString() << endl;
