@@ -330,6 +330,8 @@ int main()
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
     LLVMGen::Build(loop, *llmod);
+    
+    ExecEngine::Optimize(*llmod);
 
     // dump llvm IR to .ll file
     ofstream llfile(llmod->getName().str() + ".ll");

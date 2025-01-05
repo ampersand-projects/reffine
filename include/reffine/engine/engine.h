@@ -46,6 +46,7 @@ public:
     }
 
     static ExecEngine* Get();
+    static void Optimize(Module&);
     void AddModule(unique_ptr<Module>);
     LLVMContext& GetCtx();
 
