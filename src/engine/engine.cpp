@@ -83,6 +83,8 @@ void ExecEngine::register_symbols()
 
 void ExecEngine::add_opt_passes()
 {
+    // based on optimization pipeline here:
+    // https://github.com/csb6/bluebird/blob/master/src/optimizer.cpp
     VectorizerParams::VectorizationFactor = 4;
 
     PB.registerModuleAnalyses(MAM);
