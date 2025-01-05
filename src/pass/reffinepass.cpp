@@ -36,14 +36,27 @@ Expr get_upper_bound(Sym iter, Expr pred)
     return nullptr;
 }
 
+Expr apply_op(MathOp op, const Expr left, const Expr right)
+{
+    if (left && right) {
+        return _nary(left->type, op, vector<Expr>{left, right});
+    } else if (left) {
+        return left;
+    } else if (right) {
+        return right;
+    } else {
+        return nullptr;
+    }
+}
+
 IterSpace apply_bounds(IterSpace ispace, Expr pred)
 {
     ASSERT(ispace.space->type.is_val());
 
     if (auto lb = get_lower_bound(ispace.space, pred)) {
-        ispace.lower_bound = _max(ispace.lower_bound, lb);
+        ispace.lower_bound = apply_op(MathOp::MAX, ispace.lower_bound, lb);
     } else if (auto ub = get_upper_bound(ispace.space, pred)) {
-        ispace.upper_bound = _min(ispace.upper_bound, ub);
+        ispace.upper_bound = apply_op(MathOp::MIN, ispace.upper_bound, ub);
     } else {
         throw runtime_error("Unabled to identify the bounds");
     }
@@ -70,9 +83,11 @@ IterSpace intersect(IterSpace a, IterSpace b)
     IterSpace ispace;
 
     ispace.space = left->space;
-    ispace.lower_bound = _max(left->lower_bound, right->lower_bound);
-    ispace.upper_bound = _min(left->upper_bound, right->upper_bound);
-    ispace.body_cond = _and(left->body_cond, right->body_cond);
+    ispace.lower_bound =
+        apply_op(MathOp::MAX, left->lower_bound, right->lower_bound);
+    ispace.upper_bound =
+        apply_op(MathOp::MIN, left->upper_bound, right->upper_bound);
+    ispace.body_cond = apply_op(MathOp::AND, left->body_cond, right->body_cond);
     ispace.iter_to_idx = left->iter_to_idx;
     ispace.idx_to_iter = left->idx_to_iter;
     ispace.idx_incr = left->idx_incr;
@@ -101,8 +116,8 @@ IterSpace Reffine::visit(Sym sym)
 
     if (sym == op().iters[0]) {
         ispace.space = sym;
-        ispace.lower_bound = _const(sym->type, -INF);
-        ispace.upper_bound = _const(sym->type, INF);
+        ispace.lower_bound = nullptr;
+        ispace.upper_bound = nullptr;
         ispace.body_cond = _true();
         ispace.idx_to_iter = [sym](Expr idx) { return _cast(sym->type, idx); };
         ispace.iter_to_idx = [](Expr iter) { return _cast(_idx_t, iter); };
@@ -168,7 +183,7 @@ shared_ptr<Op> OpToLoop::reffine(Op& op)
     auto lb = eval(ispace.iter_to_idx(ispace.lower_bound));
     auto ub = eval(ispace.iter_to_idx(ispace.upper_bound));
     auto incr = eval(ispace.idx_incr(idx));
-    auto body_cond = eval(ispace.body_cond);
+    auto body_cond = ispace.body_cond ? eval(ispace.body_cond) : nullptr;
 
     vector<Expr> new_outputs;
     for (auto& output : op.outputs) { new_outputs.push_back(eval(output)); }
