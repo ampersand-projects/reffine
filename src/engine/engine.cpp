@@ -3,39 +3,24 @@
 #include <llvm/IR/Module.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Passes/PassBuilder.h>
-#include <llvm/Transforms/AggressiveInstCombine/AggressiveInstCombine.h>
+#include <llvm/Transforms/IPO/PartialInlining.h>
 #include <llvm/Transforms/Scalar/ADCE.h>
 #include <llvm/Transforms/Scalar/GVN.h>
-#include <llvm/Transforms/Scalar/Reassociate.h>
+#include <llvm/Transforms/Scalar/LoopUnrollPass.h>
+#include <llvm/Transforms/Scalar/SCCP.h>
 #include <llvm/Transforms/Scalar/SimplifyCFG.h>
 #include <llvm/Transforms/Scalar/Sink.h>
-#include <llvm/Transforms/Scalar/TailRecursionElimination.h>
 #include <llvm/Transforms/Utils/LoopSimplify.h>
-#include <llvm/Transforms/Utils/Mem2Reg.h>
 #include <llvm/Transforms/Vectorize/SLPVectorizer.h>
 
-#include "llvm/Analysis/CGSCCPassManager.h"
-#include "llvm/Analysis/LoopAnalysisManager.h"
 #include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
-#include "llvm/IR/PassManager.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Passes/PassBuilder.h"
 #include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/Scalar/InstSimplifyPass.h"
 #include "llvm/Transforms/Scalar/LoopRotation.h"
 #include "llvm/Transforms/Vectorize/LoopVectorize.h"
-// #include <llvm/Transforms/Scalar/SROA.h>
-#include <llvm/Transforms/IPO/DeadArgumentElimination.h>
-#include <llvm/Transforms/IPO/GlobalOpt.h>
-#include <llvm/Transforms/IPO/MergeFunctions.h>
-#include <llvm/Transforms/IPO/PartialInlining.h>
-#include <llvm/Transforms/IPO/SCCP.h>
-#include <llvm/Transforms/Scalar/IndVarSimplify.h>
-#include <llvm/Transforms/Scalar/LICM.h>
-#include <llvm/Transforms/Scalar/LoopUnrollPass.h>
-#include <llvm/Transforms/Scalar/SCCP.h>
 
 using namespace reffine;
 using namespace std::placeholders;
@@ -101,16 +86,12 @@ void ExecEngine::Optimize(Module &llmod)
     PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
 
     FunctionPassManager FPM;
-    FPM.addPass(PromotePass());
-    FPM.addPass(AggressiveInstCombinePass());
-    FPM.addPass(ReassociatePass());
     FPM.addPass(SCCPPass());
     FPM.addPass(ADCEPass());
     FPM.addPass(
         LoopSimplifyPass());  // needs to be followed by a simplifycfg pass
     {
         LoopPassManager LM;
-        LM.addPass(IndVarSimplifyPass());
         LM.addPass(LoopRotatePass());
         FPM.addPass(createFunctionToLoopPassAdaptor(std::move(LM)));
     }
@@ -118,10 +99,8 @@ void ExecEngine::Optimize(Module &llmod)
     FPM.addPass(SimplifyCFGPass());
     FPM.addPass(ADCEPass());
     FPM.addPass(SinkingPass());
-    FPM.addPass(TailCallElimPass());
     FPM.addPass(LoopVectorizePass());
     FPM.addPass(SLPVectorizerPass());
-    FPM.addPass(SCCPPass());
 
     ModulePassManager MPM =
         PB.buildPerModuleDefaultPipeline(OptimizationLevel::O3);
@@ -141,7 +120,8 @@ unique_ptr<ExecutionSession> ExecEngine::createExecutionSession()
 void ExecEngine::register_symbols()
 {
     cantFail(jd.define(absoluteSymbols(SymbolMap({
-        //{ mangler("get_vector_len"), { ExecutorAddr::fromPtr(&get_vector_len),
+        // { mangler("get_vector_len"), {
+        // ExecutorAddr::fromPtr(&get_vector_len),
         // JITSymbolFlags::Callable } }
     }))));
 }
