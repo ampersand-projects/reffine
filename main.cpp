@@ -27,6 +27,7 @@
 #include "reffine/engine/engine.h"
 #include "reffine/arrow/defs.h"
 #include "reffine/builder/reffiner.h"
+#include "reffine/pass/vinstr.h"
 
 using namespace reffine;
 using namespace std;
@@ -265,12 +266,9 @@ shared_ptr<Func> reduce_op_fn()
     auto idx_sym = _sym("i", _idx_t);
     auto vec_in_sym = _sym("vec_in", _vec_t<0, int64_t, int64_t, int64_t, int64_t, int64_t, int8_t, int64_t>());
 
-    auto len = _call("get_vector_len", _idx_t, vector<Expr>{vec_in_sym});
-    auto len_sym = _sym("len", len);
-
     Op op(
         { idx_sym },
-        _gte(idx_sym, _idx(0)) && _lt(idx_sym, len_sym),
+        _gte(idx_sym, _idx(0)) && _lt(idx_sym, _idx(2880404)),
         { _get(make_shared<Lookup>(vec_in_sym, idx_sym), 1) }
     );
     auto sum = _red(
@@ -284,7 +282,6 @@ shared_ptr<Func> reduce_op_fn()
     auto sum_sym = _sym("sum", sum);
 
     auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
-    foo_fn->tbl[len_sym] = len;
     foo_fn->tbl[sum_sym] = sum;
 
     return foo_fn;
