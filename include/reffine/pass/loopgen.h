@@ -17,6 +17,7 @@ private:
     shared_ptr<Loop> build_loop(Op&);
     Expr visit(Reduce&) final;
     Expr visit(Element&) final;
+    Expr visit(Lookup&) final;
     Expr visit(NotNull&) final
     {
         throw runtime_error("NotNull visit not supported");

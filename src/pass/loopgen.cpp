@@ -27,6 +27,21 @@ Expr LoopGen::visit(Element& elem)
     return _new(vals);
 }
 
+Expr LoopGen::visit(Lookup& lookup)
+{
+    auto vec = eval(lookup.vec);
+    auto idx = eval(lookup.idx);
+
+    vector<Expr> vals;
+    for (size_t i=vec->type.dim; i < vec->type.dtypes.size(); i++) {
+        auto data_ptr = _fetch(vec, idx, i);
+        auto data = _load(data_ptr);
+        vals.push_back(data);
+    }
+
+    return _new(vals);
+}
+
 shared_ptr<Loop> LoopGen::build_loop(Op& op)
 {
     ASSERT(op.iters.size() == 1);
