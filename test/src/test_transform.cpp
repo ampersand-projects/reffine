@@ -1,7 +1,9 @@
+#include "reffine/builder/reffiner.h"
 #include "test_base.h"
 #include "test_utils.h"
 
 using namespace reffine;
+using namespace reffine::reffiner;
 
 shared_ptr<Func> transform_loop()
 {
@@ -43,7 +45,7 @@ shared_ptr<Func> transform_loop()
     auto out_sleep_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 2);
     auto out_minutes = make_shared<Mul>(hours_data, sixty);
 
-    auto loop = make_shared<Loop>(vec_out_sym);
+    auto loop = _loop(vec_out_sym);
     auto loop_sym = make_shared<SymNode>("loop", loop);
     loop->init = make_shared<Stmts>(vector<Stmt>{
         make_shared<Store>(idx_addr, zero),
