@@ -17,6 +17,8 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/Module.h"
+#include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/TargetSelect.h"
 
 using namespace std;
@@ -43,9 +45,11 @@ public:
                 dl.getGlobalPrefix())));
 
         register_symbols();
+        add_opt_passes();
     }
 
     static ExecEngine* Get();
+    void Optimize(Module&);
     void AddModule(unique_ptr<Module>);
     LLVMContext& GetCtx();
 
@@ -72,7 +76,17 @@ private:
 
     JITDylib& jd;
 
+    LoopAnalysisManager LAM;
+    FunctionAnalysisManager FAM;
+    CGSCCAnalysisManager CGAM;
+    ModuleAnalysisManager MAM;
+    PassBuilder PB;
+    FunctionPassManager FPM;
+    LoopPassManager LM;
+    ModulePassManager MPM;
+
     void register_symbols();
+    void add_opt_passes();
 };
 
 }  // namespace reffine

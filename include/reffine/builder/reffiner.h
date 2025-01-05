@@ -113,7 +113,7 @@ REGISTER_EXPR(_setval, SetValid)
 REGISTER_EXPR(_fetch, FetchDataPtr)
 REGISTER_EXPR(_alloc, Alloc)
 REGISTER_EXPR(_load, Load)
-REGISTER_EXPR(_loop, Loop)
+REGISTER_EXPR(_loop, reffine::Loop)
 
 // Ops
 REGISTER_EXPR(_elem, Element)

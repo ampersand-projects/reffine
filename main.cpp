@@ -165,7 +165,7 @@ shared_ptr<Func> transform_fn()
     auto out_sleep_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 2);
     auto out_minutes = make_shared<Mul>(hours_data, sixty);
 
-    auto loop = make_shared<Loop>(vec_out_sym);
+    auto loop = _loop(vec_out_sym);
     auto loop_sym = make_shared<SymNode>("loop", loop);
     loop->init = make_shared<Stmts>(vector<Stmt>{
         make_shared<Store>(idx_addr, zero),
@@ -330,6 +330,8 @@ int main()
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
     LLVMGen::Build(loop, *llmod);
+    
+    jit->Optimize(*llmod);
 
     // dump llvm IR to .ll file
     ofstream llfile(llmod->getName().str() + ".ll");

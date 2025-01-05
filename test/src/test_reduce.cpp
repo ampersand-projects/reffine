@@ -1,3 +1,4 @@
+#include "reffine/builder/reffiner.h"
 #include "test_base.h"
 #include "test_utils.h"
 
@@ -26,7 +27,7 @@ shared_ptr<Func> vector_loop()
     auto val_ptr = make_shared<FetchDataPtr>(vec_sym, idx, 1);
     auto val = make_shared<Load>(val_ptr);
 
-    auto loop = make_shared<Loop>(make_shared<Load>(sum_addr));
+    auto loop = _loop(make_shared<Load>(sum_addr));
     auto loop_sym = make_shared<SymNode>("loop", loop);
     loop->init = make_shared<Stmts>(vector<Stmt>{
         make_shared<Store>(idx_addr, make_shared<Const>(types::IDX, 0)),
