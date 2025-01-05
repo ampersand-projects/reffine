@@ -35,6 +35,8 @@ protected:
     Expr visit(NaryExpr&) override;
     Expr visit(Op&) override;
     Expr visit(Element&) override;
+    Expr visit(Lookup&) override;
+    Expr visit(Locate&) override;
     Expr visit(NotNull&) override;
     Expr visit(Reduce&) override;
     void visit(Func&) override;

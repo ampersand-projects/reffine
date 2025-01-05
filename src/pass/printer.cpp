@@ -371,6 +371,24 @@ void IRPrinter::Visit(SetValid& set_valid)
              {set_valid.vec, set_valid.idx, set_valid.validity});
 }
 
+void IRPrinter::Visit(Lookup& lookup)
+{
+    emitfunc("lookup", {lookup.vec, lookup.idx});
+}
+
+void IRPrinter::Visit(Locate& locate)
+{
+    ostr << "locate(";
+    locate.vec->Accept(*this);
+    ostr << ", {";
+    for (const auto& iter : locate.iters) {
+        iter->Accept(*this);
+        ostr << ", ";
+    }
+    ostr << "\b\b";
+    ostr << ")";
+}
+
 void IRPrinter::Visit(FetchDataPtr& fetch_data_ptr)
 {
     emitfunc("fetch_data_ptr<" + std::to_string(fetch_data_ptr.col) + ">",

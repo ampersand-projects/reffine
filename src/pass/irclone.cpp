@@ -41,6 +41,19 @@ Expr IRClone::visit(Element& elem)
     return _elem(eval(elem.vec), new_iters);
 }
 
+Expr IRClone::visit(Lookup& lookup)
+{
+    return _lookup(eval(lookup.vec), eval(lookup.idx));
+}
+
+Expr IRClone::visit(Locate& locate)
+{
+    vector<Expr> new_iters;
+    for (auto& old_iter : locate.iters) { new_iters.push_back(eval(old_iter)); }
+
+    return _locate(eval(locate.vec), new_iters);
+}
+
 Expr IRClone::visit(NotNull& not_null) { return _notnull(eval(not_null.elem)); }
 
 Expr IRClone::visit(NaryExpr& nexpr)

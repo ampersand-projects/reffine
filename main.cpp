@@ -262,14 +262,17 @@ void demorgan_test()
 
 shared_ptr<Func> reduce_op_fn()
 {
-    auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym = _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t, int8_t, int64_t>());
-    Op op(
-        { t_sym },
-        ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(20)) &&  _gte(t_sym, _i64(10)),
-        { vec_in_sym[{t_sym}][1] }
-    );
+    auto idx_sym = _sym("i", _idx_t);
+    auto vec_in_sym = _sym("vec_in", _vec_t<0, int64_t, int64_t, int64_t, int64_t, int64_t, int8_t, int64_t>());
 
+    auto len = _call("get_vector_len", _idx_t, vector<Expr>{vec_in_sym});
+    auto len_sym = _sym("len", len);
+
+    Op op(
+        { idx_sym },
+        _gte(idx_sym, _idx(0)) && _lt(idx_sym, len_sym),
+        { _get(make_shared<Lookup>(vec_in_sym, idx_sym), 1) }
+    );
     auto sum = _red(
         op,
         [] () { return _i64(0); },
@@ -281,6 +284,7 @@ shared_ptr<Func> reduce_op_fn()
     auto sum_sym = _sym("sum", sum);
 
     auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
+    foo_fn->tbl[len_sym] = len;
     foo_fn->tbl[sum_sym] = sum;
 
     return foo_fn;
@@ -315,11 +319,8 @@ shared_ptr<Func> tpcds_query9(ArrowTable& table)
 
 int main()
 {
-    auto table = load_arrow_file("../benchmark/store_sales.arrow");
-
-    auto fn = tpcds_query9(*table);
+    auto fn = reduce_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
-    return 0;
     auto fn2 = OpToLoop::Build(fn);
     cout << "OpToLoop IR: " << endl << IRPrinter::Build(fn2) << endl;
 
@@ -346,6 +347,7 @@ int main()
     auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
 
     //auto status = csv_to_arrow();
+    auto table = load_arrow_file("../students.arrow");
     auto status = query_arrow_file(*table, query_fn);
     if (!status.ok()) {
         cerr << status.ToString() << endl;
