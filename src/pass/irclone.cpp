@@ -92,6 +92,16 @@ Expr IRClone::visit(Call& call)
     return _call(call.name, call.type, new_args);
 }
 
+Expr IRClone::visit(FetchDataPtr& fetch)
+{
+    return _fetch(eval(fetch.vec), eval(fetch.idx), fetch.col);
+}
+
+Expr IRClone::visit(Load& load)
+{
+    return _load(eval(load.addr));
+}
+
 void IRClone::visit(Func& func)
 {
     // Populate loop function inputs

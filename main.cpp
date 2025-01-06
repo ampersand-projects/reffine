@@ -1,6 +1,8 @@
 #include <iostream>
 #include <memory>
 #include <fstream>
+#include <iomanip>
+#include <sys/resource.h>
 
 #include <arrow/api.h>
 #include <arrow/csv/api.h>
@@ -376,6 +378,21 @@ shared_ptr<Func> tpcds_query9(ArrowTable& table)
 
 int main()
 {
+    const rlim_t kStackSize = 1 * 1024 * 1024 * 1024u;   // min stack size = 2 GB
+    struct rlimit rl;
+    int result;
+
+    result = getrlimit(RLIMIT_STACK, &rl);
+    if (result == 0) {
+        if (rl.rlim_cur < kStackSize) {
+            rl.rlim_cur = kStackSize;
+            result = setrlimit(RLIMIT_STACK, &rl);
+            if (result != 0) {
+                cerr << "setrlimit returned result = " << result << endl;
+            }
+        }
+    }
+
     //auto table = load_arrow_file("../students.arrow");
     auto table = load_arrow_file("../benchmark/store_sales.arrow");
     cout << "type: " << table->get_data_type(0).str() << endl;
