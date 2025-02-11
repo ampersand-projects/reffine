@@ -26,10 +26,9 @@ Value* LLVMGen::llcall(const string name, llvm::Type* ret_type,
     auto fn_type = FunctionType::get(ret_type, arg_types, false);
     auto fn = llmod()->getOrInsertFunction(name, fn_type);
     auto call_instr = builder()->CreateCall(fn, arg_vals);
+    call_instr->setMetadata(LLVMContext::MD_noalias,
+                            MDNode::get(llctx(), ArrayRef<Metadata*>()));
 
-    MDNode *md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
-    call_instr->setMetadata(LLVMContext::MD_noalias, md_node);
-    
     return call_instr;
 }
 
@@ -123,7 +122,7 @@ Value* LLVMGen::visit(New& e)
 {
     auto new_type = lltype(e);
     auto ptr = builder()->CreateAlloca(new_type);
-    MDNode *md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
+    MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
     ptr->setMetadata(LLVMContext::MD_noalias, md_node);
 
     for (size_t i = 0; i < e.vals.size(); i++) {
@@ -372,8 +371,9 @@ Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
     auto data_addr = builder()->CreateGEP(lltype(fetch_data_ptr.type.deref()),
                                           buf_addr, idx_val);
 
-    Instruction *data_instr = cast<Instruction>(data_addr);
-    data_instr->setMetadata(LLVMContext::MD_noalias, MDNode::get(llctx(), ArrayRef<Metadata*>()));
+    Instruction* data_instr = cast<Instruction>(data_addr);
+    data_instr->setMetadata(LLVMContext::MD_noalias,
+                            MDNode::get(llctx(), ArrayRef<Metadata*>()));
     return data_instr;
 }
 
@@ -397,7 +397,8 @@ Value* LLVMGen::visit(Load& load)
     auto addr = eval(load.addr);
     auto addr_type = lltype(load.addr->type.deref());
     auto load_instr = builder()->CreateLoad(addr_type, addr);
-    load_instr->setMetadata(LLVMContext::MD_noalias, MDNode::get(llctx(), ArrayRef<Metadata*>()));
+    load_instr->setMetadata(LLVMContext::MD_noalias,
+                            MDNode::get(llctx(), ArrayRef<Metadata*>()));
     return load_instr;
 }
 
@@ -406,7 +407,8 @@ void LLVMGen::visit(Store& store)
     auto addr = eval(store.addr);
     auto val = eval(store.val);
     auto store_instr = builder()->CreateStore(val, addr);
-    store_instr->setMetadata(LLVMContext::MD_noalias, MDNode::get(llctx(), ArrayRef<Metadata*>()));
+    store_instr->setMetadata(LLVMContext::MD_noalias,
+                             MDNode::get(llctx(), ArrayRef<Metadata*>()));
 }
 
 Value* LLVMGen::visit(Loop& loop)
@@ -474,7 +476,8 @@ void LLVMGen::visit(Func& func)
 
     builder()->SetInsertPoint(entry_bb);
     auto ret_instr = builder()->CreateRet(eval(func.output));
-    ret_instr->setMetadata(LLVMContext::MD_noalias, MDNode::get(llctx(), ArrayRef<Metadata*>()));
+    ret_instr->setMetadata(LLVMContext::MD_noalias,
+                           MDNode::get(llctx(), ArrayRef<Metadata*>()));
 }
 
 void LLVMGen::register_vinstrs()
@@ -514,7 +517,7 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
 {
     auto old_val = this->ctx().in_sym_tbl.at(old_sym);
     auto new_val = eval(old_val);
-    MDNode *md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
+    MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
 
     auto var_addr = builder()->CreateAlloca(new_val->getType(), nullptr);
     var_addr->setName(old_sym->name + "_ref");
