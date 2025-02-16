@@ -25,11 +25,7 @@ Value* LLVMGen::llcall(const string name, llvm::Type* ret_type,
 
     auto fn_type = FunctionType::get(ret_type, arg_types, false);
     auto fn = llmod()->getOrInsertFunction(name, fn_type);
-    auto call_instr = builder()->CreateCall(fn, arg_vals);
-    call_instr->setMetadata(LLVMContext::MD_noalias,
-                            MDNode::get(llctx(), ArrayRef<Metadata*>()));
-
-    return call_instr;
+    return builder()->CreateCall(fn, arg_vals);
 }
 
 Value* LLVMGen::llcall(const string name, llvm::Type* ret_type,
@@ -122,17 +118,13 @@ Value* LLVMGen::visit(New& e)
 {
     auto new_type = lltype(e);
     auto ptr = builder()->CreateAlloca(new_type);
-    MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
-    ptr->setMetadata(LLVMContext::MD_noalias, md_node);
 
     for (size_t i = 0; i < e.vals.size(); i++) {
         auto val_ptr = builder()->CreateStructGEP(new_type, ptr, i);
-        auto store = builder()->CreateStore(eval(e.vals[i]), val_ptr);
-        store->setMetadata(LLVMContext::MD_noalias, md_node);
+        CreateStore(eval(e.vals[i]), val_ptr);
     }
 
-    auto load_instr = builder()->CreateLoad(new_type, ptr);
-    load_instr->setMetadata(LLVMContext::MD_noalias, md_node);
+    auto load_instr = CreateLoad(new_type, ptr);
     return load_instr;
 }
 
@@ -371,10 +363,7 @@ Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
     auto data_addr = builder()->CreateGEP(lltype(fetch_data_ptr.type.deref()),
                                           buf_addr, idx_val);
 
-    Instruction* data_instr = cast<Instruction>(data_addr);
-    data_instr->setMetadata(LLVMContext::MD_noalias,
-                            MDNode::get(llctx(), ArrayRef<Metadata*>()));
-    return data_instr;
+    return data_addr;
 }
 
 Value* LLVMGen::visit(Call& call)
@@ -396,9 +385,7 @@ Value* LLVMGen::visit(Load& load)
 {
     auto addr = eval(load.addr);
     auto addr_type = lltype(load.addr->type.deref());
-    auto load_instr = builder()->CreateLoad(addr_type, addr);
-    load_instr->setMetadata(LLVMContext::MD_noalias,
-                            MDNode::get(llctx(), ArrayRef<Metadata*>()));
+    auto load_instr = CreateLoad(addr_type, addr);
     return load_instr;
 }
 
@@ -406,9 +393,7 @@ void LLVMGen::visit(Store& store)
 {
     auto addr = eval(store.addr);
     auto val = eval(store.val);
-    auto store_instr = builder()->CreateStore(val, addr);
-    store_instr->setMetadata(LLVMContext::MD_noalias,
-                             MDNode::get(llctx(), ArrayRef<Metadata*>()));
+    CreateStore(val, addr);
 }
 
 Value* LLVMGen::visit(Loop& loop)
@@ -517,17 +502,11 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
 {
     auto old_val = this->ctx().in_sym_tbl.at(old_sym);
     auto new_val = eval(old_val);
-    MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
 
     auto var_addr = builder()->CreateAlloca(new_val->getType(), nullptr);
-    var_addr->setName(old_sym->name + "_ref");
-    var_addr->setMetadata(LLVMContext::MD_noalias, md_node);
-
-    auto store = builder()->CreateStore(new_val, var_addr);
-    store->setMetadata(LLVMContext::MD_noalias, md_node);
-    auto var = builder()->CreateLoad(lltype(old_sym), var_addr);
+    CreateStore(new_val, var_addr);
+    auto var = CreateLoad(lltype(old_sym), var_addr);
     var->setName(old_sym->name);
-    var->setMetadata(LLVMContext::MD_noalias, md_node);
 
     return var;
 }
@@ -537,4 +516,21 @@ void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
     LLVMGenCtx ctx(func);
     LLVMGen llgen(ctx, llmod);
     func->Accept(llgen);
+}
+
+// Helpers
+void LLVMGen::CreateStore(Value* new_val, Value* var_addr)
+{
+    MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
+    auto store = builder()->CreateStore(new_val, var_addr);
+    store->setMetadata(LLVMContext::MD_noalias, md_node);
+}
+
+LoadInst* LLVMGen::CreateLoad(Type* type, Value* addr)
+{
+    MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
+    auto var = builder()->CreateLoad(type, addr);
+    var->setMetadata(LLVMContext::MD_noalias, md_node);
+
+    return var;
 }
