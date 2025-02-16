@@ -124,8 +124,7 @@ Value* LLVMGen::visit(New& e)
         CreateStore(eval(e.vals[i]), val_ptr);
     }
 
-    auto load_instr = CreateLoad(new_type, ptr);
-    return load_instr;
+    return CreateLoad(new_type, ptr);
 }
 
 Value* LLVMGen::visit(NaryExpr& e)
@@ -385,8 +384,7 @@ Value* LLVMGen::visit(Load& load)
 {
     auto addr = eval(load.addr);
     auto addr_type = lltype(load.addr->type.deref());
-    auto load_instr = CreateLoad(addr_type, addr);
-    return load_instr;
+    return CreateLoad(addr_type, addr);
 }
 
 void LLVMGen::visit(Store& store)
@@ -504,6 +502,7 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
     auto new_val = eval(old_val);
 
     auto var_addr = builder()->CreateAlloca(new_val->getType(), nullptr);
+    var_addr->setName(old_sym->name + "_ref");
     CreateStore(new_val, var_addr);
     auto var = CreateLoad(lltype(old_sym), var_addr);
     var->setName(old_sym->name);
