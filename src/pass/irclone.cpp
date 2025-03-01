@@ -101,5 +101,5 @@ shared_ptr<Func> IRClone::Build(shared_ptr<Func> func)
     IRClone irclone(ctx);
     func->Accept(irclone);
 
-    return new_func;
+    return std::move(new_func);
 }

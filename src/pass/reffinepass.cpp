@@ -193,7 +193,7 @@ shared_ptr<Op> OpToLoop::reffine(Op& op)
     new_op->_upper = ub;
     new_op->_incr = incr;
 
-    return new_op;
+    return std::move(new_op);
 }
 
 Expr OpToLoop::visit(Op& op) { return this->reffine(op); }
@@ -212,5 +212,5 @@ shared_ptr<Func> OpToLoop::Build(shared_ptr<Func> func)
     OpToLoop optoloop(ctx);
     func->Accept(optoloop);
 
-    return new_func;
+    return std::move(new_func);
 }

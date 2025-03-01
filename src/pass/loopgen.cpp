@@ -64,7 +64,7 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
     loop->body = nullptr;
     loop->post = nullptr;
 
-    return loop;
+    return std::move(loop);
 }
 
 Expr LoopGen::visit(Reduce& red)
@@ -97,5 +97,5 @@ shared_ptr<Func> LoopGen::Build(shared_ptr<Func> op_func)
     LoopGen loopgen(ctx);
     op_func->Accept(loopgen);
 
-    return loop_func;
+    return std::move(loop_func);
 }
