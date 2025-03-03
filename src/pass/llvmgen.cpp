@@ -3,6 +3,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "reffine/base/type.h"
 
 using namespace reffine;
@@ -65,7 +66,7 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
             return StructType::get(llctx(), lltypes);
         }
         case BaseType::PTR:
-            return PointerType::get(lltype(type.dtypes[0]), 0);
+            return PointerType::get(lltype(type.dtypes[0]), 1U); //0);
         case BaseType::VECTOR:
             return PointerType::get(
                 llvm::StructType::getTypeByName(llctx(), "struct.ArrowArray"),
@@ -458,6 +459,18 @@ void LLVMGen::visit(Func& func)
 
     builder()->SetInsertPoint(entry_bb);
     builder()->CreateRet(eval(func.output));
+
+    // added for cuda
+    fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
+    llvm::NamedMDNode *MD = llmod()->getOrInsertNamedMetadata("nvvm.annotations");
+    
+    std::vector<llvm::Metadata *> MDVals;
+    MDVals.push_back(llvm::ValueAsMetadata::get(fn));
+    MDVals.push_back(llvm::MDString::get(llctx(), "kernel"));
+    MDVals.push_back(llvm::ConstantAsMetadata::get(
+                     llvm::ConstantInt::get(llvm::Type::getInt32Ty(llctx()), 1)));
+    
+    MD->addOperand(llvm::MDNode::get(llctx(), MDVals));
 }
 
 void LLVMGen::register_vinstrs()
@@ -513,3 +526,31 @@ void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
     LLVMGen llgen(ctx, llmod);
     func->Accept(llgen);
 }
+
+// void LLVMGen::GeneratePTX(Module &llmod, std::string& outputPTX, const std::string& sm_xx) {
+//     llvm::InitializeAllTargetInfos();
+//     llvm::InitializeAllTargets();
+//     llvm::InitializeAllTargetMCs();
+//     llvm::InitializeAllAsmParsers();
+//     llvm::InitializeAllAsmPrinters();
+
+//     auto target_triple = "nvptx64-nvidia-cuda";
+
+//     std::string Error;
+//     const llvm::Target *Target = llvm::TargetRegistry::lookupTarget(target_triple, Error);
+//     if (!Target) {
+//         llvm::errs() << Error;
+//         cout << "Error" << Error << endl;
+//         return;
+//     }
+
+//     // this will make possible to use the right intrinsics when possible
+//     auto CPU = sm_xx;  // to set the sm version (https://reviews.llvm.org/D141054)
+//     auto Features = "";
+
+//     llvm::TargetOptions opt;
+//     auto RM = std::optional<llvm::Reloc::Model>();
+    
+//     auto nv_target_machine = target->createTargetMachine(target_triple, CPU, Features, opt, RM);
+
+// }

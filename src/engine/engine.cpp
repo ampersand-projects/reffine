@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "reffine/engine/engine.h"
 
 #include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
@@ -16,6 +18,9 @@
 #include "llvm/Transforms/Utils/LoopSimplify.h"
 #include "llvm/Transforms/Vectorize/LoopVectorize.h"
 #include "llvm/Transforms/Vectorize/SLPVectorizer.h"
+#include "llvm/MC/TargetRegistry.h"
+#include <cuda.h>
+// #include <cuda_runtime.h>
 
 using namespace reffine;
 using namespace std::placeholders;
@@ -65,6 +70,96 @@ Expected<ThreadSafeModule> ExecEngine::optimize_module(
 }
 
 void ExecEngine::Optimize(Module &llmod) { MPM.run(llmod, MAM); }
+
+void ExecEngine::GeneratePTX(Module &llmod)
+{
+    InitializeAllTargets();
+    InitializeAllTargetMCs();
+    InitializeAllAsmPrinters();
+    InitializeAllAsmParsers();
+
+    llmod.setTargetTriple("nvptx64-nvidia-cuda");
+
+    // std::string error;
+    // auto target = llvm::TargetRegistry::lookupTarget(llmod.getTargetTriple(),
+    // error);
+    // llvm::TargetRegistry::lookupTarget(llmod.getTargetTriple(), error);
+
+    // llvm::TargetOptions opt;
+    // auto targetMachine = target->createTargetMachine(llmod.getTargetTriple(),
+    // "sm_52", "", opt, llvm::Reloc::PIC_);
+    // llmod.setDataLayout(targetMachine->createDataLayout());
+
+    // std::error_code ec;
+    // llvm::raw_fd_ostream dest("output.ptx", ec, llvm::sys::fs::OF_None);
+
+    // llvm::legacy::PassManager pass;
+    // if (targetMachine->addPassesToEmitFile(pass, dest, nullptr,
+    // llvm::LLVMAssemblyFile)) {
+    //     llvm::errs() << "TargetMachine can't emit a file of this type";
+    //     return;
+    // }
+
+    // pass.run(llmod);
+    // dest.flush();
+}
+
+void ExecEngine::GeneratePTX(Module &llmod, std::string& outputPTX, std::string computeCapability)
+{
+    // Initialize NVPTX target
+    std::string Error;
+    const llvm::Target *Target = llvm::TargetRegistry::lookupTarget("nvptx64-nvidia-cuda", Error);
+    
+    if (!Target) {
+        cout << "Error" << Error << endl;
+        return;
+    }
+    
+    // Create target machine
+    llvm::TargetOptions Opt;
+    llvm::TargetMachine *TM = Target->createTargetMachine(
+        "nvptx64-nvidia-cuda",
+        computeCapability,  // e.g., "sm_75"
+        "+ptx63",          // PTX version
+        Opt,
+        llvm::Reloc::Static);
+    
+    // Set data layout
+    llmod.setDataLayout(TM->createDataLayout());
+    
+    // Generate PTX
+    llvm::SmallString<1024> PTXStr;
+    llvm::raw_svector_ostream PTXOS(PTXStr);
+    
+    llvm::legacy::PassManager PM;
+    TM->addPassesToEmitFile(PM, PTXOS, nullptr, llvm::CodeGenFileType::AssemblyFile);
+    PM.run(llmod);
+
+    std::cout << "Generated PTXStr: " << std::endl << PTXStr.str().str() << std::endl;
+    
+    outputPTX = PTXStr.str().str();
+}
+
+// void ExecEngine::ExecutePTX(std::string& ptxCode, std::string& kernel_name) {
+//     CUdevice device;
+//     CUmodule cudaModule;
+//     CUcontext context;
+//     CUfunction function;
+//     // CUlinkState linker;
+    
+//     cuInit(0);
+//     cuDeviceGet(&device, 0);
+//     cuCtxCreate(&context, 0, device);
+
+//     char name[128];
+//     cuDeviceGetName(name, 128, device);
+//     std::cout << "Using CUDA Device [0]: " << name << "\n";
+
+//     cuModuleLoadData(&cudaModule, ptxCode.c_str());
+
+//     cuModuleGetFunction(&function, cudaModule, kernel_name.c_str());
+
+// }
 
 unique_ptr<ExecutionSession> ExecEngine::createExecutionSession()
 {

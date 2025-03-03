@@ -315,6 +315,52 @@ shared_ptr<Func> tpcds_query9(ArrowTable& table)
 
 int main()
 {
+    auto fn = vector_fn();
+    CanonPass::Build(fn);
+    cout << "Canon IR:" << endl << IRPrinter::Build(fn) << endl;
+
+    auto jit = ExecEngine::Get();
+    auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
+    LLVMGen::Build(fn, *llmod);
+
+    cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
+    
+    // jit->Optimize(*llmod);
+    // cout << "Optimized LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
+
+    jit->GeneratePTX(*llmod);
+    cout << "Generated PTX:" << endl << IRPrinter::Build(*llmod) << endl;
+
+    std::string output_ptx;
+    jit->GeneratePTX(*llmod, output_ptx);
+    cout << "Generated PTX 2:" << endl << output_ptx << endl;
+
+    // jit->ExecutePTX(output_ptx, llmod->getName().str());
+
+    // dump llvm IR to .ll file
+    ofstream llfile(llmod->getName().str() + ".ll");
+    llfile << IRPrinter::Build(*llmod);
+    llfile.close();
+
+    if (llvm::verifyModule(*llmod)) {
+        throw std::runtime_error("LLVM module verification failed!!!");
+    }
+
+    // jit->AddModule(std::move(llmod));
+    // auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
+
+    // //auto status = csv_to_arrow();
+    // auto status = query_arrow_file(*table, query_fn);
+    // if (!status.ok()) {
+    //     cerr << status.ToString() << endl;
+    // }
+
+    // return 0;
+}
+
+/*
+int main()
+{
     auto table = load_arrow_file("../benchmark/store_sales.arrow");
 
     auto fn = tpcds_query9(*table);
@@ -353,3 +399,4 @@ int main()
 
     return 0;
 }
+*/
