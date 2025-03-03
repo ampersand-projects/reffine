@@ -52,7 +52,7 @@ public:
     void Optimize(Module&);
     void GeneratePTX(Module&);
     void GeneratePTX(Module&, std::string&, std::string = "sm_75");
-    void ExecutePTX(std::string&, std::string&);
+    void ExecutePTX(const std::string&, const std::string&);
     void AddModule(unique_ptr<Module>);
     LLVMContext& GetCtx();
 

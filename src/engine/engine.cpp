@@ -140,26 +140,26 @@ void ExecEngine::GeneratePTX(Module &llmod, std::string& outputPTX, std::string 
     outputPTX = PTXStr.str().str();
 }
 
-// void ExecEngine::ExecutePTX(std::string& ptxCode, std::string& kernel_name) {
-//     CUdevice device;
-//     CUmodule cudaModule;
-//     CUcontext context;
-//     CUfunction function;
-//     // CUlinkState linker;
+void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kernel_name) {
+    CUdevice device;
+    CUmodule cudaModule;
+    CUcontext context;
+    CUfunction function;
+    // CUlinkState linker;
     
-//     cuInit(0);
-//     cuDeviceGet(&device, 0);
-//     cuCtxCreate(&context, 0, device);
+    cuInit(0);
+    cuDeviceGet(&device, 0);
+    cuCtxCreate(&context, 0, device);
 
-//     char name[128];
-//     cuDeviceGetName(name, 128, device);
-//     std::cout << "Using CUDA Device [0]: " << name << "\n";
+    char name[128];
+    cuDeviceGetName(name, 128, device);
+    std::cout << "Using CUDA Device [0]: " << name << "\n";
 
-//     cuModuleLoadData(&cudaModule, ptxCode.c_str());
+    cuModuleLoadData(&cudaModule, ptxCode.c_str());
 
-//     cuModuleGetFunction(&function, cudaModule, kernel_name.c_str());
+    cuModuleGetFunction(&function, cudaModule, kernel_name.c_str());
 
-// }
+}
 
 unique_ptr<ExecutionSession> ExecEngine::createExecutionSession()
 {

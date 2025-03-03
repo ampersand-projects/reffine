@@ -335,7 +335,7 @@ int main()
     jit->GeneratePTX(*llmod, output_ptx);
     cout << "Generated PTX 2:" << endl << output_ptx << endl;
 
-    // jit->ExecutePTX(output_ptx, llmod->getName().str());
+    jit->ExecutePTX(output_ptx, llmod->getName().str());
 
     // dump llvm IR to .ll file
     ofstream llfile(llmod->getName().str() + ".ll");
