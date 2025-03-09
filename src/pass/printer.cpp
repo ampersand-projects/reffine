@@ -296,8 +296,8 @@ void IRPrinter::Visit(Store& store)
     emitfunc("store", vector<Expr>{store.addr, store.val});
 }
 
-void IRPrinter::Visit(GetThreadId& tid) {
-    ostr << "get thread id: TO BE IMPLEMENTED"; 
+void IRPrinter::Visit(GetKernelInfo& getKernelInfo) {
+    ostr << "GetKernelInfo: TO BE IMPLEMENTED"; 
 }
 
 void IRPrinter::Visit(Loop& loop)

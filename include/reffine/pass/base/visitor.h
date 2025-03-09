@@ -105,9 +105,9 @@ public:
     {
         throw runtime_error("NoOp operation not supported");
     }
-    virtual void Visit(GetThreadId&)
+    virtual void Visit(GetKernelInfo&)
     {
-        throw runtime_error("GetThreadId operation not supported");
+        throw runtime_error("GetKernelInfo operation not supported");
     }
     virtual void Visit(Loop&)
     {

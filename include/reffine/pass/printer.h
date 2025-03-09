@@ -54,7 +54,7 @@ public:
     void Visit(Alloc&) final;
     void Visit(Load&) final;
     void Visit(Store&) final;
-    void Visit(GetThreadId&) final;
+    void Visit(GetKernelInfo&) final;
     void Visit(Loop&) final;
     void Visit(IsValid&) final;
     void Visit(SetValid&) final;

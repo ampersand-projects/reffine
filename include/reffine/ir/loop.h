@@ -103,12 +103,16 @@ struct Store : public StmtNode {
     void Accept(Visitor&) final;
 };
 
-struct GetThreadId : public ExprNode {
-    Expr id;
+struct GetKernelInfo : public ExprNode {
+    Expr thread_idx;
+    Expr block_idx;
+    Expr block_dim;
 
-    GetThreadId(Expr id) : ExprNode(types::INT64), id(id)
+    GetKernelInfo(Expr thread_idx, Expr block_idx, Expr block_dim) : ExprNode(types::INT64), thread_idx(thread_idx), block_idx(block_idx), block_dim(block_dim)
     {
-        ASSERT(id->type.is_int());
+        ASSERT(thread_idx->type.is_int());
+        ASSERT(block_idx->type.is_int());
+        ASSERT(block_dim->type.is_int());
     }
 
     void Accept(Visitor&) final;

@@ -396,7 +396,7 @@ void LLVMGen::visit(Store& store)
     builder()->CreateStore(val, addr);
 }
 
-Value* LLVMGen::visit(GetThreadId& getThreadId)
+Value* LLVMGen::visit(GetKernelInfo& getKernelInfo)
 {
     Value * tid = nullptr;      // TODO
     return tid;

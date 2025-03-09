@@ -84,9 +84,9 @@ protected:
     {
         throw runtime_error("Store visit not supported");
     }
-    virtual ValTy visit(GetThreadId&)
+    virtual ValTy visit(GetKernelInfo&)
     {
-        throw runtime_error("GetThreadId visit not supported");
+        throw runtime_error("GetKernelInfo visit not supported");
     }
     virtual ValTy visit(Loop&)
     {
@@ -126,7 +126,7 @@ protected:
     void Visit(Alloc& expr) final { val() = visit(expr); }
     void Visit(Load& expr) final { val() = visit(expr); }
     void Visit(Store& expr) final { visit(expr); }
-    void Visit(GetThreadId& expr) final { visit(expr); }
+    void Visit(GetKernelInfo& expr) final { visit(expr); }
     void Visit(Loop& expr) final { val() = visit(expr); }
     void Visit(IsValid& expr) final { val() = visit(expr); }
     void Visit(SetValid& expr) final { val() = visit(expr); }

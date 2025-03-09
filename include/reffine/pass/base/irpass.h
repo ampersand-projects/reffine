@@ -136,9 +136,11 @@ public:
         expr.val->Accept(*this);
     }
 
-    void Visit(GetThreadId& expr) override
+    void Visit(GetKernelInfo& expr) override
     {
-        expr.id->Accept(*this);
+        expr.thread_idx->Accept(*this);
+        expr.block_idx->Accept(*this);
+        expr.block_dim->Accept(*this);
     }
 
     void Visit(Loop& expr) override

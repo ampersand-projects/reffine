@@ -145,7 +145,8 @@ shared_ptr<Func> vector_fn()
     auto len = _call("get_vector_len", _idx_t, vector<Expr>{vec_sym});
     auto len_sym = _sym("len", len);
 
-    auto tid = make_shared<GetThreadId>(_i64(0));
+    auto kernel = make_shared<GetKernelInfo>(_i64(1), _i64(1), _i64(1));
+    auto kernel_sym = _sym("kernel", kernel);
 
     auto idx_alloc = _alloc(_idx_t);
     auto idx_addr = _sym("idx_addr", idx_alloc);
@@ -174,6 +175,7 @@ shared_ptr<Func> vector_fn()
     foo_fn->tbl[idx_addr] = idx_alloc;
     foo_fn->tbl[sum_addr] = sum_alloc;
     foo_fn->tbl[loop_sym] = loop;
+    foo_fn->tbl[kernel_sym] = kernel;
 
     return foo_fn;
 }
