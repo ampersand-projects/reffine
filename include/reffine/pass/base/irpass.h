@@ -136,6 +136,11 @@ public:
         expr.val->Accept(*this);
     }
 
+    void Visit(GetThreadId& expr) override
+    {
+        expr.id->Accept(*this);
+    }
+
     void Visit(Loop& expr) override
     {
         if (expr.init) { expr.init->Accept(*this); }

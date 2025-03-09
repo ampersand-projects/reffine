@@ -62,6 +62,7 @@ private:
     llvm::Value* visit(Alloc&) final;
     llvm::Value* visit(Load&) final;
     void visit(Store&) final;
+    llvm::Value* visit(GetThreadId&) final;
     llvm::Value* visit(Loop&) final;
     llvm::Value* visit(IsValid&) final;
     llvm::Value* visit(SetValid&) final;
@@ -81,6 +82,8 @@ private:
 
     llvm::Module& _llmod;
     unique_ptr<llvm::IRBuilder<>> _builder;
+    
+    // llvm::Value* tid;
 };
 
 }  // namespace reffine

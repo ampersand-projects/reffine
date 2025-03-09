@@ -103,6 +103,17 @@ struct Store : public StmtNode {
     void Accept(Visitor&) final;
 };
 
+struct GetThreadId : public ExprNode {
+    Expr id;
+
+    GetThreadId(Expr id) : ExprNode(types::INT64), id(id)
+    {
+        ASSERT(id->type.is_int());
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct Loop : public ExprNode {
     // Loop initialization
     Stmt init = nullptr;

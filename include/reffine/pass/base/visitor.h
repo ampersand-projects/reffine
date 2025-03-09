@@ -105,6 +105,10 @@ public:
     {
         throw runtime_error("NoOp operation not supported");
     }
+    virtual void Visit(GetThreadId&)
+    {
+        throw runtime_error("GetThreadId operation not supported");
+    }
     virtual void Visit(Loop&)
     {
         throw runtime_error("Loop operation not supported");

@@ -4,6 +4,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/IR/IntrinsicsNVPTX.h"
 #include "reffine/base/type.h"
 
 using namespace reffine;
@@ -395,6 +396,12 @@ void LLVMGen::visit(Store& store)
     builder()->CreateStore(val, addr);
 }
 
+Value* LLVMGen::visit(GetThreadId& getThreadId)
+{
+    Value * tid = nullptr;      // TODO
+    return tid;
+}
+
 Value* LLVMGen::visit(Loop& loop)
 {
     // Loop body condition and incr needs to be merged into loop body before
@@ -443,6 +450,12 @@ Value* LLVMGen::visit(Loop& loop)
 
 void LLVMGen::visit(Func& func)
 {
+    // tid = builder()->CreateIntrinsic(
+    //     llvm::Type::getInt32Ty(*ctx), 
+    //     llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x, 
+    //     {}
+    // );
+
     // Define function signature
     vector<llvm::Type*> args_type;
     for (auto& input : func.inputs) {

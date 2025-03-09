@@ -140,7 +140,7 @@ void ExecEngine::GeneratePTX(Module &llmod, std::string& outputPTX, std::string 
     outputPTX = PTXStr.str().str();
 }
 
-void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kernel_name) {
+void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kernel_name, void* arg) {
     CUdevice device;
     CUmodule cudaModule;
     CUcontext context;
@@ -159,6 +159,20 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
 
     cuModuleGetFunction(&function, cudaModule, kernel_name.c_str());
 
+    int gridDimX = 1;
+    int blockDimX = 1;
+
+    // handle args
+    
+    // void* kernelParams[] = { /* TODO */ };
+
+    cuLaunchKernel(function,
+        gridDimX, 1, 1,
+        blockDimX, 1, 1,
+        0,   // shared memory size
+        0,   // stream handle
+        NULL,// kernelParams,
+        NULL);  
 }
 
 unique_ptr<ExecutionSession> ExecEngine::createExecutionSession()

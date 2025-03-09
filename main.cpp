@@ -90,6 +90,53 @@ arrow::Status query_arrow_file(ArrowTable& in_table, long (*query_fn)(void*))
     return arrow::Status::OK();
 }
 
+arrow::Status run_vector_fn(int (*query_fn)(void*))
+{
+    ARROW_ASSIGN_OR_RAISE(auto infile, arrow::io::ReadableFile::Open(
+                "../students.arrow", arrow::default_memory_pool()));
+
+    ARROW_ASSIGN_OR_RAISE(auto ipc_reader, arrow::ipc::RecordBatchFileReader::Open(infile));
+
+    ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
+
+    cout << rbatch->ToString() << endl;
+
+    ArrowSchema in_schema;
+    ArrowArray in_array;
+
+    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &in_array, &in_schema));
+    // arrow_print_schema(&in_schema);
+    // arrow_print_array(&in_array);
+    
+    int res;
+    res = query_fn(&in_array);
+    cout << "Result: " << res << endl;
+
+    return arrow::Status::OK();
+}
+
+
+arrow::Status get_arrow_array(ArrowArray& in_array) {
+    // for CUDA testing
+
+    ARROW_ASSIGN_OR_RAISE(auto infile, arrow::io::ReadableFile::Open(
+        "../students.arrow", arrow::default_memory_pool()));
+
+    ARROW_ASSIGN_OR_RAISE(auto ipc_reader, arrow::ipc::RecordBatchFileReader::Open(infile));
+
+    ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
+
+    // cout << rbatch->ToString() << endl;
+
+    ArrowSchema in_schema;
+    // ArrowArray in_array;
+
+    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &in_array, &in_schema));
+
+    // return in_array;
+    return arrow::Status::OK();
+}
+
 shared_ptr<Func> vector_fn()
 {
     auto vec_sym = _sym("vec", types::VECTOR<1>(vector<DataType>{
@@ -97,6 +144,8 @@ shared_ptr<Func> vector_fn()
 
     auto len = _call("get_vector_len", _idx_t, vector<Expr>{vec_sym});
     auto len_sym = _sym("len", len);
+
+    auto tid = make_shared<GetThreadId>(_i64(0));
 
     auto idx_alloc = _alloc(_idx_t);
     auto idx_addr = _sym("idx_addr", idx_alloc);
@@ -129,193 +178,16 @@ shared_ptr<Func> vector_fn()
     return foo_fn;
 }
 
-shared_ptr<Func> transform_fn()
-{
-    auto vec_in_sym = make_shared<SymNode>("vec_in", types::VECTOR<1>(vector<DataType>{
-        types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
-    auto vec_out_sym = make_shared<SymNode>("vec_out", types::VECTOR<1>(vector<DataType>{
-        types::INT64, types::INT64, types::INT8 }));
-
-    auto len = make_shared<Call>("get_vector_len", types::IDX, vector<Expr>{vec_in_sym});
-    auto len_sym = make_shared<SymNode>("len", len);
-
-    auto zero = make_shared<Const>(types::IDX, 0);
-    auto one = make_shared<Const>(types::IDX, 1);
-    auto eight = make_shared<Const>(types::INT64, 8);
-    auto sixty = make_shared<Const>(types::INT64, 60);
-    auto twenty = make_shared<Const>(types::INT64, 20);
-    auto _true = make_shared<Const>(types::BOOL, 1);
-    auto _false = make_shared<Const>(types::BOOL, 0);
-
-    auto idx_alloc = make_shared<Alloc>(types::IDX);
-    auto idx_addr = make_shared<SymNode>("idx_addr", idx_alloc);
-    auto idx = make_shared<Load>(idx_addr);
-
-    auto id_valid = make_shared<IsValid>(vec_in_sym, idx, 0);
-    auto id_data_ptr = make_shared<FetchDataPtr>(vec_in_sym, idx, 0);
-    auto id_data = make_shared<Load>(id_data_ptr);
-    auto hours_valid = make_shared<IsValid>(vec_in_sym, idx, 1);
-    auto hours_data_ptr = make_shared<FetchDataPtr>(vec_in_sym, idx, 1);
-    auto hours_data = make_shared<Load>(hours_data_ptr);
-    auto hours_slept_data_ptr = make_shared<FetchDataPtr>(vec_in_sym, idx, 3);
-    auto hours_slept_data = make_shared<Load>(hours_slept_data_ptr);
-
-    auto out_id_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 0);
-    auto out_minutes_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 1);
-    auto out_sleep_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 2);
-    auto out_minutes = make_shared<Mul>(hours_data, sixty);
-
-    auto loop = _loop(vec_out_sym);
-    auto loop_sym = make_shared<SymNode>("loop", loop);
-    loop->init = make_shared<Stmts>(vector<Stmt>{
-        make_shared<Store>(idx_addr, zero),
-    });
-    loop->incr = make_shared<Stmts>(vector<Stmt>{
-        make_shared<Store>(idx_addr, make_shared<Add>(make_shared<Load>(idx_addr), one)),
-    });
-    loop->exit_cond = make_shared<GreaterThanEqual>(make_shared<Load>(idx_addr), len_sym);
-    loop->body = make_shared<Stmts>(vector<Stmt>{
-        make_shared<IfElse>(
-            make_shared<And>(
-                make_shared<And>(id_valid, hours_valid),
-                make_shared<GreaterThanEqual>(hours_data, twenty)
-            ),
-            make_shared<Stmts>(vector<Stmt>{
-                make_shared<Store>(out_id_data_ptr, make_shared<Load>(id_data_ptr)),
-                make_shared<Store>(out_minutes_data_ptr, out_minutes),
-                make_shared<SetValid>(vec_out_sym, idx, _true, 0),
-                make_shared<SetValid>(vec_out_sym, idx, _true, 1),
-            }),
-            make_shared<Stmts>(vector<Stmt>{
-                make_shared<SetValid>(vec_out_sym, idx, _false, 0),
-                make_shared<SetValid>(vec_out_sym, idx, _false, 1),
-            })
-        ),
-        make_shared<Store>(
-            out_sleep_data_ptr,
-            make_shared<Select>(
-                make_shared<LessThan>(hours_slept_data, eight),
-		make_shared<Const>(types::INT8, 0),
-		make_shared<Const>(types::INT8, 1)
-	    )
-        ),
-        make_shared<SetValid>(vec_out_sym, idx, _true, 2)
-    });
-    loop->post = make_shared<Call>("set_vector_len", types::INT64, vector<Expr>{
-        vec_out_sym, make_shared<Load>(idx_addr)
-    });
-
-    auto foo_fn = make_shared<Func>("foo", loop_sym, vector<Sym>{vec_in_sym, vec_out_sym});
-    foo_fn->tbl[len_sym] = len;
-    foo_fn->tbl[idx_addr] = idx_alloc;
-    foo_fn->tbl[loop_sym] = loop;
-
-    return foo_fn;
-}
-
-shared_ptr<Func> test_op_fn()
-{
-    auto t_sym = make_shared<SymNode>("t", types::INT32);
-    Op op(
-        vector<Sym>{t_sym},
-        make_shared<And>(
-            make_shared<GreaterThan>(t_sym, make_shared<Const>(types::INT32, 0)),
-            make_shared<LessThan>(t_sym, make_shared<Const>(types::INT32, 10))
-        ),
-        vector<Expr>{t_sym}
-    );
-
-    auto sum = make_shared<Reduce>(
-        op,
-        [] () { return make_shared<Const>(types::INT32, 0); },
-        [] (Expr s, Expr v) {
-            auto e = make_shared<Get>(v, 0);
-            return make_shared<Add>(s, e);
-        }
-    );
-    auto sum_sym = make_shared<SymNode>("sum", sum);
-
-    auto foo_fn = make_shared<Func>("foo", sum_sym, vector<Sym>{});
-    foo_fn->tbl[sum_sym] = sum;
-
-    return foo_fn;
-}
-
-void demorgan_test()
-{
-    auto t = make_shared<SymNode>("t", types::INT64);
-    auto lb = make_shared<Const>(types::INT64, 10);
-    auto pred = make_shared<GreaterThanEqual>(t, lb);
-
-    auto p = make_shared<SymNode>("p", t);
-    auto forall = make_shared<ForAll>(t,
-        make_shared<And>(
-            make_shared<Implies>(make_shared<GreaterThanEqual>(t, p), pred),
-            make_shared<Implies>(make_shared<LessThan>(t, p), make_shared<Not>(pred))
-        )
-    );
-
-    Z3Solver z3s;
-    int res = z3s.solve(forall, p).as_int64();
-    cout << "p = " << res << endl;
-}
-
-shared_ptr<Func> reduce_op_fn()
-{
-    auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym = _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t, int8_t, int64_t>());
-    Op op(
-        { t_sym },
-        ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(20)) &&  _gte(t_sym, _i64(10)),
-        { vec_in_sym[{t_sym}][1] }
-    );
-
-    auto sum = _red(
-        op,
-        [] () { return _i64(0); },
-        [] (Expr s, Expr v) {
-            auto e = _get(v, 0);
-            return _add(s, e);
-        }
-    );
-    auto sum_sym = _sym("sum", sum);
-
-    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
-    foo_fn->tbl[sum_sym] = sum;
-
-    return foo_fn;
-}
-
-shared_ptr<Func> tpcds_query9(ArrowTable& table)
-{
-    auto vec_in_sym = _sym("vec_in", table.get_data_type(2));
-    /*
-    auto idx = _sym("idx", _idx_t);
-    Op op(
-        {idx},
-        ~(vec_in_sym[{idx}]),
-        { vec_in_sym[{idx}][10] }
-    );
-    auto sum = _red(
-        op,
-        []() { return _i64(0); },
-        [](Expr s, Expr v) {
-            auto e = _get(v, 0);
-            return _add(s, e);
-        }
-    );
-    auto sum_sym = _sym("sum", sum);
-    */
-
-    auto foo_fn = _func("foo", vec_in_sym, vector<Sym>{vec_in_sym});
-    //foo_fn->tbl[sum_sym] = sum;
-
-    return foo_fn;
-}
 
 int main()
 {
     auto fn = vector_fn();
+    cout << "Reffine IR: " << endl << IRPrinter::Build(fn) << endl;
+    // auto fn2 = OpToLoop::Build(fn);
+    // cout << "OpToLoop IR: " << endl << IRPrinter::Build(fn2) << endl;
+    // auto loop = LoopGen::Build(fn);
+    // cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
+    return 0;
     CanonPass::Build(fn);
     cout << "Canon IR:" << endl << IRPrinter::Build(fn) << endl;
 
@@ -335,49 +207,13 @@ int main()
     jit->GeneratePTX(*llmod, output_ptx);
     cout << "Generated PTX 2:" << endl << output_ptx << endl;
 
-    jit->ExecutePTX(output_ptx, llmod->getName().str());
-
-    // dump llvm IR to .ll file
-    ofstream llfile(llmod->getName().str() + ".ll");
-    llfile << IRPrinter::Build(*llmod);
-    llfile.close();
-
-    if (llvm::verifyModule(*llmod)) {
-        throw std::runtime_error("LLVM module verification failed!!!");
+    ArrowArray in_array;
+    auto status = get_arrow_array(in_array);
+    if (!status.ok()) {
+        cerr << status.ToString() << endl;
     }
 
-    // jit->AddModule(std::move(llmod));
-    // auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
-
-    // //auto status = csv_to_arrow();
-    // auto status = query_arrow_file(*table, query_fn);
-    // if (!status.ok()) {
-    //     cerr << status.ToString() << endl;
-    // }
-
-    // return 0;
-}
-
-/*
-int main()
-{
-    auto table = load_arrow_file("../benchmark/store_sales.arrow");
-
-    auto fn = tpcds_query9(*table);
-    cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
-    return 0;
-    auto fn2 = OpToLoop::Build(fn);
-    cout << "OpToLoop IR: " << endl << IRPrinter::Build(fn2) << endl;
-
-    auto loop = LoopGen::Build(fn2);
-    cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
-    CanonPass::Build(loop);
-
-    auto jit = ExecEngine::Get();
-    auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(loop, *llmod);
-    
-    jit->Optimize(*llmod);
+    jit->ExecutePTX(output_ptx, llmod->getName().str(), (void*) (&in_array));
 
     // dump llvm IR to .ll file
     ofstream llfile(llmod->getName().str() + ".ll");
@@ -389,14 +225,13 @@ int main()
     }
 
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
+    // auto query_fn = jit->Lookup<int (*)(void*)>(fn->name);
 
-    //auto status = csv_to_arrow();
-    auto status = query_arrow_file(*table, query_fn);
-    if (!status.ok()) {
-        cerr << status.ToString() << endl;
-    }
+    // //auto status = csv_to_arrow();
+    // auto status2 = run_vector_fn(query_fn);
+    // if (!status2.ok()) {
+    //     cerr << status.ToString() << endl;
+    // }
 
     return 0;
 }
-*/
