@@ -104,16 +104,36 @@ struct Store : public StmtNode {
 };
 
 struct GetKernelInfo : public ExprNode {
-    Expr thread_idx;
-    Expr block_idx;
-    Expr block_dim;
+    Expr thread_idx = nullptr;
+    Expr block_idx = nullptr;
+    Expr block_dim = nullptr;
 
-    GetKernelInfo(Expr thread_idx, Expr block_idx, Expr block_dim) : ExprNode(types::INT64), thread_idx(thread_idx), block_idx(block_idx), block_dim(block_dim)
-    {
-        ASSERT(thread_idx->type.is_int());
-        ASSERT(block_idx->type.is_int());
-        ASSERT(block_dim->type.is_int());
-    }
+    // GetKernelInfo(Expr thread_idx, Expr block_idx, Expr block_dim) : ExprNode(types::INT64), thread_idx(thread_idx), block_idx(block_idx), block_dim(block_dim)
+    // {
+    //     ASSERT(thread_idx->type.is_int());
+    //     ASSERT(block_idx->type.is_int());
+    //     ASSERT(block_dim->type.is_int());
+    // }
+
+    GetKernelInfo() : ExprNode(types::INT64) {}
+
+    void Accept(Visitor&) final;
+};
+
+struct ThreadIdx : public ExprNode {
+    ThreadIdx() : ExprNode(types::INT64) {}
+
+    void Accept(Visitor&) final;
+};
+
+struct BlockIdx : public ExprNode {
+    BlockIdx() : ExprNode(types::INT64) {}
+
+    void Accept(Visitor&) final;
+};
+
+struct BlockDim : public ExprNode {
+    BlockDim() : ExprNode(types::INT64) {}
 
     void Accept(Visitor&) final;
 };

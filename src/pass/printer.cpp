@@ -300,6 +300,18 @@ void IRPrinter::Visit(GetKernelInfo& getKernelInfo) {
     ostr << "GetKernelInfo: TO BE IMPLEMENTED"; 
 }
 
+void IRPrinter::Visit(ThreadIdx& tidx) {
+    ostr << "ThreadIdx: TO BE IMPLEMENTED"; 
+}
+
+void IRPrinter::Visit(BlockIdx& bidx) {
+    ostr << "BlockIdx: TO BE IMPLEMENTED"; 
+}
+
+void IRPrinter::Visit(BlockDim& bdim) {
+    ostr << "BlockDim: TO BE IMPLEMENTED"; 
+}
+
 void IRPrinter::Visit(Loop& loop)
 {
     ostr << "{";

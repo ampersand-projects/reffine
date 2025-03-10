@@ -63,6 +63,9 @@ private:
     llvm::Value* visit(Load&) final;
     void visit(Store&) final;
     llvm::Value* visit(GetKernelInfo&) final;
+    llvm::Value* visit(ThreadIdx&) final;
+    llvm::Value* visit(BlockIdx&) final;
+    llvm::Value* visit(BlockDim&) final;
     llvm::Value* visit(Loop&) final;
     llvm::Value* visit(IsValid&) final;
     llvm::Value* visit(SetValid&) final;

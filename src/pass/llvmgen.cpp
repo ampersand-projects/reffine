@@ -398,8 +398,57 @@ void LLVMGen::visit(Store& store)
 
 Value* LLVMGen::visit(GetKernelInfo& getKernelInfo)
 {
-    Value * tid = nullptr;      // TODO
-    return tid;
+    // This info should be populated at the LLVM Gen step
+    ASSERT(getKernelInfo.thread_idx == nullptr);
+    ASSERT(getKernelInfo.block_dim == nullptr);
+    ASSERT(getKernelInfo.block_idx == nullptr);
+
+    auto thread_idx = builder()->CreateIntrinsic(
+        Type::getInt32Ty(llctx()),
+        llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
+        {}
+    );
+    // auto block_dim = builder()->CreateIntrinsic(
+    //     Type::getInt32Ty(llctx()),
+    //     llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
+    //     {}
+    // );
+    // auto block_idx = builder()->CreateIntrinsic(
+    //     Type::getInt32Ty(llctx()),
+    //     llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
+    //     {}
+    // );
+    return thread_idx;  // TODO: fix
+}
+
+Value* LLVMGen::visit(ThreadIdx& tidx) {
+    auto thread_idx = builder()->CreateIntrinsic(
+        Type::getInt32Ty(llctx()),
+        llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
+        {}
+    );
+
+    return thread_idx;
+}
+
+Value* LLVMGen::visit(BlockIdx& bidx) {
+    auto block_idx = builder()->CreateIntrinsic(
+        Type::getInt32Ty(llctx()),
+        llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
+        {}
+    );
+
+    return block_idx;
+}
+
+Value* LLVMGen::visit(BlockDim& bdim) {
+    auto block_dim = builder()->CreateIntrinsic(
+        Type::getInt32Ty(llctx()),
+        llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
+        {}
+    );
+
+    return block_dim;
 }
 
 Value* LLVMGen::visit(Loop& loop)
@@ -450,12 +499,6 @@ Value* LLVMGen::visit(Loop& loop)
 
 void LLVMGen::visit(Func& func)
 {
-    // tid = builder()->CreateIntrinsic(
-    //     llvm::Type::getInt32Ty(*ctx), 
-    //     llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x, 
-    //     {}
-    // );
-
     // Define function signature
     vector<llvm::Type*> args_type;
     for (auto& input : func.inputs) {

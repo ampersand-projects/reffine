@@ -145,7 +145,8 @@ shared_ptr<Func> vector_fn()
     auto len = _call("get_vector_len", _idx_t, vector<Expr>{vec_sym});
     auto len_sym = _sym("len", len);
 
-    auto kernel = make_shared<GetKernelInfo>(_i64(1), _i64(1), _i64(1));
+    // auto kernel = make_shared<GetKernelInfo>(_i64(1), _i64(1), _i64(1));
+    auto kernel = make_shared<GetKernelInfo>();
     auto kernel_sym = _sym("kernel", kernel);
 
     auto idx_alloc = _alloc(_idx_t);
