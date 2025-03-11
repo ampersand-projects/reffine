@@ -148,6 +148,8 @@ shared_ptr<Func> vector_fn()
     // auto kernel = make_shared<GetKernelInfo>(_i64(1), _i64(1), _i64(1));
     auto kernel = make_shared<GetKernelInfo>();
     auto kernel_sym = _sym("kernel", kernel);
+    auto tid = make_shared<ThreadIdx>();
+    auto tid_sym = _sym("tid", tid);
 
     auto idx_alloc = _alloc(_idx_t);
     auto idx_addr = _sym("idx_addr", idx_alloc);
@@ -177,6 +179,7 @@ shared_ptr<Func> vector_fn()
     foo_fn->tbl[sum_addr] = sum_alloc;
     foo_fn->tbl[loop_sym] = loop;
     foo_fn->tbl[kernel_sym] = kernel;
+    foo_fn->tbl[tid_sym] = tid;
 
     return foo_fn;
 }
@@ -190,7 +193,7 @@ int main()
     // cout << "OpToLoop IR: " << endl << IRPrinter::Build(fn2) << endl;
     // auto loop = LoopGen::Build(fn);
     // cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
-    return 0;
+    // return 0;
     CanonPass::Build(fn);
     cout << "Canon IR:" << endl << IRPrinter::Build(fn) << endl;
 
@@ -199,6 +202,7 @@ int main()
     LLVMGen::Build(fn, *llmod);
 
     cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
+    return 0;
     
     // jit->Optimize(*llmod);
     // cout << "Optimized LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;

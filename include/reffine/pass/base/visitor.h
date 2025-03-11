@@ -121,6 +121,18 @@ public:
     {
         throw runtime_error("BlockDim operation not supported");
     }
+    virtual void Visit(GridDim&)
+    {
+        throw runtime_error("GridDim operation not supported");
+    }
+    virtual void Visit(IdxStart&)
+    {
+        throw runtime_error("IdxStart operation not supported");
+    }
+    virtual void Visit(IdxEnd&)
+    {
+        throw runtime_error("IdxEnd operation not supported");
+    }
     virtual void Visit(Loop&)
     {
         throw runtime_error("Loop operation not supported");

@@ -24,6 +24,9 @@ void GetKernelInfo::Accept(Visitor& v) { v.Visit(*this); }
 void ThreadIdx::Accept(Visitor& v) { v.Visit(*this); }
 void BlockIdx::Accept(Visitor& v) { v.Visit(*this); }
 void BlockDim::Accept(Visitor& v) { v.Visit(*this); }
+void GridDim::Accept(Visitor& v) { v.Visit(*this); }
+void IdxStart::Accept(Visitor& v) { v.Visit(*this); }
+void IdxEnd::Accept(Visitor& v) { v.Visit(*this); }
 void Loop::Accept(Visitor& v) { v.Visit(*this); }
 void IsValid::Accept(Visitor& v) { v.Visit(*this); }
 void SetValid::Accept(Visitor& v) { v.Visit(*this); }

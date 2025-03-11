@@ -422,6 +422,7 @@ Value* LLVMGen::visit(GetKernelInfo& getKernelInfo)
 }
 
 Value* LLVMGen::visit(ThreadIdx& tidx) {
+    // https://llvm.org/docs/NVPTXUsage.html#overview
     auto thread_idx = builder()->CreateIntrinsic(
         Type::getInt32Ty(llctx()),
         llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
@@ -449,6 +450,74 @@ Value* LLVMGen::visit(BlockDim& bdim) {
     );
 
     return block_dim;
+}
+
+Value* LLVMGen::visit(GridDim& bdim) {
+    auto grid_dim = builder()->CreateIntrinsic(
+        Type::getInt32Ty(llctx()),
+        llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
+        {}
+    );
+
+    return grid_dim;
+}
+
+Value* LLVMGen::visit(IdxStart& idx) {
+    Value* tidx = eval(idx.tidx);
+    Value* bidx = eval(idx.bidx);
+    Value* bdim = eval(idx.bdim);
+    Value* gdim = eval(idx.gdim);
+    Value* len = eval(idx.len);
+
+    // TODO: will I have to make these the special NVPTX operations?
+    auto temp1 = builder()->CreateAdd(len, gdim);   // TODO: should also subtract 1 here
+    auto elem_per_block = builder()->CreateSDiv(temp1, gdim);
+    auto block_start = builder()->CreateMul(bidx, elem_per_block);
+    auto block_end = builder()->CreateAdd(block_start, elem_per_block);
+
+    auto temp2 = builder()->CreateSub(block_end, block_start);
+    auto temp3 = builder()->CreateAdd(temp2, bdim); // TODO: should also subtract 1 here
+    auto elem_per_thread = builder()->CreateSDiv(temp3, bdim);
+    auto temp4 = builder()->CreateMul(tidx, elem_per_thread);
+    auto thread_start = builder()->CreateAdd(block_start, temp4);
+    // auto thread_end = builder()->CreateAdd(thread_start, elem_per_thread);
+
+    return thread_start;
+    /*
+    int tid = threadIdx.x;
+    int elements_per_block = (n + gridDim.x - 1) / gridDim.x;
+    int block_start = blockIdx.x * elements_per_block;
+    // int block_end = min(block_start + elements_per_block, n);
+    int block_end = block_start + elements_per_block;
+
+    int elements_per_thread = (block_end - block_start + blockDim.x - 1) / blockDim.x;
+    int thread_start = block_start + tid * elements_per_thread;
+    // int thread_end = min(thread_start + elements_per_thread, block_end);
+    int thread_end = thread_start + elements_per_thread;
+    */
+}
+
+Value* LLVMGen::visit(IdxEnd& idx) {
+    Value* tidx = eval(idx.tidx);
+    Value* bidx = eval(idx.bidx);
+    Value* bdim = eval(idx.bdim);
+    Value* gdim = eval(idx.gdim);
+    Value* len = eval(idx.len);
+
+    // TODO: will I have to make these the special NVPTX operations?
+    auto temp1 = builder()->CreateAdd(len, gdim);   // TODO: should also subtract 1 here
+    auto elem_per_block = builder()->CreateSDiv(temp1, gdim);
+    auto block_start = builder()->CreateMul(bidx, elem_per_block);
+    auto block_end = builder()->CreateAdd(block_start, elem_per_block);
+
+    auto temp2 = builder()->CreateSub(block_end, block_start);
+    auto temp3 = builder()->CreateAdd(temp2, bdim); // TODO: should also subtract 1 here
+    auto elem_per_thread = builder()->CreateSDiv(temp3, bdim);
+    auto temp4 = builder()->CreateMul(tidx, elem_per_thread);
+    auto thread_start = builder()->CreateAdd(block_start, temp4);
+    auto thread_end = builder()->CreateAdd(thread_start, elem_per_thread);
+
+    return thread_end;
 }
 
 Value* LLVMGen::visit(Loop& loop)

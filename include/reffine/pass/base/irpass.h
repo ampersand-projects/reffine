@@ -146,6 +146,25 @@ public:
     void Visit(ThreadIdx& expr) override{}
     void Visit(BlockDim& expr) override{}
     void Visit(BlockIdx& expr) override{}
+    void Visit(GridDim& expr) override{}
+
+    void Visit(IdxStart& expr) override
+    {
+        expr.tidx->Accept(*this);
+        expr.bidx->Accept(*this);
+        expr.bdim->Accept(*this);
+        expr.gdim->Accept(*this);
+        expr.len->Accept(*this);
+    }
+
+    void Visit(IdxEnd& expr) override
+    {
+        expr.tidx->Accept(*this);
+        expr.bidx->Accept(*this);
+        expr.bdim->Accept(*this);
+        expr.gdim->Accept(*this);
+        expr.len->Accept(*this);
+    }
 
     void Visit(Loop& expr) override
     {

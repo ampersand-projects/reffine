@@ -58,6 +58,9 @@ public:
     void Visit(ThreadIdx&) final;
     void Visit(BlockIdx&) final;
     void Visit(BlockDim&) final;
+    void Visit(GridDim&) final;
+    void Visit(IdxStart&) final;
+    void Visit(IdxEnd&) final;
     void Visit(Loop&) final;
     void Visit(IsValid&) final;
     void Visit(SetValid&) final;

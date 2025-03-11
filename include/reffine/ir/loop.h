@@ -138,6 +138,44 @@ struct BlockDim : public ExprNode {
     void Accept(Visitor&) final;
 };
 
+struct GridDim : public ExprNode {
+    GridDim() : ExprNode(types::INT64) {}
+
+    void Accept(Visitor&) final;
+};
+
+struct IdxStart : public ExprNode {
+    // TODO: should the types of all of these just be Expr?
+    Expr tidx;
+    Expr bidx;
+    Expr bdim;
+    Expr gdim;
+    Expr len;
+
+    IdxStart(Expr tidx, Expr bidx, Expr bdim, Expr gdim, Expr len) : ExprNode(types::IDX), tidx(tidx), bidx(bidx), bdim(bdim), gdim(gdim), len(len)
+    {
+        // TODO: add any asserts ???
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct IdxEnd : public ExprNode {
+    // TODO: should the types of all of these just be Expr?
+    Expr tidx;
+    Expr bidx;
+    Expr bdim;
+    Expr gdim;
+    Expr len;
+
+    IdxEnd(Expr tidx, Expr bidx, Expr bdim, Expr gdim, Expr len) : ExprNode(types::IDX), tidx(tidx), bidx(bidx), bdim(bdim), gdim(gdim), len(len)
+    {
+        // TODO: add any asserts ???
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct Loop : public ExprNode {
     // Loop initialization
     Stmt init = nullptr;

@@ -312,6 +312,18 @@ void IRPrinter::Visit(BlockDim& bdim) {
     ostr << "BlockDim: TO BE IMPLEMENTED"; 
 }
 
+void IRPrinter::Visit(GridDim& bdim) {
+    ostr << "GridDim: TO BE IMPLEMENTED"; 
+}
+
+void IRPrinter::Visit(IdxStart& bdim) {
+    ostr << "IdxStart: TO BE IMPLEMENTED"; 
+}
+
+void IRPrinter::Visit(IdxEnd& bdim) {
+    ostr << "IdxEnd: TO BE IMPLEMENTED"; 
+}
+
 void IRPrinter::Visit(Loop& loop)
 {
     ostr << "{";
