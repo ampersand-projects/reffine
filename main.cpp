@@ -149,7 +149,12 @@ shared_ptr<Func> vector_fn()
     auto kernel = make_shared<GetKernelInfo>();
     auto kernel_sym = _sym("kernel", kernel);
     auto tid = make_shared<ThreadIdx>();
+    auto bid = make_shared<BlockIdx>();
+    auto bdim = make_shared<BlockDim>();
+    auto gdim = make_shared<GridDim>(); 
     auto tid_sym = _sym("tid", tid);
+    auto idx_start = make_shared<IdxStart>(tid, bid, bdim, gdim, len);
+    auto idx_end = make_shared<IdxEnd>(tid, bid, bdim, gdim, len);
 
     auto idx_alloc = _alloc(_idx_t);
     auto idx_addr = _sym("idx_addr", idx_alloc);
@@ -164,10 +169,12 @@ shared_ptr<Func> vector_fn()
     auto loop = _loop(_load(sum_addr));
     auto loop_sym = _sym("loop", loop);
     loop->init = _stmts(vector<Stmt>{
-        _store(idx_addr, _idx(0)),
+        // _store(idx_addr, _idx(0)),
+        _store(idx_addr, idx_start),
         _store(sum_addr, _i64(0)),
     });
     loop->exit_cond = _gte(idx, len_sym);
+    // loop->exit_cond = _gte(idx, idx_end);    // TODO: causing type mismatch error
     loop->body = _stmts(vector<Stmt>{
         _store(sum_addr, sum + val),
         _store(idx_addr, idx + _idx(1)),
@@ -202,7 +209,7 @@ int main()
     LLVMGen::Build(fn, *llmod);
 
     cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
-    return 0;
+    // return 0;
     
     // jit->Optimize(*llmod);
     // cout << "Optimized LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
@@ -210,9 +217,13 @@ int main()
     jit->GeneratePTX(*llmod);
     cout << "Generated PTX:" << endl << IRPrinter::Build(*llmod) << endl;
 
+    return 0;
+
     std::string output_ptx;
     jit->GeneratePTX(*llmod, output_ptx);
     cout << "Generated PTX 2:" << endl << output_ptx << endl;
+
+    return 0;
 
     ArrowArray in_array;
     auto status = get_arrow_array(in_array);
