@@ -20,6 +20,7 @@
 #include "llvm/Transforms/Vectorize/SLPVectorizer.h"
 #include "llvm/MC/TargetRegistry.h"
 #include <cuda.h>
+#include <cassert>
 // #include <cuda_runtime.h>
 
 using namespace reffine;
@@ -125,18 +126,23 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
 
     char name[128];
     cuDeviceGetName(name, 128, device);
-    std::cout << "Using CUDA Device: " << name << "\n";
+    std::cout << "Device name: " << name << "\n";
 
     CUdeviceptr d_result;
     cuMemAlloc(&d_result, sizeof(int));
+ 
+    CUdeviceptr d_arr;
+    cuMemAlloc(&d_arr, sizeof(int64_t)*100);
+    cuMemcpyHtoD(d_arr, arg, sizeof(int64_t)*100);
 
     cuModuleLoadData(&cudaModule, ptxCode.c_str());
 
     cuModuleGetFunction(&function, cudaModule, kernel_name.c_str());
 
     int gridDimX = 1;
-    int blockDimX = 1;
-    void* kernelParams[] = { &arg, &d_result };
+    int blockDimX = 32;
+    // void* kernelParams[] = { &arg, &d_result };
+    void* kernelParams[] = { &d_arr, &d_result };
 
     cuLaunchKernel(function,
         gridDimX, 1, 1,
@@ -149,7 +155,7 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
     
     cuCtxSynchronize();
 
-    cuMemcpyDtoH(result, d_result, sizeof(int));
+    cuMemcpyDtoH(result, d_result, sizeof(int64_t));
     std::cout << "Kernel result: " << *result << std::endl;
     cuMemFree(d_result);
 

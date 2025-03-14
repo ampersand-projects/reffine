@@ -86,6 +86,12 @@ int64_t vector_locate(ArrowArray* arr, int64_t t)
     return -1;
 }
 
+REFFINE_VINSTR_ATTR
+int64_t* get_elem_ptr(int64_t* arr, int64_t idx)
+{
+    return arr + idx;
+}
+
 }  // extern "C"
 }  // namespace reffine
 

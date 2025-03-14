@@ -176,31 +176,29 @@ shared_ptr<Func> vector_fn()
 {
     auto vec_sym = _sym("vec", types::VECTOR<1>(vector<DataType>{
         _i64_t, _i64_t, _i64_t, _i64_t, _i64_t, _i8_t, _i64_t }));
+    // auto vec_sym = make_shared<SymNode>("vec", types::INT64.ptr());
 
     auto len = _call("get_vector_len", _idx_t, vector<Expr>{vec_sym});
     auto len_sym = _sym("len", len);
 
-    // auto kernel = make_shared<GetKernelInfo>(_i64(1), _i64(1), _i64(1));
-    // auto kernel = make_shared<GetKernelInfo>();
-    // auto kernel_sym = _sym("kernel", kernel);
     auto tid = make_shared<ThreadIdx>();
     auto bid = make_shared<BlockIdx>();
     auto bdim = make_shared<BlockDim>();
-    auto gdim = make_shared<GridDim>(); 
-    auto tid_sym = _sym("tid", tid);
+    auto gdim = make_shared<GridDim>();
     // auto start = make_shared<IdxStart>(tid, bid, bdim, gdim, len);
     // auto idx_start = _cast(_idx_t, start);
     // auto idx_end = make_shared<IdxEnd>(tid, bid, bdim, gdim, len);
     auto idx_start = get_start_idx(tid, bid, bdim, gdim, len);
     auto idx_end = get_end_idx(tid, bid, bdim, gdim, len);
 
-    // auto idx_alloc = _alloc(_idx_t);
-    auto idx_alloc = _alloc(_idx_t, make_shared<Const>(types::UINT64, 1));
+    auto idx_alloc = _alloc(_idx_t);
+    // auto idx_alloc = _alloc(_idx_t, make_shared<Const>(types::UINT64, 1));
     auto idx_addr = _sym("idx_addr", idx_alloc);
     auto idx = _load(idx_addr);
     auto sum_alloc = _alloc(_i64_t);
     auto sum_addr = _sym("sum_addr", sum_alloc);
     auto sum = _load(sum_addr);
+    auto sum_sym = _sym("sum", sum);
 
     auto val_ptr = _fetch(vec_sym, idx, 1);
     auto val = _load(val_ptr);
@@ -219,7 +217,7 @@ shared_ptr<Func> vector_fn()
         _store(idx_addr, idx + _idx(1)),
     });
 
-    auto foo_fn = _func("foo", loop_sym, vector<Sym>{vec_sym});
+    auto foo_fn = _func("foo", loop_sym, vector<Sym>{vec_sym, sum_sym});
     foo_fn->tbl[len_sym] = len;
     foo_fn->tbl[idx_addr] = idx_alloc;
     foo_fn->tbl[sum_addr] = sum_alloc;
@@ -230,24 +228,103 @@ shared_ptr<Func> vector_fn()
     return foo_fn;
 }
 
+shared_ptr<Func> vector_fn_2()
+{
+    /* Retry with regular array (rather than Arrow Array) */
+
+    // auto vec_sym = _sym("vec", types::VECTOR<1>(vector<DataType>{
+    //     _i64_t, _i64_t, _i64_t, _i64_t, _i64_t, _i8_t, _i64_t }));
+    auto vec_sym = make_shared<SymNode>("vec", types::INT64.ptr());
+    auto sum_sym = _sym("sum", types::INT64.ptr());
+
+    auto len = _call("get_vector_len", _idx_t, vector<Expr>{vec_sym});
+    auto len_sym = _sym("len", len);
+
+    auto tid = make_shared<ThreadIdx>();
+    auto bid = make_shared<BlockIdx>();
+    auto bdim = make_shared<BlockDim>();
+    auto gdim = make_shared<GridDim>();
+    // auto idx_start = get_start_idx(tid, bid, bdim, gdim, len);
+    // auto idx_end = get_end_idx(tid, bid, bdim, gdim, len);
+
+    auto idx_alloc = _alloc(_idx_t);
+    // auto idx_alloc = _alloc(_idx_t, make_shared<Const>(types::UINT64, 1));
+    auto idx_addr = _sym("idx_addr", idx_alloc);
+    auto idx = _load(idx_addr);
+    auto sum_alloc = _alloc(_i64_t);
+    // auto sum_addr = _sym("sum_addr", sum_alloc);
+    // auto sum_addr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{sum_sym, _idx(0)});
+    // auto sum = _load(sum_addr);
+    auto sum = _load(sum_sym);
+    // auto sum_sym = _sym("sum", sum);
+
+    auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_sym, idx});
+    auto val = _load(val_ptr);
+
+    auto loop = _loop(_load(sum_sym)); 
+    // auto loop = _loop(_load(sum_sym)); 
+    auto loop_sym = _sym("loop", loop);
+    loop->init = _stmts(vector<Stmt>{
+        _store(idx_addr, _idx(0)),
+        // _store(idx_addr, idx_start),
+        _store(sum_sym, _i64(0))
+        // _store(sum_sym, _i64(0)),
+    });
+    // loop->exit_cond = _gte(idx, len_sym);
+    loop->exit_cond = _gte(idx, _idx(100));
+    // loop->exit_cond = _gte(idx, idx_end);
+    loop->body = _stmts(vector<Stmt>{
+        _store(sum_sym, sum + val),
+        // _store(sum_addr, val),
+        // _store(sum_addr, sum + _i64(5)),
+        _store(idx_addr, idx + _idx(1)),
+    });
+
+    auto foo_fn = _func("foo", loop_sym, vector<Sym>{vec_sym, sum_sym});
+    // auto foo_fn = _func("foo", loop_sym, vector<Sym>{vec_sym});
+    foo_fn->tbl[len_sym] = len;
+    foo_fn->tbl[idx_addr] = idx_alloc;
+    // foo_fn->tbl[sum_addr] = sum_alloc;
+    // foo_fn->tbl[sum_sym] = sum;
+    foo_fn->tbl[loop_sym] = loop;
+
+    return foo_fn;
+}
+
+int get_test_input_array(int64_t* in_array, int len) {
+    // int len = 100;
+    int true_res = 0;
+    // int64_t* in_array = new int64_t[len];
+    for (int i = 0; i < len; i++) {
+        in_array[i] = i+1;
+        true_res += i+1;
+    }
+
+    return true_res;
+}
+
 
 int main()
 {
-    auto fn = vector_fn();
+    // auto fn = vector_fn();
+    auto fn = vector_fn_2();
+    // return 0;
     cout << "Reffine IR: " << endl << IRPrinter::Build(fn) << endl;
+    // return 0;
+    
     // auto fn2 = OpToLoop::Build(fn);
     // cout << "OpToLoop IR: " << endl << IRPrinter::Build(fn2) << endl;
     // auto loop = LoopGen::Build(fn);
     // cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
     // return 0;
     CanonPass::Build(fn);
-    cout << "Canon IR:" << endl << IRPrinter::Build(fn) << endl;
+    // cout << "Canon IR:" << endl << IRPrinter::Build(fn) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
     LLVMGen::Build(fn, *llmod);
 
-    cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
+    // cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
     // return 0;
     
     // jit->Optimize(*llmod);
@@ -255,18 +332,21 @@ int main()
 
     std::string output_ptx;
     jit->GeneratePTX(*llmod, output_ptx);
-    cout << "Generated PTX 2:" << endl << output_ptx << endl;
+    cout << "Generated PTX:" << endl << output_ptx << endl;
 
     // return 0;
 
-    ArrowArray in_array;
-    auto status = get_arrow_array(in_array);
-    if (!status.ok()) {
-        cerr << status.ToString() << endl;
-    }
+    // ArrowArray in_array;
+    // auto status = get_arrow_array(in_array);
+    // if (!status.ok()) {
+    //     cerr << status.ToString() << endl;
+    // }
 
+    int len = 100;
+    int64_t* in_array = new int64_t[len];
+    int true_res = get_test_input_array(in_array, len);
     int result;
-    jit->ExecutePTX(output_ptx, llmod->getName().str(), (void*)(&in_array), &result);
+    jit->ExecutePTX(output_ptx, llmod->getName().str(), (int64_t*)(in_array), &result);
 
     // dump llvm IR to .ll file
     ofstream llfile(llmod->getName().str() + ".ll");
@@ -278,7 +358,14 @@ int main()
     }
 
     jit->AddModule(std::move(llmod));
-    // auto query_fn = jit->Lookup<int (*)(void*)>(fn->name);
+    auto query_fn = jit->Lookup<int (*)(void*, int*)>(fn->name);
+
+    cout << "About to run query_fn..." << endl;
+    int sum;
+    int res = query_fn(in_array, &sum);
+    cout << "True Res: " << true_res << endl;
+    cout << "Result: " << res << endl;
+
 
     // //auto status = csv_to_arrow();
     // auto status2 = run_vector_fn(query_fn);
