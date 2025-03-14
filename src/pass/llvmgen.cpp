@@ -429,6 +429,8 @@ Value* LLVMGen::visit(ThreadIdx& tidx) {
         {}
     );
 
+    // cout << "TIDX::: " << thread_idx << endl;
+
     return thread_idx;
 }
 
@@ -464,14 +466,20 @@ Value* LLVMGen::visit(GridDim& bdim) {
 
 Value* LLVMGen::visit(IdxStart& idx) {
     Value* tidx = eval(idx.tidx);
+    // return tidx;
     Value* bidx = eval(idx.bidx);
     Value* bdim = eval(idx.bdim);
     Value* gdim = eval(idx.gdim);
     Value* len = eval(idx.len);
 
+    // llvm::Value* intValue = Builder.CreateIntCast(value, Builder.getInt32Ty(), true);  // Cast to i32 with sign extension
+
+    
     // TODO: will I have to make these the special NVPTX operations?
     auto temp1 = builder()->CreateAdd(len, gdim);   // TODO: should also subtract 1 here
+    return temp1;
     auto elem_per_block = builder()->CreateSDiv(temp1, gdim);
+    return elem_per_block;
     auto block_start = builder()->CreateMul(bidx, elem_per_block);
     auto block_end = builder()->CreateAdd(block_start, elem_per_block);
 
@@ -480,25 +488,15 @@ Value* LLVMGen::visit(IdxStart& idx) {
     auto elem_per_thread = builder()->CreateSDiv(temp3, bdim);
     auto temp4 = builder()->CreateMul(tidx, elem_per_thread);
     auto thread_start = builder()->CreateAdd(block_start, temp4);
-    // auto thread_end = builder()->CreateAdd(thread_start, elem_per_thread);
+    // return thread_start;
 
-    return thread_start;
-    /*
-    int tid = threadIdx.x;
-    int elements_per_block = (n + gridDim.x - 1) / gridDim.x;
-    int block_start = blockIdx.x * elements_per_block;
-    // int block_end = min(block_start + elements_per_block, n);
-    int block_end = block_start + elements_per_block;
-
-    int elements_per_thread = (block_end - block_start + blockDim.x - 1) / blockDim.x;
-    int thread_start = block_start + tid * elements_per_thread;
-    // int thread_end = min(thread_start + elements_per_thread, block_end);
-    int thread_end = thread_start + elements_per_thread;
-    */
+    auto thread_start_int = builder()->CreateIntCast(thread_start, builder()->getInt64Ty(), true);
+    return thread_start_int;
 }
 
 Value* LLVMGen::visit(IdxEnd& idx) {
     Value* tidx = eval(idx.tidx);
+    return tidx;
     Value* bidx = eval(idx.bidx);
     Value* bdim = eval(idx.bdim);
     Value* gdim = eval(idx.gdim);
@@ -516,8 +514,11 @@ Value* LLVMGen::visit(IdxEnd& idx) {
     auto temp4 = builder()->CreateMul(tidx, elem_per_thread);
     auto thread_start = builder()->CreateAdd(block_start, temp4);
     auto thread_end = builder()->CreateAdd(thread_start, elem_per_thread);
+    // return thread_end;
 
-    return thread_end;
+    auto thread_end_int = builder()->CreateIntCast(thread_end, builder()->getInt64Ty(), true);
+
+    return thread_end_int;
 }
 
 Value* LLVMGen::visit(Loop& loop)
@@ -572,7 +573,7 @@ void LLVMGen::visit(Func& func)
     vector<llvm::Type*> args_type;
     for (auto& input : func.inputs) {
         args_type.push_back(lltype(input->type));
-    }
+}
     auto fn = llfunc(func.name, lltype(func.output), args_type);
     for (size_t i = 0; i < func.inputs.size(); i++) {
         auto input = func.inputs[i];
@@ -651,31 +652,3 @@ void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
     LLVMGen llgen(ctx, llmod);
     func->Accept(llgen);
 }
-
-// void LLVMGen::GeneratePTX(Module &llmod, std::string& outputPTX, const std::string& sm_xx) {
-//     llvm::InitializeAllTargetInfos();
-//     llvm::InitializeAllTargets();
-//     llvm::InitializeAllTargetMCs();
-//     llvm::InitializeAllAsmParsers();
-//     llvm::InitializeAllAsmPrinters();
-
-//     auto target_triple = "nvptx64-nvidia-cuda";
-
-//     std::string Error;
-//     const llvm::Target *Target = llvm::TargetRegistry::lookupTarget(target_triple, Error);
-//     if (!Target) {
-//         llvm::errs() << Error;
-//         cout << "Error" << Error << endl;
-//         return;
-//     }
-
-//     // this will make possible to use the right intrinsics when possible
-//     auto CPU = sm_xx;  // to set the sm version (https://reviews.llvm.org/D141054)
-//     auto Features = "";
-
-//     llvm::TargetOptions opt;
-//     auto RM = std::optional<llvm::Reloc::Model>();
-    
-//     auto nv_target_machine = target->createTargetMachine(target_triple, CPU, Features, opt, RM);
-
-// }

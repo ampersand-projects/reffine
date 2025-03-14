@@ -71,8 +71,9 @@ Expected<ThreadSafeModule> ExecEngine::optimize_module(
 
 void ExecEngine::Optimize(Module &llmod) { MPM.run(llmod, MAM); }
 
-void ExecEngine::GeneratePTX(Module &llmod)
+void ExecEngine::GeneratePTX(Module &llmod, std::string& outputPTX)
 {
+    // setup and initialization
     InitializeAllTargets();
     InitializeAllTargetMCs();
     InitializeAllAsmPrinters();
@@ -80,33 +81,6 @@ void ExecEngine::GeneratePTX(Module &llmod)
 
     llmod.setTargetTriple("nvptx64-nvidia-cuda");
 
-    // std::string error;
-    // auto target = llvm::TargetRegistry::lookupTarget(llmod.getTargetTriple(),
-    // error);
-    // llvm::TargetRegistry::lookupTarget(llmod.getTargetTriple(), error);
-
-    // llvm::TargetOptions opt;
-    // auto targetMachine = target->createTargetMachine(llmod.getTargetTriple(),
-    // "sm_52", "", opt, llvm::Reloc::PIC_);
-    // llmod.setDataLayout(targetMachine->createDataLayout());
-
-    // std::error_code ec;
-    // llvm::raw_fd_ostream dest("output.ptx", ec, llvm::sys::fs::OF_None);
-
-    // llvm::legacy::PassManager pass;
-    // if (targetMachine->addPassesToEmitFile(pass, dest, nullptr,
-    // llvm::LLVMAssemblyFile)) {
-    //     llvm::errs() << "TargetMachine can't emit a file of this type";
-    //     return;
-    // }
-
-    // pass.run(llmod);
-    // dest.flush();
-}
-
-void ExecEngine::GeneratePTX(Module &llmod, std::string& outputPTX, std::string computeCapability)
-{
-    // Initialize NVPTX target
     std::string Error;
     const llvm::Target *Target = llvm::TargetRegistry::lookupTarget("nvptx64-nvidia-cuda", Error);
     
@@ -114,20 +88,18 @@ void ExecEngine::GeneratePTX(Module &llmod, std::string& outputPTX, std::string 
         cout << "Error" << Error << endl;
         return;
     }
-    
-    // Create target machine
-    llvm::TargetOptions Opt;
+
+    llvm::TargetOptions opt;
     llvm::TargetMachine *TM = Target->createTargetMachine(
         "nvptx64-nvidia-cuda",
-        computeCapability,  // e.g., "sm_75"
-        "+ptx63",          // PTX version
-        Opt,
+        "sm_80",
+        "",     // "+ptx63",          // PTX version
+        opt,
         llvm::Reloc::Static);
     
-    // Set data layout
     llmod.setDataLayout(TM->createDataLayout());
     
-    // Generate PTX
+    // generate PTX
     llvm::SmallString<1024> PTXStr;
     llvm::raw_svector_ostream PTXOS(PTXStr);
     
@@ -140,7 +112,7 @@ void ExecEngine::GeneratePTX(Module &llmod, std::string& outputPTX, std::string 
     outputPTX = PTXStr.str().str();
 }
 
-void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kernel_name, void* arg) {
+void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kernel_name, void* arg, int* result) {
     CUdevice device;
     CUmodule cudaModule;
     CUcontext context;
@@ -153,7 +125,10 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
 
     char name[128];
     cuDeviceGetName(name, 128, device);
-    std::cout << "Using CUDA Device [0]: " << name << "\n";
+    std::cout << "Using CUDA Device: " << name << "\n";
+
+    CUdeviceptr d_result;
+    cuMemAlloc(&d_result, sizeof(int));
 
     cuModuleLoadData(&cudaModule, ptxCode.c_str());
 
@@ -161,18 +136,25 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
 
     int gridDimX = 1;
     int blockDimX = 1;
-
-    // handle args
-    
-    // void* kernelParams[] = { /* TODO */ };
+    void* kernelParams[] = { &arg, &d_result };
 
     cuLaunchKernel(function,
         gridDimX, 1, 1,
         blockDimX, 1, 1,
         0,   // shared memory size
         0,   // stream handle
-        NULL,// kernelParams,
-        NULL);  
+        // NULL,// kernelParams,
+        kernelParams,
+        NULL); 
+    
+    cuCtxSynchronize();
+
+    cuMemcpyDtoH(result, d_result, sizeof(int));
+    std::cout << "Kernel result: " << *result << std::endl;
+    cuMemFree(d_result);
+
+    cuModuleUnload(cudaModule);
+    cuCtxDestroy(context);
 }
 
 unique_ptr<ExecutionSession> ExecEngine::createExecutionSession()

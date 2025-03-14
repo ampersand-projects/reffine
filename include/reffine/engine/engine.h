@@ -50,9 +50,8 @@ public:
 
     static ExecEngine* Get();
     void Optimize(Module&);
-    void GeneratePTX(Module&);
-    void GeneratePTX(Module&, std::string&, std::string = "sm_75");
-    void ExecutePTX(const std::string&, const std::string&, void*);
+    void GeneratePTX(Module&, std::string&);
+    void ExecutePTX(const std::string&, const std::string&, void*, int*);
     void AddModule(unique_ptr<Module>);
     LLVMContext& GetCtx();
 

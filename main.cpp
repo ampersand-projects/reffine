@@ -253,20 +253,11 @@ int main()
     // jit->Optimize(*llmod);
     // cout << "Optimized LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
 
-    jit->GeneratePTX(*llmod);
-    // cout << "Generated PTX:" << endl << IRPrinter::Build(*llmod) << endl;
-
-    // return 0;
-
     std::string output_ptx;
-    jit->GeneratePTX(*llmod, output_ptx);   // TODO: causes error: LLVM ERROR: Copy one register into another with a different width
-                                                // probably due to a datatype mismatch somwhere
-                                                    // https://chatgpt.com/share/67d2e2d2-2d9c-8006-850e-6e8def863fa3
-                                                // --> possibly coming from this line of loop init?
-                                                    // _store(idx_addr, idx_start),
+    jit->GeneratePTX(*llmod, output_ptx);
     cout << "Generated PTX 2:" << endl << output_ptx << endl;
 
-    return 0;
+    // return 0;
 
     ArrowArray in_array;
     auto status = get_arrow_array(in_array);
@@ -274,7 +265,8 @@ int main()
         cerr << status.ToString() << endl;
     }
 
-    jit->ExecutePTX(output_ptx, llmod->getName().str(), (void*) (&in_array));
+    int result;
+    jit->ExecutePTX(output_ptx, llmod->getName().str(), (void*)(&in_array), &result);
 
     // dump llvm IR to .ll file
     ofstream llfile(llmod->getName().str() + ".ll");
