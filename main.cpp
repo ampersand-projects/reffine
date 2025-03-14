@@ -137,6 +137,41 @@ arrow::Status get_arrow_array(ArrowArray& in_array) {
     return arrow::Status::OK();
 }
 
+shared_ptr<ExprNode> get_start_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr len) {
+    auto tidx = _cast(_idx_t, tid);
+    auto bidx = _cast(_idx_t, bid);
+    auto bdimx = _cast(_idx_t, bdim);
+    auto gdimx = _cast(_idx_t, gdim);
+    auto n = _cast(_idx_t, len);
+
+    auto elem_per_block = (n + gdimx - _idx(1)) / gdimx;
+    auto block_start = bidx * elem_per_block;
+    auto block_end = _min(block_start + elem_per_block, n);
+
+    auto elem_per_thread = (block_end - block_start + bdimx - _idx(1)) / bdimx;
+    auto thread_start = block_start + (tidx * elem_per_thread);
+
+    return thread_start;
+}
+
+shared_ptr<ExprNode> get_end_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr len) {
+    auto tidx = _cast(_idx_t, tid);
+    auto bidx = _cast(_idx_t, bid);
+    auto bdimx = _cast(_idx_t, bdim);
+    auto gdimx = _cast(_idx_t, gdim);
+    auto n = _cast(_idx_t, len);
+
+    auto elem_per_block = (n + gdimx - _idx(1)) / gdimx;
+    auto block_start = bidx * elem_per_block;
+    auto block_end = _min(block_start + elem_per_block, n);
+
+    auto elem_per_thread = (block_end - block_start + bdimx - _idx(1)) / bdimx;
+    auto thread_start = block_start + (tidx * elem_per_thread);
+    auto thread_end = _min(thread_start + elem_per_thread, block_end);
+
+    return thread_end;
+}
+
 shared_ptr<Func> vector_fn()
 {
     auto vec_sym = _sym("vec", types::VECTOR<1>(vector<DataType>{
@@ -146,17 +181,21 @@ shared_ptr<Func> vector_fn()
     auto len_sym = _sym("len", len);
 
     // auto kernel = make_shared<GetKernelInfo>(_i64(1), _i64(1), _i64(1));
-    auto kernel = make_shared<GetKernelInfo>();
-    auto kernel_sym = _sym("kernel", kernel);
+    // auto kernel = make_shared<GetKernelInfo>();
+    // auto kernel_sym = _sym("kernel", kernel);
     auto tid = make_shared<ThreadIdx>();
     auto bid = make_shared<BlockIdx>();
     auto bdim = make_shared<BlockDim>();
     auto gdim = make_shared<GridDim>(); 
     auto tid_sym = _sym("tid", tid);
-    auto idx_start = make_shared<IdxStart>(tid, bid, bdim, gdim, len);
-    auto idx_end = make_shared<IdxEnd>(tid, bid, bdim, gdim, len);
+    // auto start = make_shared<IdxStart>(tid, bid, bdim, gdim, len);
+    // auto idx_start = _cast(_idx_t, start);
+    // auto idx_end = make_shared<IdxEnd>(tid, bid, bdim, gdim, len);
+    auto idx_start = get_start_idx(tid, bid, bdim, gdim, len);
+    auto idx_end = get_end_idx(tid, bid, bdim, gdim, len);
 
-    auto idx_alloc = _alloc(_idx_t);
+    // auto idx_alloc = _alloc(_idx_t);
+    auto idx_alloc = _alloc(_idx_t, make_shared<Const>(types::UINT64, 1));
     auto idx_addr = _sym("idx_addr", idx_alloc);
     auto idx = _load(idx_addr);
     auto sum_alloc = _alloc(_i64_t);
@@ -173,8 +212,8 @@ shared_ptr<Func> vector_fn()
         _store(idx_addr, idx_start),
         _store(sum_addr, _i64(0)),
     });
-    loop->exit_cond = _gte(idx, len_sym);
-    // loop->exit_cond = _gte(idx, idx_end);    // TODO: causing type mismatch error
+    // loop->exit_cond = _gte(idx, len_sym);
+    loop->exit_cond = _gte(idx, idx_end);
     loop->body = _stmts(vector<Stmt>{
         _store(sum_addr, sum + val),
         _store(idx_addr, idx + _idx(1)),
@@ -185,8 +224,8 @@ shared_ptr<Func> vector_fn()
     foo_fn->tbl[idx_addr] = idx_alloc;
     foo_fn->tbl[sum_addr] = sum_alloc;
     foo_fn->tbl[loop_sym] = loop;
-    foo_fn->tbl[kernel_sym] = kernel;
-    foo_fn->tbl[tid_sym] = tid;
+    // foo_fn->tbl[kernel_sym] = kernel;
+    // foo_fn->tbl[tid_sym] = tid;
 
     return foo_fn;
 }
@@ -215,12 +254,16 @@ int main()
     // cout << "Optimized LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
 
     jit->GeneratePTX(*llmod);
-    cout << "Generated PTX:" << endl << IRPrinter::Build(*llmod) << endl;
+    // cout << "Generated PTX:" << endl << IRPrinter::Build(*llmod) << endl;
 
-    return 0;
+    // return 0;
 
     std::string output_ptx;
-    jit->GeneratePTX(*llmod, output_ptx);
+    jit->GeneratePTX(*llmod, output_ptx);   // TODO: causes error: LLVM ERROR: Copy one register into another with a different width
+                                                // probably due to a datatype mismatch somwhere
+                                                    // https://chatgpt.com/share/67d2e2d2-2d9c-8006-850e-6e8def863fa3
+                                                // --> possibly coming from this line of loop init?
+                                                    // _store(idx_addr, idx_start),
     cout << "Generated PTX 2:" << endl << output_ptx << endl;
 
     return 0;
