@@ -92,76 +92,189 @@ void ExecEngine::GeneratePTX(Module &llmod, std::string& outputPTX)
 
     llvm::TargetOptions opt;
     llvm::TargetMachine *TM = Target->createTargetMachine(
-        "nvptx64-nvidia-cuda",
-        "sm_80",
-        "",     // "+ptx63",          // PTX version
+        "nvptx64-nvidia-cuda",  // checked by running `$ llc --version`
+        "sm_75",        // for NVIDIA GeForce RTX 2080 Ti , checked by running `$ nvidia-smi`
+        "",     //"+ptx76",         // PTX version
+        // "",     // "+ptx63",          
         opt,
         llvm::Reloc::Static);
     
     llmod.setDataLayout(TM->createDataLayout());
     
     // generate PTX
-    llvm::SmallString<1024> PTXStr;
+    llvm::SmallString<1048576> PTXStr;
     llvm::raw_svector_ostream PTXOS(PTXStr);
     
     llvm::legacy::PassManager PM;
     TM->addPassesToEmitFile(PM, PTXOS, nullptr, llvm::CodeGenFileType::AssemblyFile);
     PM.run(llmod);
 
-    std::cout << "Generated PTXStr: " << std::endl << PTXStr.str().str() << std::endl;
+    // std::cout << "Generated PTXStr: " << std::endl << PTXStr.str().str() << std::endl;
     
     outputPTX = PTXStr.str().str();
 }
 
+// static void checkCudaErrors(CUresult err)
+// {
+//     assert(err == CUDA_SUCCESS);
+// }
+#define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
+static void __checkCudaErrors(CUresult err, const char *filename, int line) {
+  assert(filename);
+  if (CUDA_SUCCESS != err) {
+    const char *ename = NULL;
+    const CUresult res = cuGetErrorName(err, &ename);
+    fprintf(stderr,
+            "CUDA API Error %04d: \"%s\" from file <%s>, "
+            "line %i.\n",
+            err, ((CUDA_SUCCESS == res) ? ename : "Unknown"), filename, line);
+    exit(err);
+  }
+}
+
+
 void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kernel_name, void* arg, int* result) {
+    std::cout << "Kernel result: " << *result << std::endl;
     CUdevice device;
     CUmodule cudaModule;
     CUcontext context;
     CUfunction function;
     // CUlinkState linker;
     
-    cuInit(0);
-    cuDeviceGet(&device, 0);
-    cuCtxCreate(&context, 0, device);
+    checkCudaErrors(cuInit(0));
+    checkCudaErrors(cuDeviceGet(&device, 0));
+    checkCudaErrors(cuCtxCreate(&context, 0, device));
+    if (!context) {
+        std::cerr << "CUDA context is not set!" << std::endl;
+    }
 
     char name[128];
     cuDeviceGetName(name, 128, device);
     std::cout << "Device name: " << name << "\n";
 
     CUdeviceptr d_result;
-    cuMemAlloc(&d_result, sizeof(int));
+    checkCudaErrors(cuMemAlloc(&d_result, sizeof(int)));
  
     CUdeviceptr d_arr;
-    cuMemAlloc(&d_arr, sizeof(int64_t)*100);
-    cuMemcpyHtoD(d_arr, arg, sizeof(int64_t)*100);
+    checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t)*100));
+    checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t)*100));
+    
 
-    cuModuleLoadData(&cudaModule, ptxCode.c_str());
+    // cout << "Generated PTX 2:" << endl << ptxCode.c_str() << endl;
+    // checkCudaErrors(cuModuleLoadData(&cudaModule, ptxCode.c_str()));
 
-    cuModuleGetFunction(&function, cudaModule, kernel_name.c_str());
+    setenv("CUDA_LAUNCH_BLOCKING", "1", 1);
+
+    // Use more detailed error checking
+    checkCudaErrors(cuModuleLoadData(&cudaModule, ptxCode.c_str()));
+
+    cout << kernel_name.c_str() << endl;
+    checkCudaErrors(cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
 
     int gridDimX = 1;
     int blockDimX = 32;
     // void* kernelParams[] = { &arg, &d_result };
     void* kernelParams[] = { &d_arr, &d_result };
 
-    cuLaunchKernel(function,
+    checkCudaErrors(cuLaunchKernel(function,
         gridDimX, 1, 1,
         blockDimX, 1, 1,
         0,   // shared memory size
         0,   // stream handle
         // NULL,// kernelParams,
         kernelParams,
-        NULL); 
+        NULL)); 
     
-    cuCtxSynchronize();
+    checkCudaErrors(cuCtxSynchronize());
 
-    cuMemcpyDtoH(result, d_result, sizeof(int64_t));
+    checkCudaErrors(cuMemcpyDtoH(result, d_result, sizeof(int64_t)));
     std::cout << "Kernel result: " << *result << std::endl;
     cuMemFree(d_result);
 
     cuModuleUnload(cudaModule);
     cuCtxDestroy(context);
 }
+
+#include <fstream>
+void ExecEngine::ExecutePTXTest(const std::string& ptxCode, const std::string& kernel_name, void* arg, int* res) {
+
+    CUdevice device;
+    CUmodule cudaModule;
+    CUcontext context;
+    CUfunction function;
+    // CUlinkState linker;
+
+    char file_name[] = "../vector_kernel.ptx";
+    char fcn_kernel_name[] = "_Z9vector_fniPiS_";
+    
+    checkCudaErrors(cuInit(0));
+    checkCudaErrors(cuDeviceGet(&device, 0));
+    checkCudaErrors(cuCtxCreate(&context, 0, device));
+    if (!context) {
+        std::cerr << "CUDA context is not set!" << std::endl;
+    }
+
+    char name[128];
+    cuDeviceGetName(name, 128, device);
+    std::cout << "Device name: " << name << "\n";
+
+    // CUdeviceptr d_result;
+    // checkCudaErrors(cuMemAlloc(&d_result, sizeof(int)));
+ 
+    // CUdeviceptr d_arr;
+    // checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t)*100));
+    // checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t)*100));
+    
+
+    // cout << "Generated PTX 2:" << endl << ptxCode.c_str() << endl;
+    // checkCudaErrors(cuModuleLoadData(&cudaModule, ptxCode.c_str()));
+
+    setenv("CUDA_LAUNCH_BLOCKING", "1", 1);
+
+    ifstream MyReadFile(file_name);
+    string myText;
+    while (getline(MyReadFile, myText)) {
+        // Output the text from the file
+        cout << myText << endl;
+    }
+    MyReadFile.close();
+    // return;
+
+    // Use more detailed error checking
+    checkCudaErrors(cuModuleLoad(&cudaModule, file_name));
+
+    cout << "cuModuleLoad passed!! loaded from " << file_name << endl;
+
+    int * result;
+    int len = 100;
+    CUdeviceptr d_result;
+    checkCudaErrors(cuMemAlloc(&d_result, sizeof(int)));
+ 
+    CUdeviceptr d_arr;
+    checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t)*100));
+    checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t)*100));
+
+    void* kernelParams[] = {
+        &len,
+        &d_arr, 
+        &d_result
+    };
+
+    checkCudaErrors(cuModuleGetFunction(&function, cudaModule, fcn_kernel_name));
+    cout << "cuModuleGetFunction passed!! running " << fcn_kernel_name << endl;
+    checkCudaErrors(cuLaunchKernel(function,
+        1, 1, 1,    // Grid dimensions
+        1, 1, 1,    // Block dimensions
+        0,          // Shared memory size
+        0,          // Stream
+        kernelParams,
+        NULL));
+
+    checkCudaErrors(cuMemcpyDtoH(&result, d_result, sizeof(int)));
+    std::cout << "Result: " << result << std::endl;
+}
+
+
 
 unique_ptr<ExecutionSession> ExecEngine::createExecutionSession()
 {

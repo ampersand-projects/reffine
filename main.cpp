@@ -291,6 +291,13 @@ shared_ptr<Func> vector_fn_2()
     return foo_fn;
 }
 
+shared_ptr<Func> vector_fn_3()
+{
+    /* make tiny example to try generating ptx code from */
+    auto foo_fn = _func("foo", _i64(5), vector<Sym>{});
+    return foo_fn;
+}
+
 int get_test_input_array(int64_t* in_array, int len) {
     // int len = 100;
     int true_res = 0;
@@ -307,7 +314,8 @@ int get_test_input_array(int64_t* in_array, int len) {
 int main()
 {
     // auto fn = vector_fn();
-    auto fn = vector_fn_2();
+    // auto fn = vector_fn_2();
+    auto fn = vector_fn_3();
     // return 0;
     cout << "Reffine IR: " << endl << IRPrinter::Build(fn) << endl;
     // return 0;
@@ -321,7 +329,7 @@ int main()
     // cout << "Canon IR:" << endl << IRPrinter::Build(fn) << endl;
 
     auto jit = ExecEngine::Get();
-    auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
+    auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
     LLVMGen::Build(fn, *llmod);
 
     // cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
@@ -345,8 +353,10 @@ int main()
     int len = 100;
     int64_t* in_array = new int64_t[len];
     int true_res = get_test_input_array(in_array, len);
-    int result;
-    jit->ExecutePTX(output_ptx, llmod->getName().str(), (int64_t*)(in_array), &result);
+    int *result;
+    result = (int*)malloc(sizeof(int));
+    // jit->ExecutePTX(output_ptx, llmod->getName().str(), (int64_t*)(in_array), result);
+    jit->ExecutePTXTest(output_ptx, llmod->getName().str(), (int64_t*)(in_array), result);
 
     // dump llvm IR to .ll file
     ofstream llfile(llmod->getName().str() + ".ll");
@@ -360,7 +370,7 @@ int main()
     jit->AddModule(std::move(llmod));
     auto query_fn = jit->Lookup<int (*)(void*, int*)>(fn->name);
 
-    cout << "About to run query_fn..." << endl;
+    cout << "\nAbout to run query_fn..." << endl;
     int sum;
     int res = query_fn(in_array, &sum);
     cout << "True Res: " << true_res << endl;
