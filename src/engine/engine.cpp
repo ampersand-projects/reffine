@@ -204,8 +204,12 @@ void ExecEngine::ExecutePTXTest(const std::string& ptxCode, const std::string& k
     CUfunction function;
     // CUlinkState linker;
 
-    char file_name[] = "../vector_kernel.ptx";
-    char fcn_kernel_name[] = "_Z9vector_fniPiS_";
+    // char file_name[] = "../vector_kernel.ptx";
+    // char fcn_kernel_name[] = "_Z9vector_fniPiS_";
+
+    char file_name[] = "../test_fn.ptx";
+    char fcn_kernel_name[] = "_Z9vector_fnPi";
+
     
     checkCudaErrors(cuInit(0));
     checkCudaErrors(cuDeviceGet(&device, 0));
@@ -245,18 +249,19 @@ void ExecEngine::ExecutePTXTest(const std::string& ptxCode, const std::string& k
 
     cout << "cuModuleLoad passed!! loaded from " << file_name << endl;
 
-    int * result;
-    int len = 100;
+    int result = 0;
+    // int len = 100;
     CUdeviceptr d_result;
-    checkCudaErrors(cuMemAlloc(&d_result, sizeof(int)));
+    checkCudaErrors(cuMemAlloc(&d_result, sizeof(int64_t)));
+    checkCudaErrors(cuMemcpyHtoD(d_result, &result, sizeof(int64_t)));
  
     CUdeviceptr d_arr;
     checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t)*100));
     checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t)*100));
 
     void* kernelParams[] = {
-        &len,
-        &d_arr, 
+        // &len,
+        // &d_arr, 
         &d_result
     };
 
