@@ -4,6 +4,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/IR/IntrinsicsNVPTX.h"
 #include "reffine/base/type.h"
 
@@ -13,6 +14,7 @@ using namespace llvm;
 Function* LLVMGen::llfunc(const string name, llvm::Type* ret_type,
                           vector<llvm::Type*> arg_types)
 {
+    ret_type = llvm::Type::getVoidTy(llctx());
     auto fn_type = FunctionType::get(ret_type, arg_types, false);
     return Function::Create(fn_type, Function::ExternalLinkage, name, llmod());
 }
@@ -71,7 +73,7 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
         case BaseType::VECTOR:
             return PointerType::get(
                 llvm::StructType::getTypeByName(llctx(), "struct.ArrowArray"),
-                0);
+                1U); //0);
         case BaseType::UNKNOWN:
         default:
             throw std::runtime_error("Invalid type");
@@ -584,7 +586,10 @@ void LLVMGen::visit(Func& func)
     auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
 
     builder()->SetInsertPoint(entry_bb);
-    builder()->CreateRet(eval(func.output));
+    // builder()->CreateRet(eval(func.output));
+    // Attempt to remove the return value
+    eval(func.output);
+    builder()->CreateRetVoid();
 
     // added for cuda
     fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
@@ -607,6 +612,7 @@ void LLVMGen::register_vinstrs()
     llvm::SMDiagnostic error;
     std::unique_ptr<llvm::Module> vinstr_mod =
         llvm::parseIR(*buffer, error, llctx());
+    vinstr_mod->setTargetTriple("nvptx64-nvidia-cuda");
     if (!vinstr_mod) {
         throw std::runtime_error("Failed to parse vinstr bitcode");
     }
@@ -648,6 +654,8 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
 
 void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
 {
+    llmod.setTargetTriple("nvptx64-nvidia-cuda");
+
     LLVMGenCtx ctx(func);
     LLVMGen llgen(ctx, llmod);
     func->Accept(llgen);
