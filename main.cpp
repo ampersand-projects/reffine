@@ -305,9 +305,17 @@ shared_ptr<Func> vector_fn_3()
     auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{input_sym, idx});
     auto val = _load(val_ptr);
 
+    auto tid = make_shared<ThreadIdx>();
+    auto bid = make_shared<BlockIdx>();
+    auto bdim = make_shared<BlockDim>();
+    auto gdim = make_shared<GridDim>();
+
+    auto idx_start = get_start_idx(tid, bid, bdim, gdim, len);
+    auto idx_end = get_end_idx(tid, bid, bdim, gdim, len);
+
     auto loop = _loop(_load(res_sym));
     loop->init = _stmts(vector<Stmt>{
-        _store(idx_sym, _idx(0)),
+        _store(idx_sym, idx_start),
         _store(res_sym, _add(_load(res_sym), _load(input_sym))),
     });
     loop->body = _stmts(vector<Stmt>{
@@ -315,7 +323,7 @@ shared_ptr<Func> vector_fn_3()
         // _store(res_sym, _add(_load(res_sym), _load(input_sym))),
         _store(res_sym, _add(_load(res_sym), val)),
     });
-    loop->exit_cond = _gte(idx, len);
+    loop->exit_cond = _gte(idx, idx_end);
     auto loop_sym = _sym("loop", loop);
 
     auto foo_fn = _func("foo", loop, vector<Sym>{input_sym, res_sym, idx_sym});
