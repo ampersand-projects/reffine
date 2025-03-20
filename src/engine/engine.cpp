@@ -21,7 +21,7 @@
 #include "llvm/MC/TargetRegistry.h"
 #include <cuda.h>
 #include <cassert>
-// #include <cuda_runtime.h>
+#include <cuda_runtime.h>
 
 using namespace reffine;
 using namespace std::placeholders;
@@ -138,7 +138,6 @@ static void __checkCudaErrors(CUresult err, const char *filename, int line) {
 
 
 void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kernel_name, void* arg, int* result) {
-    std::cout << "Kernel result before running: " << *result << std::endl;
     CUdevice device;
     CUmodule cudaModule;
     CUcontext context;
@@ -157,12 +156,11 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
     std::cout << "Device name: " << name << "\n";
 
     CUdeviceptr d_result;
-    checkCudaErrors(cuMemAlloc(&d_result, sizeof(int)));
+    checkCudaErrors(cuMemAlloc(&d_result, sizeof(int64_t)));
  
     CUdeviceptr d_arr;
     checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t)*100));
     checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t)*100));
-    
 
     // cout << "Generated PTX 2:" << endl << ptxCode.c_str() << endl;
     // checkCudaErrors(cuModuleLoadData(&cudaModule, ptxCode.c_str()));
@@ -178,7 +176,7 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
     cout << "cuModuleGetFunction passed!! running " << kernel_name << endl;
 
     int gridDimX = 1;
-    int blockDimX = 32;
+    int blockDimX = 1;
     // void* kernelParams[] = { &arg, &d_result };
     void* kernelParams[] = { &d_arr, &d_result };
 
@@ -190,11 +188,13 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
         // NULL,// kernelParams,
         kernelParams,
         NULL)); 
-    
+    // cudaGetLastError();
     checkCudaErrors(cuCtxSynchronize());
+    cout << "cuCtxSynchronize passed!! " << endl;
 
     checkCudaErrors(cuMemcpyDtoH(result, d_result, sizeof(int64_t)));
-    std::cout << "Kernel result: " << *result << std::endl;
+    cout << "Result copied cuMemcpyDtoH!! " << endl;
+    cout << "Kernel result: " << *result << endl;
     cuMemFree(d_result);
 
     cuModuleUnload(cudaModule);

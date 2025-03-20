@@ -271,7 +271,7 @@ shared_ptr<Func> vector_fn_2()
         // _store(sum_sym, _i64(0)),
     });
     // loop->exit_cond = _gte(idx, len_sym);
-    loop->exit_cond = _gte(idx, _idx(100));
+    loop->exit_cond = _gte(idx, _idx(1));
     // loop->exit_cond = _gte(idx, idx_end);
     loop->body = _stmts(vector<Stmt>{
         _store(sum_sym, sum + val),
@@ -319,8 +319,8 @@ int get_test_input_array(int64_t* in_array, int len) {
     int true_res = 0;
     // int64_t* in_array = new int64_t[len];
     for (int i = 0; i < len; i++) {
-        in_array[i] = i+1;
-        true_res += i+1;
+        in_array[i] = i+5;
+        true_res += i+5;
     }
 
     return true_res;
@@ -330,8 +330,8 @@ int get_test_input_array(int64_t* in_array, int len) {
 int main()
 {
     // auto fn = vector_fn();
-    auto fn = vector_fn_2();
-    // auto fn = vector_fn_3();
+    // auto fn = vector_fn_2();
+    auto fn = vector_fn_3();
     // return 0;
     cout << "Reffine IR: " << endl << IRPrinter::Build(fn) << endl;
     // return 0;
