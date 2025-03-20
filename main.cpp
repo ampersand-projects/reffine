@@ -300,7 +300,7 @@ shared_ptr<Func> vector_fn_3()
     auto idx_sym = _sym("idx", types::IDX.ptr());
 
     auto idx = _load(idx_sym);
-    auto len = _idx(100);
+    auto len = _idx(1024);
 
     auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{input_sym, idx});
     auto val = _load(val_ptr);
@@ -333,7 +333,6 @@ shared_ptr<Func> vector_fn_3()
 }
 
 int get_test_input_array(int64_t* in_array, int len) {
-    // int len = 100;
     int true_res = 0;
     // int64_t* in_array = new int64_t[len];
     for (int i = 0; i < len; i++) {
@@ -383,7 +382,7 @@ int main()
     //     cerr << status.ToString() << endl;
     // }
 
-    int len = 100;
+    int len = 1024;
     int64_t* in_array = new int64_t[len];
     int true_res = get_test_input_array(in_array, len);
     int *result;

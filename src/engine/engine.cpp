@@ -161,9 +161,10 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
     CUdeviceptr d_idx;
     checkCudaErrors(cuMemAlloc(&d_idx, sizeof(int64_t)));
  
+    int len = 1024;
     CUdeviceptr d_arr;
-    checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t)*100));
-    checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t)*100));
+    checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t)*len));
+    checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t)*len));
 
     // cout << "Generated PTX 2:" << endl << ptxCode.c_str() << endl;
     // checkCudaErrors(cuModuleLoadData(&cudaModule, ptxCode.c_str()));
@@ -178,9 +179,9 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
     checkCudaErrors(cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
     cout << "cuModuleGetFunction passed!! running " << kernel_name << endl;
 
-    int gridDimX = 1;
     int blockDimX = 1;
-    // void* kernelParams[] = { &arg, &d_result };
+    // int gridDimX = (len + blockDimX - 1) / blockDimX;
+    int gridDimX = 1;
     void* kernelParams[] = { 
         &d_arr, 
         &d_result,
@@ -194,7 +195,7 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
         0,   // stream handle
         kernelParams,
         NULL)); 
-    // cudaGetLastError();
+    
     checkCudaErrors(cuCtxSynchronize());
     cout << "cuCtxSynchronize passed!! " << endl;
 
