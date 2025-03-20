@@ -157,6 +157,9 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
 
     CUdeviceptr d_result;
     checkCudaErrors(cuMemAlloc(&d_result, sizeof(int64_t)));
+
+    CUdeviceptr d_idx;
+    checkCudaErrors(cuMemAlloc(&d_idx, sizeof(int64_t)));
  
     CUdeviceptr d_arr;
     checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t)*100));
@@ -178,14 +181,17 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
     int gridDimX = 1;
     int blockDimX = 1;
     // void* kernelParams[] = { &arg, &d_result };
-    void* kernelParams[] = { &d_arr, &d_result };
+    void* kernelParams[] = { 
+        &d_arr, 
+        &d_result,
+        &d_idx
+    };
 
     checkCudaErrors(cuLaunchKernel(function,
         gridDimX, 1, 1,
         blockDimX, 1, 1,
         0,   // shared memory size
         0,   // stream handle
-        // NULL,// kernelParams,
         kernelParams,
         NULL)); 
     // cudaGetLastError();

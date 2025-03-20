@@ -297,20 +297,30 @@ shared_ptr<Func> vector_fn_3()
     just takes one row of */
     auto res_sym = _sym("res", types::INT64.ptr());
     auto input_sym = _sym("input", types::INT64.ptr());
+    auto idx_sym = _sym("idx", types::IDX.ptr());
+
+    // auto idx_alloc = _alloc(_idx_t);
+    // auto idx_addr = _sym("idx_addr", idx_alloc);
+    auto idx = _load(idx_sym);
 
     auto loop = _loop(_load(res_sym));
     // auto loop = _loop(_i64(5));
     loop->init = _stmts(vector<Stmt>{
+        _store(idx_sym, _idx(0)),
         _store(res_sym, _add(_load(res_sym), _load(input_sym))),
     });
-    loop->body = _stmts(vector<Stmt>{});
-    loop->exit_cond = _gte(_idx(0), _idx(0));
+    loop->body = _stmts(vector<Stmt>{
+        _store(idx_sym, idx + _idx(1)),
+        _store(res_sym, _add(_load(res_sym), _load(input_sym))),
+    });
+    loop->exit_cond = _gte(idx, _idx(2));
     auto loop_sym = _sym("loop", loop);
 
     // auto store = _store(res_sym, _add(_load(res_sym), _load(input_sym)));
     // auto load_res = _load(res_sym);
-    auto foo_fn = _func("foo", loop, vector<Sym>{input_sym, res_sym});
+    auto foo_fn = _func("foo", loop, vector<Sym>{input_sym, res_sym, idx_sym});
     foo_fn->tbl[loop_sym] = loop;
+    // foo_fn->tbl[idx_addr] = idx_alloc;
     return foo_fn;
 }
 
