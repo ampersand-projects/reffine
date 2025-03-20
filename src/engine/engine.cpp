@@ -179,9 +179,11 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
     checkCudaErrors(cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
     cout << "cuModuleGetFunction passed!! running " << kernel_name << endl;
 
-    int blockDimX = 1;
-    // int gridDimX = (len + blockDimX - 1) / blockDimX;
-    int gridDimX = 1;
+    // gridDim: num of blocks 
+    // blockDim: num of threads in block
+    int blockDimX = 32;
+    int gridDimX = (len + blockDimX - 1) / blockDimX;
+    // int gridDimX = 1;
     void* kernelParams[] = { 
         &d_arr, 
         &d_result,

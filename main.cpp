@@ -336,8 +336,8 @@ int get_test_input_array(int64_t* in_array, int len) {
     int true_res = 0;
     // int64_t* in_array = new int64_t[len];
     for (int i = 0; i < len; i++) {
-        in_array[i] = i+5;
-        true_res += i+5;
+        in_array[i] = i;
+        true_res += i;
     }
 
     return true_res;
