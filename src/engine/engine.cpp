@@ -93,13 +93,15 @@ void ExecEngine::GeneratePTX(Module &llmod, std::string& outputPTX)
     llvm::TargetOptions opt;
     llvm::TargetMachine *TM = Target->createTargetMachine(
         "nvptx64-nvidia-cuda",  // checked by running `$ llc --version`
-        "sm_75",        // for NVIDIA GeForce RTX 2080 Ti , checked by running `$ nvidia-smi`
-        "",     //"+ptx76",         // PTX version
+        "sm_52",        // for NVIDIA GeForce RTX 2080 Ti , checked by running `$ nvidia-smi`
+        "+ptx73",     //"+ptx76",         // PTX version
         // "",     // "+ptx63",          
         opt,
         llvm::Reloc::Static);
     
     llmod.setDataLayout(TM->createDataLayout());
+
+    cout << "Created data layout" << endl;
     
     // generate PTX
     llvm::SmallString<1048576> PTXStr;
@@ -108,6 +110,8 @@ void ExecEngine::GeneratePTX(Module &llmod, std::string& outputPTX)
     llvm::legacy::PassManager PM;
     TM->addPassesToEmitFile(PM, PTXOS, nullptr, llvm::CodeGenFileType::AssemblyFile);
     PM.run(llmod);
+
+    cout << "Run PTX generation pass" << endl;
 
     // std::cout << "Generated PTXStr: " << std::endl << PTXStr.str().str() << std::endl;
     
@@ -134,7 +138,7 @@ static void __checkCudaErrors(CUresult err, const char *filename, int line) {
 
 
 void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kernel_name, void* arg, int* result) {
-    std::cout << "Kernel result: " << *result << std::endl;
+    std::cout << "Kernel result before running: " << *result << std::endl;
     CUdevice device;
     CUmodule cudaModule;
     CUcontext context;
@@ -196,7 +200,7 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
 }
 
 #include <fstream>
-void ExecEngine::ExecutePTXTest(const std::string& ptxCode, const std::string& kernel_name, void* arg, int* res) {
+void ExecEngine::ExecutePTXFromFile(const std::string& ptxCode, const std::string& kernel_name, void* arg, int* res) {
 
     CUdevice device;
     CUmodule cudaModule;
@@ -204,11 +208,19 @@ void ExecEngine::ExecutePTXTest(const std::string& ptxCode, const std::string& k
     CUfunction function;
     // CUlinkState linker;
 
+    // Generated PTX from CUDA vector_fn.cu
     // char file_name[] = "../vector_kernel.ptx";
     // char fcn_kernel_name[] = "_Z9vector_fniPiS_";
 
-    char file_name[] = "../test_fn.ptx";
-    char fcn_kernel_name[] = "_Z9vector_fnPi";
+    // Generated PTX from CUDA test_fn.cu
+    // char file_name[] = "../test_fn.ptx";
+    // char fcn_kernel_name[] = "_Z9vector_fnPi";
+
+    // Generated PTX from vector_fn_3 in main.cpp
+        // runs as long as you comment out retval line 24
+        // //st.param.b64    [func_retval0+0], %rd5;
+    char file_name[] = "../vector_fn_3_kernel.ptx";
+    char fcn_kernel_name[] = "foo";
 
     
     checkCudaErrors(cuInit(0));
@@ -261,7 +273,7 @@ void ExecEngine::ExecutePTXTest(const std::string& ptxCode, const std::string& k
 
     void* kernelParams[] = {
         // &len,
-        // &d_arr, 
+        &d_arr, 
         &d_result
     };
 
@@ -276,7 +288,7 @@ void ExecEngine::ExecutePTXTest(const std::string& ptxCode, const std::string& k
         NULL));
 
     checkCudaErrors(cuMemcpyDtoH(&result, d_result, sizeof(int)));
-    std::cout << "Result: " << result << std::endl;
+    std::cout << "Kernel Result: " << result << std::endl;
 }
 
 

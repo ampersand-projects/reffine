@@ -293,8 +293,24 @@ shared_ptr<Func> vector_fn_2()
 
 shared_ptr<Func> vector_fn_3()
 {
-    /* make tiny example to try generating ptx code from */
-    auto foo_fn = _func("foo", _i64(5), vector<Sym>{});
+    /* make tiny example to try generating ptx code from 
+    just takes one row of */
+    auto res_sym = _sym("res", types::INT64.ptr());
+    auto input_sym = _sym("input", types::INT64.ptr());
+
+    auto loop = _loop(_load(res_sym));
+    // auto loop = _loop(_i64(5));
+    loop->init = _stmts(vector<Stmt>{
+        _store(res_sym, _add(_load(res_sym), _load(input_sym))),
+    });
+    loop->body = _stmts(vector<Stmt>{});
+    loop->exit_cond = _gte(_idx(0), _idx(0));
+    auto loop_sym = _sym("loop", loop);
+
+    // auto store = _store(res_sym, _add(_load(res_sym), _load(input_sym)));
+    // auto load_res = _load(res_sym);
+    auto foo_fn = _func("foo", loop, vector<Sym>{input_sym, res_sym});
+    foo_fn->tbl[loop_sym] = loop;
     return foo_fn;
 }
 
@@ -331,8 +347,7 @@ int main()
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
     LLVMGen::Build(fn, *llmod);
-
-    // cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
+    cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
     // return 0;
     
     // jit->Optimize(*llmod);
@@ -355,8 +370,15 @@ int main()
     int true_res = get_test_input_array(in_array, len);
     int *result;
     result = (int*)malloc(sizeof(int));
+
+    // Execute generated PTX
     // jit->ExecutePTX(output_ptx, llmod->getName().str(), (int64_t*)(in_array), result);
-    jit->ExecutePTXTest(output_ptx, llmod->getName().str(), (int64_t*)(in_array), result);
+
+    // Execute pre-generated PTX from a file
+        // --> does not use above generated PTX
+    jit->ExecutePTXFromFile(output_ptx, llmod->getName().str(), (int64_t*)(in_array), result);
+
+    return 0; 
 
     // dump llvm IR to .ll file
     ofstream llfile(llmod->getName().str() + ".ll");
