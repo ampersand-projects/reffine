@@ -293,8 +293,8 @@ shared_ptr<Func> vector_fn_2()
 
 shared_ptr<Func> vector_fn_3()
 {
-    /* make tiny example to try generating ptx code from 
-    just takes one row of */
+    /* make tiny example to try generating ptx code
+    --> progressively growing to full vector_fn example */
     auto res_sym = _sym("res", types::INT64.ptr());
     auto input_sym = _sym("input", types::INT64.ptr());
     auto idx_sym = _sym("idx", types::IDX.ptr());
@@ -320,7 +320,7 @@ shared_ptr<Func> vector_fn_3()
 
     auto foo_fn = _func("foo", loop, vector<Sym>{input_sym, res_sym, idx_sym});
     foo_fn->tbl[loop_sym] = loop;
-    // foo_fn->tbl[idx_addr] = idx_alloc;
+
     return foo_fn;
 }
 
