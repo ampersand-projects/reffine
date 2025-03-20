@@ -171,9 +171,11 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
 
     // Use more detailed error checking
     checkCudaErrors(cuModuleLoadData(&cudaModule, ptxCode.c_str()));
+    cout << "cuModuleLoadData passed!! loaded from ptxCode param" << endl;
 
     cout << kernel_name.c_str() << endl;
     checkCudaErrors(cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
+    cout << "cuModuleGetFunction passed!! running " << kernel_name << endl;
 
     int gridDimX = 1;
     int blockDimX = 32;

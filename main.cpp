@@ -330,8 +330,8 @@ int get_test_input_array(int64_t* in_array, int len) {
 int main()
 {
     // auto fn = vector_fn();
-    // auto fn = vector_fn_2();
-    auto fn = vector_fn_3();
+    auto fn = vector_fn_2();
+    // auto fn = vector_fn_3();
     // return 0;
     cout << "Reffine IR: " << endl << IRPrinter::Build(fn) << endl;
     // return 0;
@@ -372,11 +372,11 @@ int main()
     result = (int*)malloc(sizeof(int));
 
     // Execute generated PTX
-    // jit->ExecutePTX(output_ptx, llmod->getName().str(), (int64_t*)(in_array), result);
+    jit->ExecutePTX(output_ptx, llmod->getName().str(), (int64_t*)(in_array), result);
 
     // Execute pre-generated PTX from a file
         // --> does not use above generated PTX
-    jit->ExecutePTXFromFile(output_ptx, llmod->getName().str(), (int64_t*)(in_array), result);
+    // jit->ExecutePTXFromFile(output_ptx, llmod->getName().str(), (int64_t*)(in_array), result);
 
     return 0; 
 
