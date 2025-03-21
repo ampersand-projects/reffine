@@ -84,10 +84,6 @@ protected:
     {
         throw runtime_error("Store visit not supported");
     }
-    virtual ValTy visit(GetKernelInfo&)
-    {
-        throw runtime_error("GetKernelInfo visit not supported");
-    }
     virtual ValTy visit(ThreadIdx&)
     {
         throw runtime_error("ThreadIdx visit not supported");
@@ -103,14 +99,6 @@ protected:
     virtual ValTy visit(GridDim&)
     {
         throw runtime_error("GridDim visit not supported");
-    }
-    virtual ValTy visit(IdxStart&)
-    {
-        throw runtime_error("IdxStart visit not supported");
-    }
-    virtual ValTy visit(IdxEnd&)
-    {
-        throw runtime_error("IdxEnd visit not supported");
     }
     virtual ValTy visit(Loop&)
     {
@@ -150,13 +138,10 @@ protected:
     void Visit(Alloc& expr) final { val() = visit(expr); }
     void Visit(Load& expr) final { val() = visit(expr); }
     void Visit(Store& expr) final { visit(expr); }
-    void Visit(GetKernelInfo& expr) final { val() = visit(expr); }
     void Visit(ThreadIdx& expr) final { val() = visit(expr); }
     void Visit(BlockIdx& expr) final { val() = visit(expr); }
     void Visit(BlockDim& expr) final { val() = visit(expr); }
     void Visit(GridDim& expr) final { val() = visit(expr); }
-    void Visit(IdxStart& expr) final { val() = visit(expr); }
-    void Visit(IdxEnd& expr) final { val() = visit(expr); }
     void Visit(Loop& expr) final { val() = visit(expr); }
     void Visit(IsValid& expr) final { val() = visit(expr); }
     void Visit(SetValid& expr) final { val() = visit(expr); }

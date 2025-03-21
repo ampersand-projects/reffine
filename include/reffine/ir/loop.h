@@ -103,23 +103,6 @@ struct Store : public StmtNode {
     void Accept(Visitor&) final;
 };
 
-struct GetKernelInfo : public ExprNode {
-    Expr thread_idx = nullptr;
-    Expr block_idx = nullptr;
-    Expr block_dim = nullptr;
-
-    // GetKernelInfo(Expr thread_idx, Expr block_idx, Expr block_dim) : ExprNode(types::INT64), thread_idx(thread_idx), block_idx(block_idx), block_dim(block_dim)
-    // {
-    //     ASSERT(thread_idx->type.is_int());
-    //     ASSERT(block_idx->type.is_int());
-    //     ASSERT(block_dim->type.is_int());
-    // }
-
-    GetKernelInfo() : ExprNode(types::INT64) {}
-
-    void Accept(Visitor&) final;
-};
-
 struct ThreadIdx : public ExprNode {
     ThreadIdx() : ExprNode(types::INT64) {}
 
@@ -140,38 +123,6 @@ struct BlockDim : public ExprNode {
 
 struct GridDim : public ExprNode {
     GridDim() : ExprNode(types::INT64) {}
-
-    void Accept(Visitor&) final;
-};
-
-struct IdxStart : public ExprNode {
-    // TODO: should the types of all of these just be Expr?
-    Expr tidx;
-    Expr bidx;
-    Expr bdim;
-    Expr gdim;
-    Expr len;
-
-    IdxStart(Expr tidx, Expr bidx, Expr bdim, Expr gdim, Expr len) : ExprNode(types::IDX), tidx(tidx), bidx(bidx), bdim(bdim), gdim(gdim), len(len)
-    {
-        // TODO: add any asserts ???
-    }
-
-    void Accept(Visitor&) final;
-};
-
-struct IdxEnd : public ExprNode {
-    // TODO: should the types of all of these just be Expr?
-    Expr tidx;
-    Expr bidx;
-    Expr bdim;
-    Expr gdim;
-    Expr len;
-
-    IdxEnd(Expr tidx, Expr bidx, Expr bdim, Expr gdim, Expr len) : ExprNode(types::IDX), tidx(tidx), bidx(bidx), bdim(bdim), gdim(gdim), len(len)
-    {
-        // TODO: add any asserts ???
-    }
 
     void Accept(Visitor&) final;
 };

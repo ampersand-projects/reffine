@@ -105,10 +105,6 @@ public:
     {
         throw runtime_error("NoOp operation not supported");
     }
-    virtual void Visit(GetKernelInfo&)
-    {
-        throw runtime_error("GetKernelInfo operation not supported");
-    }
     virtual void Visit(ThreadIdx&)
     {
         throw runtime_error("ThreadIdx operation not supported");
@@ -124,14 +120,6 @@ public:
     virtual void Visit(GridDim&)
     {
         throw runtime_error("GridDim operation not supported");
-    }
-    virtual void Visit(IdxStart&)
-    {
-        throw runtime_error("IdxStart operation not supported");
-    }
-    virtual void Visit(IdxEnd&)
-    {
-        throw runtime_error("IdxEnd operation not supported");
     }
     virtual void Visit(Loop&)
     {

@@ -299,32 +299,20 @@ void IRPrinter::Visit(Store& store)
     emitfunc("store", vector<Expr>{store.addr, store.val});
 }
 
-void IRPrinter::Visit(GetKernelInfo& getKernelInfo) {
-    ostr << "GetKernelInfo: TO BE IMPLEMENTED"; 
-}
-
 void IRPrinter::Visit(ThreadIdx& tidx) {
-    ostr << "ThreadIdx: TO BE IMPLEMENTED"; 
+    ostr << "tidx"; 
 }
 
 void IRPrinter::Visit(BlockIdx& bidx) {
-    ostr << "BlockIdx: TO BE IMPLEMENTED"; 
+    ostr << "bidx"; 
 }
 
 void IRPrinter::Visit(BlockDim& bdim) {
-    ostr << "BlockDim: TO BE IMPLEMENTED"; 
+    ostr << "bdim"; 
 }
 
 void IRPrinter::Visit(GridDim& bdim) {
-    ostr << "GridDim: TO BE IMPLEMENTED"; 
-}
-
-void IRPrinter::Visit(IdxStart& bdim) {
-    ostr << "IdxStart: TO BE IMPLEMENTED"; 
-}
-
-void IRPrinter::Visit(IdxEnd& bdim) {
-    ostr << "IdxEnd: TO BE IMPLEMENTED"; 
+    ostr << "gdim"; 
 }
 
 void IRPrinter::Visit(Loop& loop)

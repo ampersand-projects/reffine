@@ -409,31 +409,6 @@ void LLVMGen::visit(Store& store)
     builder()->CreateStore(val, addr);
 }
 
-Value* LLVMGen::visit(GetKernelInfo& getKernelInfo)
-{
-    // This info should be populated at the LLVM Gen step
-    ASSERT(getKernelInfo.thread_idx == nullptr);
-    ASSERT(getKernelInfo.block_dim == nullptr);
-    ASSERT(getKernelInfo.block_idx == nullptr);
-
-    auto thread_idx = builder()->CreateIntrinsic(
-        Type::getInt32Ty(llctx()),
-        llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
-        {}
-    );
-    // auto block_dim = builder()->CreateIntrinsic(
-    //     Type::getInt32Ty(llctx()),
-    //     llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
-    //     {}
-    // );
-    // auto block_idx = builder()->CreateIntrinsic(
-    //     Type::getInt32Ty(llctx()),
-    //     llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
-    //     {}
-    // );
-    return thread_idx;  // TODO: fix
-}
-
 Value* LLVMGen::visit(ThreadIdx& tidx) {
     // https://llvm.org/docs/NVPTXUsage.html#overview
     auto thread_idx = builder()->CreateIntrinsic(
@@ -475,63 +450,6 @@ Value* LLVMGen::visit(GridDim& bdim) {
     );
 
     return grid_dim;
-}
-
-Value* LLVMGen::visit(IdxStart& idx) {
-    Value* tidx = eval(idx.tidx);
-    // return tidx;
-    Value* bidx = eval(idx.bidx);
-    Value* bdim = eval(idx.bdim);
-    Value* gdim = eval(idx.gdim);
-    Value* len = eval(idx.len);
-
-    // llvm::Value* intValue = Builder.CreateIntCast(value, Builder.getInt32Ty(), true);  // Cast to i32 with sign extension
-
-    
-    // TODO: will I have to make these the special NVPTX operations?
-    auto temp1 = builder()->CreateAdd(len, gdim);   // TODO: should also subtract 1 here
-    return temp1;
-    auto elem_per_block = builder()->CreateSDiv(temp1, gdim);
-    return elem_per_block;
-    auto block_start = builder()->CreateMul(bidx, elem_per_block);
-    auto block_end = builder()->CreateAdd(block_start, elem_per_block);
-
-    auto temp2 = builder()->CreateSub(block_end, block_start);
-    auto temp3 = builder()->CreateAdd(temp2, bdim); // TODO: should also subtract 1 here
-    auto elem_per_thread = builder()->CreateSDiv(temp3, bdim);
-    auto temp4 = builder()->CreateMul(tidx, elem_per_thread);
-    auto thread_start = builder()->CreateAdd(block_start, temp4);
-    // return thread_start;
-
-    auto thread_start_int = builder()->CreateIntCast(thread_start, builder()->getInt64Ty(), true);
-    return thread_start_int;
-}
-
-Value* LLVMGen::visit(IdxEnd& idx) {
-    Value* tidx = eval(idx.tidx);
-    return tidx;
-    Value* bidx = eval(idx.bidx);
-    Value* bdim = eval(idx.bdim);
-    Value* gdim = eval(idx.gdim);
-    Value* len = eval(idx.len);
-
-    // TODO: will I have to make these the special NVPTX operations?
-    auto temp1 = builder()->CreateAdd(len, gdim);   // TODO: should also subtract 1 here
-    auto elem_per_block = builder()->CreateSDiv(temp1, gdim);
-    auto block_start = builder()->CreateMul(bidx, elem_per_block);
-    auto block_end = builder()->CreateAdd(block_start, elem_per_block);
-
-    auto temp2 = builder()->CreateSub(block_end, block_start);
-    auto temp3 = builder()->CreateAdd(temp2, bdim); // TODO: should also subtract 1 here
-    auto elem_per_thread = builder()->CreateSDiv(temp3, bdim);
-    auto temp4 = builder()->CreateMul(tidx, elem_per_thread);
-    auto thread_start = builder()->CreateAdd(block_start, temp4);
-    auto thread_end = builder()->CreateAdd(thread_start, elem_per_thread);
-    // return thread_end;
-
-    auto thread_end_int = builder()->CreateIntCast(thread_end, builder()->getInt64Ty(), true);
-
-    return thread_end_int;
 }
 
 Value* LLVMGen::visit(Loop& loop)

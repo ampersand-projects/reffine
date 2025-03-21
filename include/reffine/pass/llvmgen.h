@@ -62,13 +62,10 @@ private:
     llvm::Value* visit(Alloc&) final;
     llvm::Value* visit(Load&) final;
     void visit(Store&) final;
-    llvm::Value* visit(GetKernelInfo&) final;
-    llvm::Value* visit(ThreadIdx&) final;
-    llvm::Value* visit(BlockIdx&) final;
-    llvm::Value* visit(BlockDim&) final;
-    llvm::Value* visit(GridDim&) final;
-    llvm::Value* visit(IdxStart&) final;
-    llvm::Value* visit(IdxEnd&) final;
+    llvm::Value* visit(ThreadIdx&);
+    llvm::Value* visit(BlockIdx&);
+    llvm::Value* visit(BlockDim&);
+    llvm::Value* visit(GridDim&);
     llvm::Value* visit(Loop&) final;
     llvm::Value* visit(IsValid&) final;
     llvm::Value* visit(SetValid&) final;
@@ -88,8 +85,6 @@ private:
 
     llvm::Module& _llmod;
     unique_ptr<llvm::IRBuilder<>> _builder;
-    
-    // llvm::Value* tid;
 };
 
 }  // namespace reffine
