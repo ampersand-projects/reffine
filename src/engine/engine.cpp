@@ -185,13 +185,13 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
     // gridDim: num of blocks 
     // blockDim: num of threads in block
     int blockDimX = 32;
-    int gridDimX = (len + blockDimX - 1) / blockDimX;
-    // int gridDimX = 1;
+    // int gridDimX = (len + blockDimX - 1) / blockDimX;
+    int gridDimX = 4;
     void* kernelParams[] = { 
         &d_arr, 
         // &d_result,
         &d_arr_out,
-        &d_idx
+        // &d_idx
     };
 
     checkCudaErrors(cuLaunchKernel(function,

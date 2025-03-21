@@ -138,6 +138,9 @@ arrow::Status get_arrow_array(ArrowArray& in_array) {
 }
 
 shared_ptr<ExprNode> get_start_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr len) {
+    // gridDim: # of blocks in a grid
+    // blockDim: # of threads in a block
+    
     auto tidx = _cast(_idx_t, tid);
     auto bidx = _cast(_idx_t, bid);
     auto bdimx = _cast(_idx_t, bdim);
@@ -171,6 +174,7 @@ shared_ptr<ExprNode> get_end_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr 
 
     return thread_end;
 }
+
 
 shared_ptr<Func> vector_fn()
 {
@@ -337,10 +341,14 @@ shared_ptr<Func> basic_transform_fn()
     /* take in array and output array thats same thing + 1*/
     auto vec_out_sym = _sym("res", types::INT64.ptr());
     auto vec_in_sym = _sym("input", types::INT64.ptr());
-    auto idx_sym = _sym("idx", types::IDX.ptr());
+    // auto idx_sym = _sym("idx", types::IDX.ptr());
 
-    auto idx = _load(idx_sym);
+    // auto idx = _load(idx_sym);
     auto len = _idx(1024);
+    // auto idx = _idx(0);
+    auto idx_alloc = _alloc(_idx_t);
+    auto idx_addr = _sym("idx_addr", idx_alloc);
+    auto idx = _load(idx_addr);
 
     auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_in_sym, idx});
     auto val = _load(val_ptr);
@@ -357,18 +365,19 @@ shared_ptr<Func> basic_transform_fn()
 
     auto loop = _loop(_load(vec_out_sym));
     loop->init = _stmts(vector<Stmt>{
-        _store(idx_sym, idx_start),
+        _store(idx_addr, idx_start),
         // _store(vec_out_sym, _add(_load(res_sym), _load(input_sym))),
     });
     loop->body = _stmts(vector<Stmt>{
-        _store(idx_sym, idx + _idx(1)),
+        _store(idx_addr, idx + _idx(1)),
         _store(out_ptr, _add(_i64(1), val)),
     });
     loop->exit_cond = _gte(idx, idx_end);
     auto loop_sym = _sym("loop", loop);
 
-    auto foo_fn = _func("foo", loop, vector<Sym>{vec_in_sym, vec_out_sym, idx_sym});
+    auto foo_fn = _func("foo", loop, vector<Sym>{vec_in_sym, vec_out_sym});
     foo_fn->tbl[loop_sym] = loop;
+    foo_fn->tbl[idx_addr] = idx_alloc;
 
     return foo_fn;
 }

@@ -69,11 +69,11 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
             return StructType::get(llctx(), lltypes);
         }
         case BaseType::PTR:
-            return PointerType::get(lltype(type.dtypes[0]), 1U); //0);
+            return PointerType::get(lltype(type.dtypes[0]), 0);
         case BaseType::VECTOR:
             return PointerType::get(
                 llvm::StructType::getTypeByName(llctx(), "struct.ArrowArray"),
-                1U); //0);
+                0);
         case BaseType::UNKNOWN:
         default:
             throw std::runtime_error("Invalid type");
@@ -390,7 +390,9 @@ void LLVMGen::visit(Stmts& stmts)
 
 Value* LLVMGen::visit(Alloc& alloc)
 {
-    return builder()->CreateAlloca(lltype(alloc.type), eval(alloc.size));
+    // TODO: hacky, fix later
+    auto type = PointerType::get(lltype(alloc.type.dtypes[0]), 5U);
+    return builder()->CreateAlloca(type, eval(alloc.size));
 }
 
 Value* LLVMGen::visit(Load& load)
