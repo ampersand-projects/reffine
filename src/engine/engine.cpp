@@ -166,6 +166,9 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
     checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t)*len));
     checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t)*len));
 
+    CUdeviceptr d_arr_out;
+    checkCudaErrors(cuMemAlloc(&d_arr_out, sizeof(int64_t)*len));
+
     // cout << "Generated PTX 2:" << endl << ptxCode.c_str() << endl;
     // checkCudaErrors(cuModuleLoadData(&cudaModule, ptxCode.c_str()));
 
@@ -186,7 +189,8 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
     // int gridDimX = 1;
     void* kernelParams[] = { 
         &d_arr, 
-        &d_result,
+        // &d_result,
+        &d_arr_out,
         &d_idx
     };
 
@@ -205,6 +209,14 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
     cout << "Result copied cuMemcpyDtoH!! " << endl;
     cout << "Kernel result: " << *result << endl;
     cuMemFree(d_result);
+
+    auto arr_out = (int64_t*)malloc(sizeof(int64_t)*len);
+    checkCudaErrors(cuMemcpyDtoH(arr_out, d_arr_out, sizeof(int64_t)*len));
+    cout << "Output array from kernel:" << endl;
+    for (int i = 0; i < len; i++) {
+        cout << arr_out[i] << ", ";
+    }
+    cout << endl;
 
     cuModuleUnload(cudaModule);
     cuCtxDestroy(context);

@@ -293,8 +293,7 @@ shared_ptr<Func> vector_fn_2()
 
 shared_ptr<Func> vector_fn_3()
 {
-    /* make tiny example to try generating ptx code
-    --> progressively growing to full vector_fn example */
+    /* full vector_fn example; however currently has atomic add problem */
     auto res_sym = _sym("res", types::INT64.ptr());
     auto input_sym = _sym("input", types::INT64.ptr());
     auto idx_sym = _sym("idx", types::IDX.ptr());
@@ -322,12 +321,53 @@ shared_ptr<Func> vector_fn_3()
         _store(idx_sym, idx + _idx(1)),
         // _store(res_sym, _add(_load(res_sym), _load(input_sym))),
         _store(res_sym, _add(_load(res_sym), val)),
-        _store(res_sym, make_shared<AtomicAdd>(_load(res_sym), val)),
+        // _store(res_sym, make_shared<AtomicAdd>(_load(res_sym), val)),
     });
     loop->exit_cond = _gte(idx, idx_end);
     auto loop_sym = _sym("loop", loop);
 
     auto foo_fn = _func("foo", loop, vector<Sym>{input_sym, res_sym, idx_sym});
+    foo_fn->tbl[loop_sym] = loop;
+
+    return foo_fn;
+}
+
+shared_ptr<Func> basic_transform_fn()
+{
+    /* take in array and output array thats same thing + 1*/
+    auto vec_out_sym = _sym("res", types::INT64.ptr());
+    auto vec_in_sym = _sym("input", types::INT64.ptr());
+    auto idx_sym = _sym("idx", types::IDX.ptr());
+
+    auto idx = _load(idx_sym);
+    auto len = _idx(1024);
+
+    auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_in_sym, idx});
+    auto val = _load(val_ptr);
+
+    auto out_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_out_sym, idx});
+
+    auto tid = make_shared<ThreadIdx>();
+    auto bid = make_shared<BlockIdx>();
+    auto bdim = make_shared<BlockDim>();
+    auto gdim = make_shared<GridDim>();
+
+    auto idx_start = get_start_idx(tid, bid, bdim, gdim, len);
+    auto idx_end = get_end_idx(tid, bid, bdim, gdim, len);
+
+    auto loop = _loop(_load(vec_out_sym));
+    loop->init = _stmts(vector<Stmt>{
+        _store(idx_sym, idx_start),
+        // _store(vec_out_sym, _add(_load(res_sym), _load(input_sym))),
+    });
+    loop->body = _stmts(vector<Stmt>{
+        _store(idx_sym, idx + _idx(1)),
+        _store(out_ptr, _add(_i64(1), val)),
+    });
+    loop->exit_cond = _gte(idx, idx_end);
+    auto loop_sym = _sym("loop", loop);
+
+    auto foo_fn = _func("foo", loop, vector<Sym>{vec_in_sym, vec_out_sym, idx_sym});
     foo_fn->tbl[loop_sym] = loop;
 
     return foo_fn;
@@ -349,7 +389,8 @@ int main()
 {
     // auto fn = vector_fn();
     // auto fn = vector_fn_2();
-    auto fn = vector_fn_3();
+    // auto fn = vector_fn_3();
+    auto fn = basic_transform_fn();
     // return 0;
     cout << "Reffine IR: " << endl << IRPrinter::Build(fn) << endl;
     // return 0;
