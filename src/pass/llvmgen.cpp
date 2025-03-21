@@ -141,6 +141,15 @@ Value* LLVMGen::visit(NaryExpr& e)
                 return builder()->CreateAdd(eval(e.arg(0)), eval(e.arg(1)));
             }
         }
+        case MathOp::ATOMIC_ADD: {
+            Function* atomicAdd = Intrinsic::getDeclaration(llmod(), Intrinsic::nvvm_atomic_add_gen_i_sys, {lltype(e.arg(0))});
+            return builder()->CreateCall(atomicAdd, {eval(e.arg(0)), eval(e.arg(1))}, "atomic_result");
+            // if (e.type.is_float()) {
+            //     return builder()->CreateFAdd(eval(e.arg(0)), eval(e.arg(1)));
+            // } else {
+            //     return builder()->CreateAdd(eval(e.arg(0)), eval(e.arg(1)));
+            // }
+        }
         case MathOp::SUB: {
             if (e.type.is_float()) {
                 return builder()->CreateFSub(eval(e.arg(0)), eval(e.arg(1)));

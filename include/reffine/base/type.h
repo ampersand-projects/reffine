@@ -180,6 +180,7 @@ struct DataType {
 
 enum class MathOp {
     ADD,
+    ATOMIC_ADD,
     SUB,
     MUL,
     DIV,

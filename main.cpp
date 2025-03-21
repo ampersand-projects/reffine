@@ -322,6 +322,7 @@ shared_ptr<Func> vector_fn_3()
         _store(idx_sym, idx + _idx(1)),
         // _store(res_sym, _add(_load(res_sym), _load(input_sym))),
         _store(res_sym, _add(_load(res_sym), val)),
+        _store(res_sym, make_shared<AtomicAdd>(_load(res_sym), val)),
     });
     loop->exit_cond = _gte(idx, idx_end);
     auto loop_sym = _sym("loop", loop);

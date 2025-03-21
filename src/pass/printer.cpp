@@ -76,6 +76,9 @@ void IRPrinter::Visit(NaryExpr& e)
         case MathOp::ADD:
             emitbinary(e.arg(0), "+", e.arg(1));
             break;
+        case MathOp::ATOMIC_ADD:
+            emitbinary(e.arg(0), "+", e.arg(1));
+            break;
         case MathOp::SUB:
             emitbinary(e.arg(0), "-", e.arg(1));
             break;
