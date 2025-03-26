@@ -28,15 +28,19 @@ class CUDAGen : public LLVMGen {
         {
         }
     
-        static void Build(shared_ptr<Func>, llvm::Module&);
-
+        static void Build2(shared_ptr<Func>, llvm::Module&);
 
     private:
-        llvm::Value* visit(ThreadIdx&) final;
-        llvm::Value* visit(BlockIdx&) final;
-        llvm::Value* visit(BlockDim&) final;
-        llvm::Value* visit(GridDim&) final;
+    // using LLVMGen::visit;
+        llvm::Value* visit(ThreadIdx&) override; // final;
+        llvm::Value* visit(BlockIdx&) override; // final;
+        llvm::Value* visit(BlockDim&) override; // final;
+        llvm::Value* visit(GridDim&) override; // final;
         void visit(Func&) final;
+
+        // llvm::Module* llmod() { return &_llmod; }
+        // llvm::LLVMContext& llctx() { return llmod()->getContext(); }
+        // llvm::IRBuilder<>* builder() { return _builder.get(); }
 };
 }  // namespace reffine
 

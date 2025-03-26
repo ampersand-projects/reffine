@@ -20,6 +20,7 @@
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
+#include "reffine/pass/cudagen.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/loopgen.h"
 #include "reffine/pass/z3solver.h"
@@ -322,10 +323,10 @@ shared_ptr<Func> vector_fn_3()
         _store(res_sym, _add(_load(res_sym), _load(input_sym))),
     });
     loop->body = _stmts(vector<Stmt>{
-        _store(idx_sym, idx + _idx(1)),
         // _store(res_sym, _add(_load(res_sym), _load(input_sym))),
         _store(res_sym, _add(_load(res_sym), val)),
         // _store(res_sym, make_shared<AtomicAdd>(_load(res_sym), val)),
+        _store(idx_sym, idx + _idx(1)),
     });
     loop->exit_cond = _gte(idx, idx_end);
     auto loop_sym = _sym("loop", loop);
@@ -369,8 +370,8 @@ shared_ptr<Func> basic_transform_fn()
         // _store(vec_out_sym, _add(_load(res_sym), _load(input_sym))),
     });
     loop->body = _stmts(vector<Stmt>{
-        _store(idx_addr, idx + _idx(1)),
         _store(out_ptr, _add(_i64(1), val)),
+        _store(idx_addr, idx + _idx(1)),
     });
     loop->exit_cond = _gte(idx, idx_end);
     auto loop_sym = _sym("loop", loop);
@@ -414,6 +415,8 @@ int main()
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
+    CUDAGen::Build2(fn, *llmod);
+    cout << "CUDAGen IR: " << endl << IRPrinter::Build(fn) << endl;
     LLVMGen::Build(fn, *llmod);
     cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
     // return 0;

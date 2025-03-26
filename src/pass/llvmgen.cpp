@@ -410,46 +410,19 @@ void LLVMGen::visit(Store& store)
 }
 
 Value* LLVMGen::visit(ThreadIdx& tidx) {
-    // https://llvm.org/docs/NVPTXUsage.html#overview
-    auto thread_idx = builder()->CreateIntrinsic(
-        Type::getInt32Ty(llctx()),
-        llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
-        {}
-    );
-
-    // cout << "TIDX::: " << thread_idx << endl;
-
-    return thread_idx;
+    return nullptr;
 }
 
 Value* LLVMGen::visit(BlockIdx& bidx) {
-    auto block_idx = builder()->CreateIntrinsic(
-        Type::getInt32Ty(llctx()),
-        llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
-        {}
-    );
-
-    return block_idx;
+    return nullptr;
 }
 
 Value* LLVMGen::visit(BlockDim& bdim) {
-    auto block_dim = builder()->CreateIntrinsic(
-        Type::getInt32Ty(llctx()),
-        llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
-        {}
-    );
-
-    return block_dim;
+    return nullptr;
 }
 
 Value* LLVMGen::visit(GridDim& bdim) {
-    auto grid_dim = builder()->CreateIntrinsic(
-        Type::getInt32Ty(llctx()),
-        llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
-        {}
-    );
-
-    return grid_dim;
+    return nullptr;
 }
 
 Value* LLVMGen::visit(Loop& loop)
@@ -504,7 +477,7 @@ void LLVMGen::visit(Func& func)
     vector<llvm::Type*> args_type;
     for (auto& input : func.inputs) {
         args_type.push_back(lltype(input->type));
-}
+    }
     auto fn = llfunc(func.name, lltype(func.output), args_type);
     for (size_t i = 0; i < func.inputs.size(); i++) {
         auto input = func.inputs[i];
@@ -583,8 +556,6 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
 
 void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
 {
-    llmod.setTargetTriple("nvptx64-nvidia-cuda");
-
     LLVMGenCtx ctx(func);
     LLVMGen llgen(ctx, llmod);
     func->Accept(llgen);
