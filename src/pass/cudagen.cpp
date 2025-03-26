@@ -12,8 +12,9 @@ using namespace llvm;
 void CUDAGen::visit(Func& func)
 {
     // for CUDA, output needs to be appended as an output
-    auto output_sym = _sym("output", func.output);
-    func.inputs.insert(func.inputs.begin(), output_sym);
+    // auto output_sym = _sym("output", func.output);
+    // func.inputs.insert(func.inputs.begin(), output_sym);
+    LLVMGen::Visit(func);
 }
 
 Value* CUDAGen::visit(ThreadIdx& tidx) {
@@ -23,8 +24,6 @@ Value* CUDAGen::visit(ThreadIdx& tidx) {
         llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
         {}
     );
-
-    // cout << "TIDX::: " << thread_idx << endl;
 
     return thread_idx;
 }
@@ -63,7 +62,7 @@ void CUDAGen::Build2(shared_ptr<Func> func, llvm::Module& llmod)
 {
     llmod.setTargetTriple("nvptx64-nvidia-cuda");
 
-    CUDAGenCtx ctx(func);
-    CUDAGen cudagen(ctx, llmod);
+    LLVMGenCtx ctx(func);
+    LLVMGen cudagen(ctx, llmod);
     func->Accept(cudagen);
 }

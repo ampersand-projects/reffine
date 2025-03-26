@@ -410,19 +410,44 @@ void LLVMGen::visit(Store& store)
 }
 
 Value* LLVMGen::visit(ThreadIdx& tidx) {
-    return nullptr;
+    // https://llvm.org/docs/NVPTXUsage.html#overview
+    auto thread_idx = builder()->CreateIntrinsic(
+        Type::getInt32Ty(llctx()),
+        llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
+        {}
+    );
+
+    return thread_idx;
 }
 
 Value* LLVMGen::visit(BlockIdx& bidx) {
-    return nullptr;
+    auto block_idx = builder()->CreateIntrinsic(
+        Type::getInt32Ty(llctx()),
+        llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
+        {}
+    );
+
+    return block_idx;
 }
 
 Value* LLVMGen::visit(BlockDim& bdim) {
-    return nullptr;
+    auto block_dim = builder()->CreateIntrinsic(
+        Type::getInt32Ty(llctx()),
+        llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
+        {}
+    );
+
+    return block_dim;
 }
 
 Value* LLVMGen::visit(GridDim& bdim) {
-    return nullptr;
+    auto grid_dim = builder()->CreateIntrinsic(
+        Type::getInt32Ty(llctx()),
+        llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
+        {}
+    );
+
+    return grid_dim;
 }
 
 Value* LLVMGen::visit(Loop& loop)

@@ -188,9 +188,9 @@ void ExecEngine::ExecutePTX(const std::string& ptxCode, const std::string& kerne
     // int gridDimX = (len + blockDimX - 1) / blockDimX;
     int gridDimX = 4;
     void* kernelParams[] = { 
+        &d_arr_out,
         &d_arr, 
         // &d_result,
-        &d_arr_out,
         // &d_idx
     };
 

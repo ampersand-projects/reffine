@@ -365,6 +365,7 @@ shared_ptr<Func> basic_transform_fn()
     auto idx_end = get_end_idx(tid, bid, bdim, gdim, len);
 
     auto loop = _loop(_load(vec_out_sym));
+    // auto loop = _loop(vec_out_sym);
     loop->init = _stmts(vector<Stmt>{
         _store(idx_addr, idx_start),
         // _store(vec_out_sym, _add(_load(res_sym), _load(input_sym))),
@@ -376,9 +377,10 @@ shared_ptr<Func> basic_transform_fn()
     loop->exit_cond = _gte(idx, idx_end);
     auto loop_sym = _sym("loop", loop);
 
-    auto foo_fn = _func("foo", loop, vector<Sym>{vec_in_sym, vec_out_sym});
+    auto foo_fn = _func("foo", loop, vector<Sym>{vec_out_sym, vec_in_sym});
     foo_fn->tbl[loop_sym] = loop;
     foo_fn->tbl[idx_addr] = idx_alloc;
+    // foo_fn->tbl[vec_out_sym] = vec_out_sym;
 
     return foo_fn;
 }
@@ -410,15 +412,17 @@ int main()
     // auto loop = LoopGen::Build(fn);
     // cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
     // return 0;
+    cout << "About to build Canon IR" << endl;
     CanonPass::Build(fn);
-    // cout << "Canon IR:" << endl << IRPrinter::Build(fn) << endl;
+    cout << "Finished building Canon IR" << endl;
+    cout << "Canon IR:" << endl << IRPrinter::Build(fn) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
     CUDAGen::Build2(fn, *llmod);
-    cout << "CUDAGen IR: " << endl << IRPrinter::Build(fn) << endl;
-    LLVMGen::Build(fn, *llmod);
-    cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
+    cout << "CUDAGen IR: " << endl << IRPrinter::Build(*llmod) << endl;
+    // LLVMGen::Build(fn, *llmod);
+    // cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
     // return 0;
     
     // jit->Optimize(*llmod);
