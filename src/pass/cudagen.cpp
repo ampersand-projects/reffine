@@ -12,8 +12,8 @@ using namespace llvm;
 void CUDAGen::visit(Func& func)
 {
     // for CUDA, output needs to be appended as an output
-    // auto output_sym = _sym("output", func.output);
-    // func.inputs.insert(func.inputs.begin(), output_sym);
+    auto output_sym = _sym("output", func.output);
+    func.inputs.insert(func.inputs.begin(), output_sym);
     LLVMGen::Visit(func);
 }
 

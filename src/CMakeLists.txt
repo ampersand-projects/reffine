@@ -19,6 +19,7 @@ set(SRC_FILES
     pass/llvmgen.cpp
     pass/cudagen.cpp
     engine/engine.cpp
+    engine/cudaengine.cpp
     builder/reffiner.cpp
 )
 

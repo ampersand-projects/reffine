@@ -26,6 +26,7 @@
 #include "reffine/pass/z3solver.h"
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
+#include "reffine/engine/cudaengine.h"
 #include "reffine/arrow/defs.h"
 #include "reffine/builder/reffiner.h"
 
@@ -342,11 +343,8 @@ shared_ptr<Func> basic_transform_fn()
     /* take in array and output array thats same thing + 1*/
     auto vec_out_sym = _sym("res", types::INT64.ptr());
     auto vec_in_sym = _sym("input", types::INT64.ptr());
-    // auto idx_sym = _sym("idx", types::IDX.ptr());
 
-    // auto idx = _load(idx_sym);
     auto len = _idx(1024);
-    // auto idx = _idx(0);
     auto idx_alloc = _alloc(_idx_t);
     auto idx_addr = _sym("idx_addr", idx_alloc);
     auto idx = _load(idx_addr);
@@ -365,7 +363,7 @@ shared_ptr<Func> basic_transform_fn()
     auto idx_end = get_end_idx(tid, bid, bdim, gdim, len);
 
     auto loop = _loop(_load(vec_out_sym));
-    // auto loop = _loop(vec_out_sym);
+
     loop->init = _stmts(vector<Stmt>{
         _store(idx_addr, idx_start),
         // _store(vec_out_sym, _add(_load(res_sym), _load(input_sym))),
@@ -380,7 +378,6 @@ shared_ptr<Func> basic_transform_fn()
     auto foo_fn = _func("foo", loop, vector<Sym>{vec_out_sym, vec_in_sym});
     foo_fn->tbl[loop_sym] = loop;
     foo_fn->tbl[idx_addr] = idx_alloc;
-    // foo_fn->tbl[vec_out_sym] = vec_out_sym;
 
     return foo_fn;
 }
@@ -429,31 +426,17 @@ int main()
     // cout << "Optimized LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
 
     std::string output_ptx;
-    jit->GeneratePTX(*llmod, output_ptx);
-    cout << "Generated PTX:" << endl << output_ptx << endl;
-
-    // return 0;
-
-    // ArrowArray in_array;
-    // auto status = get_arrow_array(in_array);
-    // if (!status.ok()) {
-    //     cerr << status.ToString() << endl;
-    // }
+    auto cuda = CUDAEngine::Init(*llmod);
+    cuda->GeneratePTX();
+    cuda->PrintPTX();
 
     int len = 1024;
     int64_t* in_array = new int64_t[len];
     int true_res = get_test_input_array(in_array, len);
     int *result;
     result = (int*)malloc(sizeof(int));
-
-    // Execute generated PTX
-    jit->ExecutePTX(output_ptx, llmod->getName().str(), (int64_t*)(in_array), result);
+    cuda->ExecutePTX((int64_t*)(in_array), result);
     cout << "True Res: " << true_res << endl;
-
-
-    // Execute pre-generated PTX from a file
-        // --> does not use above generated PTX
-    // jit->ExecutePTXFromFile(output_ptx, llmod->getName().str(), (int64_t*)(in_array), result);
 
     return 0; 
 
