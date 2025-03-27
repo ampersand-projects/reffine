@@ -126,6 +126,13 @@ public:
         stmt.output->Accept(*this);
     }
 
+    void Visit(Kernel& stmt) override
+    {
+        for (auto& input : stmt.inputs) { this->assign(input); }
+
+        stmt.output->Accept(*this);
+    }
+
     void Visit(Alloc& expr) override { expr.size->Accept(*this); }
 
     void Visit(Load& expr) override { expr.addr->Accept(*this); }

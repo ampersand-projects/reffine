@@ -21,6 +21,10 @@ public:
     {
         throw runtime_error("Func operation not supported");
     }
+    virtual void Visit(Kernel&)
+    {
+        throw runtime_error("Kernel operation not supported");
+    }
     virtual void Visit(Call&)
     {
         throw runtime_error("Call operation not supported");

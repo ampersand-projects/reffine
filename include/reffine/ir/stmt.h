@@ -2,6 +2,7 @@
 #define INCLUDE_REFFINE_IR_STMT_H
 
 #include "reffine/ir/node.h"
+#include "reffine/ir/loop.h"
 
 namespace reffine {
 
@@ -12,6 +13,24 @@ struct Func : public StmtNode {
     SymTable tbl;
 
     Func(string name, Expr output, vector<Sym> inputs, SymTable tbl = {})
+        : StmtNode(),
+          name(name),
+          output(output),
+          inputs(std::move(inputs)),
+          tbl(std::move(tbl))
+    {
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct Kernel : public StmtNode {
+    string name;
+    Expr output;
+    vector<Sym> inputs;
+    SymTable tbl;
+
+    Kernel(string name, Expr output, vector<Sym> inputs, SymTable tbl = {})
         : StmtNode(),
           name(name),
           output(output),

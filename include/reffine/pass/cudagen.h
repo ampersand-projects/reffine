@@ -28,7 +28,8 @@ class CUDAGen : public LLVMGen {
         {
         }
     
-        static void Build2(shared_ptr<Func>, llvm::Module&);
+        static void Build(shared_ptr<Func>, llvm::Module&);
+        static void Build(shared_ptr<Kernel>, llvm::Module&);
 
     private:
     // using LLVMGen::visit;

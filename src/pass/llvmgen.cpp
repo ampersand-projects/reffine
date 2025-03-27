@@ -531,6 +531,41 @@ void LLVMGen::visit(Func& func)
     MD->addOperand(llvm::MDNode::get(llctx(), MDVals));
 }
 
+void LLVMGen::visit(Kernel& func)
+{
+    // Define function signature
+    vector<llvm::Type*> args_type;
+    for (auto& input : func.inputs) {
+        args_type.push_back(lltype(input->type));
+    }
+    auto fn = llfunc(func.name, lltype(func.output), args_type);
+    for (size_t i = 0; i < func.inputs.size(); i++) {
+        auto input = func.inputs[i];
+        fn->getArg(i)->setName(input->name);
+        this->assign(input, fn->getArg(i));
+    }
+
+    auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
+
+    builder()->SetInsertPoint(entry_bb);
+    // builder()->CreateRet(eval(func.output));
+    // Attempt to remove the return value
+    eval(func.output);
+    builder()->CreateRetVoid();
+
+    // added for cuda
+    fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
+    llvm::NamedMDNode *MD = llmod()->getOrInsertNamedMetadata("nvvm.annotations");
+    
+    std::vector<llvm::Metadata *> MDVals;
+    MDVals.push_back(llvm::ValueAsMetadata::get(fn));
+    MDVals.push_back(llvm::MDString::get(llctx(), "kernel"));
+    MDVals.push_back(llvm::ConstantAsMetadata::get(
+                     llvm::ConstantInt::get(llvm::Type::getInt32Ty(llctx()), 1)));
+    
+    MD->addOperand(llvm::MDNode::get(llctx(), MDVals));
+}
+
 void LLVMGen::register_vinstrs()
 {
     const auto buffer =

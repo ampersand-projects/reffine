@@ -58,11 +58,19 @@ Value* CUDAGen::visit(GridDim& bdim) {
     return grid_dim;
 }
 
-void CUDAGen::Build2(shared_ptr<Func> func, llvm::Module& llmod)
+// TODO: eventually remove Func version 
+void CUDAGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
 {
-    llmod.setTargetTriple("nvptx64-nvidia-cuda");
-
     LLVMGenCtx ctx(func);
     LLVMGen cudagen(ctx, llmod);
     func->Accept(cudagen);
+}
+
+void CUDAGen::Build(shared_ptr<Kernel> kernel, llvm::Module& llmod)
+{
+    llmod.setTargetTriple("nvptx64-nvidia-cuda");
+
+    // LLVMGenCtx ctx(kernel);
+    // LLVMGen cudagen(ctx, llmod);
+    // func->Accept(cudagen);
 }
