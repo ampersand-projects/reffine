@@ -299,7 +299,7 @@ shared_ptr<Func> vector_fn_2()
 
 shared_ptr<Func> vector_fn_3()
 {
-    /* full vector_fn example; however currently has atomic add problem */
+    /* full vector_fn example */
     auto res_sym = _sym("res", types::INT64.ptr());
     auto input_sym = _sym("input", types::INT64.ptr());
     auto idx_sym = _sym("idx", types::IDX.ptr());
@@ -324,9 +324,7 @@ shared_ptr<Func> vector_fn_3()
         _store(res_sym, _add(_load(res_sym), _load(input_sym))),
     });
     loop->body = _stmts(vector<Stmt>{
-        // _store(res_sym, _add(_load(res_sym), _load(input_sym))),
         _store(res_sym, _add(_load(res_sym), val)),
-        // _store(res_sym, make_shared<AtomicAdd>(_load(res_sym), val)),
         _store(idx_sym, idx + _idx(1)),
     });
     loop->exit_cond = _gte(idx, idx_end);
@@ -366,7 +364,6 @@ shared_ptr<Func> basic_transform_fn()
 
     loop->init = _stmts(vector<Stmt>{
         _store(idx_addr, idx_start),
-        // _store(vec_out_sym, _add(_load(res_sym), _load(input_sym))),
     });
     loop->body = _stmts(vector<Stmt>{
         _store(out_ptr, _add(_i64(1), val)),
