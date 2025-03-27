@@ -20,7 +20,7 @@ void CUDAGen::visit(Func& func)
 Value* CUDAGen::visit(ThreadIdx& tidx) {
     // https://llvm.org/docs/NVPTXUsage.html#overview
     auto thread_idx = builder()->CreateIntrinsic(
-        Type::getInt32Ty(llctx()),
+        Type::getInt64Ty(llctx()),
         llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
         {}
     );
@@ -30,7 +30,7 @@ Value* CUDAGen::visit(ThreadIdx& tidx) {
 
 Value* CUDAGen::visit(BlockIdx& bidx) {
     auto block_idx = builder()->CreateIntrinsic(
-        Type::getInt32Ty(llctx()),
+        Type::getInt64Ty(llctx()),
         llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
         {}
     );
@@ -40,7 +40,7 @@ Value* CUDAGen::visit(BlockIdx& bidx) {
 
 Value* CUDAGen::visit(BlockDim& bdim) {
     auto block_dim = builder()->CreateIntrinsic(
-        Type::getInt32Ty(llctx()),
+        Type::getInt64Ty(llctx()),
         llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
         {}
     );
@@ -50,7 +50,7 @@ Value* CUDAGen::visit(BlockDim& bdim) {
 
 Value* CUDAGen::visit(GridDim& bdim) {
     auto grid_dim = builder()->CreateIntrinsic(
-        Type::getInt32Ty(llctx()),
+        Type::getInt64Ty(llctx()),
         llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
         {}
     );

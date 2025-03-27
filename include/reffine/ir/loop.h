@@ -104,25 +104,25 @@ struct Store : public StmtNode {
 };
 
 struct ThreadIdx : public ExprNode {
-    ThreadIdx() : ExprNode(types::INT64) {}
+    ThreadIdx() : ExprNode(types::IDX) {}
 
     void Accept(Visitor&) final;
 };
 
 struct BlockIdx : public ExprNode {
-    BlockIdx() : ExprNode(types::INT64) {}
+    BlockIdx() : ExprNode(types::IDX) {}
 
     void Accept(Visitor&) final;
 };
 
 struct BlockDim : public ExprNode {
-    BlockDim() : ExprNode(types::INT64) {}
+    BlockDim() : ExprNode(types::IDX) {}
 
     void Accept(Visitor&) final;
 };
 
 struct GridDim : public ExprNode {
-    GridDim() : ExprNode(types::INT64) {}
+    GridDim() : ExprNode(types::IDX) {}
 
     void Accept(Visitor&) final;
 };

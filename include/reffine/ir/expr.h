@@ -234,10 +234,6 @@ struct Add : public BinaryExpr {
     Add(Expr a, Expr b) : BinaryExpr(a->type, MathOp::ADD, a, b) {}
 };
 
-struct AtomicAdd : public BinaryExpr {
-    AtomicAdd(Expr a, Expr b) : BinaryExpr(a->type, MathOp::ATOMIC_ADD, a, b) {}
-};
-
 struct Sub : public BinaryExpr {
     Sub(Expr a, Expr b) : BinaryExpr(a->type, MathOp::SUB, a, b) {}
 };
