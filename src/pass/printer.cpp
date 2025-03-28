@@ -76,9 +76,6 @@ void IRPrinter::Visit(NaryExpr& e)
         case MathOp::ADD:
             emitbinary(e.arg(0), "+", e.arg(1));
             break;
-        case MathOp::ATOMIC_ADD:
-            emitbinary(e.arg(0), "+", e.arg(1));
-            break;
         case MathOp::SUB:
             emitbinary(e.arg(0), "-", e.arg(1));
             break;
@@ -299,21 +296,13 @@ void IRPrinter::Visit(Store& store)
     emitfunc("store", vector<Expr>{store.addr, store.val});
 }
 
-void IRPrinter::Visit(ThreadIdx& tidx) {
-    ostr << "tidx"; 
-}
+void IRPrinter::Visit(ThreadIdx& tidx) { ostr << "tidx"; }
 
-void IRPrinter::Visit(BlockIdx& bidx) {
-    ostr << "bidx"; 
-}
+void IRPrinter::Visit(BlockIdx& bidx) { ostr << "bidx"; }
 
-void IRPrinter::Visit(BlockDim& bdim) {
-    ostr << "bdim"; 
-}
+void IRPrinter::Visit(BlockDim& bdim) { ostr << "bdim"; }
 
-void IRPrinter::Visit(GridDim& bdim) {
-    ostr << "gdim"; 
-}
+void IRPrinter::Visit(GridDim& bdim) { ostr << "gdim"; }
 
 void IRPrinter::Visit(Loop& loop)
 {

@@ -1,7 +1,6 @@
 #ifndef INCLUDE_REFFINE_IR_STMT_H
 #define INCLUDE_REFFINE_IR_STMT_H
 
-#include "reffine/ir/node.h"
 #include "reffine/ir/loop.h"
 
 namespace reffine {
@@ -13,7 +12,8 @@ struct Func : public StmtNode {
     SymTable tbl;
     bool is_kernel;
 
-    Func(string name, Expr output, vector<Sym> inputs, bool is_kernel = false, SymTable tbl = {})
+    Func(string name, Expr output, vector<Sym> inputs, bool is_kernel = false,
+         SymTable tbl = {})
         : StmtNode(),
           name(name),
           output(output),

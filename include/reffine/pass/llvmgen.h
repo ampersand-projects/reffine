@@ -71,7 +71,8 @@ private:
     llvm::Value* visit(SetValid&) final;
     llvm::Value* visit(FetchDataPtr&) final;
 
-    llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>, bool = false);
+    llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>,
+                           bool = false);
     llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<Expr>);
 

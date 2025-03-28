@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "reffine/ir/expr.h"
-#include "reffine/ir/stmt.h"
 
 using namespace std;
 

@@ -1,9 +1,8 @@
-#include <iostream>
-
 #include "reffine/engine/engine.h"
 
 #include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Transforms/IPO/PartialInlining.h"
 #include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Scalar.h"
@@ -18,10 +17,6 @@
 #include "llvm/Transforms/Utils/LoopSimplify.h"
 #include "llvm/Transforms/Vectorize/LoopVectorize.h"
 #include "llvm/Transforms/Vectorize/SLPVectorizer.h"
-#include "llvm/MC/TargetRegistry.h"
-#include <cuda.h>
-#include <cassert>
-#include <cuda_runtime.h>
 
 using namespace reffine;
 using namespace std::placeholders;

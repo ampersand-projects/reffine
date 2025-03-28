@@ -1,5 +1,4 @@
 #include "reffine/pass/canonpass.h"
-#include "reffine/pass/llvmgen.h"
 
 #include "reffine/builder/reffiner.h"
 
@@ -7,7 +6,7 @@ using namespace reffine;
 using namespace reffine::reffiner;
 
 void CanonPass::Visit(Loop& loop)
-{ 
+{
     IRPass::Visit(loop);
 
     if (loop.incr) {

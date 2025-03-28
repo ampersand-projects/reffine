@@ -28,15 +28,16 @@ namespace reffine {
 
 class CUDAEngine {
 public:
-    CUDAEngine(Module &llmod) : llmod(llmod) {}
+    CUDAEngine(Module& llmod) : llmod(llmod) {}
 
-    static CUDAEngine* Init(Module &llmod);
+    static CUDAEngine* Init(Module& llmod);
     void GeneratePTX();
     void ExecutePTX(void*, int*);
     void PrintPTX();
     string GetKernelName();
 
     Module& llmod;
+
 private:
     string kernel_name;
     string ptx_str;

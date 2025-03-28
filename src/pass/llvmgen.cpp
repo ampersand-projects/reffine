@@ -3,9 +3,9 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/IntrinsicsNVPTX.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
-#include "llvm/IR/IntrinsicsNVPTX.h"
 #include "reffine/base/type.h"
 
 using namespace reffine;
@@ -141,15 +141,6 @@ Value* LLVMGen::visit(NaryExpr& e)
             } else {
                 return builder()->CreateAdd(eval(e.arg(0)), eval(e.arg(1)));
             }
-        }
-        case MathOp::ATOMIC_ADD: {
-            Function* atomicAdd = Intrinsic::getDeclaration(llmod(), Intrinsic::nvvm_atomic_add_gen_i_sys, {lltype(e.arg(0))});
-            return builder()->CreateCall(atomicAdd, {eval(e.arg(0)), eval(e.arg(1))}, "atomic_result");
-            // if (e.type.is_float()) {
-            //     return builder()->CreateFAdd(eval(e.arg(0)), eval(e.arg(1)));
-            // } else {
-            //     return builder()->CreateAdd(eval(e.arg(0)), eval(e.arg(1)));
-            // }
         }
         case MathOp::SUB: {
             if (e.type.is_float()) {
@@ -409,43 +400,39 @@ void LLVMGen::visit(Store& store)
     builder()->CreateStore(val, addr);
 }
 
-Value* LLVMGen::visit(ThreadIdx& tidx) {
+Value* LLVMGen::visit(ThreadIdx& tidx)
+{
     // https://llvm.org/docs/NVPTXUsage.html#overview
     auto thread_idx = builder()->CreateIntrinsic(
-        Type::getInt64Ty(llctx()),
-        llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
-        {}
-    );
+        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
+        {});
 
     return thread_idx;
 }
 
-Value* LLVMGen::visit(BlockIdx& bidx) {
+Value* LLVMGen::visit(BlockIdx& bidx)
+{
     auto block_idx = builder()->CreateIntrinsic(
-        Type::getInt64Ty(llctx()),
-        llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
-        {}
-    );
+        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
+        {});
 
     return block_idx;
 }
 
-Value* LLVMGen::visit(BlockDim& bdim) {
+Value* LLVMGen::visit(BlockDim& bdim)
+{
     auto block_dim = builder()->CreateIntrinsic(
-        Type::getInt64Ty(llctx()),
-        llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
-        {}
-    );
+        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
+        {});
 
     return block_dim;
 }
 
-Value* LLVMGen::visit(GridDim& bdim) {
+Value* LLVMGen::visit(GridDim& bdim)
+{
     auto grid_dim = builder()->CreateIntrinsic(
-        Type::getInt64Ty(llctx()),
-        llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
-        {}
-    );
+        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
+        {});
 
     return grid_dim;
 }
@@ -519,17 +506,17 @@ void LLVMGen::visit(Func& func)
         builder()->CreateRetVoid();
 
         fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
-        llvm::NamedMDNode *MD = llmod()->getOrInsertNamedMetadata("nvvm.annotations");
-        
-        std::vector<llvm::Metadata *> MDVals;
+        llvm::NamedMDNode* MD =
+            llmod()->getOrInsertNamedMetadata("nvvm.annotations");
+
+        std::vector<llvm::Metadata*> MDVals;
         MDVals.push_back(llvm::ValueAsMetadata::get(fn));
         MDVals.push_back(llvm::MDString::get(llctx(), "kernel"));
         MDVals.push_back(llvm::ConstantAsMetadata::get(
-                        llvm::ConstantInt::get(llvm::Type::getInt32Ty(llctx()), 1)));
-        
+            llvm::ConstantInt::get(llvm::Type::getInt32Ty(llctx()), 1)));
+
         MD->addOperand(llvm::MDNode::get(llctx(), MDVals));
-    }
-    else {
+    } else {
         builder()->CreateRet(output);
     }
 }
