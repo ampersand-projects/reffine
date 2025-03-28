@@ -72,10 +72,6 @@ protected:
     {
         throw runtime_error("Func visit not supported");
     }
-    virtual void visit(Kernel&)
-    {
-        throw runtime_error("Kernel visit not supported");
-    }
     virtual ValTy visit(Alloc&)
     {
         throw runtime_error("Alloc visit not supported");
@@ -139,7 +135,6 @@ protected:
     void Visit(Call& expr) final { val() = visit(expr); }
     void Visit(Stmts& stmt) final { visit(stmt); }
     void Visit(Func& stmt) final { visit(stmt); }
-    void Visit(Kernel& stmt) final { visit(stmt); }
     void Visit(Alloc& expr) final { val() = visit(expr); }
     void Visit(Load& expr) final { val() = visit(expr); }
     void Visit(Store& expr) final { visit(expr); }

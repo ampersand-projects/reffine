@@ -128,24 +128,6 @@ struct GridDim : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-struct Kernel : public StmtNode {
-    string name;
-    vector<Sym> inputs;
-    Stmt body;
-    SymTable tbl;
-
-    Kernel(string name, vector<Sym> inputs, Stmt body, SymTable tbl = {})
-        : StmtNode(),
-          name(name),
-          inputs(std::move(inputs)),
-          body(body),
-          tbl(std::move(tbl))
-    {
-    }
-
-    void Accept(Visitor&) final;
-};
-
 struct Loop : public ExprNode {
     // Loop initialization
     Stmt init = nullptr;

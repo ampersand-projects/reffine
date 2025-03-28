@@ -39,7 +39,6 @@ public:
     void Visit(SymNode&) final;
     void Visit(Stmts&) final;
     void Visit(Func&) final;
-    void Visit(Kernel&) final;
     void Visit(Call&) final;
     void Visit(IfElse&) final;
     void Visit(Select&) final;

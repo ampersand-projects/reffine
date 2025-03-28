@@ -30,10 +30,6 @@ public:
         : IRPassBaseCtx<llvm::Value*>(func->tbl, m)
     {
     }
-    LLVMGenCtx(shared_ptr<Kernel> kernel, map<Sym, llvm::Value*> m = {})
-        : IRPassBaseCtx<llvm::Value*>(kernel->tbl, m)
-    {
-    }
 };
 
 class LLVMGen : public IRGenBase<llvm::Value*> {
@@ -47,7 +43,6 @@ public:
     }
 
     static void Build(shared_ptr<Func>, llvm::Module&);
-    static void Build(shared_ptr<Kernel>, llvm::Module&);
 
 private:
     void register_vinstrs();
@@ -64,7 +59,6 @@ private:
     llvm::Value* visit(NaryExpr&) final;
     void visit(Stmts&) final;
     void visit(Func&) final;
-    void visit(Kernel&) final;
     llvm::Value* visit(Alloc&) final;
     llvm::Value* visit(Load&) final;
     void visit(Store&) final;
@@ -78,7 +72,6 @@ private:
     llvm::Value* visit(FetchDataPtr&) final;
 
     llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);
-    llvm::Function* llkernel(const string, vector<llvm::Type*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<Expr>);
 

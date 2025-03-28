@@ -279,27 +279,6 @@ void IRPrinter::Visit(Func& fn)
     emitnewline();
 }
 
-void IRPrinter::Visit(Kernel& fn)
-{
-    ostr << "def __global__ " << fn.name << "(";
-    for (auto& input : fn.inputs) { ostr << input->name << ", "; }
-    ostr << (fn.inputs.size() > 0 ? "\b\b" : "") << ") {";
-
-    enter_block();
-    // for (auto& [sym, val] : fn.tbl) {
-    //     emitassign(sym, val);
-    //     emitnewline();
-    // }
-
-    emitnewline();
-    ostr << "return ";
-    fn.body->Accept(*this);
-    exit_block();
-
-    ostr << "}";
-    emitnewline();
-}
-
 void IRPrinter::Visit(Stmts& stmts)
 {
     for (auto& stmt : stmts.stmts) {

@@ -379,7 +379,7 @@ shared_ptr<Func> basic_transform_fn()
     return foo_fn;
 }
 
-shared_ptr<Kernel> basic_transform_kernel()
+shared_ptr<Func> basic_transform_kernel()
 {
     /* make kernel version */
     auto vec_out_sym = _sym("res", types::INT64.ptr());
@@ -406,6 +406,7 @@ shared_ptr<Kernel> basic_transform_kernel()
     auto loop = _loop(_load(vec_out_sym));
 
     loop->init = _stmts(vector<Stmt>{
+        idx_alloc,
         _store(idx_addr, idx_start),
     });
     loop->body = _stmts(vector<Stmt>{
@@ -415,7 +416,7 @@ shared_ptr<Kernel> basic_transform_kernel()
     loop->exit_cond = _gte(idx, idx_end);
     auto loop_sym = _sym("loop", loop);
 
-    auto foo_fn = make_shared<Kernel>("foo", vector<Sym>{vec_out_sym, vec_in_sym}, loop);
+    auto foo_fn = _func("foo", loop, vector<Sym>{vec_out_sym, vec_in_sym}, true);
     foo_fn->tbl[idx_addr] = idx_alloc;
 
     return foo_fn;
