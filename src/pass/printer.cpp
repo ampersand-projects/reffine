@@ -281,7 +281,7 @@ void IRPrinter::Visit(Func& fn)
 
 void IRPrinter::Visit(Kernel& fn)
 {
-    ostr << "def " << fn.name << "(";
+    ostr << "def __global__ " << fn.name << "(";
     for (auto& input : fn.inputs) { ostr << input->name << ", "; }
     ostr << (fn.inputs.size() > 0 ? "\b\b" : "") << ") {";
 

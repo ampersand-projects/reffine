@@ -20,7 +20,7 @@
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
-#include "reffine/pass/cudagen.h"
+#include "reffine/pass/cudapass.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/loopgen.h"
 #include "reffine/pass/z3solver.h"
@@ -415,8 +415,8 @@ int main()
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
-    CUDAGen::Build(fn, *llmod);
-    cout << "CUDAGen IR: " << endl << IRPrinter::Build(*llmod) << endl;
+    CUDAPass::Build(fn, *llmod);
+    cout << "CUDAPass IR: " << endl << IRPrinter::Build(fn) << endl;
     // LLVMGen::Build(fn, *llmod);
     // cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
     // return 0;

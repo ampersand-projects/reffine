@@ -390,7 +390,6 @@ void LLVMGen::visit(Stmts& stmts)
 
 Value* LLVMGen::visit(Alloc& alloc)
 {
-    // TODO: hacky, fix later
     auto type = PointerType::get(lltype(alloc.type.dtypes[0]), 5U);
     return builder()->CreateAlloca(type, eval(alloc.size));
 }
