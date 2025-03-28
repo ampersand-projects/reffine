@@ -442,7 +442,7 @@ int main()
     // auto fn = basic_transform_fn();
     auto fn = basic_transform_kernel();
     // return 0;
-    cout << "Reffine IR: " << endl << IRPrinter::Build(fn) << endl;
+    cout << "Loop IR: " << endl << IRPrinter::Build(fn) << endl;
     // return 0;
     
     // auto fn2 = OpToLoop::Build(fn);
@@ -458,7 +458,8 @@ int main()
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
 
-    CUDAGen::Build(fn, *llmod);
+    // CUDAGen::Build(fn, *llmod);
+    LLVMGen::Build(fn, *llmod);
     // cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
     jit->Optimize(*llmod);
     cout << "Optimized LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;

@@ -19,6 +19,13 @@ Function* LLVMGen::llfunc(const string name, llvm::Type* ret_type,
     return Function::Create(fn_type, Function::ExternalLinkage, name, llmod());
 }
 
+Function* LLVMGen::llkernel(const string name, vector<llvm::Type*> arg_types)
+{
+    auto ret_type = llvm::Type::getVoidTy(llctx());
+    auto fn_type = FunctionType::get(ret_type, arg_types, false);
+    return Function::Create(fn_type, Function::ExternalLinkage, name, llmod());
+}
+
 Value* LLVMGen::llcall(const string name, llvm::Type* ret_type,
                        vector<Value*> arg_vals)
 {
@@ -512,9 +519,31 @@ void LLVMGen::visit(Func& func)
     auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
 
     builder()->SetInsertPoint(entry_bb);
-    // builder()->CreateRet(eval(func.output));
-    // Attempt to remove the return value
-    eval(func.output);
+    builder()->CreateRet(eval(func.output));
+}
+
+
+void LLVMGen::visit(Kernel& func)
+{
+    // Define function signature
+    vector<llvm::Type*> args_type;
+    for (auto& input : func.inputs) {
+        args_type.push_back(lltype(input->type));
+    }
+    auto fn = llkernel(func.name, args_type);
+    for (size_t i = 0; i < func.inputs.size(); i++) {
+        auto input = func.inputs[i];
+        fn->getArg(i)->setName(input->name);
+        this->assign(input, fn->getArg(i));
+    }
+
+    auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
+
+    builder()->SetInsertPoint(entry_bb);
+    // for (auto stmt : func.body.stmts) {
+    //     eval(stmt);
+    // }
+    eval(func.body);
     builder()->CreateRetVoid();
 
     // added for cuda
@@ -583,4 +612,11 @@ void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
     LLVMGenCtx ctx(func);
     LLVMGen llgen(ctx, llmod);
     func->Accept(llgen);
+}
+
+void LLVMGen::Build(shared_ptr<Kernel> kernel, llvm::Module& llmod)
+{
+    LLVMGenCtx ctx(kernel);
+    LLVMGen llgen(ctx, llmod);
+    kernel->Accept(llgen);
 }
