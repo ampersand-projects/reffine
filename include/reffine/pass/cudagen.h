@@ -1,0 +1,94 @@
+#ifndef INCLUDE_REFFINE_PASS_CODEGEN_CUDAGEN_H_
+#define INCLUDE_REFFINE_PASS_CODEGEN_CUDAGEN_H_
+
+#include <cstdlib>
+#include <fstream>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Verifier.h"
+#include "llvm/IRReader/IRReader.h"
+#include "llvm/Linker/Linker.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/SourceMgr.h"
+#include "reffine/pass/base/irgen.h"
+
+using namespace std;
+
+extern const char* vinstr_str;
+
+namespace reffine {
+
+class CUDAGenCtx : public IRPassBaseCtx<llvm::Value*> {
+public:
+    CUDAGenCtx(shared_ptr<Kernel> kernel, map<Sym, llvm::Value*> m = {})
+        : IRPassBaseCtx<llvm::Value*>(kernel->tbl, m)
+    {
+    }
+};
+
+class CUDAGen : public IRGenBase<llvm::Value*> {
+public:
+    explicit CUDAGen(CUDAGenCtx& ctx, llvm::Module& llmod)
+        : IRGenBase(ctx),
+          _llmod(llmod),
+          _builder(make_unique<llvm::IRBuilder<>>(llmod.getContext()))
+    {
+        register_vinstrs();
+    }
+
+    static void Build(shared_ptr<Kernel>, llvm::Module&);
+
+private:
+    void register_vinstrs();
+
+    llvm::Value* visit(Sym) final;
+    llvm::Value* visit(Call&) final;
+    void visit(IfElse&) final;
+    void visit(NoOp&) final;
+    llvm::Value* visit(Select&) final;
+    llvm::Value* visit(Const&) final;
+    llvm::Value* visit(Cast&) final;
+    llvm::Value* visit(Get&) final;
+    llvm::Value* visit(New&) final;
+    llvm::Value* visit(NaryExpr&) final;
+    void visit(Stmts&) final;
+    void visit(Func&);
+    void visit(Kernel&);
+    llvm::Value* visit(Alloc&) final;
+    llvm::Value* visit(Load&) final;
+    void visit(Store&) final;
+    llvm::Value* visit(ThreadIdx&);
+    llvm::Value* visit(BlockIdx&);
+    llvm::Value* visit(BlockDim&);
+    llvm::Value* visit(GridDim&);
+    llvm::Value* visit(Loop&) final;
+    llvm::Value* visit(IsValid&) final;
+    llvm::Value* visit(SetValid&) final;
+    llvm::Value* visit(FetchDataPtr&) final;
+
+    llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);
+    llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);
+    llvm::Value* llcall(const string, llvm::Type*, vector<Expr>);
+
+protected:
+    llvm::Type* lltype(const DataType&);
+    llvm::Type* lltype(const ExprNode& expr) { return lltype(expr.type); }
+    llvm::Type* lltype(const Expr& expr) { return lltype(expr->type); }
+
+    llvm::Module* llmod() { return &_llmod; }
+    llvm::LLVMContext& llctx() { return llmod()->getContext(); }
+    llvm::IRBuilder<>* builder() { return _builder.get(); }
+
+    llvm::Module& _llmod;
+    unique_ptr<llvm::IRBuilder<>> _builder;
+};
+
+}  // namespace reffine
+
+#endif  // INCLUDE_REFFINE_PASS_CODEGEN_CUDAGEN_H_

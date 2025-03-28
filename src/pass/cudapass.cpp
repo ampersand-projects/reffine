@@ -70,10 +70,10 @@ void CUDAPass::Visit(Loop& loop)
     auto bdim = make_shared<BlockDim>();
     auto gdim = make_shared<GridDim>();
 
-    auto len = _idx(1024);  // TODO --> make this not hardcoded, use get_vector_len fcn 
+    auto n = _idx(10);  // TODO --> make this not hardcoded, use get_vector_len fcn or loop attribute
 
-    auto idx_start = get_start_idx(tid, bid, bdim, gdim, len);
-    auto idx_end = get_end_idx(tid, bid, bdim, gdim, len);
+    auto idx_start = get_start_idx(tid, bid, bdim, gdim, n);
+    auto idx_end = get_end_idx(tid, bid, bdim, gdim, n);
 
     // TODO: need a way to access address of index
         // from loop?
@@ -84,6 +84,10 @@ void CUDAPass::Visit(Loop& loop)
     // store start index
     auto idx_init = _store(idx_alloc, idx_start);
     loop.init = _stmts(vector<Stmt>{loop.init, idx_init});
+
+    // add increment
+    auto loop_incr = _store(idx_alloc, idx + _idx(1));
+    loop.body = _stmts(vector<Stmt>{loop.body, loop_incr});
 
     // create exit_cond with index end
     loop.exit_cond = _gte(idx, idx_end);

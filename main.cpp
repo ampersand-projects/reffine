@@ -20,6 +20,7 @@
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
+#include "reffine/pass/cudagen.h"
 #include "reffine/pass/cudapass.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/loopgen.h"
@@ -336,8 +337,7 @@ shared_ptr<Func> vector_fn_3()
     return foo_fn;
 }
 
-shared_ptr<Kernel> basic_transform_fn()
-// shared_ptr<Func> basic_transform_fn()
+shared_ptr<Func> basic_transform_fn()
 {
     /* take in array and output array thats same thing + 1*/
     auto vec_out_sym = _sym("res", types::INT64.ptr());
@@ -373,8 +373,42 @@ shared_ptr<Kernel> basic_transform_fn()
     loop->exit_cond = _gte(idx, idx_end);
     auto loop_sym = _sym("loop", loop);
 
+    auto foo_fn = _func("foo", loop, vector<Sym>{vec_out_sym, vec_in_sym});
+    foo_fn->tbl[loop_sym] = loop;
+    foo_fn->tbl[idx_addr] = idx_alloc;
+
+    return foo_fn;
+}
+
+shared_ptr<Kernel> basic_transform_kernel()
+{
+    /* make kernel version */
+    auto vec_out_sym = _sym("res", types::INT64.ptr());
+    auto vec_in_sym = _sym("input", types::INT64.ptr());
+
+    auto len = _idx(1024);
+    auto idx_alloc = _alloc(_idx_t);
+    auto idx_addr = _sym("idx_addr", idx_alloc);
+    auto idx = _load(idx_addr);
+
+    auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_in_sym, idx});
+    auto val = _load(val_ptr);
+
+    auto out_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_out_sym, idx});
+
+    auto loop = _loop(_load(vec_out_sym));
+
+    loop->init = _stmts(vector<Stmt>{
+        _store(idx_addr, _idx(0)),
+    });
+    loop->body = _stmts(vector<Stmt>{
+        _store(out_ptr, _add(_i64(1), val)),
+        _store(idx_addr, idx + _idx(1)),
+    });
+    loop->exit_cond = _gte(idx, _idx(10));
+    auto loop_sym = _sym("loop", loop);
+
     auto foo_fn = make_shared<Kernel>("foo", loop, vector<Sym>{vec_out_sym, vec_in_sym});
-    // auto foo_fn = _func("foo", loop, vector<Sym>{vec_out_sym, vec_in_sym});
     foo_fn->tbl[loop_sym] = loop;
     foo_fn->tbl[idx_addr] = idx_alloc;
 
@@ -393,12 +427,14 @@ int get_test_input_array(int64_t* in_array, int len) {
 }
 
 
+
 int main()
 {
     // auto fn = vector_fn();
     // auto fn = vector_fn_2();
     // auto fn = vector_fn_3();
-    auto fn = basic_transform_fn();
+    // auto fn = basic_transform_fn();
+    auto fn = basic_transform_kernel();
     // return 0;
     cout << "Reffine IR: " << endl << IRPrinter::Build(fn) << endl;
     // return 0;
@@ -417,8 +453,8 @@ int main()
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
     CUDAPass::Build(fn, *llmod);
     cout << "CUDAPass IR: " << endl << IRPrinter::Build(fn) << endl;
-    // LLVMGen::Build(fn, *llmod);
-    // cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
+    CUDAGen::Build(fn, *llmod);
+    cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
     // return 0;
     
     // jit->Optimize(*llmod);
