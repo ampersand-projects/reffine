@@ -130,7 +130,7 @@ public:
     {
         for (auto& input : stmt.inputs) { this->assign(input); }
 
-        stmt.output->Accept(*this);
+        stmt.body->Accept(*this);
     }
 
     void Visit(Alloc& expr) override { expr.size->Accept(*this); }

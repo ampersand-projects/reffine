@@ -59,7 +59,6 @@ private:
     llvm::Value* visit(NaryExpr&) final;
     void visit(Stmts&) final;
     void visit(Func&);
-    void visit(Kernel&);
     llvm::Value* visit(Alloc&) final;
     llvm::Value* visit(Load&) final;
     void visit(Store&) final;

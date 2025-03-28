@@ -24,24 +24,6 @@ struct Func : public StmtNode {
     void Accept(Visitor&) final;
 };
 
-struct Kernel : public StmtNode {
-    string name;
-    Expr output;
-    vector<Sym> inputs;
-    SymTable tbl;
-
-    Kernel(string name, Expr output, vector<Sym> inputs, SymTable tbl = {})
-        : StmtNode(),
-          name(name),
-          output(output),
-          inputs(std::move(inputs)),
-          tbl(std::move(tbl))
-    {
-    }
-
-    void Accept(Visitor&) final;
-};
-
 struct Stmts : public StmtNode {
     vector<Stmt> stmts;
 

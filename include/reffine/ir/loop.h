@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "reffine/ir/expr.h"
+#include "reffine/ir/stmt.h"
 
 using namespace std;
 
@@ -123,6 +124,24 @@ struct BlockDim : public ExprNode {
 
 struct GridDim : public ExprNode {
     GridDim() : ExprNode(types::IDX) {}
+
+    void Accept(Visitor&) final;
+};
+
+struct Kernel : public StmtNode {
+    string name;
+    vector<Sym> inputs;
+    Stmt body;
+    SymTable tbl;
+
+    Kernel(string name, vector<Sym> inputs, Stmt body, SymTable tbl = {})
+        : StmtNode(),
+          name(name),
+          inputs(std::move(inputs)),
+          body(body),
+          tbl(std::move(tbl))
+    {
+    }
 
     void Accept(Visitor&) final;
 };

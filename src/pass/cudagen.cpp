@@ -15,7 +15,13 @@ using namespace llvm;
 Function* CUDAGen::llfunc(const string name, llvm::Type* ret_type,
                           vector<llvm::Type*> arg_types)
 {
-    ret_type = llvm::Type::getVoidTy(llctx());
+    auto fn_type = FunctionType::get(ret_type, arg_types, false);
+    return Function::Create(fn_type, Function::ExternalLinkage, name, llmod());
+}
+
+Function* CUDAGen::llkernel(const string name, vector<llvm::Type*> arg_types)
+{
+    auto ret_type = llvm::Type::getVoidTy(llctx());
     auto fn_type = FunctionType::get(ret_type, arg_types, false);
     return Function::Create(fn_type, Function::ExternalLinkage, name, llmod());
 }
@@ -404,8 +410,11 @@ Value* CUDAGen::visit(Load& load)
 
 void CUDAGen::visit(Store& store)
 {
+    cout << "about to eval store addr in CUDAGen Store" << endl;
     auto addr = eval(store.addr);
+    cout << "about to eval store val in CUDAGen Store" << endl;
     auto val = eval(store.val);
+    cout << "about to CreateStore in CUDAGen Store" << endl;
     builder()->CreateStore(val, addr);
 }
 
@@ -452,6 +461,7 @@ Value* CUDAGen::visit(GridDim& bdim) {
 
 Value* CUDAGen::visit(Loop& loop)
 {
+    cout << "Started visitng CUDAGen Loop" << endl;
     // Loop body condition and incr needs to be merged into loop body before
     // code generation
     ASSERT(loop.body_cond == nullptr);
@@ -462,6 +472,7 @@ Value* CUDAGen::visit(Loop& loop)
     ASSERT(loop.exit_cond != nullptr);
 
     auto parent_fn = builder()->GetInsertBlock()->getParent();
+    cout << "passed GetInsertBlock in CUDAGen Loop" << endl;
     auto preheader_bb = BasicBlock::Create(llctx(), "preheader");
     auto header_bb = BasicBlock::Create(llctx(), "header");
     auto body_bb = BasicBlock::Create(llctx(), "body");
@@ -472,18 +483,26 @@ Value* CUDAGen::visit(Loop& loop)
     // initialize loop
     parent_fn->insert(parent_fn->end(), preheader_bb);
     builder()->SetInsertPoint(preheader_bb);
+    cout << "about to eval loop init in CUDAGen Loop" << endl;
     if (loop.init) { eval(loop.init); }
+    cout << "finished eval loop init in CUDAGen Loop" << endl;
     builder()->CreateBr(header_bb);
+
+    cout << "passed loop init in CUDAGen Loop" << endl;
 
     // loop exit condition
     parent_fn->insert(parent_fn->end(), header_bb);
     builder()->SetInsertPoint(header_bb);
     builder()->CreateCondBr(eval(loop.exit_cond), exit_bb, body_bb);
 
+    cout << "passed loop exit condition in CUDAGen Loop" << endl;
+
     // loop body
     parent_fn->insert(parent_fn->end(), body_bb);
     builder()->SetInsertPoint(body_bb);
     eval(loop.body);
+
+    cout << "passed loop body in CUDAGen Loop" << endl;
 
     // Jump back to loop header
     builder()->CreateBr(header_bb);
@@ -493,6 +512,7 @@ Value* CUDAGen::visit(Loop& loop)
     builder()->SetInsertPoint(exit_bb);
     if (loop.post) { eval(loop.post); }
 
+    cout << "Ending visitng CUDAGen Loop" << endl;
     return eval(loop.output);
 }
 
@@ -514,31 +534,17 @@ void CUDAGen::visit(Func& func)
 
     builder()->SetInsertPoint(entry_bb);
     // builder()->CreateRet(eval(func.output));
-    // Attempt to remove the return value
-    eval(func.output);
-    builder()->CreateRetVoid();
-
-    // added for cuda
-    fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
-    llvm::NamedMDNode *MD = llmod()->getOrInsertNamedMetadata("nvvm.annotations");
-    
-    std::vector<llvm::Metadata *> MDVals;
-    MDVals.push_back(llvm::ValueAsMetadata::get(fn));
-    MDVals.push_back(llvm::MDString::get(llctx(), "kernel"));
-    MDVals.push_back(llvm::ConstantAsMetadata::get(
-                     llvm::ConstantInt::get(llvm::Type::getInt32Ty(llctx()), 1)));
-    
-    MD->addOperand(llvm::MDNode::get(llctx(), MDVals));
 }
 
 void CUDAGen::visit(Kernel& func)
 {
+    cout << "Started visitng CUDAGen Kernel" << endl;
     // Define function signature
     vector<llvm::Type*> args_type;
     for (auto& input : func.inputs) {
         args_type.push_back(lltype(input->type));
     }
-    auto fn = llfunc(func.name, lltype(func.output), args_type);
+    auto fn = llkernel(func.name, args_type);
     for (size_t i = 0; i < func.inputs.size(); i++) {
         auto input = func.inputs[i];
         fn->getArg(i)->setName(input->name);
@@ -548,9 +554,10 @@ void CUDAGen::visit(Kernel& func)
     auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
 
     builder()->SetInsertPoint(entry_bb);
-    // builder()->CreateRet(eval(func.output));
-    // Attempt to remove the return value
-    eval(func.output);
+    // for (auto stmt : func.body.stmts) {
+    //     eval(stmt);
+    // }
+    eval(func.body);
     builder()->CreateRetVoid();
 
     // added for cuda
@@ -564,6 +571,8 @@ void CUDAGen::visit(Kernel& func)
                      llvm::ConstantInt::get(llvm::Type::getInt32Ty(llctx()), 1)));
     
     MD->addOperand(llvm::MDNode::get(llctx(), MDVals));
+
+    cout << "Ended visitng CUDAGen Kernel" << endl;
 }
 
 void CUDAGen::register_vinstrs()

@@ -73,6 +73,7 @@ private:
     llvm::Value* visit(FetchDataPtr&) final;
 
     llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);
+    llvm::Function* llkernel(const string, vector<llvm::Type*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<Expr>);
 

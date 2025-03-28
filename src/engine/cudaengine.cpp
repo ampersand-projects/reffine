@@ -2,22 +2,6 @@
 
 #include "reffine/engine/cudaengine.h"
 
-#include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
-#include "llvm/IR/Verifier.h"
-#include "llvm/Transforms/IPO/PartialInlining.h"
-#include "llvm/Transforms/InstCombine/InstCombine.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Scalar/ADCE.h"
-#include "llvm/Transforms/Scalar/GVN.h"
-#include "llvm/Transforms/Scalar/InstSimplifyPass.h"
-#include "llvm/Transforms/Scalar/LoopRotation.h"
-#include "llvm/Transforms/Scalar/LoopUnrollPass.h"
-#include "llvm/Transforms/Scalar/SCCP.h"
-#include "llvm/Transforms/Scalar/SimplifyCFG.h"
-#include "llvm/Transforms/Scalar/Sink.h"
-#include "llvm/Transforms/Utils/LoopSimplify.h"
-#include "llvm/Transforms/Vectorize/LoopVectorize.h"
-#include "llvm/Transforms/Vectorize/SLPVectorizer.h"
 #include "llvm/MC/TargetRegistry.h"
 #include <cuda.h>
 #include <cassert>

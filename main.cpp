@@ -21,7 +21,6 @@
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/cudagen.h"
-#include "reffine/pass/cudapass.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/loopgen.h"
 #include "reffine/pass/z3solver.h"
@@ -396,20 +395,27 @@ shared_ptr<Kernel> basic_transform_kernel()
 
     auto out_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_out_sym, idx});
 
+    auto tid = make_shared<ThreadIdx>();
+    auto bid = make_shared<BlockIdx>();
+    auto bdim = make_shared<BlockDim>();
+    auto gdim = make_shared<GridDim>();
+
+    auto idx_start = get_start_idx(tid, bid, bdim, gdim, len);
+    auto idx_end = get_end_idx(tid, bid, bdim, gdim, len);
+
     auto loop = _loop(_load(vec_out_sym));
 
     loop->init = _stmts(vector<Stmt>{
-        _store(idx_addr, _idx(0)),
+        _store(idx_addr, idx_start),
     });
     loop->body = _stmts(vector<Stmt>{
         _store(out_ptr, _add(_i64(1), val)),
         _store(idx_addr, idx + _idx(1)),
     });
-    loop->exit_cond = _gte(idx, _idx(10));
+    loop->exit_cond = _gte(idx, idx_end);
     auto loop_sym = _sym("loop", loop);
 
-    auto foo_fn = make_shared<Kernel>("foo", loop, vector<Sym>{vec_out_sym, vec_in_sym});
-    foo_fn->tbl[loop_sym] = loop;
+    auto foo_fn = make_shared<Kernel>("foo", vector<Sym>{vec_out_sym, vec_in_sym}, loop);
     foo_fn->tbl[idx_addr] = idx_alloc;
 
     return foo_fn;
@@ -447,18 +453,15 @@ int main()
     // cout << "About to build Canon IR" << endl;
     // CanonPass::Build(fn);
     // cout << "Finished building Canon IR" << endl;
-    cout << "Canon IR:" << endl << IRPrinter::Build(fn) << endl;
+    // cout << "Canon IR:" << endl << IRPrinter::Build(fn) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
-    CUDAPass::Build(fn, *llmod);
-    cout << "CUDAPass IR: " << endl << IRPrinter::Build(fn) << endl;
+
     CUDAGen::Build(fn, *llmod);
     // cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
-    // return 0;
-    
-    // jit->Optimize(*llmod);
-    // cout << "Optimized LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
+    jit->Optimize(*llmod);
+    cout << "Optimized LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
 
     std::string output_ptx;
     auto cuda = CUDAEngine::Init(*llmod);

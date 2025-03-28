@@ -286,14 +286,14 @@ void IRPrinter::Visit(Kernel& fn)
     ostr << (fn.inputs.size() > 0 ? "\b\b" : "") << ") {";
 
     enter_block();
-    for (auto& [sym, val] : fn.tbl) {
-        emitassign(sym, val);
-        emitnewline();
-    }
+    // for (auto& [sym, val] : fn.tbl) {
+    //     emitassign(sym, val);
+    //     emitnewline();
+    // }
 
     emitnewline();
     ostr << "return ";
-    fn.output->Accept(*this);
+    fn.body->Accept(*this);
     exit_block();
 
     ostr << "}";
