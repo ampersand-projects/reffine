@@ -454,7 +454,7 @@ int main()
     CUDAPass::Build(fn, *llmod);
     cout << "CUDAPass IR: " << endl << IRPrinter::Build(fn) << endl;
     CUDAGen::Build(fn, *llmod);
-    cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
+    // cout << "LLVM IR:" << endl << IRPrinter::Build(*llmod) << endl;
     // return 0;
     
     // jit->Optimize(*llmod);

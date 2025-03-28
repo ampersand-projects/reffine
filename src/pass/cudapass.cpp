@@ -10,14 +10,6 @@ using namespace reffine::reffiner;
 using namespace llvm;
 
 
-// void CUDAPass::Visit(Func& func)
-// {
-//     // for CUDA, output needs to be appended as an output
-//     auto output_sym = _sym("output", func.output);
-//     func.inputs.insert(func.inputs.begin(), output_sym);
-//     // LLVMGen::Visit(func);
-// }
-
 shared_ptr<ExprNode> get_start_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr len) {
     // gridDim: # of blocks in a grid
     // blockDim: # of threads in a block
@@ -56,10 +48,10 @@ shared_ptr<ExprNode> get_end_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr 
     return thread_end;
 }
 
-// void CUDAPass::Visit(Kernel& kernel)
-// {
-//     IRPass::Visit(kernel);
-// }
+void CUDAPass::Visit(Kernel& kernel)
+{
+    IRPass::Visit(kernel);
+}
 
 
 void CUDAPass::Visit(Loop& loop)
@@ -70,7 +62,7 @@ void CUDAPass::Visit(Loop& loop)
     auto bdim = make_shared<BlockDim>();
     auto gdim = make_shared<GridDim>();
 
-    auto n = _idx(10);  // TODO --> make this not hardcoded, use get_vector_len fcn or loop attribute
+    auto n = _idx(1024);  // TODO --> make this not hardcoded, use loop attribute or smth
 
     auto idx_start = get_start_idx(tid, bid, bdim, gdim, n);
     auto idx_end = get_end_idx(tid, bid, bdim, gdim, n);

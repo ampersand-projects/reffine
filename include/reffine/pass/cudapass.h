@@ -14,7 +14,7 @@ public:
     static void Build(shared_ptr<Kernel>, llvm::Module&);
 
 protected:
-    // void Visit(Kernel&) final;
+    void Visit(Kernel&) final;
     // void Visit(Func&) final;
     void Visit(Loop&) final;
 };
