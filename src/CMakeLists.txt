@@ -17,7 +17,6 @@ set(SRC_FILES
     pass/irclone.cpp
     pass/z3solver.cpp
     pass/llvmgen.cpp
-    pass/cudagen.cpp
     engine/engine.cpp
     engine/cudaengine.cpp
     builder/reffiner.cpp

@@ -12,9 +12,10 @@ using namespace reffine;
 using namespace llvm;
 
 Function* LLVMGen::llfunc(const string name, llvm::Type* ret_type,
-                          vector<llvm::Type*> arg_types)
+                          vector<llvm::Type*> arg_types, bool is_kernel)
 {
-    ret_type = llvm::Type::getVoidTy(llctx());
+    if (is_kernel) { ret_type = llvm::Type::getVoidTy(llctx()); }
+
     auto fn_type = FunctionType::get(ret_type, arg_types, false);
     return Function::Create(fn_type, Function::ExternalLinkage, name, llmod());
 }
@@ -502,7 +503,7 @@ void LLVMGen::visit(Func& func)
     for (auto& input : func.inputs) {
         args_type.push_back(lltype(input->type));
     }
-    auto fn = llfunc(func.name, lltype(func.output), args_type);
+    auto fn = llfunc(func.name, lltype(func.output), args_type, func.is_kernel);
     for (size_t i = 0; i < func.inputs.size(); i++) {
         auto input = func.inputs[i];
         fn->getArg(i)->setName(input->name);

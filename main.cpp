@@ -20,7 +20,6 @@
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
-#include "reffine/pass/cudagen.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/loopgen.h"
 #include "reffine/pass/z3solver.h"
@@ -119,7 +118,6 @@ arrow::Status run_vector_fn(int (*query_fn)(void*))
 
 
 arrow::Status get_arrow_array(ArrowArray& in_array) {
-    // for CUDA testing
 
     ARROW_ASSIGN_OR_RAISE(auto infile, arrow::io::ReadableFile::Open(
         "../students.arrow", arrow::default_memory_pool()));
@@ -128,14 +126,13 @@ arrow::Status get_arrow_array(ArrowArray& in_array) {
 
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
 
-    // cout << rbatch->ToString() << endl;
+    cout << rbatch->ToString() << endl;
 
     ArrowSchema in_schema;
     // ArrowArray in_array;
 
     ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &in_array, &in_schema));
 
-    // return in_array;
     return arrow::Status::OK();
 }
 
