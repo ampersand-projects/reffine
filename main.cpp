@@ -215,9 +215,6 @@ shared_ptr<Func> transform_fn()
 }
 
 shared_ptr<ExprNode> get_start_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr len) {
-    // gridDim: # of blocks in a grid
-    // blockDim: # of threads in a block
-
     auto tidx = _cast(_idx_t, tid);
     auto bidx = _cast(_idx_t, bid);
     auto bdimx = _cast(_idx_t, bdim);
@@ -254,7 +251,7 @@ shared_ptr<ExprNode> get_end_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr 
 
 shared_ptr<Func> basic_transform_kernel()
 {
-    /* kernel version of transform_ */
+    /* kernel version of transform_fn */
     auto vec_out_sym = _sym("res", types::INT64.ptr());
     auto vec_in_sym = _sym("input", types::INT64.ptr());
 
@@ -423,8 +420,10 @@ void test_kernel() {
 
 int main()
 {
+    /*
     test_kernel();
     return 0;
+    */
 
     auto table = load_arrow_file("../benchmark/store_sales.arrow");
 

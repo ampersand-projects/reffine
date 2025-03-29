@@ -380,8 +380,8 @@ void LLVMGen::visit(Stmts& stmts)
 
 Value* LLVMGen::visit(Alloc& alloc)
 {
-    // https://llvm.org/docs/NVPTXUsage.html#address-spaces
     // 5 for local address space
+    // see https://llvm.org/docs/NVPTXUsage.html#address-spaces
     auto type = PointerType::get(lltype(alloc.type.dtypes[0]), 5U);
     return builder()->CreateAlloca(type, eval(alloc.size));
 }
