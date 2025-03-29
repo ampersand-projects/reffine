@@ -1,13 +1,13 @@
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <pybind11/functional.h>
 
+#include "reffine/base/type.h"
+#include "reffine/builder/reffiner.h"
 #include "reffine/ir/expr.h"
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/stmt.h"
-#include "reffine/base/type.h"
-#include "reffine/builder/reffiner.h"
 #include "reffine/pass/printer.h"
 
 using namespace std;
@@ -17,15 +17,16 @@ using namespace reffine::reffiner;
 namespace py = pybind11;
 
 void print_IR(shared_ptr<Func> fn)
- {
-     cout << "Loop IR:" << endl << IRPrinter::Build(fn) << endl;
- }
+{
+    cout << "Loop IR:" << endl << IRPrinter::Build(fn) << endl;
+}
 
-#define REGISTER_CLASS(CLASS, PARENT, MODULE, NAME, ...) \
+#define REGISTER_CLASS(CLASS, PARENT, MODULE, NAME, ...)       \
     py::class_<CLASS, shared_ptr<CLASS>, PARENT>(MODULE, NAME) \
         .def(py::init<__VA_ARGS__>());
 
-PYBIND11_MODULE(ir, m) {
+PYBIND11_MODULE(ir, m)
+{
     /* Structures related to Reffine typing */
     py::enum_<BaseType>(m, "BaseType")
         .value("bool", BaseType::BOOL)
@@ -43,17 +44,15 @@ PYBIND11_MODULE(ir, m) {
         .value("ptr", BaseType::PTR);
 
     py::class_<DataType>(m, "DataType")
-        .def(py::init<BaseType, vector<DataType>, size_t>(),
-              py::arg("btype"),
-              py::arg("dtypes") = vector<DataType>{},
-              py::arg("size") = 0)
+        .def(py::init<BaseType, vector<DataType>, size_t>(), py::arg("btype"),
+             py::arg("dtypes") = vector<DataType>{}, py::arg("size") = 0)
         .def("str", &DataType::str);
 
     /* StmtNode and Derived Structures Declarations
-    */
+     */
     py::class_<StmtNode, Stmt>(m, "stmt");
     py::class_<ExprNode, Expr, StmtNode>(m, "expr");
-    
+
     /* Symbol Definition */
     py::class_<SymNode, Sym, ExprNode>(m, "sym")
         .def(py::init<string, DataType>())
@@ -72,7 +71,8 @@ PYBIND11_MODULE(ir, m) {
     REGISTER_CLASS(Loop, ExprNode, m, "loop", Expr)
 
     /* Statements */
-    REGISTER_CLASS(Func, StmtNode, m, "func", string, Expr, vector<Sym>, SymTable)
+    REGISTER_CLASS(Func, StmtNode, m, "func", string, Expr, vector<Sym>,
+                   SymTable)
     REGISTER_CLASS(Stmts, StmtNode, m, "stmts", vector<Stmt>)
     REGISTER_CLASS(IfElse, StmtNode, m, "ifelse", Expr, Stmt, Stmt)
     REGISTER_CLASS(NoOp, StmtNode, m, "noop")
@@ -102,9 +102,11 @@ PYBIND11_MODULE(ir, m) {
         .value("or", MathOp::OR);
 
     /* Nary Expressions */
-    REGISTER_CLASS(NaryExpr, ExprNode, m, "nary_expr", DataType, MathOp, vector<Expr>)
+    REGISTER_CLASS(NaryExpr, ExprNode, m, "nary_expr", DataType, MathOp,
+                   vector<Expr>)
     REGISTER_CLASS(UnaryExpr, NaryExpr, m, "unary_expr", DataType, MathOp, Expr)
-    REGISTER_CLASS(BinaryExpr, NaryExpr, m, "binary_expr", DataType, MathOp, Expr, Expr)
+    REGISTER_CLASS(BinaryExpr, NaryExpr, m, "binary_expr", DataType, MathOp,
+                   Expr, Expr)
 
     /* Logical Expressions */
     REGISTER_CLASS(Equals, BinaryExpr, m, "equals", Expr, Expr)
