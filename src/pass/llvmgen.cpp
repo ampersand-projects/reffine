@@ -4,8 +4,6 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/IntrinsicsNVPTX.h"
-#include "llvm/MC/TargetRegistry.h"
-#include "llvm/Support/TargetSelect.h"
 #include "reffine/base/type.h"
 
 using namespace reffine;
@@ -382,6 +380,8 @@ void LLVMGen::visit(Stmts& stmts)
 
 Value* LLVMGen::visit(Alloc& alloc)
 {
+    // https://llvm.org/docs/NVPTXUsage.html#address-spaces
+    // 5 for local address space
     auto type = PointerType::get(lltype(alloc.type.dtypes[0]), 5U);
     return builder()->CreateAlloca(type, eval(alloc.size));
 }
@@ -529,7 +529,6 @@ void LLVMGen::register_vinstrs()
     llvm::SMDiagnostic error;
     std::unique_ptr<llvm::Module> vinstr_mod =
         llvm::parseIR(*buffer, error, llctx());
-    vinstr_mod->setTargetTriple("nvptx64-nvidia-cuda");
     if (!vinstr_mod) {
         throw std::runtime_error("Failed to parse vinstr bitcode");
     }

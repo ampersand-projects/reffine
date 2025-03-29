@@ -470,9 +470,7 @@ int main()
     int len = 1024;
     int64_t* in_array = new int64_t[len];
     int true_res = get_test_input_array(in_array, len);
-    int *result;
-    result = (int*)malloc(sizeof(int));
-    cuda->ExecutePTX((int64_t*)(in_array), result);
+    cuda->ExecutePTX((int64_t*)(in_array), len);
     cout << "True Res: " << true_res << endl;
 
     return 0; 

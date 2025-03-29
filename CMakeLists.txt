@@ -19,5 +19,3 @@ target_include_directories(reffine SYSTEM PUBLIC ${CUDA_INCLUDE_DIRS})
 add_subdirectory(third_party/googletest)
 enable_testing()
 add_subdirectory(test)
-
-add_compile_options(-Wno-return-std-move)

@@ -6,8 +6,6 @@
 #include <cassert>
 #include <iostream>
 
-#include "llvm/MC/TargetRegistry.h"
-
 using namespace reffine;
 using namespace std;
 using namespace std::placeholders;
@@ -54,12 +52,10 @@ TargetMachine *CUDAEngine::get_target()
         llvm::TargetRegistry::lookupTarget("nvptx64-nvidia-cuda", Error);
 
     llvm::TargetOptions opt;
-    llvm::TargetMachine *TM = Target->createTargetMachine(
-        "nvptx64-nvidia-cuda",  // checked by running `$ llc --version`
-        "sm_52",   // for NVIDIA GeForce RTX 2080 Ti , checked by running `$
-                   // nvidia-smi`
-        "+ptx73",  //"+ptx76",         // PTX version
-        opt, llvm::Reloc::Static);
+    llvm::TargetMachine *TM =
+        Target->createTargetMachine("nvptx64-nvidia-cuda", "sm_52",
+                                    "+ptx76",  // PTX version
+                                    opt, llvm::Reloc::Static);
 
     llmod.setDataLayout(TM->createDataLayout());
 
@@ -82,7 +78,7 @@ void CUDAEngine::GeneratePTX()
     ptx_str = PTXStr.str().str();
 }
 
-void CUDAEngine::ExecutePTX(void *arg, int *result)
+void CUDAEngine::ExecutePTX(void *arg, int len)
 {
     CUdevice device;
     CUmodule cudaModule;
@@ -97,7 +93,6 @@ void CUDAEngine::ExecutePTX(void *arg, int *result)
     cuDeviceGetName(name, 128, device);
     std::cout << "Device name: " << name << "\n";
 
-    int len = 1024;
     CUdeviceptr d_arr;
     checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t) * len));
     checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t) * len));

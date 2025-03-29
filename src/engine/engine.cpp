@@ -2,7 +2,6 @@
 
 #include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Transforms/IPO/PartialInlining.h"
 #include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Scalar.h"

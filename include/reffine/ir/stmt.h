@@ -1,7 +1,7 @@
 #ifndef INCLUDE_REFFINE_IR_STMT_H
 #define INCLUDE_REFFINE_IR_STMT_H
 
-#include "reffine/ir/loop.h"
+#include "reffine/ir/node.h"
 
 namespace reffine {
 

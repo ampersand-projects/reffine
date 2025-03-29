@@ -22,8 +22,6 @@ set(SRC_FILES
     builder/reffiner.cpp
 )
 
-add_compile_options(-Wno-return-std-move)
-
 find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
