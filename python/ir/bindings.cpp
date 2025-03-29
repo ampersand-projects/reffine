@@ -39,7 +39,8 @@ PYBIND11_MODULE(ir, m) {
         .value("u64", BaseType::UINT64)
         .value("f32", BaseType::FLOAT32)
         .value("f64", BaseType::FLOAT64)
-        .value("struct", BaseType::STRUCT);
+        .value("struct", BaseType::STRUCT)
+        .value("ptr", BaseType::PTR);
 
     py::class_<DataType>(m, "DataType")
         .def(py::init<BaseType, vector<DataType>, size_t>(),
@@ -120,9 +121,11 @@ PYBIND11_MODULE(ir, m) {
     REGISTER_CLASS(GreaterThanEqual, BinaryExpr, m, "gte", Expr, Expr)
 
     /* Misc Expressions */
+    REGISTER_CLASS(Call, ExprNode, m, "call", string, DataType, vector<Expr>)
     REGISTER_CLASS(Get, ExprNode, m, "get", Expr, size_t)
     REGISTER_CLASS(New, ExprNode, m, "new", vector<Expr>)
     REGISTER_CLASS(Cast, ExprNode, m, "cast", DataType, Expr)
+    REGISTER_CLASS(Select, ExprNode, m, "select", Expr, Expr, Expr)
 
     m.def("print_IR", &print_IR);
 }
