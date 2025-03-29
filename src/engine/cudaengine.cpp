@@ -91,7 +91,7 @@ void CUDAEngine::ExecutePTX(void *arg, int len)
 
     char name[128];
     cuDeviceGetName(name, 128, device);
-    std::cout << "Device name: " << name << "\n";
+    std::cout << "Device name: " << name << endl;
 
     CUdeviceptr d_arr;
     checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t) * len));
@@ -103,7 +103,7 @@ void CUDAEngine::ExecutePTX(void *arg, int len)
     checkCudaErrors(cuModuleLoadData(&cudaModule, ptx_str.c_str()));
     checkCudaErrors(
         cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
-    cout << "About to run " << kernel_name << " kernel." << endl;
+    cout << "About to run " << kernel_name << " kernel..." << endl;
 
     int blockDimX = 32;  // num of threads per block
     int gridDimX = (len + blockDimX - 1) / blockDimX;  // num of blocks
