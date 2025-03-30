@@ -12,8 +12,7 @@ struct Func : public StmtNode {
     SymTable tbl;
     bool is_kernel;
 
-    Func(string name, Expr output, vector<Sym> inputs, bool is_kernel = false,
-         SymTable tbl = {})
+    Func(string name, Expr output, vector<Sym> inputs, SymTable tbl = {}, bool is_kernel = false)
         : StmtNode(),
           name(name),
           output(output),

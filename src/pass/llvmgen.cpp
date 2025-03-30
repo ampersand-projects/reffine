@@ -568,6 +568,54 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
     return var;
 }
 
+void LLVMGen::init_cuda()
+{
+    InitializeAllTargets();
+    InitializeAllTargetMCs();
+    InitializeAllAsmPrinters();
+    InitializeAllAsmParsers();
+
+    llmod()->setTargetTriple("nvptx64-nvidia-cuda");
+}
+
+TargetMachine *LLVMGen::get_target()
+{
+    std::string Error;
+    const llvm::Target *Target =
+        llvm::TargetRegistry::lookupTarget("nvptx64-nvidia-cuda", Error);
+
+    llvm::TargetOptions opt;
+    llvm::TargetMachine *TM =
+        Target->createTargetMachine("nvptx64-nvidia-cuda", "sm_52",
+                                    "+ptx76",  // PTX version
+                                    opt, llvm::Reloc::Static);
+
+    llmod()->setDataLayout(TM->createDataLayout());
+
+    return TM;
+}
+
+string LLVMGen::BuildPTX(shared_ptr<Func> func, Module& llmod)
+{
+    LLVMGenCtx ctx(func);
+    LLVMGen llgen(ctx, llmod);
+    llgen.init_cuda();
+    func->Accept(llgen);
+
+    auto TM = llgen.get_target();
+
+    llvm::SmallString<1048576> PTXStr;
+    llvm::raw_svector_ostream PTXOS(PTXStr);
+
+    llvm::legacy::PassManager PM;
+    TM->addPassesToEmitFile(PM, PTXOS, nullptr,
+                            llvm::CodeGenFileType::AssemblyFile);
+    PM.run(llmod);
+    cout << "Finished generating PTX..." << endl;
+
+    return PTXStr.str().str();
+}
+
 void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
 {
     LLVMGenCtx ctx(func);

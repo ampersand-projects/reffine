@@ -14,8 +14,13 @@ add_subdirectory(src)
 
 add_executable(main main.cpp)
 target_link_libraries(main reffine Arrow::arrow_shared)
-target_include_directories(reffine SYSTEM PUBLIC ${CUDA_INCLUDE_DIRS})
 
 add_subdirectory(third_party/googletest)
 enable_testing()
 add_subdirectory(test)
+
+option(ENABLE_CUDA "Enable CUDA support" ON)
+if(ENABLE_CUDA)
+    find_package(CUDA REQUIRED)
+    target_include_directories(reffine SYSTEM PUBLIC ${CUDA_INCLUDE_DIRS})
+endif()
