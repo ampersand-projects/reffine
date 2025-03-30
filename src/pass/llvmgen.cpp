@@ -578,14 +578,14 @@ void LLVMGen::init_cuda()
     llmod()->setTargetTriple("nvptx64-nvidia-cuda");
 }
 
-TargetMachine *LLVMGen::get_target()
+TargetMachine* LLVMGen::get_target()
 {
     std::string Error;
-    const llvm::Target *Target =
+    const llvm::Target* Target =
         llvm::TargetRegistry::lookupTarget("nvptx64-nvidia-cuda", Error);
 
     llvm::TargetOptions opt;
-    llvm::TargetMachine *TM =
+    llvm::TargetMachine* TM =
         Target->createTargetMachine("nvptx64-nvidia-cuda", "sm_52",
                                     "+ptx76",  // PTX version
                                     opt, llvm::Reloc::Static);

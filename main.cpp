@@ -266,13 +266,8 @@ shared_ptr<Func> basic_transform_kernel()
 
     auto out_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_out_sym, idx});
 
-    auto tid = make_shared<ThreadIdx>();
-    auto bid = make_shared<BlockIdx>();
-    auto bdim = make_shared<BlockDim>();
-    auto gdim = make_shared<GridDim>();
-
-    auto idx_start = get_start_idx(tid, bid, bdim, gdim, len);
-    auto idx_end = get_end_idx(tid, bid, bdim, gdim, len);
+    auto idx_start = get_start_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
+    auto idx_end = get_end_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
 
     auto loop = _loop(_load(vec_out_sym));
 
