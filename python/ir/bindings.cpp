@@ -16,10 +16,7 @@ using namespace reffine::reffiner;
 
 namespace py = pybind11;
 
-void print_IR(shared_ptr<Func> fn)
-{
-    cout << "Loop IR:" << endl << IRPrinter::Build(fn) << endl;
-}
+string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
 
 #define REGISTER_CLASS(CLASS, PARENT, MODULE, NAME, ...)       \
     py::class_<CLASS, shared_ptr<CLASS>, PARENT>(MODULE, NAME) \
@@ -58,10 +55,7 @@ PYBIND11_MODULE(ir, m)
         .def(py::init<string, DataType>())
         .def(py::init<string, Expr>());
 
-    /* Constant Expressions */
-    REGISTER_CLASS(Const, ExprNode, m, "const", DataType, double)
-
-    /* Loop ops */
+    /* Loop */
     REGISTER_CLASS(IsValid, ExprNode, m, "is_valid", Expr, Expr, size_t)
     REGISTER_CLASS(SetValid, ExprNode, m, "set_valid", Expr, Expr, Expr, size_t)
     REGISTER_CLASS(FetchDataPtr, ExprNode, m, "fetch", Expr, Expr, size_t)
@@ -70,6 +64,9 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(Store, StmtNode, m, "store", Expr, Expr)
     REGISTER_CLASS(Loop, ExprNode, m, "loop", Expr)
 
+    /* Op */
+    REGISTER_CLASS(Op, ExprNode, m, "op", vector<Sym>, Expr, vector<Expr>)
+
     /* Statements */
     REGISTER_CLASS(Func, StmtNode, m, "func", string, Expr, vector<Sym>,
                    SymTable)
@@ -77,29 +74,37 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(IfElse, StmtNode, m, "ifelse", Expr, Stmt, Stmt)
     REGISTER_CLASS(NoOp, StmtNode, m, "noop")
 
+    /* Misc Expressions */
+    REGISTER_CLASS(Call, ExprNode, m, "call", string, DataType, vector<Expr>)
+    REGISTER_CLASS(Select, ExprNode, m, "select", Expr, Expr, Expr)
+    REGISTER_CLASS(Const, ExprNode, m, "const", DataType, double)
+    REGISTER_CLASS(Cast, ExprNode, m, "cast", DataType, Expr)
+    REGISTER_CLASS(Get, ExprNode, m, "get", Expr, size_t)
+    REGISTER_CLASS(New, ExprNode, m, "new", vector<Expr>)
+
     /* Math Operators for Nary Expressions */
     py::enum_<MathOp>(m, "MathOp")
-        .value("add", MathOp::ADD)
-        .value("sub", MathOp::SUB)
-        .value("mul", MathOp::MUL)
-        .value("div", MathOp::DIV)
-        .value("max", MathOp::MAX)
-        .value("min", MathOp::MIN)
-        .value("mod", MathOp::MOD)
-        .value("sqrt", MathOp::SQRT)
-        .value("pow", MathOp::POW)
-        .value("abs", MathOp::ABS)
-        .value("neg", MathOp::NEG)
-        .value("ceil", MathOp::CEIL)
-        .value("floor", MathOp::FLOOR)
-        .value("lt", MathOp::LT)
-        .value("lte", MathOp::LTE)
-        .value("gt", MathOp::GT)
-        .value("gte", MathOp::GTE)
-        .value("eq", MathOp::EQ)
-        .value("not", MathOp::NOT)
-        .value("and", MathOp::AND)
-        .value("or", MathOp::OR);
+        .value("_add", MathOp::ADD)
+        .value("_sub", MathOp::SUB)
+        .value("_mul", MathOp::MUL)
+        .value("_div", MathOp::DIV)
+        .value("_max", MathOp::MAX)
+        .value("_min", MathOp::MIN)
+        .value("_mod", MathOp::MOD)
+        .value("_sqrt", MathOp::SQRT)
+        .value("_pow", MathOp::POW)
+        .value("_abs", MathOp::ABS)
+        .value("_neg", MathOp::NEG)
+        .value("_ceil", MathOp::CEIL)
+        .value("_floor", MathOp::FLOOR)
+        .value("_lt", MathOp::LT)
+        .value("_lte", MathOp::LTE)
+        .value("_gt", MathOp::GT)
+        .value("_gte", MathOp::GTE)
+        .value("_eq", MathOp::EQ)
+        .value("_not", MathOp::NOT)
+        .value("_and", MathOp::AND)
+        .value("_or", MathOp::OR);
 
     /* Nary Expressions */
     REGISTER_CLASS(NaryExpr, ExprNode, m, "nary_expr", DataType, MathOp,
@@ -108,10 +113,26 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(BinaryExpr, NaryExpr, m, "binary_expr", DataType, MathOp,
                    Expr, Expr)
 
+    /* Math ops */
+    REGISTER_CLASS(Not, UnaryExpr, m, "_not", Expr)
+    REGISTER_CLASS(Abs, UnaryExpr, m, "_abs", Expr)
+    REGISTER_CLASS(Neg, UnaryExpr, m, "_neg", Expr)
+    REGISTER_CLASS(Sqrt, UnaryExpr, m, "_sqrt", Expr)
+    REGISTER_CLASS(Ceil, UnaryExpr, m, "_ceil", Expr)
+    REGISTER_CLASS(Floor, UnaryExpr, m, "_floor", Expr)
+    REGISTER_CLASS(Add, BinaryExpr, m, "_add", Expr, Expr)
+    REGISTER_CLASS(Sub, BinaryExpr, m, "_sub", Expr, Expr)
+    REGISTER_CLASS(Mul, BinaryExpr, m, "_mul", Expr, Expr)
+    REGISTER_CLASS(Div, BinaryExpr, m, "_div", Expr, Expr)
+    REGISTER_CLASS(Max, BinaryExpr, m, "_max", Expr, Expr)
+    REGISTER_CLASS(Min, BinaryExpr, m, "_min", Expr, Expr)
+    REGISTER_CLASS(Mod, BinaryExpr, m, "_mod", Expr, Expr)
+    REGISTER_CLASS(Pow, BinaryExpr, m, "_pow", Expr, Expr)
+    REGISTER_CLASS(Equals, BinaryExpr, m, "_eq", Expr, Expr)
+    REGISTER_CLASS(And, BinaryExpr, m, "_and", Expr, Expr)
+    REGISTER_CLASS(Or, BinaryExpr, m, "_or", Expr, Expr)
+
     /* Logical Expressions */
-    REGISTER_CLASS(Equals, BinaryExpr, m, "equals", Expr, Expr)
-    REGISTER_CLASS(And, BinaryExpr, m, "and", Expr, Expr)
-    REGISTER_CLASS(Or, BinaryExpr, m, "or", Expr, Expr)
     REGISTER_CLASS(Implies, BinaryExpr, m, "implies", Expr, Expr)
     REGISTER_CLASS(ForAll, NaryExpr, m, "for_all", Sym, Expr)
     REGISTER_CLASS(Exists, NaryExpr, m, "exists", Sym, Expr)
@@ -122,12 +143,5 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(LessThanEqual, BinaryExpr, m, "lte", Expr, Expr)
     REGISTER_CLASS(GreaterThanEqual, BinaryExpr, m, "gte", Expr, Expr)
 
-    /* Misc Expressions */
-    REGISTER_CLASS(Call, ExprNode, m, "call", string, DataType, vector<Expr>)
-    REGISTER_CLASS(Get, ExprNode, m, "get", Expr, size_t)
-    REGISTER_CLASS(New, ExprNode, m, "new", vector<Expr>)
-    REGISTER_CLASS(Cast, ExprNode, m, "cast", DataType, Expr)
-    REGISTER_CLASS(Select, ExprNode, m, "select", Expr, Expr, Expr)
-
-    m.def("print_IR", &print_IR);
+    m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
 }
