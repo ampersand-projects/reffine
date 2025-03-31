@@ -55,32 +55,34 @@ PYBIND11_MODULE(ir, m)
         .def(py::init<string, DataType>())
         .def(py::init<string, Expr>());
 
+    /* Const */
+    REGISTER_CLASS(Const, ExprNode, m, "const", DataType, double)
+
     /* Loop */
-    REGISTER_CLASS(IsValid, ExprNode, m, "is_valid", Expr, Expr, size_t)
-    REGISTER_CLASS(SetValid, ExprNode, m, "set_valid", Expr, Expr, Expr, size_t)
-    REGISTER_CLASS(FetchDataPtr, ExprNode, m, "fetch", Expr, Expr, size_t)
-    REGISTER_CLASS(Alloc, ExprNode, m, "alloc", DataType, Expr)
-    REGISTER_CLASS(Load, ExprNode, m, "load", Expr)
-    REGISTER_CLASS(Store, StmtNode, m, "store", Expr, Expr)
-    REGISTER_CLASS(Loop, ExprNode, m, "loop", Expr)
+    REGISTER_CLASS(IsValid, ExprNode, m, "_is_valid", Expr, Expr, size_t)
+    REGISTER_CLASS(SetValid, ExprNode, m, "_set_valid", Expr, Expr, Expr, size_t)
+    REGISTER_CLASS(FetchDataPtr, ExprNode, m, "_fetch", Expr, Expr, size_t)
+    REGISTER_CLASS(Alloc, ExprNode, m, "_alloc", DataType, Expr)
+    REGISTER_CLASS(Load, ExprNode, m, "_load", Expr)
+    REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr)
+    REGISTER_CLASS(Loop, ExprNode, m, "_loop", Expr)
 
     /* Op */
-    REGISTER_CLASS(Op, ExprNode, m, "op", vector<Sym>, Expr, vector<Expr>)
+    REGISTER_CLASS(Op, ExprNode, m, "_op", vector<Sym>, Expr, vector<Expr>)
 
     /* Statements */
-    REGISTER_CLASS(Func, StmtNode, m, "func", string, Expr, vector<Sym>,
+    REGISTER_CLASS(Func, StmtNode, m, "_func", string, Expr, vector<Sym>,
                    SymTable)
-    REGISTER_CLASS(Stmts, StmtNode, m, "stmts", vector<Stmt>)
-    REGISTER_CLASS(IfElse, StmtNode, m, "ifelse", Expr, Stmt, Stmt)
-    REGISTER_CLASS(NoOp, StmtNode, m, "noop")
+    REGISTER_CLASS(Stmts, StmtNode, m, "_stmts", vector<Stmt>)
+    REGISTER_CLASS(IfElse, StmtNode, m, "_ifelse", Expr, Stmt, Stmt)
+    REGISTER_CLASS(NoOp, StmtNode, m, "_noop")
 
     /* Misc Expressions */
-    REGISTER_CLASS(Call, ExprNode, m, "call", string, DataType, vector<Expr>)
-    REGISTER_CLASS(Select, ExprNode, m, "select", Expr, Expr, Expr)
-    REGISTER_CLASS(Const, ExprNode, m, "const", DataType, double)
-    REGISTER_CLASS(Cast, ExprNode, m, "cast", DataType, Expr)
-    REGISTER_CLASS(Get, ExprNode, m, "get", Expr, size_t)
-    REGISTER_CLASS(New, ExprNode, m, "new", vector<Expr>)
+    REGISTER_CLASS(Call, ExprNode, m, "_call", string, DataType, vector<Expr>)
+    REGISTER_CLASS(Select, ExprNode, m, "_select", Expr, Expr, Expr)
+    REGISTER_CLASS(Cast, ExprNode, m, "_cast", DataType, Expr)
+    REGISTER_CLASS(Get, ExprNode, m, "_get", Expr, size_t)
+    REGISTER_CLASS(New, ExprNode, m, "_new", vector<Expr>)
 
     /* Math Operators for Nary Expressions */
     py::enum_<MathOp>(m, "MathOp")
@@ -107,10 +109,10 @@ PYBIND11_MODULE(ir, m)
         .value("_or", MathOp::OR);
 
     /* Nary Expressions */
-    REGISTER_CLASS(NaryExpr, ExprNode, m, "nary_expr", DataType, MathOp,
+    REGISTER_CLASS(NaryExpr, ExprNode, m, "_nary_expr", DataType, MathOp,
                    vector<Expr>)
-    REGISTER_CLASS(UnaryExpr, NaryExpr, m, "unary_expr", DataType, MathOp, Expr)
-    REGISTER_CLASS(BinaryExpr, NaryExpr, m, "binary_expr", DataType, MathOp,
+    REGISTER_CLASS(UnaryExpr, NaryExpr, m, "_unary_expr", DataType, MathOp, Expr)
+    REGISTER_CLASS(BinaryExpr, NaryExpr, m, "_binary_expr", DataType, MathOp,
                    Expr, Expr)
 
     /* Math ops */
@@ -133,15 +135,15 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(Or, BinaryExpr, m, "_or", Expr, Expr)
 
     /* Logical Expressions */
-    REGISTER_CLASS(Implies, BinaryExpr, m, "implies", Expr, Expr)
-    REGISTER_CLASS(ForAll, NaryExpr, m, "for_all", Sym, Expr)
-    REGISTER_CLASS(Exists, NaryExpr, m, "exists", Sym, Expr)
+    REGISTER_CLASS(Implies, BinaryExpr, m, "_implies", Expr, Expr)
+    REGISTER_CLASS(ForAll, NaryExpr, m, "_for_all", Sym, Expr)
+    REGISTER_CLASS(Exists, NaryExpr, m, "_exists", Sym, Expr)
 
     /* Comparison Operators*/
-    REGISTER_CLASS(LessThan, BinaryExpr, m, "lt", Expr, Expr)
-    REGISTER_CLASS(GreaterThan, BinaryExpr, m, "gt", Expr, Expr)
-    REGISTER_CLASS(LessThanEqual, BinaryExpr, m, "lte", Expr, Expr)
-    REGISTER_CLASS(GreaterThanEqual, BinaryExpr, m, "gte", Expr, Expr)
+    REGISTER_CLASS(LessThan, BinaryExpr, m, "_lt", Expr, Expr)
+    REGISTER_CLASS(GreaterThan, BinaryExpr, m, "_gt", Expr, Expr)
+    REGISTER_CLASS(LessThanEqual, BinaryExpr, m, "_lte", Expr, Expr)
+    REGISTER_CLASS(GreaterThanEqual, BinaryExpr, m, "_gte", Expr, Expr)
 
     m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
 }
