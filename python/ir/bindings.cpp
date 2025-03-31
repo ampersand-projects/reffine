@@ -60,7 +60,8 @@ PYBIND11_MODULE(ir, m)
 
     /* Loop */
     REGISTER_CLASS(IsValid, ExprNode, m, "_is_valid", Expr, Expr, size_t)
-    REGISTER_CLASS(SetValid, ExprNode, m, "_set_valid", Expr, Expr, Expr, size_t)
+    REGISTER_CLASS(SetValid, ExprNode, m, "_set_valid", Expr, Expr, Expr,
+                   size_t)
     REGISTER_CLASS(FetchDataPtr, ExprNode, m, "_fetch", Expr, Expr, size_t)
     REGISTER_CLASS(Alloc, ExprNode, m, "_alloc", DataType, Expr)
     REGISTER_CLASS(Load, ExprNode, m, "_load", Expr)
@@ -111,7 +112,8 @@ PYBIND11_MODULE(ir, m)
     /* Nary Expressions */
     REGISTER_CLASS(NaryExpr, ExprNode, m, "_nary_expr", DataType, MathOp,
                    vector<Expr>)
-    REGISTER_CLASS(UnaryExpr, NaryExpr, m, "_unary_expr", DataType, MathOp, Expr)
+    REGISTER_CLASS(UnaryExpr, NaryExpr, m, "_unary_expr", DataType, MathOp,
+                   Expr)
     REGISTER_CLASS(BinaryExpr, NaryExpr, m, "_binary_expr", DataType, MathOp,
                    Expr, Expr)
 
