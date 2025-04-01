@@ -13,6 +13,7 @@
 #include <z3++.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <ctime>
 
 #include "reffine/ir/node.h"
 #include "reffine/ir/stmt.h"
@@ -250,13 +251,53 @@ shared_ptr<ExprNode> get_end_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr 
     return thread_end;
 }
 
-shared_ptr<Func> basic_transform_kernel()
+shared_ptr<Func> basic_aggregate_kernel(int n)
+{
+    /* kernel version of vector_fn */
+    auto sum_out_sym = _sym("res", types::INT64.ptr());
+    auto vec_in_sym = _sym("input", types::INT64.ptr());
+
+    auto len = _idx(n);
+    auto idx_alloc = _alloc(_idx_t);
+    auto idx_addr = _sym("idx_addr", idx_alloc);
+    auto idx = _load(idx_addr);
+
+    auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_in_sym, idx});
+    auto val = _load(val_ptr);
+
+    // auto out_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_out_sym, idx});
+
+    auto idx_start = get_start_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
+    auto idx_end = get_end_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
+
+    auto loop = _loop(_load(sum_out_sym));
+
+    loop->init = _stmts(vector<Stmt>{
+        idx_alloc,
+        _store(idx_addr, idx_start),
+        // _store(idx_addr, _idx(0)),
+    });
+    loop->body = _stmts(vector<Stmt>{
+        _store(sum_out_sym, _add(_load(sum_out_sym), val)),
+        _store(idx_addr, idx + _idx(1)),
+    });
+    loop->exit_cond = _gte(idx, idx_end);
+    // loop->exit_cond = _gte(idx, len);
+    auto loop_sym = _sym("loop", loop);
+
+    auto foo_fn = make_shared<Func>("foo", loop, vector<Sym>{sum_out_sym, vec_in_sym}, SymTable(), true);
+    foo_fn->tbl[idx_addr] = idx_alloc;
+
+    return foo_fn;
+}
+
+shared_ptr<Func> basic_transform_kernel(int n)
 {
     /* kernel version of transform_fn */
     auto vec_out_sym = _sym("res", types::INT64.ptr());
     auto vec_in_sym = _sym("input", types::INT64.ptr());
 
-    auto len = _idx(1024);
+    auto len = _idx(n);
     auto idx_alloc = _alloc(_idx_t);
     auto idx_addr = _sym("idx_addr", idx_alloc);
     auto idx = _load(idx_addr);
@@ -277,6 +318,54 @@ shared_ptr<Func> basic_transform_kernel()
     });
     loop->body = _stmts(vector<Stmt>{
         _store(out_ptr, _add(_i64(1), val)),
+        _store(idx_addr, idx + _idx(1)),
+    });
+    loop->exit_cond = _gte(idx, idx_end);
+    auto loop_sym = _sym("loop", loop);
+
+    auto foo_fn = make_shared<Func>("foo", loop, vector<Sym>{vec_out_sym, vec_in_sym}, SymTable(), true);
+    foo_fn->tbl[idx_addr] = idx_alloc;
+
+    return foo_fn;
+}
+
+shared_ptr<Func> basic_select_kernel(int n)
+{
+    /* kernel version of select */
+    auto vec_out_sym = _sym("res", types::INT64.ptr());
+    auto vec_in_sym = _sym("input", types::INT64.ptr());
+
+    auto len = _idx(n);
+    auto idx_alloc = _alloc(_idx_t);
+    auto idx_addr = _sym("idx_addr", idx_alloc);
+    auto idx = _load(idx_addr);
+
+    auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_in_sym, idx});
+    auto val = _load(val_ptr);
+
+    auto out_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_out_sym, idx});
+
+    auto idx_start = get_start_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
+    auto idx_end = get_end_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
+
+    auto loop = _loop(_load(vec_out_sym));
+
+    loop->init = _stmts(vector<Stmt>{
+        idx_alloc,
+        _store(idx_addr, idx_start),
+    });
+    loop->body = _stmts(vector<Stmt>{
+        _store(
+            out_ptr, 
+            _sel(
+                _eq(
+                    _mod(val, _i64(2)),
+                    _i64(0)
+                ),
+                val,
+                _i64(0)
+            )
+        ),
         _store(idx_addr, idx + _idx(1)),
     });
     loop->exit_cond = _gte(idx, idx_end);
@@ -404,8 +493,13 @@ static void __checkCudaErrors(CUresult err, const char *filename, int line)
     }
 }
 
-void execute_ptx(string kernel_name, string ptx_str, void *arg, int len)
+void benchmark_transform_kernel(string kernel_name, string ptx_str, int len, int iter)
 {
+    int64_t* in_array = new int64_t[len];
+    for (int i = 0; i < len; i++) {
+        in_array[i] = i;
+    }
+
     CUdevice device;
     CUmodule cudaModule;
     CUcontext context;
@@ -421,7 +515,7 @@ void execute_ptx(string kernel_name, string ptx_str, void *arg, int len)
 
     CUdeviceptr d_arr;
     checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t) * len));
-    checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t) * len));
+    checkCudaErrors(cuMemcpyHtoD(d_arr, in_array, sizeof(int64_t) * len));
 
     CUdeviceptr d_arr_out;
     checkCudaErrors(cuMemAlloc(&d_arr_out, sizeof(int64_t) * len));
@@ -438,29 +532,119 @@ void execute_ptx(string kernel_name, string ptx_str, void *arg, int len)
         &d_arr,
     };
 
-    checkCudaErrors(cuLaunchKernel(function, gridDimX, 1, 1, blockDimX, 1, 1,
-                                   0,  // shared memory size
-                                   0,  // stream handle
-                                   kernelParams, NULL));
+    // auto iter = 10000;
+    double total_duration = 0.0;
+    for (int i = 0; i < iter; i++) {
+        clock_t start = clock();
 
-    checkCudaErrors(cuCtxSynchronize());
+        checkCudaErrors(cuLaunchKernel(function, gridDimX, 1, 1, blockDimX, 1, 1,
+                                    0,  // shared memory size
+                                    0,  // stream handle
+                                    kernelParams, NULL));
+
+        checkCudaErrors(cuCtxSynchronize());
+
+        clock_t end = clock();
+        total_duration = total_duration + double(end - start) / CLOCKS_PER_SEC;
+    }
 
     auto arr_out = (int64_t *)malloc(sizeof(int64_t) * len);
     checkCudaErrors(cuMemcpyDtoH(arr_out, d_arr_out, sizeof(int64_t) * len));
     cuMemFree(d_arr);
-    cout << "Output from " << kernel_name << " kernel:" << endl;
-    for (int i = 0; i < len; i++) { cout << arr_out[i] << ", "; }
+    // cout << "Output from " << kernel_name << " kernel:" << endl;
+    // for (int i = 0; i < len; i++) { cout << arr_out[i] << ", "; }
     cout << endl << endl;
 
     cuMemFree(d_arr);
     cuMemFree(d_arr_out);
     cuModuleUnload(cudaModule);
     cuCtxDestroy(context);
+
+    double duration = total_duration / iter;
+    std::cout << "Transform Execution time: " << duration << " seconds" << std::endl;
 }
 
-void test_kernel() {
+void benchmark_aggregate_kernel(string kernel_name, string ptx_str, int len, int iter)
+{
+    int64_t* in_array = new int64_t[len];
+    for (int i = 0; i < len; i++) {
+        in_array[i] = i;
+    }
+    int res = 0;
+
+    CUdevice device;
+    CUmodule cudaModule;
+    CUcontext context;
+    CUfunction function;
+
+    checkCudaErrors(cuInit(0));
+    checkCudaErrors(cuDeviceGet(&device, 0));
+    checkCudaErrors(cuCtxCreate(&context, 0, device));
+
+    char name[128];
+    cuDeviceGetName(name, 128, device);
+    std::cout << "Device name: " << name << endl;
+
+    CUdeviceptr d_arr;
+    checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t) * len));
+    checkCudaErrors(cuMemcpyHtoD(d_arr, in_array, sizeof(int64_t) * len));
+
+    CUdeviceptr d_res_out;
+    checkCudaErrors(cuMemAlloc(&d_res_out, sizeof(int64_t)));
+    checkCudaErrors(cuMemcpyHtoD(d_res_out, &res, sizeof(int64_t)));
+
+    checkCudaErrors(cuModuleLoadData(&cudaModule, ptx_str.c_str()));
+    checkCudaErrors(
+        cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
+    cout << "About to run " << kernel_name << " kernel..." << endl;
+
+    int blockDimX = 32;  // num of threads per block
+    int gridDimX = (len + blockDimX - 1) / blockDimX;  // num of blocks
+    void *kernelParams[] = {
+        &d_res_out,
+        &d_arr,
+    };
+
+    // auto iter = 10000;
+    double total_duration = 0.0;
+    for (int i = 0; i < iter; i++) {
+        checkCudaErrors(cuMemcpyHtoD(d_res_out, &res, sizeof(int64_t)));
+        kernelParams[0] = &d_res_out;
+
+        clock_t start = clock();
+
+        checkCudaErrors(cuLaunchKernel(function, gridDimX, 1, 1, blockDimX, 1, 1,
+                                    0,  // shared memory size
+                                    0,  // stream handle
+                                    kernelParams, NULL));
+
+        checkCudaErrors(cuCtxSynchronize());
+
+        clock_t end = clock();
+        total_duration = total_duration + double(end - start) / CLOCKS_PER_SEC;
+    }
+
+    // auto res = (int64_t *)malloc(sizeof(int64_t));
+    checkCudaErrors(cuMemcpyDtoH(&res, d_res_out, sizeof(int64_t)));
+    cuMemFree(d_arr);
+    // cout << "Output from " << kernel_name << " kernel:" << endl;
+    // cout << res << endl;
+    // cout << endl << endl;
+
+    cuMemFree(d_arr);
+    cuMemFree(d_res_out);
+    cuModuleUnload(cudaModule);
+    cuCtxDestroy(context);
+
+    double duration = total_duration / iter;
+    std::cout << "Aggregate Kernel Execution time: " << duration << " seconds" << std::endl;
+}
+
+void test_kernel(int len, int iter) {
     /* Test kernel generation and execution*/
-    auto fn = basic_transform_kernel();
+    auto fn = basic_transform_kernel(len);
+    // auto fn = basic_aggregate_kernel(len);
+    // auto fn = basic_select_kernel(len);
     cout << "Loop IR: " << endl << IRPrinter::Build(fn) << endl;
     CanonPass::Build(fn);
 
@@ -472,22 +656,20 @@ void test_kernel() {
     auto output_ptx = LLVMGen::BuildPTX(fn, *llmod);
     cout << "Generated PTX:" << endl << output_ptx << endl;
 
-    int len = 1024;
-    int64_t* in_array = new int64_t[len];
-    for (int i = 0; i < len; i++) {
-        in_array[i] = i;
-    }
-    execute_ptx(llmod->getName().str(), output_ptx, (int64_t*)(in_array), len);
+    // auto len = 1024*1024;
+    // auto iter = 10000;
+    benchmark_transform_kernel(llmod->getName().str(), output_ptx, len, iter);
+    // benchmark_aggregate_kernel(llmod->getName().str(), output_ptx, len, iter);
 
     return;
 }
 
 int main()
 {
-    /*
-    test_kernel();
+    int len = 1024*1024;
+    int iter = 1000000;
+    test_kernel(len, iter);
     return 0;
-    */
 
     auto table = load_arrow_file("../benchmark/store_sales.arrow");
 

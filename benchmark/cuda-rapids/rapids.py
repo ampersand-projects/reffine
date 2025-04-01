@@ -60,6 +60,6 @@ def benchmark_select(n=1025, iter=10000):
     print(f"Average RAPIDS cuDF select time: {av_time:.6f} seconds over {iter} iterations")
     print(res_gpu)
     
-benchmark_aggregate()
-benchmark_transform()
-benchmark_select()
+# benchmark_aggregate()
+benchmark_transform(1024*1024, 1000000)
+benchmark_select(1024*1024, 1000000)
