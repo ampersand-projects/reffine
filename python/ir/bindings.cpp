@@ -47,29 +47,30 @@ PYBIND11_MODULE(ir, m)
 
     /* StmtNode and Derived Structures Declarations
      */
-    py::class_<StmtNode, Stmt>(m, "stmt");
-    py::class_<ExprNode, Expr, StmtNode>(m, "expr");
+    py::class_<StmtNode, Stmt>(m, "_stmt");
+    py::class_<ExprNode, Expr, StmtNode>(m, "_expr");
 
     /* Symbol Definition */
-    py::class_<SymNode, Sym, ExprNode>(m, "sym")
+    py::class_<SymNode, Sym, ExprNode>(m, "_sym")
         .def(py::init<string, DataType>())
         .def(py::init<string, Expr>());
 
     /* Const */
-    REGISTER_CLASS(Const, ExprNode, m, "const", DataType, double)
+    REGISTER_CLASS(Const, ExprNode, m, "_const", DataType, double)
 
     /* Loop */
-    REGISTER_CLASS(IsValid, ExprNode, m, "_is_valid", Expr, Expr, size_t)
-    REGISTER_CLASS(SetValid, ExprNode, m, "_set_valid", Expr, Expr, Expr,
-                   size_t)
+    REGISTER_CLASS(IsValid, ExprNode, m, "_isval", Expr, Expr, size_t)
+    REGISTER_CLASS(SetValid, ExprNode, m, "_setvald", Expr, Expr, Expr, size_t)
     REGISTER_CLASS(FetchDataPtr, ExprNode, m, "_fetch", Expr, Expr, size_t)
     REGISTER_CLASS(Alloc, ExprNode, m, "_alloc", DataType, Expr)
     REGISTER_CLASS(Load, ExprNode, m, "_load", Expr)
-    REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr)
     REGISTER_CLASS(Loop, ExprNode, m, "_loop", Expr)
 
     /* Op */
+    REGISTER_CLASS(Element, ExprNode, m, "_elem", Expr, vector<Expr>)
     REGISTER_CLASS(Op, ExprNode, m, "_op", vector<Sym>, Expr, vector<Expr>)
+    REGISTER_CLASS(Reduce, ExprNode, m, "_red", Op, InitFnTy, AccFnTy)
+    REGISTER_CLASS(NotNull, ExprNode, m, "_notnull", Expr)
 
     /* Statements */
     REGISTER_CLASS(Func, StmtNode, m, "_func", string, Expr, vector<Sym>,
@@ -77,6 +78,7 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(Stmts, StmtNode, m, "_stmts", vector<Stmt>)
     REGISTER_CLASS(IfElse, StmtNode, m, "_ifelse", Expr, Stmt, Stmt)
     REGISTER_CLASS(NoOp, StmtNode, m, "_noop")
+    REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr)
 
     /* Misc Expressions */
     REGISTER_CLASS(Call, ExprNode, m, "_call", string, DataType, vector<Expr>)
@@ -110,12 +112,11 @@ PYBIND11_MODULE(ir, m)
         .value("_or", MathOp::OR);
 
     /* Nary Expressions */
-    REGISTER_CLASS(NaryExpr, ExprNode, m, "_nary_expr", DataType, MathOp,
+    REGISTER_CLASS(NaryExpr, ExprNode, m, "_nary", DataType, MathOp,
                    vector<Expr>)
-    REGISTER_CLASS(UnaryExpr, NaryExpr, m, "_unary_expr", DataType, MathOp,
+    REGISTER_CLASS(UnaryExpr, NaryExpr, m, "_unary", DataType, MathOp, Expr)
+    REGISTER_CLASS(BinaryExpr, NaryExpr, m, "_binary", DataType, MathOp, Expr,
                    Expr)
-    REGISTER_CLASS(BinaryExpr, NaryExpr, m, "_binary_expr", DataType, MathOp,
-                   Expr, Expr)
 
     /* Math ops */
     REGISTER_CLASS(Not, UnaryExpr, m, "_not", Expr)
@@ -138,7 +139,7 @@ PYBIND11_MODULE(ir, m)
 
     /* Logical Expressions */
     REGISTER_CLASS(Implies, BinaryExpr, m, "_implies", Expr, Expr)
-    REGISTER_CLASS(ForAll, NaryExpr, m, "_for_all", Sym, Expr)
+    REGISTER_CLASS(ForAll, NaryExpr, m, "_forall", Sym, Expr)
     REGISTER_CLASS(Exists, NaryExpr, m, "_exists", Sym, Expr)
 
     /* Comparison Operators*/
