@@ -148,5 +148,36 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(LessThanEqual, BinaryExpr, m, "_lte", Expr, Expr)
     REGISTER_CLASS(GreaterThanEqual, BinaryExpr, m, "_gte", Expr, Expr)
 
+    /* Constants */
+    m.def("_i8", [](int8_t val) { return Const(types::INT8, val); });
+    m.def("_i16", [](int16_t val) { return Const(types::INT16, val); });
+    m.def("_i32", [](int32_t val) { return Const(types::INT32, val); });
+    m.def("_i64", [](int64_t val) { return Const(types::INT64, val); });
+    m.def("_u8", [](uint8_t val) { return Const(types::UINT8, val); });
+    m.def("_u16", [](uint16_t val) { return Const(types::UINT16, val); });
+    m.def("_u32", [](uint32_t val) { return Const(types::UINT32, val); });
+    m.def("_u64", [](uint64_t val) { return Const(types::UINT64, val); });
+    m.def("_f32", [](float val) { return Const(types::FLOAT32, val); });
+    m.def("_f64", [](double val) { return Const(types::FLOAT64, val); });
+    m.def("_ch", [](char val) { return Const(types::INT8, val); });
+    m.def("_idx", [](int64_t val) { return Const(types::IDX, val); });
+    m.def("_true", []() { return Const(types::BOOL, true); });
+    m.def("_false", []() { return Const(types::BOOL, false); });
+
+    /* Types */
+    m.attr("_i8_t") = types::INT8;
+    m.attr("_i16_t") = types::INT16;
+    m.attr("_i32_t") = types::INT32;
+    m.attr("_i64_t") = types::INT64;
+    m.attr("_u8_t") = types::UINT8;
+    m.attr("_u16_t") = types::UINT16;
+    m.attr("_u32_t") = types::UINT32;
+    m.attr("_u64_t") = types::UINT64;
+    m.attr("_f32_t") = types::FLOAT32;
+    m.attr("_f64_t") = types::FLOAT64;
+    m.attr("_idx_t") = types::IDX;
+    m.attr("_ch_t") = types::INT8;
+    m.attr("_bool_t") = types::BOOL;
+
     m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
 }
