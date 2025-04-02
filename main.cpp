@@ -250,6 +250,47 @@ shared_ptr<ExprNode> get_end_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr 
     return thread_end;
 }
 
+shared_ptr<Func> basic_aggregate_kernel()
+{
+    /* kernel version of vector_fn */
+    auto sum_out_sym = _sym("res", types::INT64.ptr());
+    auto vec_in_sym = _sym("input", types::INT64.ptr());
+
+    auto len = _idx(1024);
+    auto idx_alloc = _alloc(_idx_t);
+    auto idx_addr = _sym("idx_addr", idx_alloc);
+    auto idx = _load(idx_addr);
+
+    auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_in_sym, idx});
+    auto val = _load(val_ptr);
+
+    // auto out_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_out_sym, idx});
+
+    auto idx_start = get_start_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
+    auto idx_end = get_end_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
+
+    auto loop = _loop(_load(sum_out_sym));
+
+    loop->init = _stmts(vector<Stmt>{
+        idx_alloc,
+        _store(idx_addr, idx_start),
+        // _store(idx_addr, _idx(0)),
+    });
+    loop->body = _stmts(vector<Stmt>{
+        make_shared<AtomicAdd>(sum_out_sym, val),
+        // _store(sum_out_sym, _add(_load(sum_out_sym), val)),
+        _store(idx_addr, idx + _idx(1)),
+    });
+    loop->exit_cond = _gte(idx, idx_end);
+    // loop->exit_cond = _gte(idx, len);
+    auto loop_sym = _sym("loop", loop);
+
+    auto foo_fn = make_shared<Func>("foo", loop, vector<Sym>{sum_out_sym, vec_in_sym}, SymTable(), true);
+    foo_fn->tbl[idx_addr] = idx_alloc;
+
+    return foo_fn;
+}
+
 shared_ptr<Func> basic_transform_kernel()
 {
     /* kernel version of transform_fn */
@@ -460,7 +501,8 @@ void execute_ptx(string kernel_name, string ptx_str, void *arg, int len)
 
 void test_kernel() {
     /* Test kernel generation and execution*/
-    auto fn = basic_transform_kernel();
+    // auto fn = basic_transform_kernel();
+    auto fn = basic_aggregate_kernel();
     cout << "Loop IR: " << endl << IRPrinter::Build(fn) << endl;
     CanonPass::Build(fn);
 
@@ -468,6 +510,7 @@ void test_kernel() {
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
     LLVMGen::Build(fn, *llmod);
     jit->Optimize(*llmod);
+    cout << "LLVM IR: " << endl << IRPrinter::Build(*llmod) << endl;
 
     auto output_ptx = LLVMGen::BuildPTX(fn, *llmod);
     cout << "Generated PTX:" << endl << output_ptx << endl;
@@ -484,10 +527,10 @@ void test_kernel() {
 
 int main()
 {
-    /*
+    
     test_kernel();
     return 0;
-    */
+    
 
     auto table = load_arrow_file("../benchmark/store_sales.arrow");
 
