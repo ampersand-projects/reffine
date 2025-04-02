@@ -296,6 +296,19 @@ void IRPrinter::Visit(Store& store)
     emitfunc("store", vector<Expr>{store.addr, store.val});
 }
 
+void IRPrinter::Visit(AtomicAdd& add)
+{
+    emitfunc("atomic_add", vector<Expr>{add.addr, add.val});
+}
+
+void IRPrinter::Visit(ThreadIdx& tidx) { ostr << "tidx"; }
+
+void IRPrinter::Visit(BlockIdx& bidx) { ostr << "bidx"; }
+
+void IRPrinter::Visit(BlockDim& bdim) { ostr << "bdim"; }
+
+void IRPrinter::Visit(GridDim& bdim) { ostr << "gdim"; }
+
 void IRPrinter::Visit(Loop& loop)
 {
     ostr << "{";

@@ -3,14 +3,17 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/IntrinsicsNVPTX.h"
 #include "reffine/base/type.h"
 
 using namespace reffine;
 using namespace llvm;
 
 Function* LLVMGen::llfunc(const string name, llvm::Type* ret_type,
-                          vector<llvm::Type*> arg_types)
+                          vector<llvm::Type*> arg_types, bool is_kernel)
 {
+    if (is_kernel) { ret_type = llvm::Type::getVoidTy(llctx()); }
+
     auto fn_type = FunctionType::get(ret_type, arg_types, false);
     return Function::Create(fn_type, Function::ExternalLinkage, name, llmod());
 }
@@ -377,7 +380,10 @@ void LLVMGen::visit(Stmts& stmts)
 
 Value* LLVMGen::visit(Alloc& alloc)
 {
-    return builder()->CreateAlloca(lltype(alloc.type), eval(alloc.size));
+    // 5 for local address space
+    // see https://llvm.org/docs/NVPTXUsage.html#address-spaces
+    auto type = PointerType::get(lltype(alloc.type.dtypes[0]), 5U);
+    return builder()->CreateAlloca(type, eval(alloc.size));
 }
 
 Value* LLVMGen::visit(Load& load)
@@ -392,6 +398,51 @@ void LLVMGen::visit(Store& store)
     auto addr = eval(store.addr);
     auto val = eval(store.val);
     builder()->CreateStore(val, addr);
+}
+
+void LLVMGen::visit(AtomicAdd& add)
+{
+    auto addr = eval(add.addr);
+    auto val = eval(add.val);
+    builder()->CreateAtomicRMW(AtomicRMWInst::Add, addr, val, MaybeAlign(),
+                               AtomicOrdering::Monotonic);
+}
+
+Value* LLVMGen::visit(ThreadIdx& tidx)
+{
+    // https://llvm.org/docs/NVPTXUsage.html#overview
+    auto thread_idx = builder()->CreateIntrinsic(
+        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
+        {});
+
+    return thread_idx;
+}
+
+Value* LLVMGen::visit(BlockIdx& bidx)
+{
+    auto block_idx = builder()->CreateIntrinsic(
+        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
+        {});
+
+    return block_idx;
+}
+
+Value* LLVMGen::visit(BlockDim& bdim)
+{
+    auto block_dim = builder()->CreateIntrinsic(
+        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
+        {});
+
+    return block_dim;
+}
+
+Value* LLVMGen::visit(GridDim& bdim)
+{
+    auto grid_dim = builder()->CreateIntrinsic(
+        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
+        {});
+
+    return grid_dim;
 }
 
 Value* LLVMGen::visit(Loop& loop)
@@ -447,7 +498,7 @@ void LLVMGen::visit(Func& func)
     for (auto& input : func.inputs) {
         args_type.push_back(lltype(input->type));
     }
-    auto fn = llfunc(func.name, lltype(func.output), args_type);
+    auto fn = llfunc(func.name, lltype(func.output), args_type, func.is_kernel);
     for (size_t i = 0; i < func.inputs.size(); i++) {
         auto input = func.inputs[i];
         fn->getArg(i)->setName(input->name);
@@ -457,7 +508,25 @@ void LLVMGen::visit(Func& func)
     auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
 
     builder()->SetInsertPoint(entry_bb);
-    builder()->CreateRet(eval(func.output));
+
+    auto output = eval(func.output);
+    if (func.is_kernel) {
+        builder()->CreateRetVoid();
+
+        fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
+        llvm::NamedMDNode* MD =
+            llmod()->getOrInsertNamedMetadata("nvvm.annotations");
+
+        std::vector<llvm::Metadata*> MDVals;
+        MDVals.push_back(llvm::ValueAsMetadata::get(fn));
+        MDVals.push_back(llvm::MDString::get(llctx(), "kernel"));
+        MDVals.push_back(llvm::ConstantAsMetadata::get(
+            llvm::ConstantInt::get(llvm::Type::getInt32Ty(llctx()), 1)));
+
+        MD->addOperand(llvm::MDNode::get(llctx(), MDVals));
+    } else {
+        builder()->CreateRet(output);
+    }
 }
 
 void LLVMGen::register_vinstrs()
@@ -505,6 +574,54 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
     var->setName(old_sym->name);
 
     return var;
+}
+
+void LLVMGen::init_cuda()
+{
+    InitializeAllTargets();
+    InitializeAllTargetMCs();
+    InitializeAllAsmPrinters();
+    InitializeAllAsmParsers();
+
+    llmod()->setTargetTriple("nvptx64-nvidia-cuda");
+}
+
+TargetMachine* LLVMGen::get_target()
+{
+    std::string Error;
+    const llvm::Target* Target =
+        llvm::TargetRegistry::lookupTarget("nvptx64-nvidia-cuda", Error);
+
+    llvm::TargetOptions opt;
+    llvm::TargetMachine* TM =
+        Target->createTargetMachine("nvptx64-nvidia-cuda", "sm_52",
+                                    "+ptx76",  // PTX version
+                                    opt, llvm::Reloc::Static);
+
+    llmod()->setDataLayout(TM->createDataLayout());
+
+    return TM;
+}
+
+string LLVMGen::BuildPTX(shared_ptr<Func> func, Module& llmod)
+{
+    LLVMGenCtx ctx(func);
+    LLVMGen llgen(ctx, llmod);
+    llgen.init_cuda();
+    func->Accept(llgen);
+
+    auto TM = llgen.get_target();
+
+    llvm::SmallString<1048576> PTXStr;
+    llvm::raw_svector_ostream PTXOS(PTXStr);
+
+    llvm::legacy::PassManager PM;
+    TM->addPassesToEmitFile(PM, PTXOS, nullptr,
+                            llvm::CodeGenFileType::AssemblyFile);
+    PM.run(llmod);
+    cout << "Finished generating PTX..." << endl;
+
+    return PTXStr.str().str();
 }
 
 void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)

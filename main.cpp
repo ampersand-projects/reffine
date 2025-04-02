@@ -11,6 +11,8 @@
 #include <arrow/c/bridge.h>
 
 #include <z3++.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
 
 #include "reffine/ir/node.h"
 #include "reffine/ir/stmt.h"
@@ -213,6 +215,123 @@ shared_ptr<Func> transform_fn()
     return foo_fn;
 }
 
+shared_ptr<ExprNode> get_start_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr len) {
+    auto tidx = _cast(_idx_t, tid);
+    auto bidx = _cast(_idx_t, bid);
+    auto bdimx = _cast(_idx_t, bdim);
+    auto gdimx = _cast(_idx_t, gdim);
+    auto n = _cast(_idx_t, len);
+
+    auto elem_per_block = (n + gdimx - _idx(1)) / gdimx;
+    auto block_start = bidx * elem_per_block;
+    auto block_end = _min(block_start + elem_per_block, n);
+
+    auto elem_per_thread = (block_end - block_start + bdimx - _idx(1)) / bdimx;
+    auto thread_start = block_start + (tidx * elem_per_thread);
+
+    return thread_start;
+}
+
+shared_ptr<ExprNode> get_end_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr len) {
+    auto tidx = _cast(_idx_t, tid);
+    auto bidx = _cast(_idx_t, bid);
+    auto bdimx = _cast(_idx_t, bdim);
+    auto gdimx = _cast(_idx_t, gdim);
+    auto n = _cast(_idx_t, len);
+
+    auto elem_per_block = (n + gdimx - _idx(1)) / gdimx;
+    auto block_start = bidx * elem_per_block;
+    auto block_end = _min(block_start + elem_per_block, n);
+
+    auto elem_per_thread = (block_end - block_start + bdimx - _idx(1)) / bdimx;
+    auto thread_start = block_start + (tidx * elem_per_thread);
+    auto thread_end = _min(thread_start + elem_per_thread, block_end);
+
+    return thread_end;
+}
+
+shared_ptr<Func> basic_aggregate_kernel()
+{
+    /* kernel version of vector_fn */
+    auto sum_out_sym = _sym("res", types::INT64.ptr());
+    auto vec_in_sym = _sym("input", types::INT64.ptr());
+
+    auto len = _idx(1024);
+    auto idx_alloc = _alloc(_idx_t);
+    auto idx_addr = _sym("idx_addr", idx_alloc);
+    auto idx = _load(idx_addr);
+
+    auto temp_alloc = _alloc(_i64_t);
+    auto temp_addr = _sym("temp_addr", temp_alloc);
+    auto temp_sum = _load(temp_addr);
+
+    auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_in_sym, idx});
+    auto val = _load(val_ptr);
+
+    auto idx_start = get_start_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
+    auto idx_end = get_end_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
+
+    auto loop = _loop(_load(sum_out_sym));
+
+    loop->init = _stmts(vector<Stmt>{
+        idx_alloc,
+        _store(idx_addr, idx_start),
+        temp_alloc,
+        _store(temp_addr, _i64(0)),
+    });
+    loop->body = _stmts(vector<Stmt>{
+        _store(temp_addr, _add(temp_sum, val)),
+        _store(idx_addr, idx + _idx(1)),
+    });
+    loop->exit_cond = _gte(idx, idx_end);
+    loop->post = _atomic_add(sum_out_sym, temp_sum);
+    auto loop_sym = _sym("loop", loop);
+
+    auto foo_fn = make_shared<Func>("foo", loop, vector<Sym>{sum_out_sym, vec_in_sym}, SymTable(), true);
+    foo_fn->tbl[idx_addr] = idx_alloc;
+    foo_fn->tbl[temp_addr] = temp_alloc;
+
+    return foo_fn;
+}
+
+shared_ptr<Func> basic_transform_kernel()
+{
+    /* kernel version of transform_fn */
+    auto vec_out_sym = _sym("res", types::INT64.ptr());
+    auto vec_in_sym = _sym("input", types::INT64.ptr());
+
+    auto len = _idx(1024);
+    auto idx_alloc = _alloc(_idx_t);
+    auto idx_addr = _sym("idx_addr", idx_alloc);
+    auto idx = _load(idx_addr);
+
+    auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_in_sym, idx});
+    auto val = _load(val_ptr);
+
+    auto out_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_out_sym, idx});
+
+    auto idx_start = get_start_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
+    auto idx_end = get_end_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
+
+    auto loop = _loop(_load(vec_out_sym));
+
+    loop->init = _stmts(vector<Stmt>{
+        idx_alloc,
+        _store(idx_addr, idx_start),
+    });
+    loop->body = _stmts(vector<Stmt>{
+        _store(out_ptr, _add(_i64(1), val)),
+        _store(idx_addr, idx + _idx(1)),
+    });
+    loop->exit_cond = _gte(idx, idx_end);
+    auto loop_sym = _sym("loop", loop);
+
+    auto foo_fn = make_shared<Func>("foo", loop, vector<Sym>{vec_out_sym, vec_in_sym}, SymTable(), true);
+    foo_fn->tbl[idx_addr] = idx_alloc;
+
+    return foo_fn;
+}
+
 shared_ptr<Func> test_op_fn()
 {
     auto t_sym = make_shared<SymNode>("t", types::INT32);
@@ -313,8 +432,109 @@ shared_ptr<Func> tpcds_query9(ArrowTable& table)
     return foo_fn;
 }
 
+#define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
+static void __checkCudaErrors(CUresult err, const char *filename, int line)
+{
+    assert(filename);
+    if (CUDA_SUCCESS != err) {
+        const char *ename = NULL;
+        const CUresult res = cuGetErrorName(err, &ename);
+        fprintf(stderr,
+                "CUDA API Error %04d: \"%s\" from file <%s>, "
+                "line %i.\n",
+                err, ((CUDA_SUCCESS == res) ? ename : "Unknown"), filename,
+                line);
+        exit(err);
+    }
+}
+
+void execute_ptx(string kernel_name, string ptx_str, void *arg, int len)
+{
+    CUdevice device;
+    CUmodule cudaModule;
+    CUcontext context;
+    CUfunction function;
+
+    checkCudaErrors(cuInit(0));
+    checkCudaErrors(cuDeviceGet(&device, 0));
+    checkCudaErrors(cuCtxCreate(&context, 0, device));
+
+    char name[128];
+    cuDeviceGetName(name, 128, device);
+    std::cout << "Device name: " << name << endl;
+
+    CUdeviceptr d_arr;
+    checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t) * len));
+    checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t) * len));
+
+    CUdeviceptr d_arr_out;
+    checkCudaErrors(cuMemAlloc(&d_arr_out, sizeof(int64_t) * len));
+
+    checkCudaErrors(cuModuleLoadData(&cudaModule, ptx_str.c_str()));
+    checkCudaErrors(
+        cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
+    cout << "About to run " << kernel_name << " kernel..." << endl;
+
+    int blockDimX = 32;  // num of threads per block
+    int gridDimX = (len + blockDimX - 1) / blockDimX;  // num of blocks
+    void *kernelParams[] = {
+        &d_arr_out,
+        &d_arr,
+    };
+
+    checkCudaErrors(cuLaunchKernel(function, gridDimX, 1, 1, blockDimX, 1, 1,
+                                   0,  // shared memory size
+                                   0,  // stream handle
+                                   kernelParams, NULL));
+
+    checkCudaErrors(cuCtxSynchronize());
+
+    auto arr_out = (int64_t *)malloc(sizeof(int64_t) * len);
+    checkCudaErrors(cuMemcpyDtoH(arr_out, d_arr_out, sizeof(int64_t) * len));
+    cuMemFree(d_arr);
+    cout << "Output from " << kernel_name << " kernel:" << endl;
+    for (int i = 0; i < len; i++) { cout << arr_out[i] << ", "; }
+    cout << endl << endl;
+
+    cuMemFree(d_arr);
+    cuMemFree(d_arr_out);
+    cuModuleUnload(cudaModule);
+    cuCtxDestroy(context);
+}
+
+void test_kernel() {
+    /* Test kernel generation and execution*/
+    // auto fn = basic_transform_kernel();
+    auto fn = basic_aggregate_kernel();
+    cout << "Loop IR: " << endl << IRPrinter::Build(fn) << endl;
+    CanonPass::Build(fn);
+
+    auto jit = ExecEngine::Get();
+    auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
+    LLVMGen::Build(fn, *llmod);
+    jit->Optimize(*llmod);
+    cout << "LLVM IR: " << endl << IRPrinter::Build(*llmod) << endl;
+
+    auto output_ptx = LLVMGen::BuildPTX(fn, *llmod);
+    cout << "Generated PTX:" << endl << output_ptx << endl;
+
+    int len = 1024;
+    int64_t* in_array = new int64_t[len];
+    for (int i = 0; i < len; i++) {
+        in_array[i] = i;
+    }
+    execute_ptx(llmod->getName().str(), output_ptx, (int64_t*)(in_array), len);
+
+    return;
+}
+
 int main()
 {
+    /*
+    test_kernel();
+    return 0;
+    */
+
     auto table = load_arrow_file("../benchmark/store_sales.arrow");
 
     auto fn = tpcds_query9(*table);

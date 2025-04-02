@@ -121,6 +121,12 @@ REGISTER_EXPR(_op, Op)
 REGISTER_EXPR(_red, Reduce)
 REGISTER_EXPR(_notnull, NotNull)
 
+// CUDA
+REGISTER_EXPR(_tidx, ThreadIdx)
+REGISTER_EXPR(_bidx, BlockIdx)
+REGISTER_EXPR(_gdim, GridDim)
+REGISTER_EXPR(_bdim, BlockDim)
+
 // Misc expressions
 REGISTER_EXPR(_call, Call)
 REGISTER_EXPR(_sel, Select)
@@ -149,6 +155,7 @@ REGISTER_STMT(_stmts, Stmts)
 REGISTER_STMT(_ifelse, IfElse)
 REGISTER_STMT(_noop, NoOp)
 REGISTER_STMT(_store, Store)
+REGISTER_STMT(_atomic_add, AtomicAdd)
 #undef REGISTER_STMT
 
 _expr<Const> _i8(int8_t);

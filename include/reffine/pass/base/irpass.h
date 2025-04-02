@@ -130,11 +130,22 @@ public:
 
     void Visit(Load& expr) override { expr.addr->Accept(*this); }
 
-    void Visit(Store& expr) override
+    void Visit(Store& stmt) override
     {
-        expr.addr->Accept(*this);
-        expr.val->Accept(*this);
+        stmt.addr->Accept(*this);
+        stmt.val->Accept(*this);
     }
+
+    void Visit(AtomicAdd& stmt) override
+    {
+        stmt.addr->Accept(*this);
+        stmt.val->Accept(*this);
+    }
+
+    void Visit(ThreadIdx& expr) override {}
+    void Visit(BlockDim& expr) override {}
+    void Visit(BlockIdx& expr) override {}
+    void Visit(GridDim& expr) override {}
 
     void Visit(Loop& expr) override
     {
