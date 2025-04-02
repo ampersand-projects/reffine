@@ -261,6 +261,10 @@ shared_ptr<Func> basic_aggregate_kernel()
     auto idx_addr = _sym("idx_addr", idx_alloc);
     auto idx = _load(idx_addr);
 
+    auto temp_alloc = _alloc(_i64_t);
+    auto temp_addr = _sym("temp_addr", temp_alloc);
+    auto temp_sum = _load(temp_addr);
+
     auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_in_sym, idx});
     auto val = _load(val_ptr);
 
@@ -272,16 +276,20 @@ shared_ptr<Func> basic_aggregate_kernel()
     loop->init = _stmts(vector<Stmt>{
         idx_alloc,
         _store(idx_addr, idx_start),
+        temp_alloc,
+        _store(temp_addr, _i64(0)),
     });
     loop->body = _stmts(vector<Stmt>{
-        _atomic_add(sum_out_sym, val),
+        _store(temp_addr, _add(temp_sum, val)),
         _store(idx_addr, idx + _idx(1)),
     });
     loop->exit_cond = _gte(idx, idx_end);
+    loop->post = _atomic_add(sum_out_sym, temp_sum);
     auto loop_sym = _sym("loop", loop);
 
     auto foo_fn = make_shared<Func>("foo", loop, vector<Sym>{sum_out_sym, vec_in_sym}, SymTable(), true);
     foo_fn->tbl[idx_addr] = idx_alloc;
+    foo_fn->tbl[temp_addr] = temp_alloc;
 
     return foo_fn;
 }
