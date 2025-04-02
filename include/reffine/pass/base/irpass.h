@@ -130,16 +130,10 @@ public:
 
     void Visit(Load& expr) override { expr.addr->Accept(*this); }
 
-    void Visit(Store& stmt) override
+    void Visit(Store& expr) override
     {
-        stmt.addr->Accept(*this);
-        stmt.val->Accept(*this);
-    }
-
-    void Visit(AtomicAdd& stmt) override
-    {
-        stmt.addr->Accept(*this);
-        stmt.val->Accept(*this);
+        expr.addr->Accept(*this);
+        expr.val->Accept(*this);
     }
 
     void Visit(ThreadIdx& expr) override {}

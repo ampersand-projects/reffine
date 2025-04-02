@@ -20,7 +20,6 @@ void Stmts::Accept(Visitor& v) { v.Visit(*this); }
 void Alloc::Accept(Visitor& v) { v.Visit(*this); }
 void Load::Accept(Visitor& v) { v.Visit(*this); }
 void Store::Accept(Visitor& v) { v.Visit(*this); }
-void AtomicAdd::Accept(Visitor& v) { v.Visit(*this); }
 void ThreadIdx::Accept(Visitor& v) { v.Visit(*this); }
 void BlockIdx::Accept(Visitor& v) { v.Visit(*this); }
 void BlockDim::Accept(Visitor& v) { v.Visit(*this); }

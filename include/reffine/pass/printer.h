@@ -54,7 +54,6 @@ public:
     void Visit(Alloc&) final;
     void Visit(Load&) final;
     void Visit(Store&) final;
-    void Visit(AtomicAdd&) final;
     void Visit(ThreadIdx&) final;
     void Visit(BlockIdx&) final;
     void Visit(BlockDim&) final;
