@@ -400,14 +400,6 @@ void LLVMGen::visit(Store& store)
     builder()->CreateStore(val, addr);
 }
 
-void LLVMGen::visit(AtomicAdd& add)
-{
-    auto addr = eval(add.addr);
-    auto val = eval(add.val);
-    builder()->CreateAtomicRMW(AtomicRMWInst::Add, addr, val, MaybeAlign(),
-                               AtomicOrdering::Monotonic);
-}
-
 Value* LLVMGen::visit(ThreadIdx& tidx)
 {
     // https://llvm.org/docs/NVPTXUsage.html#overview
