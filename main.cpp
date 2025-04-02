@@ -264,8 +264,6 @@ shared_ptr<Func> basic_aggregate_kernel()
     auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_in_sym, idx});
     auto val = _load(val_ptr);
 
-    // auto out_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_out_sym, idx});
-
     auto idx_start = get_start_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
     auto idx_end = get_end_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
 
@@ -274,15 +272,12 @@ shared_ptr<Func> basic_aggregate_kernel()
     loop->init = _stmts(vector<Stmt>{
         idx_alloc,
         _store(idx_addr, idx_start),
-        // _store(idx_addr, _idx(0)),
     });
     loop->body = _stmts(vector<Stmt>{
-        make_shared<AtomicAdd>(sum_out_sym, val),
-        // _store(sum_out_sym, _add(_load(sum_out_sym), val)),
+        _atomic_add(sum_out_sym, val),
         _store(idx_addr, idx + _idx(1)),
     });
     loop->exit_cond = _gte(idx, idx_end);
-    // loop->exit_cond = _gte(idx, len);
     auto loop_sym = _sym("loop", loop);
 
     auto foo_fn = make_shared<Func>("foo", loop, vector<Sym>{sum_out_sym, vec_in_sym}, SymTable(), true);
@@ -527,10 +522,10 @@ void test_kernel() {
 
 int main()
 {
-    
+    /*
     test_kernel();
     return 0;
-    
+    */
 
     auto table = load_arrow_file("../benchmark/store_sales.arrow");
 
