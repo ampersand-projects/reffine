@@ -84,6 +84,10 @@ protected:
     {
         throw runtime_error("Store visit not supported");
     }
+    virtual void visit(AtomicAdd&)
+    {
+        throw runtime_error("AtomicAdd visit not supported");
+    }
     virtual ValTy visit(ThreadIdx&)
     {
         throw runtime_error("ThreadIdx visit not supported");
@@ -137,7 +141,8 @@ protected:
     void Visit(Func& stmt) final { visit(stmt); }
     void Visit(Alloc& expr) final { val() = visit(expr); }
     void Visit(Load& expr) final { val() = visit(expr); }
-    void Visit(Store& expr) final { visit(expr); }
+    void Visit(Store& stmt) final { visit(stmt); }
+    void Visit(AtomicAdd& stmt) final { visit(stmt); }
     void Visit(ThreadIdx& expr) final { val() = visit(expr); }
     void Visit(BlockIdx& expr) final { val() = visit(expr); }
     void Visit(BlockDim& expr) final { val() = visit(expr); }

@@ -68,6 +68,7 @@ private:
     llvm::Value* visit(Alloc&) final;
     llvm::Value* visit(Load&) final;
     void visit(Store&) final;
+    void visit(AtomicAdd&) final;
     llvm::Value* visit(ThreadIdx&);
     llvm::Value* visit(BlockIdx&);
     llvm::Value* visit(BlockDim&);
