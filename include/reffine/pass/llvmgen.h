@@ -81,6 +81,10 @@ private:
 
     llvm::Module& _llmod;
     unique_ptr<llvm::IRBuilder<>> _builder;
+
+    // Helpers
+    llvm::LoadInst* CreateLoad(llvm::Type*, llvm::Value*);
+    llvm::StoreInst* CreateStore(llvm::Value*, llvm::Value*);
 };
 
 }  // namespace reffine
