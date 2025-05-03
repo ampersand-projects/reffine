@@ -84,7 +84,7 @@ private:
 
     // Helpers
     llvm::LoadInst* CreateLoad(llvm::Type*, llvm::Value*);
-    void CreateStore(llvm::Value*, llvm::Value*);
+    llvm::StoreInst* CreateStore(llvm::Value*, llvm::Value*);
 };
 
 }  // namespace reffine

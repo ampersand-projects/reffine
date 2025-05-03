@@ -518,14 +518,16 @@ void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
 }
 
 // Helpers
-void LLVMGen::CreateStore(Value* new_val, Value* var_addr)
+llvm::StoreInst* LLVMGen::CreateStore(Value* new_val, Value* var_addr)
 {
     MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
     auto store = builder()->CreateStore(new_val, var_addr);
     store->setMetadata(LLVMContext::MD_noalias, md_node);
+
+    return store;
 }
 
-LoadInst* LLVMGen::CreateLoad(Type* type, Value* addr)
+llvm::LoadInst* LLVMGen::CreateLoad(Type* type, Value* addr)
 {
     MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
     auto var = builder()->CreateLoad(type, addr);
