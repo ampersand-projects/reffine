@@ -552,10 +552,10 @@ void test_kernel() {
 
 int main()
 {
-    /*
+    
     test_kernel();
     return 0;
-    */
+    
 
     const rlim_t kStackSize = 1 * 1024 * 1024 * 1024u;   // min stack size = 2 GB
     struct rlimit rl;
