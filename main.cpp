@@ -489,10 +489,10 @@ void test_kernel() {
 
 int main()
 {
-    
+    /*
     test_kernel();
     return 0;
-    
+    */
 
     auto table = load_arrow_file("../benchmark/store_sales.arrow");
 
