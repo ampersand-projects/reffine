@@ -33,7 +33,7 @@ Expr LoopGen::visit(Lookup& lookup)
     auto idx = eval(lookup.idx);
 
     vector<Expr> vals;
-    for (size_t i=vec->type.dim; i < vec->type.dtypes.size(); i++) {
+    for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
         auto data_ptr = _fetch(vec, idx, i);
         auto data = _load(data_ptr);
         vals.push_back(data);
