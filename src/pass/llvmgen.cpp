@@ -5,7 +5,7 @@
 #include "llvm/IR/InstrTypes.h"
 #include "reffine/base/type.h"
 #ifdef ENABLE_CUDA
-    #include "llvm/IR/IntrinsicsNVPTX.h"
+#include "llvm/IR/IntrinsicsNVPTX.h"
 #endif
 
 using namespace reffine;
@@ -400,60 +400,54 @@ void LLVMGen::visit(Store& store)
     builder()->CreateStore(val, addr);
 }
 
-
-
 Value* LLVMGen::visit(ThreadIdx& tidx)
 {
     // https://llvm.org/docs/NVPTXUsage.html#overview
 
-    #ifdef ENABLE_CUDA
-        auto thread_idx = builder()->CreateIntrinsic(
-            lltype(tidx), llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
-            {});
+#ifdef ENABLE_CUDA
+    auto thread_idx = builder()->CreateIntrinsic(
+        lltype(tidx), llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x, {});
 
-        return thread_idx;
-    #else
-        throw std::runtime_error("CUDA not enabled.");
-    #endif
+    return thread_idx;
+#else
+    throw std::runtime_error("CUDA not enabled.");
+#endif
 }
 
 Value* LLVMGen::visit(BlockIdx& bidx)
 {
-    #ifdef ENABLE_CUDA
-        auto block_idx = builder()->CreateIntrinsic(
-            lltype(bidx), llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
-            {});
+#ifdef ENABLE_CUDA
+    auto block_idx = builder()->CreateIntrinsic(
+        lltype(bidx), llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x, {});
 
-        return block_idx;
-    #else
-        throw std::runtime_error("CUDA not enabled.");
-    #endif
+    return block_idx;
+#else
+    throw std::runtime_error("CUDA not enabled.");
+#endif
 }
 
 Value* LLVMGen::visit(BlockDim& bdim)
 {
-    #ifdef ENABLE_CUDA
-        auto block_dim = builder()->CreateIntrinsic(
-            lltype(bdim), llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
-            {});
+#ifdef ENABLE_CUDA
+    auto block_dim = builder()->CreateIntrinsic(
+        lltype(bdim), llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x, {});
 
-        return block_dim;
-    #else
-        throw std::runtime_error("CUDA not enabled.");
-    #endif
+    return block_dim;
+#else
+    throw std::runtime_error("CUDA not enabled.");
+#endif
 }
 
 Value* LLVMGen::visit(GridDim& gdim)
 {
-    #ifdef ENABLE_CUDA
-        auto grid_dim = builder()->CreateIntrinsic(
-            lltype(gdim), llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
-            {});
+#ifdef ENABLE_CUDA
+    auto grid_dim = builder()->CreateIntrinsic(
+        lltype(gdim), llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x, {});
 
-        return grid_dim;
-    #else
-        throw std::runtime_error("CUDA not enabled.");
-    #endif
+    return grid_dim;
+#else
+    throw std::runtime_error("CUDA not enabled.");
+#endif
 }
 
 Value* LLVMGen::visit(Loop& loop)
@@ -528,23 +522,23 @@ void LLVMGen::visit(Func& func)
 
     auto output = eval(func.output);
     if (func.is_kernel) {
-        #ifdef ENABLE_CUDA
-            builder()->CreateRetVoid();
+#ifdef ENABLE_CUDA
+        builder()->CreateRetVoid();
 
-            fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
-            llvm::NamedMDNode* MD =
-                llmod()->getOrInsertNamedMetadata("nvvm.annotations");
+        fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
+        llvm::NamedMDNode* MD =
+            llmod()->getOrInsertNamedMetadata("nvvm.annotations");
 
-            std::vector<llvm::Metadata*> MDVals;
-            MDVals.push_back(llvm::ValueAsMetadata::get(fn));
-            MDVals.push_back(llvm::MDString::get(llctx(), "kernel"));
-            MDVals.push_back(llvm::ConstantAsMetadata::get(
-                llvm::ConstantInt::get(llvm::Type::getInt32Ty(llctx()), 1)));
+        std::vector<llvm::Metadata*> MDVals;
+        MDVals.push_back(llvm::ValueAsMetadata::get(fn));
+        MDVals.push_back(llvm::MDString::get(llctx(), "kernel"));
+        MDVals.push_back(llvm::ConstantAsMetadata::get(
+            llvm::ConstantInt::get(llvm::Type::getInt32Ty(llctx()), 1)));
 
-            MD->addOperand(llvm::MDNode::get(llctx(), MDVals));
-        #else
-            throw std::runtime_error("CUDA not enabled.");
-        #endif
+        MD->addOperand(llvm::MDNode::get(llctx(), MDVals));
+#else
+        throw std::runtime_error("CUDA not enabled.");
+#endif
     } else {
         builder()->CreateRet(output);
     }
