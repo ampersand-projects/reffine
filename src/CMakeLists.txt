@@ -47,8 +47,8 @@ target_link_libraries(reffine ${llvm_libs} ${Z3_LIBRARIES})
 target_include_directories(reffine PUBLIC ${LLVM_INCLUDE_DIRS} ${Z3_CXX_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 target_compile_options(reffine PRIVATE -Wall -Wextra -pedantic -Werror -Wno-unused-parameter ${Z3_COMPONENT_CXX_FLAGS})
 
-option(ENABLE_CUDA "Enable CUDA support" ON)
 if(ENABLE_CUDA)
+    find_package(CUDA REQUIRED)
     llvm_map_components_to_libnames(llvm_nvptx_libs
         NVPTX
         NVPTXDesc

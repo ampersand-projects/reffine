@@ -3,8 +3,10 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/IntrinsicsNVPTX.h"
 #include "reffine/base/type.h"
+#ifdef ENABLE_CUDA
+    #include "llvm/IR/IntrinsicsNVPTX.h"
+#endif
 
 using namespace reffine;
 using namespace llvm;
@@ -398,41 +400,60 @@ void LLVMGen::visit(Store& store)
     builder()->CreateStore(val, addr);
 }
 
+
+
 Value* LLVMGen::visit(ThreadIdx& tidx)
 {
     // https://llvm.org/docs/NVPTXUsage.html#overview
-    auto thread_idx = builder()->CreateIntrinsic(
-        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
-        {});
 
-    return thread_idx;
+    #ifdef ENABLE_CUDA
+        auto thread_idx = builder()->CreateIntrinsic(
+            Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
+            {});
+
+        return thread_idx;
+    #else
+        throw std::runtime_error("CUDA not enabled.");
+    #endif
 }
 
 Value* LLVMGen::visit(BlockIdx& bidx)
 {
-    auto block_idx = builder()->CreateIntrinsic(
-        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
-        {});
+    #ifdef ENABLE_CUDA
+        auto block_idx = builder()->CreateIntrinsic(
+            Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
+            {});
 
-    return block_idx;
+        return block_idx;
+    #else
+        throw std::runtime_error("CUDA not enabled.");
+    #endif
 }
 
 Value* LLVMGen::visit(BlockDim& bdim)
 {
-    auto block_dim = builder()->CreateIntrinsic(
-        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
-        {});
+    #ifdef ENABLE_CUDA
+        auto block_dim = builder()->CreateIntrinsic(
+            Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
+            {});
 
-    return block_dim;
+        return block_dim;
+    #else
+        throw std::runtime_error("CUDA not enabled.");
+    #endif
 }
 
 Value* LLVMGen::visit(GridDim& bdim)
 {
-    auto grid_dim = builder()->CreateIntrinsic(
-        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
-        {});
+    #ifdef ENABLE_CUDA
+        auto grid_dim = builder()->CreateIntrinsic(
+            Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
+            {});
 
-    return grid_dim;
+        return grid_dim;
+    #else
+        throw std::runtime_error("CUDA not enabled.");
+    #endif
 }
 
 Value* LLVMGen::visit(Loop& loop)
@@ -572,6 +593,7 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
     return var;
 }
 
+#ifdef ENABLE_CUDA
 void LLVMGen::init_cuda()
 {
     InitializeAllTargets();
@@ -615,10 +637,10 @@ string LLVMGen::BuildPTX(shared_ptr<Func> func, Module& llmod)
     TM->addPassesToEmitFile(PM, PTXOS, nullptr,
                             llvm::CodeGenFileType::AssemblyFile);
     PM.run(llmod);
-    cout << "Finished generating PTX..." << endl;
 
     return PTXStr.str().str();
 }
+#endif
 
 void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
 {

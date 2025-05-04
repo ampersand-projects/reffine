@@ -11,8 +11,11 @@
 #include <arrow/c/bridge.h>
 
 #include <z3++.h>
-#include <cuda.h>
-#include <cuda_runtime.h>
+
+#ifdef ENABLE_CUDA
+    #include <cuda.h>
+    #include <cuda_runtime.h>
+#endif
 
 #include "reffine/ir/node.h"
 #include "reffine/ir/stmt.h"
@@ -388,6 +391,7 @@ shared_ptr<Func> tpcds_query9(ArrowTable& table)
     return foo_fn;
 }
 
+#ifdef ENABLE_CUDA
 #define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
 static void __checkCudaErrors(CUresult err, const char *filename, int line)
 {
@@ -481,13 +485,14 @@ void test_kernel() {
 
     return;
 }
+#endif
 
 int main()
 {
-    /*
+    
     test_kernel();
     return 0;
-    */
+    
 
     auto table = load_arrow_file("../benchmark/store_sales.arrow");
 
