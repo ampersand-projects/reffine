@@ -557,7 +557,6 @@ int main()
     return 0;
     */
 
-    auto table = load_arrow_file("../benchmark/store_sales.arrow");
     const rlim_t kStackSize = 1 * 1024 * 1024 * 1024u;   // min stack size = 2 GB
     struct rlimit rl;
     int result;

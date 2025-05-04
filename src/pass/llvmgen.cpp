@@ -522,9 +522,10 @@ void LLVMGen::visit(Func& func)
     builder()->SetInsertPoint(entry_bb);
 
     auto output = eval(func.output);
+    ReturnInst* ret_instr;
     if (func.is_kernel) {
 #ifdef ENABLE_CUDA
-        auto ret_instr = builder()->CreateRetVoid();
+        ret_instr = builder()->CreateRetVoid();
 
         fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
         llvm::NamedMDNode* MD =
@@ -541,7 +542,7 @@ void LLVMGen::visit(Func& func)
         throw std::runtime_error("CUDA not enabled.");
 #endif
     } else {
-        auto ret_instr = builder()->CreateRet(output);
+        ret_instr = builder()->CreateRet(output);
     }
     ret_instr->setMetadata(LLVMContext::MD_noalias,
                            MDNode::get(llctx(), ArrayRef<Metadata*>()));
