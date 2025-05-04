@@ -124,10 +124,10 @@ Value* LLVMGen::visit(New& e)
 
     for (size_t i = 0; i < e.vals.size(); i++) {
         auto val_ptr = builder()->CreateStructGEP(new_type, ptr, i);
-        builder()->CreateStore(eval(e.vals[i]), val_ptr);
+        CreateStore(eval(e.vals[i]), val_ptr);
     }
 
-    return builder()->CreateLoad(new_type, ptr);
+    return CreateLoad(new_type, ptr);
 }
 
 Value* LLVMGen::visit(NaryExpr& e)
@@ -390,14 +390,14 @@ Value* LLVMGen::visit(Load& load)
 {
     auto addr = eval(load.addr);
     auto addr_type = lltype(load.addr->type.deref());
-    return builder()->CreateLoad(addr_type, addr);
+    return CreateLoad(addr_type, addr);
 }
 
 void LLVMGen::visit(Store& store)
 {
     auto addr = eval(store.addr);
     auto val = eval(store.val);
-    builder()->CreateStore(val, addr);
+    CreateStore(val, addr);
 }
 
 Value* LLVMGen::visit(ThreadIdx& tidx)
@@ -513,6 +513,7 @@ void LLVMGen::visit(Func& func)
     for (size_t i = 0; i < func.inputs.size(); i++) {
         auto input = func.inputs[i];
         fn->getArg(i)->setName(input->name);
+        fn->getArg(i)->addAttr(Attribute::NoAlias);
         this->assign(input, fn->getArg(i));
     }
 
@@ -523,7 +524,7 @@ void LLVMGen::visit(Func& func)
     auto output = eval(func.output);
     if (func.is_kernel) {
 #ifdef ENABLE_CUDA
-        builder()->CreateRetVoid();
+        auto ret_instr = builder()->CreateRetVoid();
 
         fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
         llvm::NamedMDNode* MD =
@@ -540,8 +541,10 @@ void LLVMGen::visit(Func& func)
         throw std::runtime_error("CUDA not enabled.");
 #endif
     } else {
-        builder()->CreateRet(output);
+        auto ret_instr = builder()->CreateRet(output);
     }
+    ret_instr->setMetadata(LLVMContext::MD_noalias,
+                           MDNode::get(llctx(), ArrayRef<Metadata*>()));
 }
 
 void LLVMGen::register_vinstrs()
@@ -584,8 +587,8 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
 
     auto var_addr = builder()->CreateAlloca(new_val->getType(), nullptr);
     var_addr->setName(old_sym->name + "_ref");
-    builder()->CreateStore(new_val, var_addr);
-    auto var = builder()->CreateLoad(lltype(old_sym), var_addr);
+    CreateStore(new_val, var_addr);
+    auto var = CreateLoad(lltype(old_sym), var_addr);
     var->setName(old_sym->name);
 
     return var;
@@ -596,4 +599,23 @@ void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
     LLVMGenCtx ctx(func);
     LLVMGen llgen(ctx, llmod);
     func->Accept(llgen);
+}
+
+// Helpers
+llvm::StoreInst* LLVMGen::CreateStore(Value* new_val, Value* var_addr)
+{
+    MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
+    auto store = builder()->CreateStore(new_val, var_addr);
+    store->setMetadata(LLVMContext::MD_noalias, md_node);
+
+    return store;
+}
+
+llvm::LoadInst* LLVMGen::CreateLoad(Type* type, Value* addr)
+{
+    MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
+    auto var = builder()->CreateLoad(type, addr);
+    var->setMetadata(LLVMContext::MD_noalias, md_node);
+
+    return var;
 }

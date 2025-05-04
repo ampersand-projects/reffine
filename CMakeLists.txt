@@ -25,6 +25,9 @@ add_subdirectory(third_party/googletest)
 enable_testing()
 add_subdirectory(test)
 
+add_subdirectory(third_party/pybind11)
+add_subdirectory(python)
+
 if(ENABLE_CUDA)
     target_compile_definitions(reffine PUBLIC ENABLE_CUDA)
     target_include_directories(reffine SYSTEM PUBLIC ${CUDA_INCLUDE_DIRS})

@@ -77,6 +77,14 @@ public:
     {
         throw runtime_error("SetValid operation not supported");
     }
+    virtual void Visit(Lookup&)
+    {
+        throw runtime_error("Lookup operation not supported");
+    }
+    virtual void Visit(Locate&)
+    {
+        throw runtime_error("Locate operation not supported");
+    }
     virtual void Visit(FetchDataPtr&)
     {
         throw runtime_error("FetchDataPtr operation not supported");

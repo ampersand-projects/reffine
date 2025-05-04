@@ -52,7 +52,6 @@ struct DataType {
                 ASSERT(dtypes.size() == 1);
                 break;
             case BaseType::VECTOR:
-                ASSERT(dim > 0);
                 ASSERT(dtypes.size() >= dim);
                 break;
             default:
