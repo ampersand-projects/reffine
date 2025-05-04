@@ -49,15 +49,12 @@ target_compile_options(reffine PRIVATE -Wall -Wextra -pedantic -Werror -Wno-unus
 
 option(ENABLE_CUDA "Enable CUDA support" ON)
 if(ENABLE_CUDA)
-  target_include_directories(reffine SYSTEM PUBLIC ${CUDA_INCLUDE_DIRS})
-  include_directories(${CUDA_INCLUDE_DIRS})
-  llvm_map_components_to_libnames(llvm_libs
-    NVPTX
-    NVPTXDesc
-    NVPTXInfo
-    NVPTXCodeGen
-  )
-  target_link_libraries(reffine ${llvm_libs} ${CUDA_CUDA_LIBRARY})
-
-  include_directories(/usr/local/cuda/include)
+    llvm_map_components_to_libnames(llvm_nvptx_libs
+        NVPTX
+        NVPTXDesc
+        NVPTXInfo
+        NVPTXCodeGen
+    )
+    target_include_directories(reffine SYSTEM PUBLIC ${CUDA_INCLUDE_DIRS})
+    target_link_libraries(reffine ${llvm_nvptx_libs} ${CUDA_CUDA_LIBRARY})
 endif()
