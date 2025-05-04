@@ -27,20 +27,20 @@ void IRPrinter::Visit(Const& cnst)
         case BaseType::INT16:
         case BaseType::INT32:
         case BaseType::INT64:
-            ostr << cnst.val << "i";
+            ostr << (int64_t)cnst.val << "i";
             break;
         case BaseType::UINT8:
         case BaseType::UINT16:
         case BaseType::UINT32:
         case BaseType::UINT64:
-            ostr << cnst.val << "u";
+            ostr << (uint64_t)cnst.val << "u";
             break;
         case BaseType::FLOAT32:
         case BaseType::FLOAT64:
             ostr << cnst.val << "f";
             break;
         case BaseType::IDX:
-            ostr << cnst.val << "x";
+            ostr << (uint64_t)cnst.val << "x";
             break;
         default:
             throw std::runtime_error("Invalid constant type");
@@ -369,6 +369,24 @@ void IRPrinter::Visit(SetValid& set_valid)
 {
     emitfunc("set_valid<" + std::to_string(set_valid.col) + ">",
              {set_valid.vec, set_valid.idx, set_valid.validity});
+}
+
+void IRPrinter::Visit(Lookup& lookup)
+{
+    emitfunc("lookup", {lookup.vec, lookup.idx});
+}
+
+void IRPrinter::Visit(Locate& locate)
+{
+    ostr << "locate(";
+    locate.vec->Accept(*this);
+    ostr << ", {";
+    for (const auto& iter : locate.iters) {
+        iter->Accept(*this);
+        ostr << ", ";
+    }
+    ostr << "\b\b";
+    ostr << ")";
 }
 
 void IRPrinter::Visit(FetchDataPtr& fetch_data_ptr)
