@@ -17,7 +17,6 @@
 #include "llvm/IR/Verifier.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Linker/Linker.h"
-#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
@@ -47,7 +46,6 @@ public:
         register_vinstrs();
     }
 
-    static string BuildPTX(shared_ptr<Func>, llvm::Module&);
     static void Build(shared_ptr<Func>, llvm::Module&);
 
 private:
@@ -91,9 +89,6 @@ private:
 
     llvm::Module& _llmod;
     unique_ptr<llvm::IRBuilder<>> _builder;
-
-    void init_cuda();
-    llvm::TargetMachine* get_target();
 };
 
 }  // namespace reffine

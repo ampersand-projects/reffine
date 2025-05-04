@@ -473,7 +473,7 @@ void test_kernel() {
     LLVMGen::Build(fn, *llmod);
     jit->Optimize(*llmod);
 
-    auto output_ptx = LLVMGen::BuildPTX(fn, *llmod);
+    auto output_ptx = jit->BuildPTX(*llmod);
     cout << "Generated PTX:" << endl << output_ptx << endl;
 
     int len = 1024;

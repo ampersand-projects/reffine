@@ -20,6 +20,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/TargetSelect.h"
+#include "llvm/MC/TargetRegistry.h"
 
 using namespace std;
 using namespace llvm;
@@ -52,6 +53,8 @@ public:
     void Optimize(Module&);
     void AddModule(unique_ptr<Module>);
     LLVMContext& GetCtx();
+
+    string BuildPTX(Module&);
 
     template <typename FnTy>
     FnTy Lookup(StringRef name)
@@ -87,6 +90,9 @@ private:
 
     void register_symbols();
     void add_opt_passes();
+
+    void init_cuda(Module&);
+    llvm::TargetMachine* get_target(Module&);
 };
 
 }  // namespace reffine
