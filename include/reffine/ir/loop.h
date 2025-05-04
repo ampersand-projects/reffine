@@ -85,6 +85,9 @@ struct Load : public ExprNode {
     Load(Expr addr) : ExprNode(addr->type.deref()), addr(addr)
     {
         ASSERT(addr->type.is_ptr());
+        // Don't allow loading struct
+        // https://llvm.org/docs/Frontend/PerformanceTips.html#avoid-creating-values-of-aggregate-type
+        ASSERT(!addr->type.deref().is_struct());
     }
 
     void Accept(Visitor&) final;
@@ -98,6 +101,9 @@ struct Store : public StmtNode {
     {
         ASSERT(addr->type.is_ptr());
         ASSERT(addr->type == val->type.ptr());
+        // Don't allow storing struct
+        // https://llvm.org/docs/Frontend/PerformanceTips.html#avoid-creating-values-of-aggregate-type
+        ASSERT(!val->type.is_struct());
     }
 
     void Accept(Visitor&) final;
