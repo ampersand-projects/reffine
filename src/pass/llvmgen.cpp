@@ -408,7 +408,7 @@ Value* LLVMGen::visit(ThreadIdx& tidx)
 
     #ifdef ENABLE_CUDA
         auto thread_idx = builder()->CreateIntrinsic(
-            Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
+            lltype(tidx), llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
             {});
 
         return thread_idx;
@@ -421,7 +421,7 @@ Value* LLVMGen::visit(BlockIdx& bidx)
 {
     #ifdef ENABLE_CUDA
         auto block_idx = builder()->CreateIntrinsic(
-            Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
+            lltype(bidx), llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
             {});
 
         return block_idx;
@@ -434,7 +434,7 @@ Value* LLVMGen::visit(BlockDim& bdim)
 {
     #ifdef ENABLE_CUDA
         auto block_dim = builder()->CreateIntrinsic(
-            Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
+            lltype(bdim), llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
             {});
 
         return block_dim;
@@ -443,11 +443,11 @@ Value* LLVMGen::visit(BlockDim& bdim)
     #endif
 }
 
-Value* LLVMGen::visit(GridDim& bdim)
+Value* LLVMGen::visit(GridDim& gdim)
 {
     #ifdef ENABLE_CUDA
         auto grid_dim = builder()->CreateIntrinsic(
-            Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
+            lltype(gdim), llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
             {});
 
         return grid_dim;
