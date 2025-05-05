@@ -27,6 +27,7 @@
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
+#include "reffine/pass/scalarpass.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/loopgen.h"
 #include "reffine/pass/z3solver.h"
@@ -354,10 +355,12 @@ shared_ptr<Func> reduce_op_fn()
     );
     auto sum = _red(
         op,
-        [] () { return _i64(0); },
+        [] () { return _new(vector<Expr>{_i64(0), _i64(0)}); },
         [] (Expr s, Expr v) {
             auto e = _get(v, 0);
-            return _add(s, e);
+            auto s0 = _get(s, 0);
+            auto s1 = _get(s, 1);
+            return _new(vector<Expr>{_add(s0, e), s1});
         }
     );
     auto sum_sym = _sym("sum", sum);
@@ -544,21 +547,24 @@ int main()
     //auto table = load_arrow_file("../students.arrow");
     auto table = load_arrow_file("../benchmark/store_sales.arrow");
     cout << "type: " << table->get_data_type(0).str() << endl;
-    auto fn = tpcds_query9(*table);
+    auto fn = reduce_op_fn();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto fn2 = OpToLoop::Build(fn);
     cout << "OpToLoop IR: " << endl << IRPrinter::Build(fn2) << endl;
 
     auto loop = LoopGen::Build(fn2);
-    cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
+    cout << "Loop IR (raw):" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
     cout << "Loop IR (canon):" << endl << IRPrinter::Build(loop) << endl;
+    auto exp_loop = LoadStoreExpand::Build(loop);
+    cout << "Loop IR (expand):" << endl << IRPrinter::Build(exp_loop) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(loop, *llmod);
+    LLVMGen::Build(exp_loop, *llmod);
+    return 0;
     
-    jit->Optimize(*llmod);
+    //jit->Optimize(*llmod);
 
     // dump llvm IR to .ll file
     ofstream llfile(llmod->getName().str() + ".ll");
@@ -568,6 +574,7 @@ int main()
     if (llvm::verifyModule(*llmod)) {
         throw std::runtime_error("LLVM module verification failed!!!");
     }
+    return 0;
 
     jit->AddModule(std::move(llmod));
     auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);

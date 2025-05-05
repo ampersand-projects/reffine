@@ -606,6 +606,9 @@ void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
 // Helpers
 llvm::StoreInst* LLVMGen::CreateStore(Value* new_val, Value* var_addr)
 {
+    // Don't allow storing struct
+    ASSERT(!new_val->getType()->isStructTy());
+
     MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
     auto store = builder()->CreateStore(new_val, var_addr);
     store->setMetadata(LLVMContext::MD_noalias, md_node);
@@ -615,6 +618,9 @@ llvm::StoreInst* LLVMGen::CreateStore(Value* new_val, Value* var_addr)
 
 llvm::LoadInst* LLVMGen::CreateLoad(Type* type, Value* addr)
 {
+    // Don't allow loading struct
+    ASSERT(!type->isStructTy());
+
     MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
     auto var = builder()->CreateLoad(type, addr);
     var->setMetadata(LLVMContext::MD_noalias, md_node);

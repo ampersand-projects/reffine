@@ -298,6 +298,11 @@ void IRPrinter::Visit(Store& store)
     emitfunc("store", vector<Expr>{store.addr, store.val});
 }
 
+void IRPrinter::Visit(StructGEP& gep)
+{
+    emitfunc("structgep", vector<Expr>{gep.addr, _idx(gep.col)});
+}
+
 void IRPrinter::Visit(ThreadIdx& tidx) { ostr << "tidx"; }
 
 void IRPrinter::Visit(BlockIdx& bidx) { ostr << "bidx"; }

@@ -70,18 +70,35 @@ shared_ptr<Func> vector_op()
     Op op({t_sym},
           ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(48)) &&
               _gte(t_sym, _i64(10)),
-          {vec_in_sym[{t_sym}][1]});
+          {
+              vec_in_sym[{t_sym}][1],
+              vec_in_sym[{t_sym}][2],
+              vec_in_sym[{t_sym}][3],
+              vec_in_sym[{t_sym}][4]
+          }
+    );
 
     auto sum = _red(
-        op, []() { return _i64(0); },
+        op, []() { return _new(vector<Expr>{_i64(0), _i64(0), _i64(0), _i64(0)}); },
         [](Expr s, Expr v) {
-            auto e = _get(v, 0);
-            return _add(s, e);
+            auto v0 = _get(v, 0);
+            auto v1 = _get(v, 1);
+            auto v2 = _get(v, 2);
+            auto v3 = _get(v, 3);
+            auto s0 = _get(s, 0);
+            auto s1 = _get(s, 1);
+            auto s2 = _get(s, 2);
+            auto s3 = _get(s, 3);
+            return _new(vector<Expr>{
+                _add(s0, v0), _add(s1, v1), _add(s2, v2), _add(s3, v3)});
         });
     auto sum_sym = _sym("sum", sum);
+    auto res = _get(sum_sym, 0);
+    auto res_sym = _sym("res", res);
 
-    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
+    auto foo_fn = _func("foo", res_sym, vector<Sym>{vec_in_sym});
     foo_fn->tbl[sum_sym] = sum;
+    foo_fn->tbl[res_sym] = res;
 
     return foo_fn;
 }
