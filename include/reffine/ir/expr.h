@@ -97,8 +97,13 @@ private:
     static DataType get_new_type(vector<Expr> vals)
     {
         vector<DataType> dtypes;
-        for (const auto& val : vals) { dtypes.push_back(val->type); }
-        return DataType(BaseType::STRUCT, (dtypes));
+        for (const auto& val : vals)
+        {
+            // Don't allow struct of struct
+            ASSERT(!val->type.is_struct());
+            dtypes.push_back(val->type);
+        }
+        return DataType(BaseType::STRUCT, dtypes);
     }
 };
 

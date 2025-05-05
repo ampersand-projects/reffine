@@ -37,7 +37,7 @@ Value* LLVMGen::llcall(const string name, llvm::Type* ret_type,
     return llcall(name, ret_type, arg_vals);
 }
 
-llvm::Type* LLVMGen::lltype(const DataType& type)
+llvm::Type* LLVMGen::lltype(const DataType& type, bool struct_ref)
 {
     switch (type.btype) {
         case BaseType::BOOL:
@@ -62,7 +62,12 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
         case BaseType::STRUCT: {
             vector<llvm::Type*> lltypes;
             for (auto dt : type.dtypes) { lltypes.push_back(lltype(dt)); }
-            return StructType::get(llctx(), lltypes);
+            auto struct_type = StructType::get(llctx(), lltypes);
+            if (struct_ref) {
+                return PointerType::get(struct_type, 0);
+            } else {
+                return struct_type;
+            }
         }
         case BaseType::PTR:
             return PointerType::get(lltype(type.dtypes[0]), 0);
@@ -111,20 +116,22 @@ Value* LLVMGen::visit(Cast& e)
 Value* LLVMGen::visit(Get& e)
 {
     auto val = eval(e.val);
-    return builder()->CreateExtractValue(val, e.col);
+    auto struct_type = lltype(e.val->type, /*struct_ref=*/false);
+    auto val_ptr = builder()->CreateStructGEP(struct_type, val, e.col);
+    return CreateLoad(lltype(e), val_ptr);
 }
 
 Value* LLVMGen::visit(New& e)
 {
-    auto new_type = lltype(e);
-    auto ptr = builder()->CreateAlloca(new_type);
+    auto struct_type = lltype(e.type, /*struct_ref=*/false);
+    auto ptr = builder()->CreateAlloca(struct_type);
 
     for (size_t i = 0; i < e.vals.size(); i++) {
-        auto val_ptr = builder()->CreateStructGEP(new_type, ptr, i);
+        auto val_ptr = builder()->CreateStructGEP(struct_type, ptr, i);
         CreateStore(eval(e.vals[i]), val_ptr);
     }
 
-    return CreateLoad(new_type, ptr);
+    return ptr;
 }
 
 Value* LLVMGen::visit(NaryExpr& e)
@@ -383,7 +390,7 @@ Value* LLVMGen::visit(Alloc& alloc)
 Value* LLVMGen::visit(Load& load)
 {
     auto addr = eval(load.addr);
-    auto addr_type = lltype(load.addr->type.deref());
+    auto addr_type = lltype(load);
     return CreateLoad(addr_type, addr);
 }
 
