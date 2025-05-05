@@ -15,8 +15,8 @@
 #include <z3++.h>
 
 #ifdef ENABLE_CUDA
-    #include <cuda.h>
-    #include <cuda_runtime.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
 #endif
 
 #include "reffine/ir/node.h"
