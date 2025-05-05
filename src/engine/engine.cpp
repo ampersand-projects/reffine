@@ -121,7 +121,7 @@ void ExecEngine::init_cuda(Module& llmod)
     InitializeAllAsmPrinters();
     InitializeAllAsmParsers();
 
-    llmod.setTargetTriple("nvptx64-nvidia-cuda");
+    // llmod.setTargetTriple("nvptx64-nvidia-cuda");
 }
 
 TargetMachine* ExecEngine::get_target(Module& llmod)

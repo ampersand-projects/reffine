@@ -32,6 +32,7 @@
 #include "reffine/pass/z3solver.h"
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
+#include "reffine/engine/cuda_engine.h"
 #include "reffine/arrow/defs.h"
 #include "reffine/builder/reffiner.h"
 #include "reffine/pass/vinstr.h"
@@ -471,20 +472,24 @@ static void __checkCudaErrors(CUresult err, const char *filename, int line)
     }
 }
 
-void execute_ptx(string kernel_name, string ptx_str, void *arg, int len)
+void execute_kernel(string kernel_name, CUfunction kernel, void *arg, int len)
 {
-    CUdevice device;
-    CUmodule cudaModule;
-    CUcontext context;
-    CUfunction function;
+    // CUdevice device;
+    // CUmodule cudaModule;
+    // CUcontext context;
+    // CUfunction function;
 
-    checkCudaErrors(cuInit(0));
-    checkCudaErrors(cuDeviceGet(&device, 0));
-    checkCudaErrors(cuCtxCreate(&context, 0, device));
+    // checkCudaErrors(cuInit(0));
+    // checkCudaErrors(cuDeviceGet(&device, 0));
+    // checkCudaErrors(cuCtxCreate(&context, 0, device));
 
-    char name[128];
-    cuDeviceGetName(name, 128, device);
-    std::cout << "Device name: " << name << endl;
+    // checkCudaErrors(cuModuleLoadData(&cudaModule, ptx_str.c_str()));
+    // checkCudaErrors(
+    //     cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
+
+    // char name[128];
+    // cuDeviceGetName(name, 128, device);
+    // std::cout << "Device name: " << name << endl;
 
     CUdeviceptr d_arr;
     checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t) * len));
@@ -493,9 +498,6 @@ void execute_ptx(string kernel_name, string ptx_str, void *arg, int len)
     CUdeviceptr d_arr_out;
     checkCudaErrors(cuMemAlloc(&d_arr_out, sizeof(int64_t) * len));
 
-    checkCudaErrors(cuModuleLoadData(&cudaModule, ptx_str.c_str()));
-    checkCudaErrors(
-        cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
     cout << "About to run " << kernel_name << " kernel..." << endl;
 
     int blockDimX = 32;  // num of threads per block
@@ -505,7 +507,7 @@ void execute_ptx(string kernel_name, string ptx_str, void *arg, int len)
         &d_arr,
     };
 
-    checkCudaErrors(cuLaunchKernel(function, gridDimX, 1, 1, blockDimX, 1, 1,
+    checkCudaErrors(cuLaunchKernel(kernel, gridDimX, 1, 1, blockDimX, 1, 1,
                                    0,  // shared memory size
                                    0,  // stream handle
                                    kernelParams, NULL));
@@ -521,8 +523,8 @@ void execute_ptx(string kernel_name, string ptx_str, void *arg, int len)
 
     cuMemFree(d_arr);
     cuMemFree(d_arr_out);
-    cuModuleUnload(cudaModule);
-    cuCtxDestroy(context);
+    // cuModuleUnload(cudaModule);
+    // cuCtxDestroy(context);
 }
 
 void test_kernel() {
@@ -536,15 +538,17 @@ void test_kernel() {
     LLVMGen::Build(fn, *llmod);
     jit->Optimize(*llmod);
 
-    auto output_ptx = jit->BuildPTX(*llmod);
-    cout << "Generated PTX:" << endl << output_ptx << endl;
+    auto cuda_engine = CudaEngine::Get();
+    auto cuda_module = cuda_engine->Build(*llmod);
+    auto kernel = cuda_engine->Lookup(cuda_module, llmod->getName().str());
+    // cout << "Generated PTX:" << endl << output_ptx << endl;
 
     int len = 1024;
     int64_t* in_array = new int64_t[len];
     for (int i = 0; i < len; i++) {
         in_array[i] = i;
     }
-    execute_ptx(llmod->getName().str(), output_ptx, (int64_t*)(in_array), len);
+    execute_kernel(llmod->getName().str(), kernel, (int64_t*)(in_array), len);
 
     return;
 }
@@ -552,10 +556,10 @@ void test_kernel() {
 
 int main()
 {
-    /*
+    
     test_kernel();
     return 0;
-    */
+    
 
     const rlim_t kStackSize = 1 * 1024 * 1024 * 1024u;   // min stack size = 2 GB
     struct rlimit rl;

@@ -18,6 +18,7 @@ set(SRC_FILES
     pass/z3solver.cpp
     pass/llvmgen.cpp
     engine/engine.cpp
+    engine/cuda_engine.cpp
     builder/reffiner.cpp
 )
 
