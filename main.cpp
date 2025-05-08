@@ -456,30 +456,14 @@ shared_ptr<Func> tpcds_query9(ArrowTable& table)
 }
 
 #ifdef ENABLE_CUDA
-#define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
-static void __checkCudaErrors(CUresult err, const char *filename, int line)
-{
-    assert(filename);
-    if (CUDA_SUCCESS != err) {
-        const char *ename = NULL;
-        const CUresult res = cuGetErrorName(err, &ename);
-        fprintf(stderr,
-                "CUDA API Error %04d: \"%s\" from file <%s>, "
-                "line %i.\n",
-                err, ((CUDA_SUCCESS == res) ? ename : "Unknown"), filename,
-                line);
-        exit(err);
-    }
-}
-
 void execute_kernel(string kernel_name, CUfunction kernel, void *arg, int len)
 {
     CUdeviceptr d_arr;
-    checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t) * len));
-    checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t) * len));
+    cuMemAlloc(&d_arr, sizeof(int64_t) * len);
+    cuMemcpyHtoD(d_arr, arg, sizeof(int64_t) * len);
 
     CUdeviceptr d_arr_out;
-    checkCudaErrors(cuMemAlloc(&d_arr_out, sizeof(int64_t) * len));
+    cuMemAlloc(&d_arr_out, sizeof(int64_t) * len);
 
     cout << "About to run " << kernel_name << " kernel..." << endl;
 
@@ -490,15 +474,15 @@ void execute_kernel(string kernel_name, CUfunction kernel, void *arg, int len)
         &d_arr,
     };
 
-    checkCudaErrors(cuLaunchKernel(kernel, gridDimX, 1, 1, blockDimX, 1, 1,
+    cuLaunchKernel(kernel, gridDimX, 1, 1, blockDimX, 1, 1,
                                    0,  // shared memory size
                                    0,  // stream handle
-                                   kernelParams, NULL));
+                                   kernelParams, NULL);
 
-    checkCudaErrors(cuCtxSynchronize());
+    cuCtxSynchronize();
 
     auto arr_out = (int64_t *)malloc(sizeof(int64_t) * len);
-    checkCudaErrors(cuMemcpyDtoH(arr_out, d_arr_out, sizeof(int64_t) * len));
+    cuMemcpyDtoH(arr_out, d_arr_out, sizeof(int64_t) * len);
     cuMemFree(d_arr);
     cout << "Output from " << kernel_name << " kernel:" << endl;
     for (int i = 0; i < len; i++) { cout << arr_out[i] << ", "; }
@@ -536,10 +520,11 @@ void test_kernel() {
 #endif
 
 int main()
-{    
+{   
+    /*
     test_kernel();
     return 0;
-    
+    */
 
     const rlim_t kStackSize = 1 * 1024 * 1024 * 1024u;   // min stack size = 2 GB
     struct rlimit rl;

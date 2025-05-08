@@ -2,8 +2,6 @@
 #include "reffine/engine/cuda_engine.h"
 
 using namespace reffine;
-using namespace std::placeholders;
-using namespace std;
 
 #define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
 static void __checkCudaErrors(CUresult err, const char* filename, int line)
