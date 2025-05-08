@@ -5,13 +5,12 @@ using namespace reffine;
 using namespace std::placeholders;
 using namespace std;
 
-
 #define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
-static void __checkCudaErrors(CUresult err, const char *filename, int line)
+static void __checkCudaErrors(CUresult err, const char* filename, int line)
 {
     assert(filename);
     if (CUDA_SUCCESS != err) {
-        const char *ename = NULL;
+        const char* ename = NULL;
         const CUresult res = cuGetErrorName(err, &ename);
         fprintf(stderr,
                 "CUDA API Error %04d: \"%s\" from file <%s>, "
@@ -38,8 +37,10 @@ CudaEngine* CudaEngine::Get()
     return engine.get();
 }
 
-CUfunction CudaEngine::Lookup(CUmodule cudaModule, string kernel_name) {
-    checkCudaErrors(cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
+CUfunction CudaEngine::Lookup(CUmodule cudaModule, string kernel_name)
+{
+    checkCudaErrors(
+        cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
 
     return function;
 }
@@ -71,7 +72,8 @@ CUmodule CudaEngine::Build(Module& llmod)
     return cudaModule;
 }
 
-void CudaEngine::Cleanup() {
+void CudaEngine::Cleanup()
+{
     cuModuleUnload(cudaModule);
     cuCtxDestroy(context);
 }

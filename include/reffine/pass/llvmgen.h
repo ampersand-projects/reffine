@@ -75,7 +75,7 @@ private:
     llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<Expr>);
 
-    llvm::Type* lltype(const DataType&);
+    llvm::Type* lltype(const DataType&, unsigned int addr_space = 0);
     llvm::Type* lltype(const ExprNode& expr) { return lltype(expr.type); }
     llvm::Type* lltype(const Expr& expr) { return lltype(expr->type); }
 

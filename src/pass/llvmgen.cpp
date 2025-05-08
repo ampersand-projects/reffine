@@ -40,7 +40,7 @@ Value* LLVMGen::llcall(const string name, llvm::Type* ret_type,
     return llcall(name, ret_type, arg_vals);
 }
 
-llvm::Type* LLVMGen::lltype(const DataType& type)
+llvm::Type* LLVMGen::lltype(const DataType& type, unsigned int addr_space)
 {
     switch (type.btype) {
         case BaseType::BOOL:
@@ -68,11 +68,11 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
             return StructType::get(llctx(), lltypes);
         }
         case BaseType::PTR:
-            return PointerType::get(lltype(type.dtypes[0]), 0);
+            return PointerType::get(lltype(type.dtypes[0]), addr_space);
         case BaseType::VECTOR:
             return PointerType::get(
                 llvm::StructType::getTypeByName(llctx(), "struct.ArrowArray"),
-                0);
+                addr_space);
         case BaseType::UNKNOWN:
         default:
             throw std::runtime_error("Invalid type");
@@ -382,8 +382,7 @@ Value* LLVMGen::visit(Alloc& alloc)
 {
     // 5 for local address space
     // see https://llvm.org/docs/NVPTXUsage.html#address-spaces
-    auto type = PointerType::get(lltype(alloc.type), 5U);
-    return builder()->CreateAlloca(type, eval(alloc.size));
+    return builder()->CreateAlloca(lltype(alloc.type, 5U), eval(alloc.size));
 }
 
 Value* LLVMGen::visit(Load& load)

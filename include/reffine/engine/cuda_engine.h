@@ -3,6 +3,11 @@
 #ifndef INCLUDE_REFFINE_CUDA_ENGINE_ENGINE_H_
 #define INCLUDE_REFFINE_CUDA_ENGINE_ENGINE_H_
 
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/Target/TargetOptions.h>
+
 #include <memory>
 #include <utility>
 
@@ -13,10 +18,6 @@
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Support/TargetSelect.h"
-#include <llvm/Target/TargetOptions.h>
-#include <llvm/Target/TargetMachine.h>
-#include <cuda.h>
-#include <cuda_runtime.h>
 
 using namespace std;
 using namespace llvm;
