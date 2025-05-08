@@ -1,9 +1,26 @@
-// #ifdef ENABLE_CUDA
+#ifdef ENABLE_CUDA
 #include "reffine/engine/cuda_engine.h"
 
 using namespace reffine;
 using namespace std::placeholders;
 using namespace std;
+
+
+#define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
+static void __checkCudaErrors(CUresult err, const char *filename, int line)
+{
+    assert(filename);
+    if (CUDA_SUCCESS != err) {
+        const char *ename = NULL;
+        const CUresult res = cuGetErrorName(err, &ename);
+        fprintf(stderr,
+                "CUDA API Error %04d: \"%s\" from file <%s>, "
+                "line %i.\n",
+                err, ((CUDA_SUCCESS == res) ? ename : "Unknown"), filename,
+                line);
+        exit(err);
+    }
+}
 
 CudaEngine* CudaEngine::Get()
 {
@@ -14,47 +31,15 @@ CudaEngine* CudaEngine::Get()
     InitializeAllAsmPrinters();
     InitializeAllAsmParsers();
 
-    CUdevice device;
-    // CUmodule cudaModule;
-    CUcontext context;
-    // CUfunction function;
-
     cuInit(0);
-    cuDeviceGet(&device, 0);
-    cuCtxCreate(&context, 0, device);
+    checkCudaErrors(cuDeviceGet(&engine->device, 0));
+    checkCudaErrors(cuCtxCreate(&engine->context, 0, engine->device));
 
     return engine.get();
 }
 
-void CudaEngine::AddModule(unique_ptr<Module> m)
-{
-    // ...
-}
-
-// LLVMContext& CudaEngine::GetCtx() { 
-    // ...
-// }
-
-TargetMachine* CudaEngine::get_target(Module& llmod)
-{
-    std::string Error;
-    const llvm::Target* Target =
-        llvm::TargetRegistry::lookupTarget("nvptx64-nvidia-cuda", Error);
-
-    llvm::TargetOptions opt;
-    llvm::TargetMachine* TM =
-        Target->createTargetMachine("nvptx64-nvidia-cuda", "sm_52",
-                                    "+ptx76",  // PTX version
-                                    opt, llvm::Reloc::Static);
-
-    llmod.setDataLayout(TM->createDataLayout());
-
-    return TM;
-}
-
 CUfunction CudaEngine::Lookup(CUmodule cudaModule, string kernel_name) {
-    CUfunction function;
-    cuModuleGetFunction(&function, cudaModule, kernel_name.c_str());
+    checkCudaErrors(cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
 
     return function;
 }
@@ -67,13 +52,13 @@ CUmodule CudaEngine::Build(Module& llmod)
 
     llvm::TargetOptions opt;
     llvm::TargetMachine* TM =
-        Target->createTargetMachine("nvptx64-nvidia-cuda", "sm_52",
-                                    "+ptx76",  // PTX version
+        Target->createTargetMachine("nvptx64-nvidia-cuda", "sm_75",
+                                    "+ptx81",  // PTX version
                                     opt, llvm::Reloc::Static);
 
     llmod.setDataLayout(TM->createDataLayout());
 
-    llvm::SmallString<1048576> PTXStr;
+    llvm::SmallString<1048576> PTXStr;  // max size
     llvm::raw_svector_ostream PTXOS(PTXStr);
 
     llvm::legacy::PassManager PM;
@@ -81,11 +66,13 @@ CUmodule CudaEngine::Build(Module& llmod)
                             llvm::CodeGenFileType::AssemblyFile);
     PM.run(llmod);
 
-    // std::cout << "Generated PTX:" << endl << PTXStr << endl;
-
-    CUmodule cudaModule;
-    cuModuleLoadData(&cudaModule, PTXStr.c_str());
+    checkCudaErrors(cuModuleLoadData(&cudaModule, PTXStr.c_str()));
 
     return cudaModule;
 }
-// #endif
+
+void CudaEngine::Cleanup() {
+    cuModuleUnload(cudaModule);
+    cuCtxDestroy(context);
+}
+#endif

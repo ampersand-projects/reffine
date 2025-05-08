@@ -54,8 +54,6 @@ public:
     void AddModule(unique_ptr<Module>);
     LLVMContext& GetCtx();
 
-    string BuildPTX(Module&);
-
     template <typename FnTy>
     FnTy Lookup(StringRef name)
     {
@@ -90,9 +88,6 @@ private:
 
     void register_symbols();
     void add_opt_passes();
-
-    void init_cuda(Module&);
-    llvm::TargetMachine* get_target(Module&);
 };
 
 }  // namespace reffine

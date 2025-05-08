@@ -474,23 +474,6 @@ static void __checkCudaErrors(CUresult err, const char *filename, int line)
 
 void execute_kernel(string kernel_name, CUfunction kernel, void *arg, int len)
 {
-    // CUdevice device;
-    // CUmodule cudaModule;
-    // CUcontext context;
-    // CUfunction function;
-
-    // checkCudaErrors(cuInit(0));
-    // checkCudaErrors(cuDeviceGet(&device, 0));
-    // checkCudaErrors(cuCtxCreate(&context, 0, device));
-
-    // checkCudaErrors(cuModuleLoadData(&cudaModule, ptx_str.c_str()));
-    // checkCudaErrors(
-    //     cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
-
-    // char name[128];
-    // cuDeviceGetName(name, 128, device);
-    // std::cout << "Device name: " << name << endl;
-
     CUdeviceptr d_arr;
     checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t) * len));
     checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t) * len));
@@ -523,8 +506,6 @@ void execute_kernel(string kernel_name, CUfunction kernel, void *arg, int len)
 
     cuMemFree(d_arr);
     cuMemFree(d_arr_out);
-    // cuModuleUnload(cudaModule);
-    // cuCtxDestroy(context);
 }
 
 void test_kernel() {
@@ -541,7 +522,6 @@ void test_kernel() {
     auto cuda_engine = CudaEngine::Get();
     auto cuda_module = cuda_engine->Build(*llmod);
     auto kernel = cuda_engine->Lookup(cuda_module, llmod->getName().str());
-    // cout << "Generated PTX:" << endl << output_ptx << endl;
 
     int len = 1024;
     int64_t* in_array = new int64_t[len];
@@ -549,14 +529,14 @@ void test_kernel() {
         in_array[i] = i;
     }
     execute_kernel(llmod->getName().str(), kernel, (int64_t*)(in_array), len);
+    cuda_engine->Cleanup();
 
     return;
 }
 #endif
 
 int main()
-{
-    
+{    
     test_kernel();
     return 0;
     
