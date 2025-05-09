@@ -75,7 +75,7 @@ private:
     llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<Expr>);
 
-    llvm::Type* lltype(const DataType&, unsigned int addr_space = 0);
+    llvm::Type* lltype(const DataType&);
     llvm::Type* lltype(const ExprNode& expr) { return lltype(expr.type); }
     llvm::Type* lltype(const Expr& expr) { return lltype(expr->type); }
 
@@ -89,6 +89,8 @@ private:
     // Helpers
     llvm::LoadInst* CreateLoad(llvm::Type*, llvm::Value*);
     llvm::StoreInst* CreateStore(llvm::Value*, llvm::Value*);
+    llvm::AllocaInst* CreateAlloca(llvm::Type*,
+                                   llvm::Value* size = (llvm::Value*)nullptr);
 };
 
 }  // namespace reffine

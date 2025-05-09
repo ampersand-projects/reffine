@@ -40,7 +40,7 @@ Value* LLVMGen::llcall(const string name, llvm::Type* ret_type,
     return llcall(name, ret_type, arg_vals);
 }
 
-llvm::Type* LLVMGen::lltype(const DataType& type, unsigned int addr_space)
+llvm::Type* LLVMGen::lltype(const DataType& type)
 {
     switch (type.btype) {
         case BaseType::BOOL:
@@ -68,11 +68,11 @@ llvm::Type* LLVMGen::lltype(const DataType& type, unsigned int addr_space)
             return StructType::get(llctx(), lltypes);
         }
         case BaseType::PTR:
-            return PointerType::get(lltype(type.dtypes[0]), addr_space);
+            return PointerType::get(lltype(type.dtypes[0]), 0);
         case BaseType::VECTOR:
             return PointerType::get(
                 llvm::StructType::getTypeByName(llctx(), "struct.ArrowArray"),
-                addr_space);
+                0);
         case BaseType::UNKNOWN:
         default:
             throw std::runtime_error("Invalid type");
@@ -119,8 +119,8 @@ Value* LLVMGen::visit(Get& e)
 
 Value* LLVMGen::visit(New& e)
 {
-    auto new_type = lltype(e.type, 5U);
-    auto ptr = builder()->CreateAlloca(new_type);
+    auto new_type = lltype(e);
+    auto ptr = CreateAlloca(new_type);
 
     for (size_t i = 0; i < e.vals.size(); i++) {
         auto val_ptr = builder()->CreateStructGEP(new_type, ptr, i);
@@ -380,9 +380,7 @@ void LLVMGen::visit(Stmts& stmts)
 
 Value* LLVMGen::visit(Alloc& alloc)
 {
-    // 5 for local address space
-    // see https://llvm.org/docs/NVPTXUsage.html#address-spaces
-    return builder()->CreateAlloca(lltype(alloc.type, 5U), eval(alloc.size));
+    return CreateAlloca(lltype(alloc.type), eval(alloc.size));
 }
 
 Value* LLVMGen::visit(Load& load)
@@ -585,7 +583,7 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
     auto old_val = this->ctx().in_sym_tbl.at(old_sym);
     auto new_val = eval(old_val);
 
-    auto var_addr = builder()->CreateAlloca(new_val->getType(), nullptr);
+    auto var_addr = CreateAlloca(new_val->getType());
     var_addr->setName(old_sym->name + "_ref");
     CreateStore(new_val, var_addr);
     auto var = CreateLoad(lltype(old_sym), var_addr);
@@ -618,4 +616,11 @@ llvm::LoadInst* LLVMGen::CreateLoad(Type* type, Value* addr)
     var->setMetadata(LLVMContext::MD_noalias, md_node);
 
     return var;
+}
+
+llvm::AllocaInst* LLVMGen::CreateAlloca(llvm::Type* type, llvm::Value* size)
+{
+    // 5 for local address space
+    // see https://llvm.org/docs/NVPTXUsage.html#address-spaces
+    return builder()->CreateAlloca(type, 5U, size);
 }
