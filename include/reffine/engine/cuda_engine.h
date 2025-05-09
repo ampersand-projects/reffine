@@ -24,8 +24,6 @@ class CudaEngine {
 public:
     CudaEngine() {}
 
-    static unique_ptr<CudaEngine> engine;
-
     static CudaEngine* Get();
     CUmodule Build(Module&);
     CUfunction Lookup(CUmodule, string);
