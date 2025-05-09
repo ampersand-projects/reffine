@@ -29,7 +29,7 @@ public:
     static CudaEngine* Get();
     CUmodule Build(Module&);
     CUfunction Lookup(CUmodule, string);
-    void Cleanup(CUmodule*);
+    void Cleanup(CUmodule);
 
     CUdevice device;
     CUcontext context;

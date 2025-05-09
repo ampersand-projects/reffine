@@ -513,7 +513,7 @@ void test_kernel() {
         in_array[i] = i;
     }
     execute_kernel(llmod->getName().str(), kernel, (int64_t*)(in_array), len);
-    // cuda_engine->Cleanup(cuda_module.get());
+    cuda_engine->Cleanup(cuda_module);
 
     return;
 }

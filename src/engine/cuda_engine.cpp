@@ -6,6 +6,7 @@
 using namespace reffine;
 
 #define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
+
 static void __checkCudaErrors(CUresult err, const char* filename, int line)
 {
     ASSERT(filename);
@@ -78,9 +79,9 @@ CUmodule CudaEngine::Build(Module& llmod)
     return cudaModule;
 }
 
-// void CudaEngine::Cleanup(CUmodule* cudaModule)
-// {
-//     cuModuleUnload(cudaModule.get());
-//     cuCtxDestroy(context);
-// }
+void CudaEngine::Cleanup(CUmodule cudaModule)
+{
+    cuModuleUnload(cudaModule);
+    cuCtxDestroy(context);
+}
 #endif
