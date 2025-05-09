@@ -103,6 +103,30 @@ struct Store : public StmtNode {
     void Accept(Visitor&) final;
 };
 
+struct ThreadIdx : public ExprNode {
+    ThreadIdx() : ExprNode(types::IDX) {}
+
+    void Accept(Visitor&) final;
+};
+
+struct BlockIdx : public ExprNode {
+    BlockIdx() : ExprNode(types::IDX) {}
+
+    void Accept(Visitor&) final;
+};
+
+struct BlockDim : public ExprNode {
+    BlockDim() : ExprNode(types::IDX) {}
+
+    void Accept(Visitor&) final;
+};
+
+struct GridDim : public ExprNode {
+    GridDim() : ExprNode(types::IDX) {}
+
+    void Accept(Visitor&) final;
+};
+
 struct Loop : public ExprNode {
     // Loop initialization
     Stmt init = nullptr;

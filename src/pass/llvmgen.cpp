@@ -4,6 +4,9 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
 #include "reffine/base/type.h"
+#ifdef ENABLE_CUDA
+#include "llvm/IR/IntrinsicsNVPTX.h"
+#endif
 
 using namespace reffine;
 using namespace llvm;
@@ -117,7 +120,7 @@ Value* LLVMGen::visit(Get& e)
 Value* LLVMGen::visit(New& e)
 {
     auto new_type = lltype(e);
-    auto ptr = builder()->CreateAlloca(new_type);
+    auto ptr = CreateAlloca(new_type);
 
     for (size_t i = 0; i < e.vals.size(); i++) {
         auto val_ptr = builder()->CreateStructGEP(new_type, ptr, i);
@@ -377,7 +380,7 @@ void LLVMGen::visit(Stmts& stmts)
 
 Value* LLVMGen::visit(Alloc& alloc)
 {
-    return builder()->CreateAlloca(lltype(alloc.type), eval(alloc.size));
+    return CreateAlloca(lltype(alloc.type), eval(alloc.size));
 }
 
 Value* LLVMGen::visit(Load& load)
@@ -392,6 +395,56 @@ void LLVMGen::visit(Store& store)
     auto addr = eval(store.addr);
     auto val = eval(store.val);
     CreateStore(val, addr);
+}
+
+Value* LLVMGen::visit(ThreadIdx& tidx)
+{
+    // https://llvm.org/docs/NVPTXUsage.html#overview
+
+#ifdef ENABLE_CUDA
+    auto thread_idx = builder()->CreateIntrinsic(
+        lltype(tidx), llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x, {});
+
+    return thread_idx;
+#else
+    throw std::runtime_error("CUDA not enabled.");
+#endif
+}
+
+Value* LLVMGen::visit(BlockIdx& bidx)
+{
+#ifdef ENABLE_CUDA
+    auto block_idx = builder()->CreateIntrinsic(
+        lltype(bidx), llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x, {});
+
+    return block_idx;
+#else
+    throw std::runtime_error("CUDA not enabled.");
+#endif
+}
+
+Value* LLVMGen::visit(BlockDim& bdim)
+{
+#ifdef ENABLE_CUDA
+    auto block_dim = builder()->CreateIntrinsic(
+        lltype(bdim), llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x, {});
+
+    return block_dim;
+#else
+    throw std::runtime_error("CUDA not enabled.");
+#endif
+}
+
+Value* LLVMGen::visit(GridDim& gdim)
+{
+#ifdef ENABLE_CUDA
+    auto grid_dim = builder()->CreateIntrinsic(
+        lltype(gdim), llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x, {});
+
+    return grid_dim;
+#else
+    throw std::runtime_error("CUDA not enabled.");
+#endif
 }
 
 Value* LLVMGen::visit(Loop& loop)
@@ -447,7 +500,13 @@ void LLVMGen::visit(Func& func)
     for (auto& input : func.inputs) {
         args_type.push_back(lltype(input->type));
     }
-    auto fn = llfunc(func.name, lltype(func.output), args_type);
+    llvm::Type* ret_type = nullptr;
+    if (func.is_kernel) {
+        ret_type = llvm::Type::getVoidTy(llctx());
+    } else {
+        ret_type = lltype(func.output);
+    }
+    auto fn = llfunc(func.name, ret_type, args_type);
     for (size_t i = 0; i < func.inputs.size(); i++) {
         auto input = func.inputs[i];
         fn->getArg(i)->setName(input->name);
@@ -458,7 +517,30 @@ void LLVMGen::visit(Func& func)
     auto entry_bb = BasicBlock::Create(llctx(), "entry", fn);
 
     builder()->SetInsertPoint(entry_bb);
-    auto ret_instr = builder()->CreateRet(eval(func.output));
+
+    auto output = eval(func.output);
+    ReturnInst* ret_instr;
+    if (func.is_kernel) {
+#ifdef ENABLE_CUDA
+        ret_instr = builder()->CreateRetVoid();
+
+        fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
+        llvm::NamedMDNode* MD =
+            llmod()->getOrInsertNamedMetadata("nvvm.annotations");
+
+        std::vector<llvm::Metadata*> MDVals;
+        MDVals.push_back(llvm::ValueAsMetadata::get(fn));
+        MDVals.push_back(llvm::MDString::get(llctx(), "kernel"));
+        MDVals.push_back(llvm::ConstantAsMetadata::get(
+            llvm::ConstantInt::get(llvm::Type::getInt32Ty(llctx()), 1)));
+
+        MD->addOperand(llvm::MDNode::get(llctx(), MDVals));
+#else
+        throw std::runtime_error("CUDA not enabled.");
+#endif
+    } else {
+        ret_instr = builder()->CreateRet(output);
+    }
     ret_instr->setMetadata(LLVMContext::MD_noalias,
                            MDNode::get(llctx(), ArrayRef<Metadata*>()));
 }
@@ -501,7 +583,7 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
     auto old_val = this->ctx().in_sym_tbl.at(old_sym);
     auto new_val = eval(old_val);
 
-    auto var_addr = builder()->CreateAlloca(new_val->getType(), nullptr);
+    auto var_addr = CreateAlloca(new_val->getType());
     var_addr->setName(old_sym->name + "_ref");
     CreateStore(new_val, var_addr);
     auto var = CreateLoad(lltype(old_sym), var_addr);
@@ -534,4 +616,11 @@ llvm::LoadInst* LLVMGen::CreateLoad(Type* type, Value* addr)
     var->setMetadata(LLVMContext::MD_noalias, md_node);
 
     return var;
+}
+
+llvm::AllocaInst* LLVMGen::CreateAlloca(llvm::Type* type, llvm::Value* size)
+{
+    // 5 for local address space
+    // see https://llvm.org/docs/NVPTXUsage.html#address-spaces
+    return builder()->CreateAlloca(type, 5U, size);
 }

@@ -54,6 +54,10 @@ public:
     void Visit(Alloc&) final;
     void Visit(Load&) final;
     void Visit(Store&) final;
+    void Visit(ThreadIdx&) final;
+    void Visit(BlockIdx&) final;
+    void Visit(BlockDim&) final;
+    void Visit(GridDim&) final;
     void Visit(Loop&) final;
     void Visit(IsValid&) final;
     void Visit(SetValid&) final;

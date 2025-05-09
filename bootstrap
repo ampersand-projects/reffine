@@ -9,8 +9,10 @@ mkdir -p ${LLVM_BUILD_DIR}
 pushd ${LLVM_BUILD_DIR}
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DLLVM_ENABLE_RTTI=ON \
-      -DLLVM_TARGETS_TO_BUILD="X86" \
-      -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" \
+      -DLLVM_TARGETS_TO_BUILD="X86;NVPTX" \
+      -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="NVPTX" \
+      -DLLVM_ENABLE_BINDINGS=OFF \
+      -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libc" \
       -DLLVM_ENABLE_RUNTIMES="libc;libcxx;libcxxabi;libunwind" \
       -DLLVM_ENABLE_ZLIB=OFF \
       -DLLVM_ENABLE_ZSTD=OFF \
@@ -74,6 +76,7 @@ mkdir -p ${REFFINE_BUILD_DIR}
 pushd ${REFFINE_BUILD_DIR}
 cmake -DCMAKE_BUILD_TYPE=Debug \
       -DCMAKE_PREFIX_PATH=${INSTALL_PREFIX} \
+      # -DENABLE_CUDA=ON \
       ..
 make -j $(nproc)
 popd

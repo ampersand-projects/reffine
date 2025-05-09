@@ -20,7 +20,7 @@
 using namespace reffine;
 using namespace std::placeholders;
 
-ExecEngine *ExecEngine::Get()
+ExecEngine* ExecEngine::Get()
 {
     static unique_ptr<ExecEngine> engine;
 
@@ -45,12 +45,12 @@ void ExecEngine::AddModule(unique_ptr<Module> m)
     cantFail(optimizer.add(jd, ThreadSafeModule(std::move(m), ctx)));
 }
 
-LLVMContext &ExecEngine::GetCtx() { return *ctx.getContext(); }
+LLVMContext& ExecEngine::GetCtx() { return *ctx.getContext(); }
 
 Expected<ThreadSafeModule> ExecEngine::optimize_module(
-    ThreadSafeModule tsm, const MaterializationResponsibility &r)
+    ThreadSafeModule tsm, const MaterializationResponsibility& r)
 {
-    tsm.withModuleDo([](Module &m) {
+    tsm.withModuleDo([](Module& m) {
         auto fpm = std::make_unique<legacy::FunctionPassManager>(&m);
         fpm->add(createInstructionCombiningPass());
         fpm->add(createReassociatePass());
@@ -58,13 +58,13 @@ Expected<ThreadSafeModule> ExecEngine::optimize_module(
         fpm->add(createCFGSimplificationPass());
         fpm->doInitialization();
 
-        for (auto &f : m) { fpm->run(f); }
+        for (auto& f : m) { fpm->run(f); }
     });
 
     return std::move(tsm);
 }
 
-void ExecEngine::Optimize(Module &llmod) { MPM.run(llmod, MAM); }
+void ExecEngine::Optimize(Module& llmod) { MPM.run(llmod, MAM); }
 
 unique_ptr<ExecutionSession> ExecEngine::createExecutionSession()
 {

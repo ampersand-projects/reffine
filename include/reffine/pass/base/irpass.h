@@ -136,6 +136,11 @@ public:
         expr.val->Accept(*this);
     }
 
+    void Visit(ThreadIdx& expr) override {}
+    void Visit(BlockDim& expr) override {}
+    void Visit(BlockIdx& expr) override {}
+    void Visit(GridDim& expr) override {}
+
     void Visit(Loop& expr) override
     {
         if (expr.init) { expr.init->Accept(*this); }

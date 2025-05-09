@@ -123,6 +123,12 @@ REGISTER_EXPR(_op, Op)
 REGISTER_EXPR(_red, Reduce)
 REGISTER_EXPR(_notnull, NotNull)
 
+// CUDA
+REGISTER_EXPR(_tidx, ThreadIdx)
+REGISTER_EXPR(_bidx, BlockIdx)
+REGISTER_EXPR(_gdim, GridDim)
+REGISTER_EXPR(_bdim, BlockDim)
+
 // Misc expressions
 REGISTER_EXPR(_call, Call)
 REGISTER_EXPR(_sel, Select)

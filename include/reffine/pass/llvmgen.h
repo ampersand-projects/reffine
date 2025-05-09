@@ -62,6 +62,10 @@ private:
     llvm::Value* visit(Alloc&) final;
     llvm::Value* visit(Load&) final;
     void visit(Store&) final;
+    llvm::Value* visit(ThreadIdx&);
+    llvm::Value* visit(BlockIdx&);
+    llvm::Value* visit(BlockDim&);
+    llvm::Value* visit(GridDim&);
     llvm::Value* visit(Loop&) final;
     llvm::Value* visit(IsValid&) final;
     llvm::Value* visit(SetValid&) final;
@@ -85,6 +89,8 @@ private:
     // Helpers
     llvm::LoadInst* CreateLoad(llvm::Type*, llvm::Value*);
     llvm::StoreInst* CreateStore(llvm::Value*, llvm::Value*);
+    llvm::AllocaInst* CreateAlloca(llvm::Type*,
+                                   llvm::Value* size = (llvm::Value*)nullptr);
 };
 
 }  // namespace reffine

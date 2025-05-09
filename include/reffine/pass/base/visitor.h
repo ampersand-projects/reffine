@@ -113,6 +113,22 @@ public:
     {
         throw runtime_error("NoOp operation not supported");
     }
+    virtual void Visit(ThreadIdx&)
+    {
+        throw runtime_error("ThreadIdx operation not supported");
+    }
+    virtual void Visit(BlockIdx&)
+    {
+        throw runtime_error("BlockIdx operation not supported");
+    }
+    virtual void Visit(BlockDim&)
+    {
+        throw runtime_error("BlockDim operation not supported");
+    }
+    virtual void Visit(GridDim&)
+    {
+        throw runtime_error("GridDim operation not supported");
+    }
     virtual void Visit(Loop&)
     {
         throw runtime_error("Loop operation not supported");
