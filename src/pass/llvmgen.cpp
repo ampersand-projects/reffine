@@ -380,7 +380,9 @@ void LLVMGen::visit(Stmts& stmts)
 
 Value* LLVMGen::visit(Alloc& alloc)
 {
-    return CreateAlloca(alloc.type, eval(alloc.size));
+    // 5 for local address space
+    // see https://llvm.org/docs/NVPTXUsage.html#address-spaces
+    return builder()->CreateAlloca(lltype(alloc.type, 5U), eval(alloc.size));
 }
 
 Value* LLVMGen::visit(Load& load)
@@ -616,11 +618,4 @@ llvm::LoadInst* LLVMGen::CreateLoad(Type* type, Value* addr)
     var->setMetadata(LLVMContext::MD_noalias, md_node);
 
     return var;
-}
-
-llvm::AllocaInst* LLVMGen::CreateAlloca(DataType type, llvm::Value* size)
-{
-    // 5 for local address space
-    // see https://llvm.org/docs/NVPTXUsage.html#address-spaces
-    return builder()->CreateAlloca(lltype(type, 5U), size);
 }
