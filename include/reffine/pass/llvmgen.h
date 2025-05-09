@@ -89,6 +89,8 @@ private:
     // Helpers
     llvm::LoadInst* CreateLoad(llvm::Type*, llvm::Value*);
     llvm::StoreInst* CreateStore(llvm::Value*, llvm::Value*);
+    llvm::AllocaInst* CreateAlloca(DataType,
+                                   llvm::Value* size = (llvm::Value*)nullptr);
 };
 
 }  // namespace reffine

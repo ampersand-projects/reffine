@@ -24,15 +24,15 @@ class CudaEngine {
 public:
     CudaEngine() {}
 
+    static unique_ptr<CudaEngine> engine;
+
     static CudaEngine* Get();
     CUmodule Build(Module&);
     CUfunction Lookup(CUmodule, string);
-    void Cleanup();
+    void Cleanup(CUmodule*);
 
     CUdevice device;
     CUcontext context;
-    CUmodule cudaModule;
-    CUfunction function;
 };
 
 }  // namespace reffine

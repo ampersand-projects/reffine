@@ -513,7 +513,7 @@ void test_kernel() {
         in_array[i] = i;
     }
     execute_kernel(llmod->getName().str(), kernel, (int64_t*)(in_array), len);
-    cuda_engine->Cleanup();
+    // cuda_engine->Cleanup(cuda_module.get());
 
     return;
 }
@@ -521,10 +521,10 @@ void test_kernel() {
 
 int main()
 {   
-    /*
+    
     test_kernel();
     return 0;
-    */
+    
 
     const rlim_t kStackSize = 1 * 1024 * 1024 * 1024u;   // min stack size = 2 GB
     struct rlimit rl;

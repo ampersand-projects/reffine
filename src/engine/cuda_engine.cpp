@@ -1,12 +1,14 @@
 #ifdef ENABLE_CUDA
 #include "reffine/engine/cuda_engine.h"
 
+#include "reffine/base/log.h"
+
 using namespace reffine;
 
 #define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
 static void __checkCudaErrors(CUresult err, const char* filename, int line)
 {
-    assert(filename);
+    ASSERT(filename);
     if (CUDA_SUCCESS != err) {
         const char* ename = NULL;
         const CUresult res = cuGetErrorName(err, &ename);
@@ -21,22 +23,27 @@ static void __checkCudaErrors(CUresult err, const char* filename, int line)
 
 CudaEngine* CudaEngine::Get()
 {
-    static unique_ptr<CudaEngine> engine = make_unique<CudaEngine>();
+    static unique_ptr<CudaEngine> engine;
 
-    InitializeAllTargets();
-    InitializeAllTargetMCs();
-    InitializeAllAsmPrinters();
-    InitializeAllAsmParsers();
+    if (!engine) {
+        engine = make_unique<CudaEngine>();
 
-    cuInit(0);
-    checkCudaErrors(cuDeviceGet(&engine->device, 0));
-    checkCudaErrors(cuCtxCreate(&engine->context, 0, engine->device));
+        InitializeAllTargets();
+        InitializeAllTargetMCs();
+        InitializeAllAsmPrinters();
+        InitializeAllAsmParsers();
+
+        cuInit(0);
+        checkCudaErrors(cuDeviceGet(&engine->device, 0));
+        checkCudaErrors(cuCtxCreate(&engine->context, 0, engine->device));
+    }
 
     return engine.get();
 }
 
 CUfunction CudaEngine::Lookup(CUmodule cudaModule, string kernel_name)
 {
+    CUfunction function;
     checkCudaErrors(
         cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
 
@@ -65,14 +72,15 @@ CUmodule CudaEngine::Build(Module& llmod)
                             llvm::CodeGenFileType::AssemblyFile);
     PM.run(llmod);
 
+    CUmodule cudaModule;
     checkCudaErrors(cuModuleLoadData(&cudaModule, PTXStr.c_str()));
 
     return cudaModule;
 }
 
-void CudaEngine::Cleanup()
-{
-    cuModuleUnload(cudaModule);
-    cuCtxDestroy(context);
-}
+// void CudaEngine::Cleanup(CUmodule* cudaModule)
+// {
+//     cuModuleUnload(cudaModule.get());
+//     cuCtxDestroy(context);
+// }
 #endif
