@@ -4,7 +4,7 @@ set(CMAKE_CXX_COMPILER clang++)
 
 project(main)
 
-option(ENABLE_CUDA "Enable CUDA support" ON)
+option(ENABLE_CUDA "Enable CUDA support" OFF)
 if(ENABLE_CUDA)
     find_package(CUDA REQUIRED)
     message(STATUS "CUDA support is enabled.")
