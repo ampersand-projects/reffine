@@ -94,8 +94,11 @@ private:
     llvm::Module& _llmod;
     unique_ptr<llvm::IRBuilder<>> _builder;
 
-    void init_cuda();
-    llvm::TargetMachine* get_target();
+    // Helpers
+    llvm::LoadInst* CreateLoad(llvm::Type*, llvm::Value*);
+    llvm::StoreInst* CreateStore(llvm::Value*, llvm::Value*);
+    llvm::AllocaInst* CreateAlloca(llvm::Type*,
+                                   llvm::Value* size = (llvm::Value*)nullptr);
 };
 
 }  // namespace reffine

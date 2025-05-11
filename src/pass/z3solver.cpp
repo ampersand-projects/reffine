@@ -42,6 +42,7 @@ void Z3Solver::Visit(Const& cnst)
         case BaseType::UINT16:
         case BaseType::UINT32:
         case BaseType::UINT64:
+        case BaseType::IDX:
             assign(ctx().int_val((int64_t)cnst.val));
             break;
         case BaseType::FLOAT32:

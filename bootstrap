@@ -10,7 +10,9 @@ pushd ${LLVM_BUILD_DIR}
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DLLVM_ENABLE_RTTI=ON \
       -DLLVM_TARGETS_TO_BUILD="X86;NVPTX" \
-      -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" \
+      -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="NVPTX" \
+      -DLLVM_ENABLE_BINDINGS=OFF \
+      -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libc" \
       -DLLVM_ENABLE_RUNTIMES="libc;libcxx;libcxxabi;libunwind" \
       -DLLVM_ENABLE_ZLIB=OFF \
       -DLLVM_ENABLE_ZSTD=OFF \
@@ -56,12 +58,25 @@ make -j $(nproc)
 make install
 popd
 
+# Build PyBind11
+PYBIND_SRC_DIR="third_party/pybind11/"
+PYBIND_BUILD_DIR="${PYBIND_SRC_DIR}/build"
+mkdir -p ${PYBIND_BUILD_DIR}
+pushd ${PYBIND_BUILD_DIR}
+cmake -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+      ..
+make -j $(nproc)
+make install
+popd
+
 # Build Reffine
 REFFINE_BUILD_DIR="build/"
 mkdir -p ${REFFINE_BUILD_DIR}
 pushd ${REFFINE_BUILD_DIR}
 cmake -DCMAKE_BUILD_TYPE=Debug \
       -DCMAKE_PREFIX_PATH=${INSTALL_PREFIX} \
+      -DENABLE_CUDA=ON \
       ..
 make -j $(nproc)
 popd

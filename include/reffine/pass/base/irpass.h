@@ -147,6 +147,11 @@ public:
     void Visit(BlockIdx& expr) override {}
     void Visit(GridDim& expr) override {}
 
+    void Visit(ThreadIdx& expr) override {}
+    void Visit(BlockDim& expr) override {}
+    void Visit(BlockIdx& expr) override {}
+    void Visit(GridDim& expr) override {}
+
     void Visit(Loop& expr) override
     {
         if (expr.init) { expr.init->Accept(*this); }
@@ -169,6 +174,18 @@ public:
         expr.vec->Accept(*this);
         expr.idx->Accept(*this);
         expr.validity->Accept(*this);
+    }
+
+    void Visit(Lookup& expr) override
+    {
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
+    }
+
+    void Visit(Locate& expr) override
+    {
+        expr.vec->Accept(*this);
+        for (auto& iter : expr.iters) { iter->Accept(*this); }
     }
 
     void Visit(FetchDataPtr& expr) override

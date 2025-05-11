@@ -1,6 +1,8 @@
 #include <iostream>
 #include <memory>
 #include <fstream>
+#include <iomanip>
+#include <sys/resource.h>
 
 #include <arrow/api.h>
 #include <arrow/csv/api.h>
@@ -11,8 +13,11 @@
 #include <arrow/c/bridge.h>
 
 #include <z3++.h>
+
+#ifdef ENABLE_CUDA
 #include <cuda.h>
 #include <cuda_runtime.h>
+#endif
 
 #include "reffine/ir/node.h"
 #include "reffine/ir/stmt.h"
@@ -27,8 +32,10 @@
 #include "reffine/pass/z3solver.h"
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
+#include "reffine/engine/cuda_engine.h"
 #include "reffine/arrow/defs.h"
 #include "reffine/builder/reffiner.h"
+#include "reffine/pass/vinstr.h"
 
 using namespace reffine;
 using namespace std;
@@ -250,50 +257,6 @@ shared_ptr<ExprNode> get_end_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr 
     return thread_end;
 }
 
-shared_ptr<Func> basic_aggregate_kernel()
-{
-    /* kernel version of vector_fn */
-    auto sum_out_sym = _sym("res", types::INT64.ptr());
-    auto vec_in_sym = _sym("input", types::INT64.ptr());
-
-    auto len = _idx(1024);
-    auto idx_alloc = _alloc(_idx_t);
-    auto idx_addr = _sym("idx_addr", idx_alloc);
-    auto idx = _load(idx_addr);
-
-    auto temp_alloc = _alloc(_i64_t);
-    auto temp_addr = _sym("temp_addr", temp_alloc);
-    auto temp_sum = _load(temp_addr);
-
-    auto val_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{vec_in_sym, idx});
-    auto val = _load(val_ptr);
-
-    auto idx_start = get_start_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
-    auto idx_end = get_end_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
-
-    auto loop = _loop(_load(sum_out_sym));
-
-    loop->init = _stmts(vector<Stmt>{
-        idx_alloc,
-        _store(idx_addr, idx_start),
-        temp_alloc,
-        _store(temp_addr, _i64(0)),
-    });
-    loop->body = _stmts(vector<Stmt>{
-        _store(temp_addr, _add(temp_sum, val)),
-        _store(idx_addr, idx + _idx(1)),
-    });
-    loop->exit_cond = _gte(idx, idx_end);
-    loop->post = _atomic_add(sum_out_sym, temp_sum);
-    auto loop_sym = _sym("loop", loop);
-
-    auto foo_fn = make_shared<Func>("foo", loop, vector<Sym>{sum_out_sym, vec_in_sym}, SymTable(), true);
-    foo_fn->tbl[idx_addr] = idx_alloc;
-    foo_fn->tbl[temp_addr] = temp_alloc;
-
-    return foo_fn;
-}
-
 shared_ptr<Func> basic_transform_kernel()
 {
     /* kernel version of transform_fn */
@@ -381,14 +344,14 @@ void demorgan_test()
 
 shared_ptr<Func> reduce_op_fn()
 {
-    auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym = _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t, int8_t, int64_t>());
-    Op op(
-        { t_sym },
-        ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(20)) &&  _gte(t_sym, _i64(10)),
-        { vec_in_sym[{t_sym}][1] }
-    );
+    auto idx_sym = _sym("i", _idx_t);
+    auto vec_in_sym = _sym("vec_in", _vec_t<0, int64_t, int64_t, int64_t, int64_t, int64_t, int8_t, int64_t>());
 
+    Op op(
+        { idx_sym },
+        _gte(idx_sym, _idx(0)) && _lt(idx_sym, _idx(2880404)),
+        { _get(make_shared<Lookup>(vec_in_sym, idx_sym), 1) }
+    );
     auto sum = _red(
         op,
         [] () { return _i64(0); },
@@ -407,72 +370,101 @@ shared_ptr<Func> reduce_op_fn()
 
 shared_ptr<Func> tpcds_query9(ArrowTable& table)
 {
-    auto vec_in_sym = _sym("vec_in", table.get_data_type(2));
-    /*
-    auto idx = _sym("idx", _idx_t);
+    auto idx_sym = _sym("i", _idx_t);
+    auto vec_in_sym = _sym("vec_in", table.get_data_type(0));
+
+    auto ss_quant = _get(make_shared<Lookup>(vec_in_sym, idx_sym), 10);
+    auto ss_quant_sym = _sym("ss_quant", ss_quant);
+    auto ss_ext_tax = _get(make_shared<Lookup>(vec_in_sym, idx_sym), 18);
+    auto ss_ext_tax_sym = _sym("ss_ext_tax", ss_ext_tax);
+    auto ss_inc_tax = _get(make_shared<Lookup>(vec_in_sym, idx_sym), 21);
+    auto ss_inc_tax_sym = _sym("ss_inc_tax", ss_inc_tax);
+
     Op op(
-        {idx},
-        ~(vec_in_sym[{idx}]),
-        { vec_in_sym[{idx}][10] }
+        { idx_sym },
+        _gte(idx_sym, _idx(0)) && _lt(idx_sym, _idx(2880404)),
+        { ss_quant_sym, ss_ext_tax_sym, ss_inc_tax_sym }
     );
     auto sum = _red(
-        op,
-        []() { return _i64(0); },
-        [](Expr s, Expr v) {
-            auto e = _get(v, 0);
-            return _add(s, e);
-        }
+            op,
+            [] () {
+            return _new(
+                    vector<Expr>{
+                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
+                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
+                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
+                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
+                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
+                    }
+                    );
+            },
+            [] (Expr s, Expr v) {
+            auto _0 = _i32(0);
+            auto _20 = _i32(20);
+            auto _40 = _i32(40);
+            auto _60 = _i32(60);
+            auto _80 = _i32(80);
+            auto _100 = _i32(100);
+
+
+            auto ss_quant = _get(v, 0);
+            auto ext_tax = _get(v, 1);
+            auto inc_tax = _get(v, 2);
+            auto s1 = _get(s, 0);
+            auto s2 = _get(s, 1);
+            auto s3 = _get(s, 2);
+            auto s4 = _get(s, 3);
+            auto s5 = _get(s, 4);
+            auto update_state = [](Expr s, Expr ext, Expr inc) {
+                auto count = _get(s, 0) + _i32(1);
+                auto ext_sum = _add(_get(s, 1), ext);
+                auto inc_sum = _add(_get(s, 2), inc);
+                return _new(vector<Expr>{count, ext_sum, inc_sum});
+            };
+            return _sel(
+                    _gt(ss_quant, _0) && _lte(ss_quant, _20),
+                    _new(vector<Expr>{update_state(s1, ext_tax, inc_tax), s2, s3, s4, s5}),
+                    _sel(
+                        _gt(ss_quant, _20) && _lte(ss_quant, _40),
+                        _new(vector<Expr>{s1, update_state(s2, ext_tax, inc_tax), s3, s4, s5}),
+                        _sel(
+                            _gt(ss_quant, _40) && _lte(ss_quant, _60),
+                            _new(vector<Expr>{s1, s2, update_state(s3, ext_tax, inc_tax), s4, s5}),
+                            _sel(
+                                _gt(ss_quant, _60) && _lte(ss_quant, _80),
+                                _new(vector<Expr>{s1, s2, s3, update_state(s4, ext_tax, inc_tax), s5}),
+                                _sel(
+                                    _gt(ss_quant, _80) && _lte(ss_quant, _100),
+                                    _new(vector<Expr>{s1, s2, s3, s4, update_state(s5, ext_tax, inc_tax)}),
+                                    s
+                                    )
+                                )
+                            )
+                        )
+                    );
+            }
     );
     auto sum_sym = _sym("sum", sum);
-    */
 
-    auto foo_fn = _func("foo", vec_in_sym, vector<Sym>{vec_in_sym});
-    //foo_fn->tbl[sum_sym] = sum;
+    auto foo_fn = _func("foo", _get(_get(sum_sym, 0), 0), vector<Sym>{vec_in_sym});
+    foo_fn->tbl[ss_quant_sym] = ss_quant;
+    foo_fn->tbl[ss_ext_tax_sym] = ss_ext_tax;
+    foo_fn->tbl[ss_inc_tax_sym] = ss_inc_tax;
+    foo_fn->tbl[sum_sym] = sum;
 
     return foo_fn;
 }
 
-#define checkCudaErrors(err) __checkCudaErrors(err, __FILE__, __LINE__)
-static void __checkCudaErrors(CUresult err, const char *filename, int line)
+#ifdef ENABLE_CUDA
+void execute_kernel(string kernel_name, CUfunction kernel, void *arg, int len)
 {
-    assert(filename);
-    if (CUDA_SUCCESS != err) {
-        const char *ename = NULL;
-        const CUresult res = cuGetErrorName(err, &ename);
-        fprintf(stderr,
-                "CUDA API Error %04d: \"%s\" from file <%s>, "
-                "line %i.\n",
-                err, ((CUDA_SUCCESS == res) ? ename : "Unknown"), filename,
-                line);
-        exit(err);
-    }
-}
-
-void execute_ptx(string kernel_name, string ptx_str, void *arg, int len)
-{
-    CUdevice device;
-    CUmodule cudaModule;
-    CUcontext context;
-    CUfunction function;
-
-    checkCudaErrors(cuInit(0));
-    checkCudaErrors(cuDeviceGet(&device, 0));
-    checkCudaErrors(cuCtxCreate(&context, 0, device));
-
-    char name[128];
-    cuDeviceGetName(name, 128, device);
-    std::cout << "Device name: " << name << endl;
-
     CUdeviceptr d_arr;
-    checkCudaErrors(cuMemAlloc(&d_arr, sizeof(int64_t) * len));
-    checkCudaErrors(cuMemcpyHtoD(d_arr, arg, sizeof(int64_t) * len));
+    cuMemAlloc(&d_arr, sizeof(int64_t) * len);
+    cuMemcpyHtoD(d_arr, arg, sizeof(int64_t) * len);
 
     CUdeviceptr d_arr_out;
-    checkCudaErrors(cuMemAlloc(&d_arr_out, sizeof(int64_t) * len));
+    cuMemAlloc(&d_arr_out, sizeof(int64_t) * len);
 
-    checkCudaErrors(cuModuleLoadData(&cudaModule, ptx_str.c_str()));
-    checkCudaErrors(
-        cuModuleGetFunction(&function, cudaModule, kernel_name.c_str()));
     cout << "About to run " << kernel_name << " kernel..." << endl;
 
     int blockDimX = 32;  // num of threads per block
@@ -482,15 +474,15 @@ void execute_ptx(string kernel_name, string ptx_str, void *arg, int len)
         &d_arr,
     };
 
-    checkCudaErrors(cuLaunchKernel(function, gridDimX, 1, 1, blockDimX, 1, 1,
+    cuLaunchKernel(kernel, gridDimX, 1, 1, blockDimX, 1, 1,
                                    0,  // shared memory size
                                    0,  // stream handle
-                                   kernelParams, NULL));
+                                   kernelParams, NULL);
 
-    checkCudaErrors(cuCtxSynchronize());
+    cuCtxSynchronize();
 
     auto arr_out = (int64_t *)malloc(sizeof(int64_t) * len);
-    checkCudaErrors(cuMemcpyDtoH(arr_out, d_arr_out, sizeof(int64_t) * len));
+    cuMemcpyDtoH(arr_out, d_arr_out, sizeof(int64_t) * len);
     cuMemFree(d_arr);
     cout << "Output from " << kernel_name << " kernel:" << endl;
     for (int i = 0; i < len; i++) { cout << arr_out[i] << ", "; }
@@ -498,14 +490,11 @@ void execute_ptx(string kernel_name, string ptx_str, void *arg, int len)
 
     cuMemFree(d_arr);
     cuMemFree(d_arr_out);
-    cuModuleUnload(cudaModule);
-    cuCtxDestroy(context);
 }
 
 void test_kernel() {
     /* Test kernel generation and execution*/
-    // auto fn = basic_transform_kernel();
-    auto fn = basic_aggregate_kernel();
+    auto fn = basic_transform_kernel();
     cout << "Loop IR: " << endl << IRPrinter::Build(fn) << endl;
     CanonPass::Build(fn);
 
@@ -513,33 +502,50 @@ void test_kernel() {
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
     LLVMGen::Build(fn, *llmod);
     jit->Optimize(*llmod);
-    cout << "LLVM IR: " << endl << IRPrinter::Build(*llmod) << endl;
 
-    auto output_ptx = LLVMGen::BuildPTX(fn, *llmod);
-    cout << "Generated PTX:" << endl << output_ptx << endl;
+    auto cuda_engine = CudaEngine::Get();
+    auto cuda_module = cuda_engine->Build(*llmod);
+    auto kernel = cuda_engine->Lookup(cuda_module, llmod->getName().str());
 
     int len = 1024;
     int64_t* in_array = new int64_t[len];
     for (int i = 0; i < len; i++) {
         in_array[i] = i;
     }
-    execute_ptx(llmod->getName().str(), output_ptx, (int64_t*)(in_array), len);
+    execute_kernel(llmod->getName().str(), kernel, (int64_t*)(in_array), len);
+    cuda_engine->Cleanup(cuda_module);
 
     return;
 }
+#endif
 
 int main()
-{
+{   
     /*
     test_kernel();
     return 0;
     */
 
-    auto table = load_arrow_file("../benchmark/store_sales.arrow");
+    const rlim_t kStackSize = 1 * 1024 * 1024 * 1024u;   // min stack size = 2 GB
+    struct rlimit rl;
+    int result;
 
+    result = getrlimit(RLIMIT_STACK, &rl);
+    if (result == 0) {
+        if (rl.rlim_cur < kStackSize) {
+            rl.rlim_cur = kStackSize;
+            result = setrlimit(RLIMIT_STACK, &rl);
+            if (result != 0) {
+                cerr << "setrlimit returned result = " << result << endl;
+            }
+        }
+    }
+
+    //auto table = load_arrow_file("../students.arrow");
+    auto table = load_arrow_file("../benchmark/store_sales.arrow");
+    cout << "type: " << table->get_data_type(0).str() << endl;
     auto fn = tpcds_query9(*table);
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
-    return 0;
     auto fn2 = OpToLoop::Build(fn);
     cout << "OpToLoop IR: " << endl << IRPrinter::Build(fn2) << endl;
 
