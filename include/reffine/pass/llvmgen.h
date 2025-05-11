@@ -8,19 +8,14 @@
 #include <utility>
 #include <vector>
 
-#include "llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h"
-#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Linker/Linker.h"
-#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/TargetSelect.h"
 #include "reffine/pass/base/irgen.h"
 
 using namespace std;
@@ -47,7 +42,6 @@ public:
         register_vinstrs();
     }
 
-    static string BuildPTX(shared_ptr<Func>, llvm::Module&);
     static void Build(shared_ptr<Func>, llvm::Module&);
 
 private:
@@ -78,8 +72,7 @@ private:
     llvm::Value* visit(SetValid&) final;
     llvm::Value* visit(FetchDataPtr&) final;
 
-    llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>,
-                           bool = false);
+    llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<Expr>);
 

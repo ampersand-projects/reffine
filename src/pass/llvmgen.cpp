@@ -13,10 +13,8 @@ using namespace reffine;
 using namespace llvm;
 
 Function* LLVMGen::llfunc(const string name, llvm::Type* ret_type,
-                          vector<llvm::Type*> arg_types, bool is_kernel)
+                          vector<llvm::Type*> arg_types)
 {
-    if (is_kernel) { ret_type = llvm::Type::getVoidTy(llctx()); }
-
     auto fn_type = FunctionType::get(ret_type, arg_types, false);
     return Function::Create(fn_type, Function::ExternalLinkage, name, llmod());
 }
