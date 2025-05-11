@@ -3,6 +3,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/IntrinsicsNVPTX.h"
 #include "reffine/base/type.h"
 #ifdef ENABLE_CUDA
 #include "llvm/IR/IntrinsicsNVPTX.h"
@@ -395,6 +396,18 @@ void LLVMGen::visit(Store& store)
     auto addr = eval(store.addr);
     auto val = eval(store.val);
     CreateStore(val, addr);
+}
+
+void LLVMGen::visit(AtomicAdd& add)
+{
+#ifdef ENABLE_CUDA
+    auto addr = eval(add.addr);
+    auto val = eval(add.val);
+    builder()->CreateAtomicRMW(AtomicRMWInst::Add, addr, val, MaybeAlign(),
+                               AtomicOrdering::Monotonic);
+#else
+    throw std::runtime_error("CUDA not enabled.");
+#endif
 }
 
 Value* LLVMGen::visit(ThreadIdx& tidx)

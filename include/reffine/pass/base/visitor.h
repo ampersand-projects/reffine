@@ -105,6 +105,10 @@ public:
     {
         throw runtime_error("Store operation not supported");
     }
+    virtual void Visit(AtomicAdd&)
+    {
+        throw runtime_error("AtomicAdd operation not supported");
+    }
     virtual void Visit(IfElse&)
     {
         throw runtime_error("IfElse operation not supported");
