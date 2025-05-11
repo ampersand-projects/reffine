@@ -4,6 +4,7 @@ set(TEST_FILES
     src/test_transform.cpp
     src/test_z3solver.cpp
     src/basic_tests.cpp
+    src/test_cuda.cpp
 )
 
 find_package(Arrow REQUIRED)
