@@ -10,5 +10,6 @@ void aggregate_loop_test();
 void aggregate_op_test();
 void transform_test();
 void z3solver_test();
+void cuda_test();
 
 #endif  // TEST_INCLUDE_TEST_BASE_H_
