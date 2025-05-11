@@ -402,10 +402,14 @@ void LLVMGen::visit(Store& store)
 
 void LLVMGen::visit(AtomicAdd& add)
 {
+#ifdef ENABLE_CUDA
     auto addr = eval(add.addr);
     auto val = eval(add.val);
     builder()->CreateAtomicRMW(AtomicRMWInst::Add, addr, val, MaybeAlign(),
                                AtomicOrdering::Monotonic);
+#else
+    throw std::runtime_error("CUDA not enabled.");
+#endif
 }
 
 Value* LLVMGen::visit(ThreadIdx& tidx)
@@ -456,51 +460,6 @@ Value* LLVMGen::visit(GridDim& gdim)
 #else
     throw std::runtime_error("CUDA not enabled.");
 #endif
-}
-
-void LLVMGen::visit(AtomicAdd& add)
-{
-    auto addr = eval(add.addr);
-    auto val = eval(add.val);
-    builder()->CreateAtomicRMW(AtomicRMWInst::Add, addr, val, MaybeAlign(),
-                               AtomicOrdering::Monotonic);
-}
-
-Value* LLVMGen::visit(ThreadIdx& tidx)
-{
-    // https://llvm.org/docs/NVPTXUsage.html#overview
-    auto thread_idx = builder()->CreateIntrinsic(
-        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_tid_x,
-        {});
-
-    return thread_idx;
-}
-
-Value* LLVMGen::visit(BlockIdx& bidx)
-{
-    auto block_idx = builder()->CreateIntrinsic(
-        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_ctaid_x,
-        {});
-
-    return block_idx;
-}
-
-Value* LLVMGen::visit(BlockDim& bdim)
-{
-    auto block_dim = builder()->CreateIntrinsic(
-        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_ntid_x,
-        {});
-
-    return block_dim;
-}
-
-Value* LLVMGen::visit(GridDim& bdim)
-{
-    auto grid_dim = builder()->CreateIntrinsic(
-        Type::getInt64Ty(llctx()), llvm::Intrinsic::nvvm_read_ptx_sreg_nctaid_x,
-        {});
-
-    return grid_dim;
 }
 
 Value* LLVMGen::visit(Loop& loop)
@@ -646,54 +605,6 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
     var->setName(old_sym->name);
 
     return var;
-}
-
-void LLVMGen::init_cuda()
-{
-    InitializeAllTargets();
-    InitializeAllTargetMCs();
-    InitializeAllAsmPrinters();
-    InitializeAllAsmParsers();
-
-    llmod()->setTargetTriple("nvptx64-nvidia-cuda");
-}
-
-TargetMachine* LLVMGen::get_target()
-{
-    std::string Error;
-    const llvm::Target* Target =
-        llvm::TargetRegistry::lookupTarget("nvptx64-nvidia-cuda", Error);
-
-    llvm::TargetOptions opt;
-    llvm::TargetMachine* TM =
-        Target->createTargetMachine("nvptx64-nvidia-cuda", "sm_52",
-                                    "+ptx76",  // PTX version
-                                    opt, llvm::Reloc::Static);
-
-    llmod()->setDataLayout(TM->createDataLayout());
-
-    return TM;
-}
-
-string LLVMGen::BuildPTX(shared_ptr<Func> func, Module& llmod)
-{
-    LLVMGenCtx ctx(func);
-    LLVMGen llgen(ctx, llmod);
-    llgen.init_cuda();
-    func->Accept(llgen);
-
-    auto TM = llgen.get_target();
-
-    llvm::SmallString<1048576> PTXStr;
-    llvm::raw_svector_ostream PTXOS(PTXStr);
-
-    llvm::legacy::PassManager PM;
-    TM->addPassesToEmitFile(PM, PTXOS, nullptr,
-                            llvm::CodeGenFileType::AssemblyFile);
-    PM.run(llmod);
-    cout << "Finished generating PTX..." << endl;
-
-    return PTXStr.str().str();
 }
 
 void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
