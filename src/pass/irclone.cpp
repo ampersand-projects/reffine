@@ -113,6 +113,91 @@ void IRClone::visit(Func& func)
 
 Expr IRClone::visit(Sym old_sym) { return _sym(old_sym->name, old_sym); }
 
+Expr IRClone::visit(ThreadIdx&)
+{
+    return _tidx();
+}
+
+Expr IRClone::visit(BlockIdx&)
+{
+    return _bidx();
+}
+
+Expr IRClone::visit(BlockDim&)
+{
+    return _bdim();
+}
+
+Expr IRClone::visit(GridDim&)
+{
+    return _gdim();
+}
+
+Expr IRClone::visit(StmtExprNode& expr)
+{
+    return _stmtexpr(eval(expr.stmt));
+}
+
+Expr IRClone::visit(NoOp&)
+{
+    return _stmtexpr(_noop());
+}
+
+Expr IRClone::visit(Store& store)
+{
+    return _stmtexpr(_store(eval(store.addr), eval(store.val)));
+}
+
+Expr IRClone::visit(Stmts& stmts)
+{
+    vector<Stmt> stmt_list;
+
+    for (auto& stmt : stmts.stmts) {
+        stmt_list.push_back(eval(stmt));
+    }
+
+    return _stmtexpr(_stmts(stmt_list));
+}
+
+Expr IRClone::visit(IsValid& is_valid)
+{
+    return _isval(eval(is_valid.vec), eval(is_valid.idx), is_valid.col);
+}
+
+Expr IRClone::visit(Alloc& alloc)
+{
+    return _alloc(alloc.type, eval(alloc.size));
+}
+
+Expr IRClone::visit(IfElse& ifelse)
+{
+    return _stmtexpr(_ifelse(
+        eval(ifelse.cond), eval(ifelse.true_body), eval(ifelse.false_body)
+    ));
+}
+
+Expr IRClone::visit(SetValid& set_valid)
+{
+    return _setval(
+        eval(set_valid.vec), eval(set_valid.idx), eval(set_valid.validity), set_valid.col
+    );
+}
+
+Expr IRClone::visit(Loop& loop)
+{
+    auto new_loop = _loop(eval(loop.output));
+
+    new_loop->init = loop.init ? eval(loop.init) : nullptr;
+    new_loop->incr = loop.incr ? eval(loop.incr) : nullptr;
+    new_loop->exit_cond = loop.exit_cond ? eval(loop.exit_cond) : nullptr;
+    new_loop->body_cond = loop.body_cond ? eval(loop.body_cond) : nullptr;
+    new_loop->body = loop.body ? eval(loop.body) : nullptr;
+    new_loop->post = loop.post ? eval(loop.post) : nullptr;
+
+    return new_loop;
+}
+
+
 shared_ptr<Func> IRClone::Build(shared_ptr<Func> func)
 {
     auto new_func = _func(func->name, nullptr, vector<Sym>{});
