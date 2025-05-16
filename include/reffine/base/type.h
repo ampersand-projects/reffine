@@ -13,7 +13,7 @@ using namespace std;
 namespace reffine {
 
 enum class BaseType {
-    UNKNOWN,  // never use this type
+    UNKNOWN,  // almost never use this type
     BOOL,
     INT8,
     INT16,
