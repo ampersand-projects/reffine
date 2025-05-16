@@ -23,7 +23,7 @@ protected:
     {
         throw runtime_error("Select visit not supported");
     }
-    virtual void visit(IfElse&)
+    virtual ValTy visit(IfElse&)
     {
         throw runtime_error("IfElse visit not supported");
     }
@@ -72,7 +72,7 @@ protected:
     {
         throw runtime_error("Call visit not supported");
     }
-    virtual void visit(Stmts&)
+    virtual ValTy visit(Stmts&)
     {
         throw runtime_error("Stmts visit not supported");
     }
@@ -88,7 +88,7 @@ protected:
     {
         throw runtime_error("Load visit not supported");
     }
-    virtual void visit(Store&)
+    virtual ValTy visit(Store&)
     {
         throw runtime_error("Store visit not supported");
     }
@@ -124,13 +124,13 @@ protected:
     {
         throw runtime_error("FetchDataPtr visit not supported");
     }
-    virtual void visit(NoOp&)
+    virtual ValTy visit(NoOp&)
     {
         throw runtime_error("NoOp visit not supported");
     }
 
     void Visit(Select& expr) final { val() = visit(expr); }
-    void Visit(IfElse& stmt) final { visit(stmt); }
+    void Visit(IfElse& stmt) final { val() = visit(stmt); }
     void Visit(Const& expr) final { val() = visit(expr); }
     void Visit(Cast& expr) final { val() = visit(expr); }
     void Visit(Get& expr) final { val() = visit(expr); }
@@ -143,11 +143,10 @@ protected:
     void Visit(NotNull& expr) final { val() = visit(expr); }
     void Visit(Reduce& expr) final { val() = visit(expr); }
     void Visit(Call& expr) final { val() = visit(expr); }
-    void Visit(Stmts& stmt) final { visit(stmt); }
-    void Visit(Func& stmt) final { visit(stmt); }
+    void Visit(Stmts& stmt) final { val() = visit(stmt); }
     void Visit(Alloc& expr) final { val() = visit(expr); }
     void Visit(Load& expr) final { val() = visit(expr); }
-    void Visit(Store& expr) final { visit(expr); }
+    void Visit(Store& expr) final { val() = visit(expr); }
     void Visit(ThreadIdx& expr) final { val() = visit(expr); }
     void Visit(BlockIdx& expr) final { val() = visit(expr); }
     void Visit(BlockDim& expr) final { val() = visit(expr); }
@@ -156,7 +155,8 @@ protected:
     void Visit(IsValid& expr) final { val() = visit(expr); }
     void Visit(SetValid& expr) final { val() = visit(expr); }
     void Visit(FetchDataPtr& expr) final { val() = visit(expr); }
-    void Visit(NoOp& stmt) final { visit(stmt); }
+    void Visit(NoOp& stmt) final { val() = visit(stmt); }
+    void Visit(Func& stmt) final { visit(stmt); }
     void Visit(SymNode& symbol) override
     {
         auto sym = this->tmp_sym(symbol);

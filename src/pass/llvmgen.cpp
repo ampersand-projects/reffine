@@ -301,7 +301,7 @@ Value* LLVMGen::visit(Select& select)
     return builder()->CreateSelect(cond, true_val, false_val);
 }
 
-void LLVMGen::visit(IfElse& ifelse)
+Value* LLVMGen::visit(IfElse& ifelse)
 {
     auto parent_fn = builder()->GetInsertBlock()->getParent();
     auto then_bb = BasicBlock::Create(llctx(), "then");
@@ -329,9 +329,11 @@ void LLVMGen::visit(IfElse& ifelse)
     // merge block
     parent_fn->insert(parent_fn->end(), merge_bb);
     builder()->SetInsertPoint(merge_bb);
+
+    return nullptr;
 }
 
-void LLVMGen::visit(NoOp&) { /* do nothing */ }
+Value* LLVMGen::visit(NoOp&) { return nullptr; }
 
 Value* LLVMGen::visit(IsValid& is_valid)
 {
@@ -373,9 +375,11 @@ Value* LLVMGen::visit(Call& call)
     return llcall(call.name, lltype(call), call.args);
 }
 
-void LLVMGen::visit(Stmts& stmts)
+Value* LLVMGen::visit(Stmts& stmts)
 {
     for (auto& stmt : stmts.stmts) { eval(stmt); }
+
+    return nullptr;
 }
 
 Value* LLVMGen::visit(Alloc& alloc)
@@ -390,11 +394,11 @@ Value* LLVMGen::visit(Load& load)
     return CreateLoad(addr_type, addr);
 }
 
-void LLVMGen::visit(Store& store)
+Value* LLVMGen::visit(Store& store)
 {
     auto addr = eval(store.addr);
     auto val = eval(store.val);
-    CreateStore(val, addr);
+    return CreateStore(val, addr);
 }
 
 Value* LLVMGen::visit(ThreadIdx& tidx)

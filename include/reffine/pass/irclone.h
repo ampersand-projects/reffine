@@ -41,7 +41,7 @@ protected:
     Expr visit(Reduce&) override;
     Expr visit(FetchDataPtr&) override;
     Expr visit(Load&) override;
-    void visit(Func&) override;
+    void visit(Func&) final;
 
 private:
     shared_ptr<Op> visit_op(Op&);
