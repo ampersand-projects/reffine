@@ -19,9 +19,9 @@ public:
 
 protected:
     virtual ValTy visit(Sym) { throw runtime_error("Sym visit not supported"); }
-    virtual ValTy visit(StmtExprNode&)
+    virtual ValTy visit(StmtExprNode& expr)
     {
-        throw runtime_error("StmtExprNode visit not supported");
+        return eval(expr.stmt);
     }
     virtual ValTy visit(Select&)
     {

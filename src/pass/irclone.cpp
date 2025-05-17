@@ -133,11 +133,6 @@ Expr IRClone::visit(GridDim&)
     return _gdim();
 }
 
-Expr IRClone::visit(StmtExprNode& expr)
-{
-    return _stmtexpr(eval(expr.stmt));
-}
-
 Expr IRClone::visit(NoOp&)
 {
     return _stmtexpr(_noop());

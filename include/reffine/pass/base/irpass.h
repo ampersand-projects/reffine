@@ -66,6 +66,7 @@ public:
     {
         expr.stmt->Accept(*this);
     }
+
     void Visit(Select& expr) override
     {
         expr.cond->Accept(*this);

@@ -26,7 +26,6 @@ public:
 
 protected:
     Expr visit(Sym) override;
-    Expr visit(StmtExprNode&) override;
     Expr visit(Select&) override;
     Expr visit(IfElse&) override;
     Expr visit(Const&) override;
