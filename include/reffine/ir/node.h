@@ -34,7 +34,7 @@ typedef shared_ptr<ExprNode> Expr;
 struct StmtExprNode : public ExprNode {
     Stmt stmt;
 
-    StmtExprNode(Stmt stmt) : ExprNode(types::UNKNOWN), stmt(stmt) {}
+    StmtExprNode(Stmt stmt) : ExprNode(types::VOID), stmt(stmt) {}
 
     virtual void Accept(Visitor&) final;
 };
