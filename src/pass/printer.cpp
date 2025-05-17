@@ -17,6 +17,8 @@ static const auto PHI = "\u0278";
 
 void IRPrinter::Visit(SymNode& sym) { ostr << sym.name; }
 
+void IRPrinter::Visit(StmtExprNode& expr) { expr.stmt->Accept(*this); }
+
 void IRPrinter::Visit(Const& cnst)
 {
     switch (cnst.type.btype) {
