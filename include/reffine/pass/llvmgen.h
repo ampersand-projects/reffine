@@ -48,7 +48,6 @@ private:
     void register_vinstrs();
 
     llvm::Value* visit(Sym) final;
-    llvm::Value* visit(StmtExprNode&) final;
     llvm::Value* visit(Call&) final;
     llvm::Value* visit(IfElse&) final;
     llvm::Value* visit(NoOp&) final;
