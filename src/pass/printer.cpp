@@ -270,7 +270,9 @@ void IRPrinter::Visit(Func& fn)
     }
 
     emitnewline();
-    ostr << "return ";
+    if (!fn.output->type.is_void()) {
+        ostr << "return ";
+    }
     fn.output->Accept(*this);
     exit_block();
 
