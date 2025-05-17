@@ -43,6 +43,8 @@ Value* LLVMGen::llcall(const string name, llvm::Type* ret_type,
 llvm::Type* LLVMGen::lltype(const DataType& type)
 {
     switch (type.btype) {
+        case BaseType::VOID:
+            return llvm::Type::getVoidTy(llctx());
         case BaseType::BOOL:
             return llvm::Type::getInt1Ty(llctx());
         case BaseType::INT8:
@@ -499,6 +501,8 @@ Value* LLVMGen::visit(Loop& loop)
 
 void LLVMGen::visit(Func& func)
 {
+    ASSERT(func.output->type.is_void());
+
     // Define function signature
     vector<llvm::Type*> args_type;
     for (auto& input : func.inputs) {
@@ -522,12 +526,10 @@ void LLVMGen::visit(Func& func)
 
     builder()->SetInsertPoint(entry_bb);
 
-    auto output = eval(func.output);
-    ReturnInst* ret_instr;
+    eval(func.output);
+
     if (func.is_kernel) {
 #ifdef ENABLE_CUDA
-        ret_instr = builder()->CreateRetVoid();
-
         fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
         llvm::NamedMDNode* MD =
             llmod()->getOrInsertNamedMetadata("nvvm.annotations");
@@ -542,11 +544,9 @@ void LLVMGen::visit(Func& func)
 #else
         throw std::runtime_error("CUDA not enabled.");
 #endif
-    } else {
-        ret_instr = builder()->CreateRet(output);
     }
-    ret_instr->setMetadata(LLVMContext::MD_noalias,
-                           MDNode::get(llctx(), ArrayRef<Metadata*>()));
+
+    builder()->CreateRetVoid();
 }
 
 void LLVMGen::register_vinstrs()
