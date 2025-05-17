@@ -161,7 +161,7 @@ Expr IRClone::visit(IsValid& is_valid)
 
 Expr IRClone::visit(Alloc& alloc)
 {
-    return _alloc(alloc.type, eval(alloc.size));
+    return _alloc(alloc.type.deref(), eval(alloc.size));
 }
 
 Expr IRClone::visit(IfElse& ifelse)
