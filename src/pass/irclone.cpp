@@ -113,30 +113,15 @@ void IRClone::visit(Func& func)
 
 Expr IRClone::visit(Sym old_sym) { return _sym(old_sym->name, old_sym); }
 
-Expr IRClone::visit(ThreadIdx&)
-{
-    return _tidx();
-}
+Expr IRClone::visit(ThreadIdx&) { return _tidx(); }
 
-Expr IRClone::visit(BlockIdx&)
-{
-    return _bidx();
-}
+Expr IRClone::visit(BlockIdx&) { return _bidx(); }
 
-Expr IRClone::visit(BlockDim&)
-{
-    return _bdim();
-}
+Expr IRClone::visit(BlockDim&) { return _bdim(); }
 
-Expr IRClone::visit(GridDim&)
-{
-    return _gdim();
-}
+Expr IRClone::visit(GridDim&) { return _gdim(); }
 
-Expr IRClone::visit(NoOp&)
-{
-    return _stmtexpr(_noop());
-}
+Expr IRClone::visit(NoOp&) { return _stmtexpr(_noop()); }
 
 Expr IRClone::visit(Store& store)
 {
@@ -147,9 +132,7 @@ Expr IRClone::visit(Stmts& stmts)
 {
     vector<Stmt> stmt_list;
 
-    for (auto& stmt : stmts.stmts) {
-        stmt_list.push_back(eval(stmt));
-    }
+    for (auto& stmt : stmts.stmts) { stmt_list.push_back(eval(stmt)); }
 
     return _stmtexpr(_stmts(stmt_list));
 }
@@ -166,16 +149,14 @@ Expr IRClone::visit(Alloc& alloc)
 
 Expr IRClone::visit(IfElse& ifelse)
 {
-    return _stmtexpr(_ifelse(
-        eval(ifelse.cond), eval(ifelse.true_body), eval(ifelse.false_body)
-    ));
+    return _stmtexpr(_ifelse(eval(ifelse.cond), eval(ifelse.true_body),
+                             eval(ifelse.false_body)));
 }
 
 Expr IRClone::visit(SetValid& set_valid)
 {
-    return _setval(
-        eval(set_valid.vec), eval(set_valid.idx), eval(set_valid.validity), set_valid.col
-    );
+    return _setval(eval(set_valid.vec), eval(set_valid.idx),
+                   eval(set_valid.validity), set_valid.col);
 }
 
 Expr IRClone::visit(Loop& loop)
@@ -191,7 +172,6 @@ Expr IRClone::visit(Loop& loop)
 
     return new_loop;
 }
-
 
 shared_ptr<Func> IRClone::Build(shared_ptr<Func> func)
 {

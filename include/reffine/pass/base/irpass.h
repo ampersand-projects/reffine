@@ -62,10 +62,7 @@ class IRPass : public IRPassBase<Sym> {
 public:
     explicit IRPass(IRPassCtx& ctx) : IRPassBase(ctx) {}
 
-    void Visit(StmtExprNode& expr) override
-    {
-        expr.stmt->Accept(*this);
-    }
+    void Visit(StmtExprNode& expr) override { expr.stmt->Accept(*this); }
 
     void Visit(Select& expr) override
     {

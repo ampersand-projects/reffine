@@ -79,10 +79,7 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
     }
 }
 
-Value* LLVMGen::visit(StmtExprNode& expr)
-{
-    return eval(expr.stmt);
-}
+Value* LLVMGen::visit(StmtExprNode& expr) { return eval(expr.stmt); }
 
 Value* LLVMGen::visit(Const& cnst)
 {
