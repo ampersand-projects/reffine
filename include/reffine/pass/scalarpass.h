@@ -6,17 +6,40 @@
 
 namespace reffine {
 
-using LoadStoreExpandCtx = IRCloneCtx;
+using ScalarPassCtx = IRCloneCtx;
 
-class LoadStoreExpand : public IRClone {
+class ScalarPass : public IRClone {
 public:
-    explicit LoadStoreExpand(LoadStoreExpandCtx& ctx) : IRClone(ctx) {}
+    explicit ScalarPass(ScalarPassCtx& ctx) : IRClone(ctx) {}
 
     static shared_ptr<Func> Build(shared_ptr<Func>);
 
 protected:
+    Expr visit(Get&) final;
+};
+
+
+class LoadStoreExpand : public IRClone {
+public:
+    explicit LoadStoreExpand(ScalarPassCtx& ctx) : IRClone(ctx) {}
+
+private:
     Expr visit(Load&) final;
     Expr visit(Store&) final;
+};
+
+using NewGetEliminationCtx = ValGenCtx<Expr>;
+
+class NewGetElimination : public ValGen<Expr> {
+public:
+    NewGetElimination(NewGetEliminationCtx ctx) : ValGen<Expr>(ctx) {}
+
+private:
+    Expr visit(Sym);
+    Expr visit(New&);
+    Expr visit(Get&);
+
+    size_t col;
 };
 
 }  // namespace reffine

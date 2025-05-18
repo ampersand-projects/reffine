@@ -39,13 +39,22 @@ Expr LoadStoreExpand::visit(Store& store)
     }
 }
 
-shared_ptr<Func> LoadStoreExpand::Build(shared_ptr<Func> func)
+Expr ScalarPass::visit(Get& get)
 {
-    auto new_func = _func(func->name, nullptr, vector<Sym>{});
+    return IRClone::visit(get);
+}
 
-    LoadStoreExpandCtx ctx(func, new_func);
-    LoadStoreExpand pass(ctx);
-    func->Accept(pass);
+shared_ptr<Func> ScalarPass::Build(shared_ptr<Func> func)
+{
+    auto ldstexp_fn = _func(func->name, nullptr, vector<Sym>{});
+    ScalarPassCtx ldstexp_ctx(func, ldstexp_fn);
+    LoadStoreExpand ldstexp_pass(ldstexp_ctx);
+    func->Accept(ldstexp_pass);
 
-    return new_func;
+    auto scalar_fn = _func(ldstexp_fn->name, nullptr, vector<Sym>{});
+    ScalarPassCtx scalar_ctx(ldstexp_fn, scalar_fn);
+    ScalarPass scalar_pass(scalar_ctx);
+    ldstexp_fn->Accept(scalar_pass);
+
+    return scalar_fn;
 }

@@ -556,7 +556,7 @@ int main()
     cout << "Loop IR (raw):" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
     cout << "Loop IR (canon):" << endl << IRPrinter::Build(loop) << endl;
-    auto exp_loop = LoadStoreExpand::Build(loop);
+    auto exp_loop = ScalarPass::Build(loop);
     cout << "Loop IR (expand):" << endl << IRPrinter::Build(exp_loop) << endl;
 
     auto jit = ExecEngine::Get();
