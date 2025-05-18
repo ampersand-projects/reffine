@@ -40,7 +40,9 @@ ExecEngine* ExecEngine::Get()
 void ExecEngine::AddModule(unique_ptr<Module> m)
 {
     raw_fd_ostream r(fileno(stderr), false);
-    if (!verifyModule(*m, &r)) {
+    if (verifyModule(*m, &r)) {
+        throw std::runtime_error("LLVM module verification failed!!!");
+    } else {
         cantFail(optimizer.add(jd, ThreadSafeModule(std::move(m), ctx)));
     }
 }
