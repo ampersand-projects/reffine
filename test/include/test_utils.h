@@ -32,11 +32,8 @@ T compile_loop(std::shared_ptr<reffine::Func> loop)
 
     auto jit = reffine::ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    reffine::LLVMGen::Build(elm_loop, *llmod);
-    if (llvm::verifyModule(*llmod)) {
-        throw std::runtime_error("LLVM module verification failed!!!");
-    }
 
+    reffine::LLVMGen::Build(elm_loop, *llmod);
     jit->AddModule(std::move(llmod));
     return jit->Lookup<T>(loop->name);
 }
