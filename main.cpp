@@ -28,6 +28,7 @@
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/scalarpass.h"
+#include "reffine/pass/symanalysis.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/loopgen.h"
 #include "reffine/pass/z3solver.h"
@@ -558,6 +559,11 @@ int main()
     cout << "Loop IR (canon):" << endl << IRPrinter::Build(loop) << endl;
     auto exp_loop = ScalarPass::Build(loop);
     cout << "Loop IR (expand):" << endl << IRPrinter::Build(exp_loop) << endl;
+
+    auto syminfo_map = SymAnalysis::Build(exp_loop);
+    for (const auto& e : syminfo_map) {
+        cout << e.first->name << " -> " << e.second.count << std::endl;
+    }
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());

@@ -15,6 +15,7 @@ set(SRC_FILES
     pass/reffinepass.cpp
     pass/canonpass.cpp
     pass/scalarpass.cpp
+    pass/symanalysis.cpp
     pass/irclone.cpp
     pass/z3solver.cpp
     pass/llvmgen.cpp
