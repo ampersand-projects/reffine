@@ -113,25 +113,6 @@ Value* LLVMGen::visit(Cast& e)
     return builder()->CreateCast(op, input_val, dest_type);
 }
 
-Value* LLVMGen::visit(Get& e)
-{
-    auto val = eval(e.val);
-    return builder()->CreateExtractValue(val, e.col);
-}
-
-Value* LLVMGen::visit(New& e)
-{
-    auto new_type = lltype(e);
-    auto ptr = CreateAlloca(new_type);
-
-    for (size_t i = 0; i < e.vals.size(); i++) {
-        auto val_ptr = builder()->CreateStructGEP(new_type, ptr, i);
-        CreateStore(eval(e.vals[i]), val_ptr);
-    }
-
-    return CreateLoad(new_type, ptr);
-}
-
 Value* LLVMGen::visit(NaryExpr& e)
 {
     switch (e.op) {
@@ -401,6 +382,11 @@ Value* LLVMGen::visit(Store& store)
     auto addr = eval(store.addr);
     auto val = eval(store.val);
     return CreateStore(val, addr);
+}
+
+Value* LLVMGen::visit(StructGEP& gep)
+{
+    return builder()->CreateStructGEP(lltype(gep), eval(gep.addr), gep.col);
 }
 
 Value* LLVMGen::visit(ThreadIdx& tidx)

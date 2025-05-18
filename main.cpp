@@ -561,13 +561,10 @@ int main()
     cout << "Loop IR (expand):" << endl << IRPrinter::Build(exp_loop) << endl;
     auto ngelm_loop = NewGetElimination::Build(exp_loop);
     cout << "Loop IR (eliminate):" << endl << IRPrinter::Build(ngelm_loop) << endl;
-    return 0;
-
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
     LLVMGen::Build(ngelm_loop, *llmod);
-    return 0;
     
     //jit->Optimize(*llmod);
 
@@ -576,12 +573,9 @@ int main()
     llfile << IRPrinter::Build(*llmod);
     llfile.close();
 
-    if (llvm::verifyModule(*llmod)) {
-        throw std::runtime_error("LLVM module verification failed!!!");
-    }
+    jit->AddModule(std::move(llmod));
     return 0;
 
-    jit->AddModule(std::move(llmod));
     auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
 
     //auto status = csv_to_arrow();
