@@ -8,38 +8,26 @@ namespace reffine {
 
 using ScalarPassCtx = IRCloneCtx;
 
-class ScalarPass : public IRClone {
-public:
-    explicit ScalarPass(ScalarPassCtx& ctx) : IRClone(ctx) {}
-
-    static shared_ptr<Func> Build(shared_ptr<Func>);
-
-protected:
-    Expr visit(Get&) final;
-};
-
-
 class LoadStoreExpand : public IRClone {
 public:
     explicit LoadStoreExpand(ScalarPassCtx& ctx) : IRClone(ctx) {}
 
+    static shared_ptr<Func> Build(shared_ptr<Func>);
 private:
     Expr visit(Load&) final;
     Expr visit(Store&) final;
 };
 
-using NewGetEliminationCtx = ValGenCtx<Expr>;
-
-class NewGetElimination : public ValGen<Expr> {
+class NewGetElimination : public IRClone {
 public:
-    NewGetElimination(NewGetEliminationCtx ctx) : ValGen<Expr>(ctx) {}
+    NewGetElimination(ScalarPassCtx& ctx) : IRClone(ctx) {}
 
+    static shared_ptr<Func> Build(shared_ptr<Func>);
 private:
-    Expr visit(Sym);
-    Expr visit(New&);
-    Expr visit(Get&);
+    Expr visit(New&) final;
+    Expr visit(Get&) final;
 
-    size_t col;
+    map<Expr, vector<Expr>> _new_get_map;
 };
 
 }  // namespace reffine

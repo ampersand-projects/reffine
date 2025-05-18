@@ -557,17 +557,16 @@ int main()
     cout << "Loop IR (raw):" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
     cout << "Loop IR (canon):" << endl << IRPrinter::Build(loop) << endl;
-    auto exp_loop = ScalarPass::Build(loop);
+    auto exp_loop = LoadStoreExpand::Build(loop);
     cout << "Loop IR (expand):" << endl << IRPrinter::Build(exp_loop) << endl;
+    auto ngelm_loop = NewGetElimination::Build(exp_loop);
+    cout << "Loop IR (eliminate):" << endl << IRPrinter::Build(ngelm_loop) << endl;
+    return 0;
 
-    auto syminfo_map = SymAnalysis::Build(exp_loop);
-    for (const auto& e : syminfo_map) {
-        cout << e.first->name << " -> " << e.second.count << std::endl;
-    }
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(exp_loop, *llmod);
+    LLVMGen::Build(ngelm_loop, *llmod);
     return 0;
     
     //jit->Optimize(*llmod);

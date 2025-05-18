@@ -39,22 +39,53 @@ Expr LoadStoreExpand::visit(Store& store)
     }
 }
 
-Expr ScalarPass::visit(Get& get)
+shared_ptr<Func> LoadStoreExpand::Build(shared_ptr<Func> func)
 {
-    return IRClone::visit(get);
+    auto new_func = _func(func->name, nullptr, vector<Sym>{});
+
+    ScalarPassCtx ctx(func, new_func);
+    LoadStoreExpand pass(ctx);
+    func->Accept(pass);
+
+    return new_func;
 }
 
-shared_ptr<Func> ScalarPass::Build(shared_ptr<Func> func)
+Expr NewGetElimination::visit(New& expr)
 {
-    auto ldstexp_fn = _func(func->name, nullptr, vector<Sym>{});
-    ScalarPassCtx ldstexp_ctx(func, ldstexp_fn);
-    LoadStoreExpand ldstexp_pass(ldstexp_ctx);
-    func->Accept(ldstexp_pass);
+    vector<Expr> new_vals;
+    for (auto& val : expr.vals) { new_vals.push_back(eval(val)); }
 
-    auto scalar_fn = _func(ldstexp_fn->name, nullptr, vector<Sym>{});
-    ScalarPassCtx scalar_ctx(ldstexp_fn, scalar_fn);
-    ScalarPass scalar_pass(scalar_ctx);
-    ldstexp_fn->Accept(scalar_pass);
+    auto new_expr = _new(new_vals);
+    _new_get_map[new_expr] = new_vals;
 
-    return scalar_fn;
+    return new_expr;
+}
+
+Expr NewGetElimination::visit(Get& get)
+{
+    auto val = eval(get.val);
+
+    if (_new_get_map.find(val) != _new_get_map.end()) {
+        return _new_get_map[val][get.col];
+    } else { // might be a symbol to New expression
+        auto maybe_sym = static_pointer_cast<SymNode>(val);
+
+        if (this->ctx().out_sym_tbl.find(maybe_sym) != this->ctx().out_sym_tbl.end()) {
+            auto expr = this->ctx().out_sym_tbl.at(maybe_sym);
+            return _new_get_map[expr][get.col];
+        } else {
+            throw runtime_error("Unable to eliminate Get expression");
+        }
+    }
+}
+
+shared_ptr<Func> NewGetElimination::Build(shared_ptr<Func> func)
+{
+    auto new_func = _func(func->name, nullptr, vector<Sym>{});
+
+    ScalarPassCtx ctx(func, new_func);
+    NewGetElimination pass(ctx);
+    func->Accept(pass);
+
+    return new_func;
 }
