@@ -386,7 +386,7 @@ Value* LLVMGen::visit(Store& store)
 
 Value* LLVMGen::visit(StructGEP& gep)
 {
-    return builder()->CreateStructGEP(lltype(gep), eval(gep.addr), gep.col);
+    return builder()->CreateStructGEP(lltype(gep.addr->type.deref()), eval(gep.addr), gep.col);
 }
 
 Value* LLVMGen::visit(ThreadIdx& tidx)
