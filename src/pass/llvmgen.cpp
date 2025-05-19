@@ -113,6 +113,13 @@ Value* LLVMGen::visit(Cast& e)
     return builder()->CreateCast(op, input_val, dest_type);
 }
 
+Value* LLVMGen::visit(Get& e)
+{
+    LOG(WARNING) << "Failed to eliminate Get expression before LLVMGen" << std::endl;
+    auto val = eval(e.val);
+    return builder()->CreateExtractValue(val, e.col);
+}
+
 Value* LLVMGen::visit(NaryExpr& e)
 {
     switch (e.op) {

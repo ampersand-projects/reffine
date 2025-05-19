@@ -53,6 +53,7 @@ private:
     llvm::Value* visit(NoOp&) final;
     llvm::Value* visit(Select&) final;
     llvm::Value* visit(Const&) final;
+    llvm::Value* visit(Get&) final;
     llvm::Value* visit(Cast&) final;
     llvm::Value* visit(NaryExpr&) final;
     llvm::Value* visit(Stmts&) final;
