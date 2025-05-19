@@ -423,6 +423,9 @@ string IRPrinter::Build(llvm::Module& llmod)
 
 string IRPrinter2::visit(Sym sym)
 {
+    auto expr_str = eval(this->ctx().in_sym_tbl.at(sym));
+    emitline(sym->name + ": " + sym->type.str() + " = " + expr_str);
+
     return sym->name;
 }
 
@@ -439,16 +442,16 @@ string IRPrinter2::visit(Const& cnst)
         case BaseType::INT16:
         case BaseType::INT32:
         case BaseType::INT64:
-            return to_string((int64_t) cnst.val) + cnst.type.str();
+            return to_string((int64_t) cnst.val);
         case BaseType::UINT8:
         case BaseType::UINT16:
         case BaseType::UINT32:
         case BaseType::UINT64:
         case BaseType::IDX:
-            return to_string((uint64_t) cnst.val) + cnst.type.str();
+            return to_string((uint64_t) cnst.val);
         case BaseType::FLOAT32:
         case BaseType::FLOAT64:
-            return to_string(cnst.val) + cnst.type.str();
+            return to_string(cnst.val);
         default:
             throw std::runtime_error("Invalid constant type");
     }
@@ -484,7 +487,7 @@ void IRPrinter2::visit(Func& func)
     emit("def " + func.name + "(");
 
     for (const auto& input : func.inputs) {
-        emit(input->name + ", ");
+        emit(input->name + ": " + input->type.str() + ", ");
     }
     if (func.inputs.size() > 0) { emit("\b\b"); }
     emit(") {");
