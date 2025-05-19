@@ -204,7 +204,7 @@ public:
     ValGen(ValGenCtx<ValTy>& ctx) : IRGenBase<ValTy>(ctx) {}
 
 protected:
-    void Visit(SymNode& symbol) final
+    void Visit(SymNode& symbol) override
     {
         auto sym = this->tmp_sym(symbol);
         this->val() = this->visit(sym);

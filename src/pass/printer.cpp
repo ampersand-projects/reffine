@@ -420,3 +420,95 @@ string IRPrinter::Build(llvm::Module& llmod)
     ostr.flush();
     return ostr.str();
 }
+
+CodeSeg IRPrinter2::visit(Sym) { return nullptr; }
+CodeSeg IRPrinter2::visit(StmtExprNode&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Select&) { return nullptr; }
+CodeSeg IRPrinter2::visit(IfElse&) { return nullptr; }
+
+CodeSeg IRPrinter2::visit(Const& cnst)
+{
+    switch (cnst.type.btype) {
+        case BaseType::BOOL:
+            return (cnst.val ? "true" : "false");
+        case BaseType::INT8:
+        case BaseType::INT16:
+        case BaseType::INT32:
+        case BaseType::INT64:
+            ostr << (int64_t)cnst.val << "i";
+            break;
+        case BaseType::UINT8:
+        case BaseType::UINT16:
+        case BaseType::UINT32:
+        case BaseType::UINT64:
+            ostr << (uint64_t)cnst.val << "u";
+            break;
+        case BaseType::FLOAT32:
+        case BaseType::FLOAT64:
+            ostr << cnst.val << "f";
+            break;
+        case BaseType::IDX:
+            ostr << (uint64_t)cnst.val << "x";
+            break;
+        default:
+            throw std::runtime_error("Invalid constant type");
+    }
+}
+
+
+
+CodeSeg IRPrinter2::visit(Cast&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Get&) { return nullptr; }
+CodeSeg IRPrinter2::visit(New&) { return nullptr; }
+CodeSeg IRPrinter2::visit(NaryExpr&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Op&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Element&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Lookup&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Locate&) { return nullptr; }
+CodeSeg IRPrinter2::visit(NotNull&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Reduce&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Call&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Stmts&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Alloc&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Load&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Store&) { return nullptr; }
+CodeSeg IRPrinter2::visit(ThreadIdx&) { return nullptr; }
+CodeSeg IRPrinter2::visit(BlockIdx&) { return nullptr; }
+CodeSeg IRPrinter2::visit(BlockDim&) { return nullptr; }
+CodeSeg IRPrinter2::visit(GridDim&) { return nullptr; }
+CodeSeg IRPrinter2::visit(Loop&) { return nullptr; }
+CodeSeg IRPrinter2::visit(IsValid&) { return nullptr; }
+CodeSeg IRPrinter2::visit(SetValid&) { return nullptr; }
+CodeSeg IRPrinter2::visit(FetchDataPtr&) { return nullptr; }
+CodeSeg IRPrinter2::visit(NoOp&) { return nullptr; }
+
+void IRPrinter2::visit(Func& func)
+{
+    emit("def " + func.name + "(");
+
+    for (const auto& input : func.inputs) {
+        emit(input->name + ", ");
+    }
+    if (func.inputs.size() > 0) { emit("\b\b"); }
+    emit(") {");
+
+    auto old_block = enter_block();
+
+    auto output = eval(func.output);
+    emitline();
+    if (!func.output->type.is_void()) { emit("return "); }
+    emit(output);
+
+    exit_block(old_block);
+
+    emitline("}");
+}
+
+
+string IRPrinter2::Build(Stmt stmt)
+{
+    IRPrinter2Ctx ctx;
+    IRPrinter2 printer(ctx);
+    stmt->Accept(printer);
+    return ctx.block->to_string(-1);
+}

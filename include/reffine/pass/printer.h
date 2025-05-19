@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "llvm/IR/Module.h"
-#include "reffine/pass/base/visitor.h"
+#include "reffine/pass/base/irgen.h"
 
 using namespace std;
 
@@ -120,6 +120,137 @@ private:
     IRPrinterCtx ctx;
     size_t tabstop;
     ostringstream ostr;
+};
+
+struct CodeSegBase {
+    virtual string to_string(int indent) = 0;
+    virtual ~CodeSegBase() {};
+};
+typedef shared_ptr<CodeSegBase> CodeSeg;
+
+struct StrSeg : public CodeSegBase {
+    string str;
+
+    StrSeg(string str) : CodeSegBase(), str(str) {}
+    ~StrSeg() override {}
+
+    string to_string(int indent = 0) override
+    {
+        return str;
+    }
+};
+
+struct LineSeg : public StrSeg {
+    LineSeg(string line) : StrSeg(line) {}
+    ~LineSeg() override {}
+
+    string to_string(int indent) override
+    {
+        return '\n' + string(indent, '\t') + StrSeg::to_string();
+    }
+};
+
+struct BlockSeg : public CodeSegBase {
+    vector<CodeSeg> lines;
+
+    ~BlockSeg() override {}
+
+    string to_string(int indent) override
+    {
+        stringstream sstr;
+        for (const auto& cl : lines) {
+            sstr << cl->to_string(indent + 1);
+        }
+        return sstr.str();
+    }
+};
+
+class IRPrinter2Ctx : public ValGenCtx<CodeSeg> {
+public:
+    IRPrinter2Ctx() : ValGenCtx<CodeSeg>() {}
+    IRPrinter2Ctx(const SymTable tbl) : ValGenCtx<CodeSeg>(tbl) {}
+
+private:
+    shared_ptr<BlockSeg> block = make_shared<BlockSeg>();
+
+    friend class IRPrinter2;
+};
+
+class IRPrinter2 : public ValGen<CodeSeg> {
+public:
+    explicit IRPrinter2(IRPrinter2Ctx ctx) : ValGen<CodeSeg>(ctx), _ctx(ctx) {}
+
+    static string Build(Stmt);
+
+private:
+    void Visit(SymNode& symbol) final
+    {
+        IRGenBase<CodeSeg>::Visit(symbol);
+    }
+
+    CodeSeg visit(Sym);
+    CodeSeg visit(StmtExprNode& expr);
+    CodeSeg visit(Select&);
+    CodeSeg visit(IfElse&);
+    CodeSeg visit(Const&);
+    CodeSeg visit(Cast&);
+    CodeSeg visit(Get&);
+    CodeSeg visit(New&);
+    CodeSeg visit(NaryExpr&);
+    CodeSeg visit(Op&);
+    CodeSeg visit(Element&);
+    CodeSeg visit(Lookup&);
+    CodeSeg visit(Locate&);
+    CodeSeg visit(NotNull&);
+    CodeSeg visit(Reduce&);
+    CodeSeg visit(Call&);
+    CodeSeg visit(Stmts&);
+    CodeSeg visit(Alloc&);
+    CodeSeg visit(Load&);
+    CodeSeg visit(Store&);
+    CodeSeg visit(ThreadIdx&);
+    CodeSeg visit(BlockIdx&);
+    CodeSeg visit(BlockDim&);
+    CodeSeg visit(GridDim&);
+    CodeSeg visit(Loop&);
+    CodeSeg visit(IsValid&);
+    CodeSeg visit(SetValid&);
+    CodeSeg visit(FetchDataPtr&);
+    CodeSeg visit(NoOp&);
+    void visit(Func&);
+
+    void emit(string str)
+    {
+        this->_ctx.block->lines.push_back(make_shared<StrSeg>(str));
+    }
+
+    void emit(CodeSeg seg)
+    {
+        this->_ctx.block->lines.push_back(seg);
+    }
+
+    void emitline(string str = "")
+    {
+        this->_ctx.block->lines.push_back(make_shared<LineSeg>(str));
+    }
+
+    shared_ptr<BlockSeg> enter_block()
+    {
+        auto old_block = this->_ctx.block;
+        auto new_block = make_shared<BlockSeg>();
+
+        old_block->lines.push_back(new_block);
+        std::swap(this->_ctx.block, new_block);
+
+        return old_block;
+    }
+
+    void exit_block(shared_ptr<BlockSeg> old_block)
+    {
+        std::swap(old_block, this->_ctx.block);
+    }
+
+    IRPrinter2Ctx _ctx;
 };
 
 }  // namespace reffine
