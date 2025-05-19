@@ -218,6 +218,30 @@ private:
     string visit(NoOp&);
     string visit(Func&);
 
+    string emitunary(string op, Expr a)
+    {
+        return op + eval(a);
+    }
+
+    string emitbinary(Expr a, string op, Expr b)
+    {
+        return "(" + eval(a) + " " + op + " " + eval(b) + ")";
+    }
+
+    string emitfunc(string name, vector<Expr> args)
+    {
+        string str = name + "(";
+
+        for (size_t i = 0; i < args.size(); i++) {
+            str += eval(args[i]);
+            str += ", ";
+        }
+        if (args.size() > 0) { str += "\b\b"; }
+        str += ")";
+
+        return str
+    }
+
     void emit(string str)
     {
         this->_ctx.block->lines.push_back(make_shared<StrSeg>(str));

@@ -429,9 +429,31 @@ string IRPrinter2::visit(Sym sym)
     return sym->name;
 }
 
-string IRPrinter2::visit(StmtExprNode&) { return nullptr; }
-string IRPrinter2::visit(Select&) { return nullptr; }
-string IRPrinter2::visit(IfElse&) { return nullptr; }
+string IRPrinter2::visit(StmtExprNode& stmtexpr) { return eval(stmtexpr.stmt); }
+
+string IRPrinter2::visit(Select& sel)
+{
+    return "(" + eval(sel.cond) + " ? " + eval(sel.true_body) + " : " + eval(sel.false_body) + ")";
+}
+
+string IRPrinter2::visit(IfElse& ifelse)
+{
+    emitline("if (" + eval(ifelse.cond) + ") {");
+
+    auto old_block1 = enter_block();
+    eval(ifelse.true_body);
+    exit_block(old_block1);
+
+    emitline("} else {");
+
+    auto old_block2 = enter_block();
+    eval(ifelse.false_body);
+    exit_block(old_block2);
+
+    emitline("}");
+
+    return "";
+}
 
 string IRPrinter2::visit(Const& cnst)
 {
@@ -457,11 +479,107 @@ string IRPrinter2::visit(Const& cnst)
     }
 }
 
-string IRPrinter2::visit(Cast&) { return nullptr; }
-string IRPrinter2::visit(Get&) { return nullptr; }
-string IRPrinter2::visit(New&) { return nullptr; }
-string IRPrinter2::visit(NaryExpr&) { return nullptr; }
-string IRPrinter2::visit(Op&) { return nullptr; }
+string IRPrinter2::visit(Cast& e)
+{
+    return "(" + e.type.str() + ") " + eval(e.arg);
+}
+
+string IRPrinter2::visit(Get& e)
+{
+    return "(" + eval(e.val) + ")._" + e.col;
+}
+
+string IRPrinter2::visit(New& e)
+{
+    auto str = "{";
+    for (const auto& val : e.vals) {
+        str += eval(val);
+        str += ", ";
+    }
+    str += "}";
+
+    return str;
+}
+
+string IRPrinter2::visit(NaryExpr& e)
+{
+    switch (e.op) {
+        case MathOp::ADD:
+            return emitbinary(e.arg(0), "+", e.arg(1));
+        case MathOp::SUB:
+            return emitbinary(e.arg(0), "-", e.arg(1));
+        case MathOp::MUL:
+            return emitbinary(e.arg(0), "*", e.arg(1));
+        case MathOp::DIV:
+            return emitbinary(e.arg(0), "/", e.arg(1));
+        case MathOp::MAX:
+            return emitfunc("max", {e.arg(0), e.arg(1)});
+        case MathOp::MIN:
+            return emitfunc("min", {e.arg(0), e.arg(1)});
+        case MathOp::MOD:
+            return emitbinary(e.arg(0), "%", e.arg(1));
+        case MathOp::ABS:
+            return "|" + eval(e.arg(0)) + "|";
+        case MathOp::NEG:
+            return emitunary("-", {e.arg(0)});
+        case MathOp::SQRT:
+            return emitfunc("sqrt", {e.arg(0)});
+        case MathOp::POW:
+            return emitfunc("pow", {e.arg(0), e.arg(1)});
+        case MathOp::CEIL:
+            return emitfunc("ceil", {e.arg(0)});
+        case MathOp::FLOOR:
+            return emitfunc("floor", {e.arg(0)});
+        case MathOp::EQ:
+            return emitbinary(e.arg(0), "==", e.arg(1));
+        case MathOp::NOT:
+            return emitunary("!", e.arg(0));
+        case MathOp::AND:
+            return emitbinary(e.arg(0), AND, e.arg(1));
+        case MathOp::OR:
+            return emitbinary(e.arg(0), OR, e.arg(1));
+        case MathOp::LT:
+            return emitbinary(e.arg(0), "<", e.arg(1));
+        case MathOp::LTE:
+            return emitbinary(e.arg(0), "<=", e.arg(1));
+        case MathOp::GT:
+            return emitbinary(e.arg(0), ">", e.arg(1));
+        case MathOp::GTE:
+            return emitbinary(e.arg(0), ">=", e.arg(1));
+        default:
+            throw std::runtime_error("Invalid math operation");
+    }
+}
+
+string IRPrinter2::visit(Op& op)
+{
+    string str = FORALL + " ";
+
+    for (const auto& iter : op.iters) { str += iter->name + ", "; }
+    if (op.iters.size() > 0) { str += "\b\b"; }
+
+    str += ": (";
+    if (op._lower) {
+        str += (" >= " + eval(op._lower) + "; ");
+    }
+    if (op._upper) {
+        str += (" <= " + eval(op._upper) + "; ");
+    }
+    if (op._incr) {
+        str += (" <- " + eval(op._incr) + "; ");
+    }
+    op.pred->Accept(*this);
+    ostr << ")";
+
+    ostr << "{";
+    for (const auto& output : op.outputs) {
+        output->Accept(*this);
+        ostr << ", ";
+    }
+    ostr << "\b\b";
+    ostr << "}";
+}
+
 string IRPrinter2::visit(Element&) { return nullptr; }
 string IRPrinter2::visit(Lookup&) { return nullptr; }
 string IRPrinter2::visit(Locate&) { return nullptr; }
