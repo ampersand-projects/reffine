@@ -519,6 +519,18 @@ void test_kernel() {
 }
 #endif
 
+shared_ptr<Func> test_printer()
+{
+    auto in_sym = _sym("in", types::INT64);
+    auto tmp = _i64(0);
+    auto tmp_sym = _sym("tmp", tmp);
+
+    auto foo_fn = _func("foo", tmp_sym, vector<Sym>{in_sym});
+    foo_fn->tbl[tmp_sym] = tmp;
+
+    return foo_fn;
+}
+
 int main()
 {   
     /*
@@ -544,7 +556,11 @@ int main()
     //auto table = load_arrow_file("../students.arrow");
     auto table = load_arrow_file("../benchmark/store_sales.arrow");
     cout << "type: " << table->get_data_type(0).str() << endl;
-    auto fn = tpcds_query9(*table);
+    auto fn = test_printer();
+    cout << "Printer:" << endl << IRPrinter::Build(fn) << endl;
+    cout << "Printer2:" << endl << IRPrinter2::Build(fn) << endl;
+    return 0;
+
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto fn2 = OpToLoop::Build(fn);
     cout << "OpToLoop IR: " << endl << IRPrinter::Build(fn2) << endl;

@@ -421,12 +421,16 @@ string IRPrinter::Build(llvm::Module& llmod)
     return ostr.str();
 }
 
-CodeSeg IRPrinter2::visit(Sym) { return nullptr; }
-CodeSeg IRPrinter2::visit(StmtExprNode&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Select&) { return nullptr; }
-CodeSeg IRPrinter2::visit(IfElse&) { return nullptr; }
+string IRPrinter2::visit(Sym sym)
+{
+    return sym->name;
+}
 
-CodeSeg IRPrinter2::visit(Const& cnst)
+string IRPrinter2::visit(StmtExprNode&) { return nullptr; }
+string IRPrinter2::visit(Select&) { return nullptr; }
+string IRPrinter2::visit(IfElse&) { return nullptr; }
+
+string IRPrinter2::visit(Const& cnst)
 {
     switch (cnst.type.btype) {
         case BaseType::BOOL:
@@ -435,52 +439,45 @@ CodeSeg IRPrinter2::visit(Const& cnst)
         case BaseType::INT16:
         case BaseType::INT32:
         case BaseType::INT64:
-            ostr << (int64_t)cnst.val << "i";
-            break;
+            return to_string((int64_t) cnst.val) + cnst.type.str();
         case BaseType::UINT8:
         case BaseType::UINT16:
         case BaseType::UINT32:
         case BaseType::UINT64:
-            ostr << (uint64_t)cnst.val << "u";
-            break;
+        case BaseType::IDX:
+            return to_string((uint64_t) cnst.val) + cnst.type.str();
         case BaseType::FLOAT32:
         case BaseType::FLOAT64:
-            ostr << cnst.val << "f";
-            break;
-        case BaseType::IDX:
-            ostr << (uint64_t)cnst.val << "x";
-            break;
+            return to_string(cnst.val) + cnst.type.str();
         default:
             throw std::runtime_error("Invalid constant type");
     }
 }
 
-
-
-CodeSeg IRPrinter2::visit(Cast&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Get&) { return nullptr; }
-CodeSeg IRPrinter2::visit(New&) { return nullptr; }
-CodeSeg IRPrinter2::visit(NaryExpr&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Op&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Element&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Lookup&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Locate&) { return nullptr; }
-CodeSeg IRPrinter2::visit(NotNull&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Reduce&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Call&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Stmts&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Alloc&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Load&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Store&) { return nullptr; }
-CodeSeg IRPrinter2::visit(ThreadIdx&) { return nullptr; }
-CodeSeg IRPrinter2::visit(BlockIdx&) { return nullptr; }
-CodeSeg IRPrinter2::visit(BlockDim&) { return nullptr; }
-CodeSeg IRPrinter2::visit(GridDim&) { return nullptr; }
-CodeSeg IRPrinter2::visit(Loop&) { return nullptr; }
-CodeSeg IRPrinter2::visit(IsValid&) { return nullptr; }
-CodeSeg IRPrinter2::visit(SetValid&) { return nullptr; }
-CodeSeg IRPrinter2::visit(FetchDataPtr&) { return nullptr; }
-CodeSeg IRPrinter2::visit(NoOp&) { return nullptr; }
+string IRPrinter2::visit(Cast&) { return nullptr; }
+string IRPrinter2::visit(Get&) { return nullptr; }
+string IRPrinter2::visit(New&) { return nullptr; }
+string IRPrinter2::visit(NaryExpr&) { return nullptr; }
+string IRPrinter2::visit(Op&) { return nullptr; }
+string IRPrinter2::visit(Element&) { return nullptr; }
+string IRPrinter2::visit(Lookup&) { return nullptr; }
+string IRPrinter2::visit(Locate&) { return nullptr; }
+string IRPrinter2::visit(NotNull&) { return nullptr; }
+string IRPrinter2::visit(Reduce&) { return nullptr; }
+string IRPrinter2::visit(Call&) { return nullptr; }
+string IRPrinter2::visit(Stmts&) { return nullptr; }
+string IRPrinter2::visit(Alloc&) { return nullptr; }
+string IRPrinter2::visit(Load&) { return nullptr; }
+string IRPrinter2::visit(Store&) { return nullptr; }
+string IRPrinter2::visit(ThreadIdx&) { return nullptr; }
+string IRPrinter2::visit(BlockIdx&) { return nullptr; }
+string IRPrinter2::visit(BlockDim&) { return nullptr; }
+string IRPrinter2::visit(GridDim&) { return nullptr; }
+string IRPrinter2::visit(Loop&) { return nullptr; }
+string IRPrinter2::visit(IsValid&) { return nullptr; }
+string IRPrinter2::visit(SetValid&) { return nullptr; }
+string IRPrinter2::visit(FetchDataPtr&) { return nullptr; }
+string IRPrinter2::visit(NoOp&) { return nullptr; }
 
 void IRPrinter2::visit(Func& func)
 {
@@ -492,14 +489,15 @@ void IRPrinter2::visit(Func& func)
     if (func.inputs.size() > 0) { emit("\b\b"); }
     emit(") {");
 
-    auto old_block = enter_block();
+    IRPrinter2Ctx ctx(func.tbl);
+    IRPrinter2 printer(ctx);
 
-    auto output = eval(func.output);
-    emitline();
-    if (!func.output->type.is_void()) { emit("return "); }
-    emit(output);
+    auto output = printer.eval(func.output);
+    printer.emitline();
+    if (!func.output->type.is_void()) { printer.emit("return "); }
+    printer.emit(output);
 
-    exit_block(old_block);
+    this->_ctx.block->lines.push_back(printer._ctx.block);
 
     emitline("}");
 }

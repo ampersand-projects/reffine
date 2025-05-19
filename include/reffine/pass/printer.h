@@ -165,10 +165,9 @@ struct BlockSeg : public CodeSegBase {
     }
 };
 
-class IRPrinter2Ctx : public ValGenCtx<CodeSeg> {
+class IRPrinter2Ctx : public IRPassBaseCtx<string> {
 public:
-    IRPrinter2Ctx() : ValGenCtx<CodeSeg>() {}
-    IRPrinter2Ctx(const SymTable tbl) : ValGenCtx<CodeSeg>(tbl) {}
+    IRPrinter2Ctx(const SymTable tbl = {}, map<Sym, string> m = {}) : IRPassBaseCtx<string>(tbl, m) {}
 
 private:
     shared_ptr<BlockSeg> block = make_shared<BlockSeg>();
@@ -176,47 +175,47 @@ private:
     friend class IRPrinter2;
 };
 
-class IRPrinter2 : public ValGen<CodeSeg> {
+class IRPrinter2 : public IRGenBase<string> {
 public:
-    explicit IRPrinter2(IRPrinter2Ctx ctx) : ValGen<CodeSeg>(ctx), _ctx(ctx) {}
+    explicit IRPrinter2(IRPrinter2Ctx ctx) : IRGenBase<string>(ctx), _ctx(ctx) {}
 
     static string Build(Stmt);
 
 private:
     void Visit(SymNode& symbol) final
     {
-        IRGenBase<CodeSeg>::Visit(symbol);
+        IRGenBase<string>::Visit(symbol);
     }
 
-    CodeSeg visit(Sym);
-    CodeSeg visit(StmtExprNode& expr);
-    CodeSeg visit(Select&);
-    CodeSeg visit(IfElse&);
-    CodeSeg visit(Const&);
-    CodeSeg visit(Cast&);
-    CodeSeg visit(Get&);
-    CodeSeg visit(New&);
-    CodeSeg visit(NaryExpr&);
-    CodeSeg visit(Op&);
-    CodeSeg visit(Element&);
-    CodeSeg visit(Lookup&);
-    CodeSeg visit(Locate&);
-    CodeSeg visit(NotNull&);
-    CodeSeg visit(Reduce&);
-    CodeSeg visit(Call&);
-    CodeSeg visit(Stmts&);
-    CodeSeg visit(Alloc&);
-    CodeSeg visit(Load&);
-    CodeSeg visit(Store&);
-    CodeSeg visit(ThreadIdx&);
-    CodeSeg visit(BlockIdx&);
-    CodeSeg visit(BlockDim&);
-    CodeSeg visit(GridDim&);
-    CodeSeg visit(Loop&);
-    CodeSeg visit(IsValid&);
-    CodeSeg visit(SetValid&);
-    CodeSeg visit(FetchDataPtr&);
-    CodeSeg visit(NoOp&);
+    string visit(Sym);
+    string visit(StmtExprNode& expr);
+    string visit(Select&);
+    string visit(IfElse&);
+    string visit(Const&);
+    string visit(Cast&);
+    string visit(Get&);
+    string visit(New&);
+    string visit(NaryExpr&);
+    string visit(Op&);
+    string visit(Element&);
+    string visit(Lookup&);
+    string visit(Locate&);
+    string visit(NotNull&);
+    string visit(Reduce&);
+    string visit(Call&);
+    string visit(Stmts&);
+    string visit(Alloc&);
+    string visit(Load&);
+    string visit(Store&);
+    string visit(ThreadIdx&);
+    string visit(BlockIdx&);
+    string visit(BlockDim&);
+    string visit(GridDim&);
+    string visit(Loop&);
+    string visit(IsValid&);
+    string visit(SetValid&);
+    string visit(FetchDataPtr&);
+    string visit(NoOp&);
     void visit(Func&);
 
     void emit(string str)
