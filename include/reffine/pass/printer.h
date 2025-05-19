@@ -140,6 +140,21 @@ struct StrSeg : public CodeSegBase {
     }
 };
 
+CodeSeg operator+(CodeSeg sg, string str)
+{
+    return make_shared<StrSeg>(sg->to_string(-1) + str);
+}
+
+CodeSeg operator+(string str, CodeSeg cs)
+{
+    return make_shared<StrSeg>(str + cs->to_string(-1));
+}
+
+CodeSeg operator+(CodeSeg cs1, CodeSeg cs2)
+{
+    return make_shared<StrSeg>(cs1->to_string(-1) + cs2->to_string(-1));
+}
+
 struct LineSeg : public StrSeg {
     LineSeg(string line) : StrSeg(line) {}
     ~LineSeg() override {}
@@ -147,6 +162,18 @@ struct LineSeg : public StrSeg {
     string to_string(int indent) override
     {
         return '\n' + string(indent, '\t') + StrSeg::to_string();
+    }
+};
+
+struct AssignSeg : public CodeSegBase {
+    string lhs;
+    CodeSeg rhs;
+
+    AssignSeg(string lhs, CodeSeg rhs) : lhs(lhs), rhs(rhs) {}
+
+    string to_string(int indent) override
+    {
+        return '\n' + string(indent, '\t') + lhs + " = " + rhs->to_string(indent);
     }
 };
 
@@ -165,9 +192,9 @@ struct BlockSeg : public CodeSegBase {
     }
 };
 
-class IRPrinter2Ctx : public IRPassBaseCtx<string> {
+class IRPrinter2Ctx : public IRPassBaseCtx<CodeSeg> {
 public:
-    IRPrinter2Ctx(const SymTable tbl = {}, map<Sym, string> m = {}) : IRPassBaseCtx<string>(tbl, m) {}
+    IRPrinter2Ctx(const SymTable tbl = {}, map<Sym, CodeSeg> m = {}) : IRPassBaseCtx<CodeSeg>(tbl, m) {}
 
 private:
     shared_ptr<BlockSeg> block = make_shared<BlockSeg>();
@@ -175,62 +202,57 @@ private:
     friend class IRPrinter2;
 };
 
-class IRPrinter2 : public IRGenBase<string> {
+class IRPrinter2 : public IRGenBase<CodeSeg> {
 public:
-    explicit IRPrinter2(IRPrinter2Ctx ctx) : IRGenBase<string>(ctx), _ctx(ctx) {}
+    explicit IRPrinter2(IRPrinter2Ctx ctx) : IRGenBase<CodeSeg>(ctx), _ctx(ctx) {}
 
     static string Build(Stmt);
 
 private:
-    void Visit(SymNode& symbol) final
-    {
-        IRGenBase<string>::Visit(symbol);
-    }
+    CodeSeg visit(Sym);
+    CodeSeg visit(StmtExprNode& expr);
+    CodeSeg visit(Select&);
+    CodeSeg visit(IfElse&);
+    CodeSeg visit(Const&);
+    CodeSeg visit(Cast&);
+    CodeSeg visit(Get&);
+    CodeSeg visit(New&);
+    CodeSeg visit(NaryExpr&);
+    CodeSeg visit(Op&);
+    CodeSeg visit(Element&);
+    CodeSeg visit(Lookup&);
+    CodeSeg visit(Locate&);
+    CodeSeg visit(NotNull&);
+    CodeSeg visit(Reduce&);
+    CodeSeg visit(Call&);
+    CodeSeg visit(Stmts&);
+    CodeSeg visit(Alloc&);
+    CodeSeg visit(Load&);
+    CodeSeg visit(Store&);
+    CodeSeg visit(ThreadIdx&);
+    CodeSeg visit(BlockIdx&);
+    CodeSeg visit(BlockDim&);
+    CodeSeg visit(GridDim&);
+    CodeSeg visit(Loop&);
+    CodeSeg visit(IsValid&);
+    CodeSeg visit(SetValid&);
+    CodeSeg visit(FetchDataPtr&);
+    CodeSeg visit(NoOp&);
+    CodeSeg visit(Func&);
 
-    string visit(Sym);
-    string visit(StmtExprNode& expr);
-    string visit(Select&);
-    string visit(IfElse&);
-    string visit(Const&);
-    string visit(Cast&);
-    string visit(Get&);
-    string visit(New&);
-    string visit(NaryExpr&);
-    string visit(Op&);
-    string visit(Element&);
-    string visit(Lookup&);
-    string visit(Locate&);
-    string visit(NotNull&);
-    string visit(Reduce&);
-    string visit(Call&);
-    string visit(Stmts&);
-    string visit(Alloc&);
-    string visit(Load&);
-    string visit(Store&);
-    string visit(ThreadIdx&);
-    string visit(BlockIdx&);
-    string visit(BlockDim&);
-    string visit(GridDim&);
-    string visit(Loop&);
-    string visit(IsValid&);
-    string visit(SetValid&);
-    string visit(FetchDataPtr&);
-    string visit(NoOp&);
-    string visit(Func&);
-
-    string emitunary(string op, Expr a)
+    CodeSeg emitunary(string op, Expr a)
     {
         return op + eval(a);
     }
 
-    string emitbinary(Expr a, string op, Expr b)
+    CodeSeg emitbinary(Expr a, string op, Expr b)
     {
         return "(" + eval(a) + " " + op + " " + eval(b) + ")";
     }
 
     string emitfunc(string name, vector<Expr> args)
     {
-        string str = name + "(";
+        auto str = make_shared<StrSeg>(name + "(");
 
         for (size_t i = 0; i < args.size(); i++) {
             str += eval(args[i]);
