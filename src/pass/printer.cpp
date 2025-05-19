@@ -482,7 +482,7 @@ string IRPrinter2::visit(SetValid&) { return nullptr; }
 string IRPrinter2::visit(FetchDataPtr&) { return nullptr; }
 string IRPrinter2::visit(NoOp&) { return nullptr; }
 
-void IRPrinter2::visit(Func& func)
+string IRPrinter2::visit(Func& func)
 {
     emit("def " + func.name + "(");
 
@@ -503,6 +503,8 @@ void IRPrinter2::visit(Func& func)
     this->_ctx.block->lines.push_back(printer._ctx.block);
 
     emitline("}");
+
+    return this->_ctx.block->to_string(-1);
 }
 
 
@@ -510,6 +512,5 @@ string IRPrinter2::Build(Stmt stmt)
 {
     IRPrinter2Ctx ctx;
     IRPrinter2 printer(ctx);
-    stmt->Accept(printer);
-    return ctx.block->to_string(-1);
+    return printer.eval(stmt);
 }

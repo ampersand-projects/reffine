@@ -216,7 +216,7 @@ private:
     string visit(SetValid&);
     string visit(FetchDataPtr&);
     string visit(NoOp&);
-    void visit(Func&);
+    string visit(Func&);
 
     void emit(string str)
     {
