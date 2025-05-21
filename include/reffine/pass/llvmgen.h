@@ -49,28 +49,28 @@ private:
 
     llvm::Value* visit(Sym) final;
     llvm::Value* visit(Call&) final;
-    void visit(IfElse&) final;
-    void visit(NoOp&) final;
+    llvm::Value* visit(IfElse&) final;
+    llvm::Value* visit(NoOp&) final;
     llvm::Value* visit(Select&) final;
     llvm::Value* visit(Const&) final;
     llvm::Value* visit(Cast&) final;
     llvm::Value* visit(Get&) final;
     llvm::Value* visit(New&) final;
     llvm::Value* visit(NaryExpr&) final;
-    void visit(Stmts&) final;
-    void visit(Func&) final;
+    llvm::Value* visit(Stmts&) final;
     llvm::Value* visit(Alloc&) final;
     llvm::Value* visit(Load&) final;
-    void visit(Store&) final;
+    llvm::Value* visit(Store&) final;
     void visit(AtomicAdd&) final;
-    llvm::Value* visit(ThreadIdx&);
-    llvm::Value* visit(BlockIdx&);
-    llvm::Value* visit(BlockDim&);
-    llvm::Value* visit(GridDim&);
+    llvm::Value* visit(ThreadIdx&) final;
+    llvm::Value* visit(BlockIdx&) final;
+    llvm::Value* visit(BlockDim&) final;
+    llvm::Value* visit(GridDim&) final;
     llvm::Value* visit(Loop&) final;
     llvm::Value* visit(IsValid&) final;
     llvm::Value* visit(SetValid&) final;
     llvm::Value* visit(FetchDataPtr&) final;
+    void visit(Func&) final;
 
     llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);

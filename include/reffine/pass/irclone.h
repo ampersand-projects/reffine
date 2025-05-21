@@ -26,8 +26,8 @@ public:
 
 protected:
     Expr visit(Sym) override;
-    Expr visit(Call&) override;
     Expr visit(Select&) override;
+    Expr visit(IfElse&) override;
     Expr visit(Const&) override;
     Expr visit(Cast&) override;
     Expr visit(Get&) override;
@@ -39,9 +39,21 @@ protected:
     Expr visit(Locate&) override;
     Expr visit(NotNull&) override;
     Expr visit(Reduce&) override;
-    Expr visit(FetchDataPtr&) override;
+    Expr visit(Call&) override;
+    Expr visit(Stmts&) override;
+    Expr visit(Alloc&) override;
     Expr visit(Load&) override;
-    void visit(Func&) override;
+    Expr visit(Store&) override;
+    Expr visit(ThreadIdx&) override;
+    Expr visit(BlockIdx&) override;
+    Expr visit(BlockDim&) override;
+    Expr visit(GridDim&) override;
+    Expr visit(Loop&) override;
+    Expr visit(IsValid&) override;
+    Expr visit(SetValid&) override;
+    Expr visit(FetchDataPtr&) override;
+    Expr visit(NoOp&) override;
+    void visit(Func&) final;
 
 private:
     shared_ptr<Op> visit_op(Op&);

@@ -552,6 +552,7 @@ int main()
     auto loop = LoopGen::Build(fn2);
     cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
+    cout << "Loop IR (canon):" << endl << IRPrinter::Build(loop) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());

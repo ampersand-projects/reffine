@@ -14,6 +14,7 @@ namespace reffine {
 
 enum class BaseType {
     UNKNOWN,  // never use this type
+    VOID,
     BOOL,
     INT8,
     INT16,
@@ -71,6 +72,7 @@ struct DataType {
     bool is_ptr() const { return btype == BaseType::PTR; }
     bool is_idx() const { return btype == BaseType::IDX; }
     bool is_vector() const { return btype == BaseType::VECTOR; }
+    bool is_void() const { return btype == BaseType::VOID; }
 
     bool is_val() const { return !(this->is_vector()); }
 
@@ -127,6 +129,8 @@ struct DataType {
     string str() const
     {
         switch (btype) {
+            case BaseType::VOID:
+                return "void";
             case BaseType::BOOL:
                 return "b";
             case BaseType::INT8:
@@ -209,6 +213,7 @@ enum class MathOp {
 namespace reffine::types {
 
 static const DataType UNKNOWN(BaseType::UNKNOWN);
+static const DataType VOID(BaseType::VOID);
 static const DataType BOOL(BaseType::BOOL);
 static const DataType INT8(BaseType::INT8);
 static const DataType INT16(BaseType::INT16);

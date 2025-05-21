@@ -44,6 +44,8 @@ Value* LLVMGen::llcall(const string name, llvm::Type* ret_type,
 llvm::Type* LLVMGen::lltype(const DataType& type)
 {
     switch (type.btype) {
+        case BaseType::VOID:
+            return llvm::Type::getVoidTy(llctx());
         case BaseType::BOOL:
             return llvm::Type::getInt1Ty(llctx());
         case BaseType::INT8:
@@ -302,7 +304,7 @@ Value* LLVMGen::visit(Select& select)
     return builder()->CreateSelect(cond, true_val, false_val);
 }
 
-void LLVMGen::visit(IfElse& ifelse)
+Value* LLVMGen::visit(IfElse& ifelse)
 {
     auto parent_fn = builder()->GetInsertBlock()->getParent();
     auto then_bb = BasicBlock::Create(llctx(), "then");
@@ -330,9 +332,11 @@ void LLVMGen::visit(IfElse& ifelse)
     // merge block
     parent_fn->insert(parent_fn->end(), merge_bb);
     builder()->SetInsertPoint(merge_bb);
+
+    return nullptr;
 }
 
-void LLVMGen::visit(NoOp&) { /* do nothing */ }
+Value* LLVMGen::visit(NoOp&) { return nullptr; }
 
 Value* LLVMGen::visit(IsValid& is_valid)
 {
@@ -374,9 +378,11 @@ Value* LLVMGen::visit(Call& call)
     return llcall(call.name, lltype(call), call.args);
 }
 
-void LLVMGen::visit(Stmts& stmts)
+Value* LLVMGen::visit(Stmts& stmts)
 {
     for (auto& stmt : stmts.stmts) { eval(stmt); }
+
+    return nullptr;
 }
 
 Value* LLVMGen::visit(Alloc& alloc)
@@ -391,11 +397,11 @@ Value* LLVMGen::visit(Load& load)
     return CreateLoad(addr_type, addr);
 }
 
-void LLVMGen::visit(Store& store)
+Value* LLVMGen::visit(Store& store)
 {
     auto addr = eval(store.addr);
     auto val = eval(store.val);
-    CreateStore(val, addr);
+    return CreateStore(val, addr);
 }
 
 void LLVMGen::visit(AtomicAdd& add)
@@ -508,6 +514,8 @@ Value* LLVMGen::visit(Loop& loop)
 
 void LLVMGen::visit(Func& func)
 {
+    ASSERT(func.output->type.is_void());
+
     // Define function signature
     vector<llvm::Type*> args_type;
     for (auto& input : func.inputs) {
@@ -531,12 +539,10 @@ void LLVMGen::visit(Func& func)
 
     builder()->SetInsertPoint(entry_bb);
 
-    auto output = eval(func.output);
-    ReturnInst* ret_instr;
+    eval(func.output);
+
     if (func.is_kernel) {
 #ifdef ENABLE_CUDA
-        ret_instr = builder()->CreateRetVoid();
-
         fn->setCallingConv(llvm::CallingConv::PTX_Kernel);
         llvm::NamedMDNode* MD =
             llmod()->getOrInsertNamedMetadata("nvvm.annotations");
@@ -551,11 +557,9 @@ void LLVMGen::visit(Func& func)
 #else
         throw std::runtime_error("CUDA not enabled.");
 #endif
-    } else {
-        ret_instr = builder()->CreateRet(output);
     }
-    ret_instr->setMetadata(LLVMContext::MD_noalias,
-                           MDNode::get(llctx(), ArrayRef<Metadata*>()));
+
+    builder()->CreateRetVoid();
 }
 
 void LLVMGen::register_vinstrs()
