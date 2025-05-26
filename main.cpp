@@ -289,7 +289,7 @@ shared_ptr<Func> basic_transform_kernel()
     loop->exit_cond = _gte(idx, idx_end);
     auto loop_sym = _sym("loop", loop);
 
-    auto foo_fn = make_shared<Func>("foo", loop, vector<Sym>{vec_out_sym, vec_in_sym}, SymTable(), true);
+    auto foo_fn = make_shared<Func>("foo", _stmtexpr(loop), vector<Sym>{vec_out_sym, vec_in_sym}, SymTable(), true);
     foo_fn->tbl[idx_addr] = idx_alloc;
 
     return foo_fn;
@@ -521,10 +521,10 @@ void test_kernel() {
 
 int main()
 {   
-    /*
+    // /*
     test_kernel();
     return 0;
-    */
+    // */
 
     const rlim_t kStackSize = 1 * 1024 * 1024 * 1024u;   // min stack size = 2 GB
     struct rlimit rl;
