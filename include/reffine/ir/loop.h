@@ -131,8 +131,10 @@ struct StructGEP : public ExprNode {
     Expr addr;
     size_t col;
 
-    StructGEP(Expr addr, size_t col) : ExprNode(extract_type(addr, col)),
-        addr(addr), col(col) {}
+    StructGEP(Expr addr, size_t col)
+        : ExprNode(extract_type(addr, col)), addr(addr), col(col)
+    {
+    }
 
     void Accept(Visitor&) final;
 

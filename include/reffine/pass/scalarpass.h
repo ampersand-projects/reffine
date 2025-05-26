@@ -13,6 +13,7 @@ public:
     explicit LoadStoreExpand(ScalarPassCtx& ctx) : IRClone(ctx) {}
 
     static shared_ptr<Func> Build(shared_ptr<Func>);
+
 private:
     Expr visit(Load&) final;
     Expr visit(Store&) final;
@@ -23,6 +24,7 @@ public:
     NewGetElimination(ScalarPassCtx& ctx) : IRClone(ctx) {}
 
     static shared_ptr<Func> Build(shared_ptr<Func>);
+
 private:
     Expr visit(New&) final;
     Expr visit(Get&) final;

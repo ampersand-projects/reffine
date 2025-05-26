@@ -115,7 +115,8 @@ Value* LLVMGen::visit(Cast& e)
 
 Value* LLVMGen::visit(Get& e)
 {
-    LOG(WARNING) << "Failed to eliminate Get expression before LLVMGen" << std::endl;
+    LOG(WARNING) << "Failed to eliminate Get expression before LLVMGen"
+                 << std::endl;
     auto val = eval(e.val);
     return builder()->CreateExtractValue(val, e.col);
 }
@@ -393,7 +394,8 @@ Value* LLVMGen::visit(Store& store)
 
 Value* LLVMGen::visit(StructGEP& gep)
 {
-    return builder()->CreateStructGEP(lltype(gep.addr->type.deref()), eval(gep.addr), gep.col);
+    return builder()->CreateStructGEP(lltype(gep.addr->type.deref()),
+                                      eval(gep.addr), gep.col);
 }
 
 Value* LLVMGen::visit(ThreadIdx& tidx)

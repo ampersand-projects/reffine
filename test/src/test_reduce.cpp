@@ -70,16 +70,12 @@ shared_ptr<Func> vector_op()
     Op op({t_sym},
           ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(48)) &&
               _gte(t_sym, _i64(10)),
-          {
-              vec_in_sym[{t_sym}][1],
-              vec_in_sym[{t_sym}][2],
-              vec_in_sym[{t_sym}][3],
-              vec_in_sym[{t_sym}][4]
-          }
-    );
+          {vec_in_sym[{t_sym}][1], vec_in_sym[{t_sym}][2],
+           vec_in_sym[{t_sym}][3], vec_in_sym[{t_sym}][4]});
 
     auto sum = _red(
-        op, []() { return _new(vector<Expr>{_i64(0), _i64(0), _i64(0), _i64(0)}); },
+        op,
+        []() { return _new(vector<Expr>{_i64(0), _i64(0), _i64(0), _i64(0)}); },
         [](Expr s, Expr v) {
             auto v0 = _get(v, 0);
             auto v1 = _get(v, 1);
@@ -89,8 +85,8 @@ shared_ptr<Func> vector_op()
             auto s1 = _get(s, 1);
             auto s2 = _get(s, 2);
             auto s3 = _get(s, 3);
-            return _new(vector<Expr>{
-                _add(s0, v0), _add(s1, v1), _add(s2, v2), _add(s3, v3)});
+            return _new(vector<Expr>{_add(s0, v0), _add(s1, v1), _add(s2, v2),
+                                     _add(s3, v3)});
         });
     auto sum_sym = _sym("sum", sum);
     auto res = _get(sum_sym, 0);

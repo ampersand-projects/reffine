@@ -11,7 +11,7 @@ Expr LoadStoreExpand::visit(Load& load)
         auto addr = eval(load.addr);
 
         vector<Expr> vals;
-        for (size_t i=0; i<load.type.dtypes.size(); i++) {
+        for (size_t i = 0; i < load.type.dtypes.size(); i++) {
             vals.push_back(_load(_structgep(addr, i)));
         }
 
@@ -28,7 +28,7 @@ Expr LoadStoreExpand::visit(Store& store)
         auto val = eval(store.val);
 
         vector<Stmt> stmt_list;
-        for (size_t i=0; i<store.val->type.dtypes.size(); i++) {
+        for (size_t i = 0; i < store.val->type.dtypes.size(); i++) {
             auto val_addr = _structgep(addr, i);
             stmt_list.push_back(_store(_structgep(addr, i), _get(val, i)));
         }
@@ -67,10 +67,11 @@ Expr NewGetElimination::visit(Get& get)
 
     if (_new_get_map.find(val) != _new_get_map.end()) {
         return _new_get_map[val][get.col];
-    } else { // might be a symbol to New expression
+    } else {  // might be a symbol to New expression
         auto maybe_sym = static_pointer_cast<SymNode>(val);
 
-        if (this->ctx().out_sym_tbl.find(maybe_sym) != this->ctx().out_sym_tbl.end()) {
+        if (this->ctx().out_sym_tbl.find(maybe_sym) !=
+            this->ctx().out_sym_tbl.end()) {
             auto expr = this->ctx().out_sym_tbl.at(maybe_sym);
             return _new_get_map[expr][get.col];
         } else {
