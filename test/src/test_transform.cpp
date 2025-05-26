@@ -81,7 +81,7 @@ shared_ptr<Func> transform_loop()
         "set_vector_len", types::INT64,
         vector<Expr>{vec_out_sym, make_shared<Load>(idx_addr)});
 
-    auto foo_fn = make_shared<Func>("foo", loop_sym,
+    auto foo_fn = make_shared<Func>("foo", _stmtexpr(loop_sym),
                                     vector<Sym>{vec_in_sym, vec_out_sym});
     foo_fn->tbl[len_sym] = len;
     foo_fn->tbl[idx_addr] = idx_alloc;
@@ -93,7 +93,7 @@ shared_ptr<Func> transform_loop()
 void transform_test()
 {
     auto loop = transform_loop();
-    auto query_fn = compile_loop<void* (*)(void*, void*)>(loop);
+    auto query_fn = compile_loop<void (*)(void*, void*)>(loop);
 
     auto tbl = get_input_vector();
     auto in_array = tbl->array;
@@ -106,7 +106,7 @@ void transform_test()
     out_array.add_child<Int64Array>(in_array.length);
     out_array.add_child<BooleanArray>(in_array.length);
 
-    auto res = query_fn(&in_array, &out_array);
+    query_fn(&in_array, &out_array);
 
     ASSERT_EQ(1, 1);
 }

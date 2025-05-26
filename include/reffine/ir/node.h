@@ -31,13 +31,22 @@ struct ExprNode : public StmtNode {
 };
 typedef shared_ptr<ExprNode> Expr;
 
+struct StmtExprNode : public ExprNode {
+    Stmt stmt;
+
+    StmtExprNode(Stmt stmt) : ExprNode(types::VOID), stmt(stmt) {}
+
+    virtual void Accept(Visitor&) final;
+};
+typedef shared_ptr<StmtExprNode> StmtExpr;
+
 struct SymNode : public ExprNode {
     const string name;
 
     SymNode(string name, DataType type) : ExprNode(type), name(name) {}
     SymNode(string name, Expr expr) : SymNode(name, expr->type) {}
 
-    void Accept(Visitor&) override;
+    void Accept(Visitor&) final;
 };
 typedef shared_ptr<SymNode> Sym;
 

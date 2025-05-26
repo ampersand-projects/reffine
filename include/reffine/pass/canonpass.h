@@ -14,6 +14,7 @@ public:
 
 protected:
     void Visit(Loop&) final;
+    void Visit(Func&) final;
 };
 
 }  // namespace reffine

@@ -139,6 +139,7 @@ REGISTER_EXPR(_nary, NaryExpr)
 REGISTER_EXPR(_unary, UnaryExpr)
 REGISTER_EXPR(_binary, BinaryExpr)
 REGISTER_EXPR(_sym, SymNode)
+REGISTER_EXPR(_stmtexpr, StmtExprNode)
 #undef REGISTER_EXPR
 
 #define REGISTER_STMT(NAME, STMT)                                            \
