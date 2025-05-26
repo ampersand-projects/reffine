@@ -374,7 +374,7 @@ Value* LLVMGen::visit(Stmts& stmts)
 
 Value* LLVMGen::visit(Alloc& alloc)
 {
-    return CreateAlloca(lltype(alloc.type), eval(alloc.size));
+    return CreateAlloca(lltype(alloc.type.deref()), eval(alloc.size));
 }
 
 Value* LLVMGen::visit(Load& load)
