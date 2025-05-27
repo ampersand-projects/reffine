@@ -138,6 +138,8 @@ public:
         expr.val->Accept(*this);
     }
 
+    void Visit(StructGEP& expr) override { expr.addr->Accept(*this); }
+
     void Visit(ThreadIdx& expr) override {}
     void Visit(BlockDim& expr) override {}
     void Visit(BlockIdx& expr) override {}

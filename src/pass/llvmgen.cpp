@@ -115,21 +115,10 @@ Value* LLVMGen::visit(Cast& e)
 
 Value* LLVMGen::visit(Get& e)
 {
+    LOG(WARNING) << "Failed to eliminate Get expression before LLVMGen"
+                 << std::endl;
     auto val = eval(e.val);
     return builder()->CreateExtractValue(val, e.col);
-}
-
-Value* LLVMGen::visit(New& e)
-{
-    auto new_type = lltype(e);
-    auto ptr = CreateAlloca(new_type);
-
-    for (size_t i = 0; i < e.vals.size(); i++) {
-        auto val_ptr = builder()->CreateStructGEP(new_type, ptr, i);
-        CreateStore(eval(e.vals[i]), val_ptr);
-    }
-
-    return CreateLoad(new_type, ptr);
 }
 
 Value* LLVMGen::visit(NaryExpr& e)
@@ -386,7 +375,7 @@ Value* LLVMGen::visit(Stmts& stmts)
 
 Value* LLVMGen::visit(Alloc& alloc)
 {
-    return CreateAlloca(lltype(alloc.type), eval(alloc.size));
+    return CreateAlloca(lltype(alloc.type.deref()), eval(alloc.size));
 }
 
 Value* LLVMGen::visit(Load& load)
@@ -401,6 +390,12 @@ Value* LLVMGen::visit(Store& store)
     auto addr = eval(store.addr);
     auto val = eval(store.val);
     return CreateStore(val, addr);
+}
+
+Value* LLVMGen::visit(StructGEP& gep)
+{
+    return builder()->CreateStructGEP(lltype(gep.addr->type.deref()),
+                                      eval(gep.addr), gep.col);
 }
 
 Value* LLVMGen::visit(ThreadIdx& tidx)
@@ -606,6 +601,9 @@ void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
 // Helpers
 llvm::StoreInst* LLVMGen::CreateStore(Value* new_val, Value* var_addr)
 {
+    // Don't allow storing struct
+    ASSERT(!new_val->getType()->isStructTy());
+
     MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
     auto store = builder()->CreateStore(new_val, var_addr);
     store->setMetadata(LLVMContext::MD_noalias, md_node);
@@ -615,6 +613,9 @@ llvm::StoreInst* LLVMGen::CreateStore(Value* new_val, Value* var_addr)
 
 llvm::LoadInst* LLVMGen::CreateLoad(Type* type, Value* addr)
 {
+    // Don't allow loading struct
+    ASSERT(!type->isStructTy());
+
     MDNode* md_node = MDNode::get(llctx(), ArrayRef<Metadata*>());
     auto var = builder()->CreateLoad(type, addr);
     var->setMetadata(LLVMContext::MD_noalias, md_node);

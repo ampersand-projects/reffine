@@ -109,6 +109,10 @@ public:
     {
         throw runtime_error("Store operation not supported");
     }
+    virtual void Visit(StructGEP&)
+    {
+        throw runtime_error("StructGEP operation not supported");
+    }
     virtual void Visit(IfElse&)
     {
         throw runtime_error("IfElse operation not supported");

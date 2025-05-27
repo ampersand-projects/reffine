@@ -127,6 +127,27 @@ struct GridDim : public ExprNode {
     void Accept(Visitor&) final;
 };
 
+struct StructGEP : public ExprNode {
+    Expr addr;
+    size_t col;
+
+    StructGEP(Expr addr, size_t col)
+        : ExprNode(extract_type(addr, col)), addr(addr), col(col)
+    {
+    }
+
+    void Accept(Visitor&) final;
+
+private:
+    static DataType extract_type(Expr addr, size_t col)
+    {
+        auto struct_type = addr->type.deref();
+
+        ASSERT(struct_type.is_struct());
+        return struct_type.dtypes[col].ptr();
+    }
+};
+
 struct Loop : public ExprNode {
     // Loop initialization
     Stmt init = nullptr;

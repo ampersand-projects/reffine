@@ -128,6 +128,11 @@ Expr IRClone::visit(Store& store)
     return _stmtexpr(_store(eval(store.addr), eval(store.val)));
 }
 
+Expr IRClone::visit(StructGEP& gep)
+{
+    return _structgep(eval(gep.addr), gep.col);
+}
+
 Expr IRClone::visit(Stmts& stmts)
 {
     vector<Stmt> stmt_list;

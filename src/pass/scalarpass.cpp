@@ -1,0 +1,92 @@
+#include "reffine/pass/scalarpass.h"
+
+#include "reffine/builder/reffiner.h"
+
+using namespace reffine;
+using namespace reffine::reffiner;
+
+Expr LoadStoreExpand::visit(Load& load)
+{
+    if (load.type.is_struct()) {
+        auto addr = eval(load.addr);
+
+        vector<Expr> vals;
+        for (size_t i = 0; i < load.type.dtypes.size(); i++) {
+            vals.push_back(_load(_structgep(addr, i)));
+        }
+
+        return _new(vals);
+    } else {
+        return IRClone::visit(load);
+    }
+}
+
+Expr LoadStoreExpand::visit(Store& store)
+{
+    if (store.val->type.is_struct()) {
+        auto addr = eval(store.addr);
+        auto val = eval(store.val);
+
+        vector<Stmt> stmt_list;
+        for (size_t i = 0; i < store.val->type.dtypes.size(); i++) {
+            auto val_addr = _structgep(addr, i);
+            stmt_list.push_back(_store(_structgep(addr, i), _get(val, i)));
+        }
+
+        return _stmtexpr(_stmts(stmt_list));
+    } else {
+        return IRClone::visit(store);
+    }
+}
+
+shared_ptr<Func> LoadStoreExpand::Build(shared_ptr<Func> func)
+{
+    auto new_func = _func(func->name, nullptr, vector<Sym>{});
+
+    ScalarPassCtx ctx(func, new_func);
+    LoadStoreExpand pass(ctx);
+    func->Accept(pass);
+
+    return new_func;
+}
+
+Expr NewGetElimination::visit(New& expr)
+{
+    vector<Expr> new_vals;
+    for (auto& val : expr.vals) { new_vals.push_back(eval(val)); }
+
+    auto new_expr = _new(new_vals);
+    _new_get_map[new_expr] = new_vals;
+
+    return new_expr;
+}
+
+Expr NewGetElimination::visit(Get& get)
+{
+    auto val = eval(get.val);
+
+    if (_new_get_map.find(val) != _new_get_map.end()) {
+        return _new_get_map[val][get.col];
+    } else {  // might be a symbol to New expression
+        auto maybe_sym = static_pointer_cast<SymNode>(val);
+
+        if (this->ctx().out_sym_tbl.find(maybe_sym) !=
+            this->ctx().out_sym_tbl.end()) {
+            auto expr = this->ctx().out_sym_tbl.at(maybe_sym);
+            return _new_get_map[expr][get.col];
+        } else {
+            throw runtime_error("Unable to eliminate Get expression");
+        }
+    }
+}
+
+shared_ptr<Func> NewGetElimination::Build(shared_ptr<Func> func)
+{
+    auto new_func = _func(func->name, nullptr, vector<Sym>{});
+
+    ScalarPassCtx ctx(func, new_func);
+    NewGetElimination pass(ctx);
+    func->Accept(pass);
+
+    return new_func;
+}
