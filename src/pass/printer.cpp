@@ -17,7 +17,12 @@ static const auto PHI = "\u0278";
 
 void IRPrinter::Visit(SymNode& sym) { ostr << sym.name; }
 
-void IRPrinter::Visit(StmtExprNode& expr) { expr.stmt->Accept(*this); }
+void IRPrinter::Visit(StmtExprNode& expr)
+{
+    ostr << "(void)[";
+    expr.stmt->Accept(*this);
+    ostr << "]";
+}
 
 void IRPrinter::Visit(Const& cnst)
 {
@@ -301,6 +306,11 @@ void IRPrinter::Visit(Store& store)
 void IRPrinter::Visit(AtomicAdd& add)
 {
     emitfunc("atomic_add", vector<Expr>{add.addr, add.val});
+}
+
+void IRPrinter::Visit(StructGEP& gep)
+{
+    emitfunc("structgep", vector<Expr>{gep.addr, _idx(gep.col)});
 }
 
 void IRPrinter::Visit(ThreadIdx& tidx) { ostr << "tidx"; }

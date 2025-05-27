@@ -75,7 +75,7 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
     loop->init = _store(idx_addr, lb_expr);
     loop->incr = _store(idx_addr, incr_expr);
     loop->exit_cond = _gt(idx, ub_expr);
-    loop->body_cond = nullptr;
+    loop->body_cond = nullptr;  // TODO: need to use cond_expr
     loop->body = nullptr;
     loop->post = nullptr;
 
@@ -84,24 +84,30 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
 
 Expr LoopGen::visit(Reduce& red)
 {
-    auto red_loop = this->build_loop(red.op);
+    auto tmp_loop = this->build_loop(red.op);
 
     // State allocation and initialization
     auto state_addr_expr = _alloc(red.type);
     auto state_addr = _sym("state_addr", state_addr_expr);
     this->assign(state_addr, state_addr_expr);
-    auto load_state_expr = _load(state_addr);
 
-    // Finalize loop
+    // Build reduce loop
+    auto red_loop = _loop(state_addr);
     red_loop->init = _stmts(vector<Stmt>{
-        red_loop->init,
+        tmp_loop->init,
         _store(state_addr, red.init()),
     });
+    red_loop->incr = tmp_loop->incr;
+    red_loop->exit_cond = tmp_loop->exit_cond;
+    red_loop->body_cond = tmp_loop->body_cond;
     red_loop->body =
-        _store(state_addr, red.acc(load_state_expr, red_loop->output));
-    red_loop->output = load_state_expr;
+        _store(state_addr, red.acc(_load(state_addr), tmp_loop->output));
+    red_loop->output = state_addr;
 
-    return red_loop;
+    auto red_loop_sym = _sym("red_loop", red_loop);
+    this->assign(red_loop_sym, red_loop);
+
+    return _load(red_loop_sym);
 }
 
 shared_ptr<Func> LoopGen::Build(shared_ptr<Func> op_func)

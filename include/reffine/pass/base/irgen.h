@@ -96,6 +96,9 @@ protected:
     virtual void visit(AtomicAdd&)
     {
         throw runtime_error("AtomicAdd visit not supported");
+    virtual ValTy visit(StructGEP&)
+    {
+        throw runtime_error("StructGEP visit not supported");
     }
     virtual ValTy visit(ThreadIdx&)
     {
@@ -154,6 +157,7 @@ protected:
     void Visit(Load& expr) final { val() = visit(expr); }
     void Visit(Store& expr) final { val() = visit(expr); }
     void Visit(AtomicAdd& stmt) final { visit(stmt); }
+    void Visit(StructGEP& expr) final { val() = visit(expr); }
     void Visit(ThreadIdx& expr) final { val() = visit(expr); }
     void Visit(BlockIdx& expr) final { val() = visit(expr); }
     void Visit(BlockDim& expr) final { val() = visit(expr); }

@@ -53,15 +53,15 @@ private:
     llvm::Value* visit(NoOp&) final;
     llvm::Value* visit(Select&) final;
     llvm::Value* visit(Const&) final;
-    llvm::Value* visit(Cast&) final;
     llvm::Value* visit(Get&) final;
-    llvm::Value* visit(New&) final;
+    llvm::Value* visit(Cast&) final;
     llvm::Value* visit(NaryExpr&) final;
     llvm::Value* visit(Stmts&) final;
     llvm::Value* visit(Alloc&) final;
     llvm::Value* visit(Load&) final;
     llvm::Value* visit(Store&) final;
     void visit(AtomicAdd&) final;
+    llvm::Value* visit(StructGEP&) final;
     llvm::Value* visit(ThreadIdx&) final;
     llvm::Value* visit(BlockIdx&) final;
     llvm::Value* visit(BlockDim&) final;

@@ -81,7 +81,7 @@ shared_ptr<Func> transform_loop()
         "set_vector_len", types::INT64,
         vector<Expr>{vec_out_sym, make_shared<Load>(idx_addr)});
 
-    auto foo_fn = make_shared<Func>("foo", _stmtexpr(loop_sym),
+    auto foo_fn = make_shared<Func>("foo", loop_sym,
                                     vector<Sym>{vec_in_sym, vec_out_sym});
     foo_fn->tbl[len_sym] = len;
     foo_fn->tbl[idx_addr] = idx_alloc;

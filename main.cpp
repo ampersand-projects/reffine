@@ -27,6 +27,8 @@
 #include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/canonpass.h"
+#include "reffine/pass/scalarpass.h"
+#include "reffine/pass/symanalysis.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/loopgen.h"
 #include "reffine/pass/z3solver.h"
@@ -354,10 +356,12 @@ shared_ptr<Func> reduce_op_fn()
     );
     auto sum = _red(
         op,
-        [] () { return _i64(0); },
+        [] () { return _new(vector<Expr>{_i64(0), _i64(0)}); },
         [] (Expr s, Expr v) {
             auto e = _get(v, 0);
-            return _add(s, e);
+            auto s0 = _get(s, 0);
+            auto s1 = _get(s, 1);
+            return _new(vector<Expr>{_add(s0, e), s1});
         }
     );
     auto sum_sym = _sym("sum", sum);
@@ -519,6 +523,48 @@ void test_kernel() {
 }
 #endif
 
+shared_ptr<Func> vector_op()
+{
+    auto t_sym = _sym("t", _i64_t);
+    auto vec_in_sym =
+        _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
+                              int8_t, int64_t>());
+    Op op({t_sym},
+          ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(48)) &&
+              _gte(t_sym, _i64(10)),
+          {
+              vec_in_sym[{t_sym}][1],
+              vec_in_sym[{t_sym}][2],
+              vec_in_sym[{t_sym}][3],
+              vec_in_sym[{t_sym}][4]
+          }
+    );
+
+    auto sum = _red(
+        op, []() { return _new(vector<Expr>{_i64(0), _i64(0), _i64(0), _i64(0)}); },
+        [](Expr s, Expr v) {
+            auto v0 = _get(v, 0);
+            auto v1 = _get(v, 1);
+            auto v2 = _get(v, 2);
+            auto v3 = _get(v, 3);
+            auto s0 = _get(s, 0);
+            auto s1 = _get(s, 1);
+            auto s2 = _get(s, 2);
+            auto s3 = _get(s, 3);
+            return _new(vector<Expr>{
+                _add(s0, v0), _add(s1, v1), _add(s2, v2), _add(s3, v3)});
+        });
+    auto sum_sym = _sym("sum", sum);
+    auto res = _get(sum_sym, 0);
+    auto res_sym = _sym("res", res);
+
+    auto foo_fn = _func("foo", res_sym, vector<Sym>{vec_in_sym});
+    foo_fn->tbl[sum_sym] = sum;
+    foo_fn->tbl[res_sym] = res;
+
+    return foo_fn;
+}
+
 int main()
 {   
     /*
@@ -542,41 +588,31 @@ int main()
     }
 
     //auto table = load_arrow_file("../students.arrow");
-    auto table = load_arrow_file("../benchmark/store_sales.arrow");
-    cout << "type: " << table->get_data_type(0).str() << endl;
-    auto fn = tpcds_query9(*table);
+    auto fn = vector_op();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto fn2 = OpToLoop::Build(fn);
     cout << "OpToLoop IR: " << endl << IRPrinter::Build(fn2) << endl;
 
     auto loop = LoopGen::Build(fn2);
-    cout << "Loop IR:" << endl << IRPrinter::Build(loop) << endl;
+    cout << "Loop IR (raw):" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
     cout << "Loop IR (canon):" << endl << IRPrinter::Build(loop) << endl;
+    auto exp_loop = LoadStoreExpand::Build(loop);
+    cout << "Loop IR (expand):" << endl << IRPrinter::Build(exp_loop) << endl;
+    auto ngelm_loop = NewGetElimination::Build(exp_loop);
+    cout << "Loop IR (eliminate):" << endl << IRPrinter::Build(ngelm_loop) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(loop, *llmod);
+    LLVMGen::Build(ngelm_loop, *llmod);
     
-    jit->Optimize(*llmod);
+    //jit->Optimize(*llmod);
 
     // dump llvm IR to .ll file
     ofstream llfile(llmod->getName().str() + ".ll");
     llfile << IRPrinter::Build(*llmod);
     llfile.close();
 
-    if (llvm::verifyModule(*llmod)) {
-        throw std::runtime_error("LLVM module verification failed!!!");
-    }
-
     jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<long (*)(void*)>(fn->name);
-
-    //auto status = csv_to_arrow();
-    auto status = query_arrow_file(*table, query_fn);
-    if (!status.ok()) {
-        cerr << status.ToString() << endl;
-    }
-
     return 0;
 }

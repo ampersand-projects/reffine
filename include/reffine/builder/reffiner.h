@@ -140,6 +140,7 @@ REGISTER_EXPR(_unary, UnaryExpr)
 REGISTER_EXPR(_binary, BinaryExpr)
 REGISTER_EXPR(_sym, SymNode)
 REGISTER_EXPR(_stmtexpr, StmtExprNode)
+REGISTER_EXPR(_structgep, StructGEP)
 #undef REGISTER_EXPR
 
 #define REGISTER_STMT(NAME, STMT)                                            \
