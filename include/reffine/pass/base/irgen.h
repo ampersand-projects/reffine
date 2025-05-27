@@ -96,6 +96,7 @@ protected:
     virtual void visit(AtomicAdd&)
     {
         throw runtime_error("AtomicAdd visit not supported");
+    }
     virtual ValTy visit(StructGEP&)
     {
         throw runtime_error("StructGEP visit not supported");

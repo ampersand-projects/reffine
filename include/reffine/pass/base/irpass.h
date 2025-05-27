@@ -143,7 +143,7 @@ public:
         stmt.addr->Accept(*this);
         stmt.val->Accept(*this);
     }
-  
+
     void Visit(StructGEP& expr) override { expr.addr->Accept(*this); }
 
     void Visit(ThreadIdx& expr) override {}

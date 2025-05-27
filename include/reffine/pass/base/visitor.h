@@ -112,6 +112,7 @@ public:
     virtual void Visit(AtomicAdd&)
     {
         throw runtime_error("AtomicAdd operation not supported");
+    }
     virtual void Visit(StructGEP&)
     {
         throw runtime_error("StructGEP operation not supported");
