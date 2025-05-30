@@ -159,7 +159,6 @@ REGISTER_STMT(_stmts, Stmts)
 REGISTER_STMT(_ifelse, IfElse)
 REGISTER_STMT(_noop, NoOp)
 REGISTER_STMT(_store, Store)
-REGISTER_STMT(_atomic_add, AtomicAdd)
 REGISTER_STMT(_atomic_op, AtomicOp)
 #undef REGISTER_STMT
 

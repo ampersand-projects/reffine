@@ -55,7 +55,6 @@ public:
     void Visit(Alloc&) final;
     void Visit(Load&) final;
     void Visit(Store&) final;
-    void Visit(AtomicAdd&) final;
     void Visit(AtomicOp&) final;
     void Visit(StructGEP&) final;
     void Visit(ThreadIdx&) final;

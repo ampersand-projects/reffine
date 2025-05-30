@@ -138,12 +138,6 @@ public:
         expr.val->Accept(*this);
     }
 
-    void Visit(AtomicAdd& stmt) override
-    {
-        stmt.addr->Accept(*this);
-        stmt.val->Accept(*this);
-    }
-
     void Visit(AtomicOp& stmt) override
     {
         stmt.addr->Accept(*this);

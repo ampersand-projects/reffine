@@ -393,18 +393,6 @@ Value* LLVMGen::visit(Store& store)
     return CreateStore(val, addr);
 }
 
-void LLVMGen::visit(AtomicAdd& add)
-{
-#ifdef ENABLE_CUDA
-    auto addr = eval(add.addr);
-    auto val = eval(add.val);
-    builder()->CreateAtomicRMW(AtomicRMWInst::Add, addr, val, MaybeAlign(),
-                               AtomicOrdering::Monotonic);
-#else
-    throw std::runtime_error("CUDA not enabled.");
-#endif
-}
-
 void LLVMGen::visit(AtomicOp& e)
 {
     auto addr = eval(e.addr);

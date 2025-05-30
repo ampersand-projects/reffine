@@ -103,19 +103,6 @@ struct Store : public StmtNode {
     void Accept(Visitor&) final;
 };
 
-struct AtomicAdd : public StmtNode {
-    Expr addr;
-    Expr val;
-
-    AtomicAdd(Expr addr, Expr val) : StmtNode(), addr(addr), val(val)
-    {
-        ASSERT(addr->type.is_ptr());
-        ASSERT(addr->type == val->type.ptr());
-    }
-
-    void Accept(Visitor&) final;
-};
-
 struct AtomicOp : public StmtNode {
     MathOp op;
     Expr addr;
