@@ -18,7 +18,11 @@ Expr LoopGen::visit(Element& elem)
 
     vector<Expr> vals;
     for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
-        auto data_ptr = _fetch(vec, idx, i);
+        auto col_ptr = _fetch(vec, _idx(0), i);
+        auto col_sym = _sym("col_" + std::to_string(i), col_ptr);
+        this->assign(col_sym, col_ptr);
+
+        auto data_ptr = _call("get_elem_ptr", types::INT64.ptr(), vector<Expr>{col_sym, idx});
         auto data = _load(data_ptr);
         vals.push_back(data);
     }
