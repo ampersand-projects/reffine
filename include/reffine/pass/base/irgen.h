@@ -249,6 +249,7 @@ protected:
     virtual void map_sym(Sym old_sym, Sym new_sym)
     {
         _irgenctx.sym_sym_map[old_sym] = new_sym;
+        _irgenctx.sym_sym_map[new_sym] = new_sym;
     }
 
 private:
