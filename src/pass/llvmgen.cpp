@@ -397,77 +397,58 @@ void LLVMGen::visit(AtomicOp& e)
 {
     auto addr = eval(e.addr);
     auto val = eval(e.val);
+    llvm::AtomicRMWInst::BinOp instr_type;
     switch (e.op) {
         case MathOp::ADD: {
             if (e.addr->type.is_float()) {
-                builder()->CreateAtomicRMW(AtomicRMWInst::FAdd, addr, val,
-                                           MaybeAlign(),
-                                           AtomicOrdering::Monotonic);
+                instr_type = AtomicRMWInst::FAdd;
             } else {
-                builder()->CreateAtomicRMW(AtomicRMWInst::Add, addr, val,
-                                           MaybeAlign(),
-                                           AtomicOrdering::Monotonic);
+                instr_type = AtomicRMWInst::Add;
             }
-            return;
+            break;
         }
         case MathOp::SUB: {
             if (e.addr->type.is_float()) {
-                builder()->CreateAtomicRMW(AtomicRMWInst::FSub, addr, val,
-                                           MaybeAlign(),
-                                           AtomicOrdering::Monotonic);
+                instr_type = AtomicRMWInst::FSub;
             } else {
-                builder()->CreateAtomicRMW(AtomicRMWInst::Sub, addr, val,
-                                           MaybeAlign(),
-                                           AtomicOrdering::Monotonic);
+                instr_type = AtomicRMWInst::Sub;
             }
-            return;
+            break;
         }
         case MathOp::MAX: {
             if (e.addr->type.is_float()) {
-                builder()->CreateAtomicRMW(AtomicRMWInst::FMax, addr, val,
-                                           MaybeAlign(),
-                                           AtomicOrdering::Monotonic);
+                instr_type = AtomicRMWInst::FMax;
             } else if (e.addr->type.is_signed()) {
-                builder()->CreateAtomicRMW(AtomicRMWInst::Max, addr, val,
-                                           MaybeAlign(),
-                                           AtomicOrdering::Monotonic);
+                instr_type = AtomicRMWInst::Max;
             } else {
-                builder()->CreateAtomicRMW(AtomicRMWInst::UMin, addr, val,
-                                           MaybeAlign(),
-                                           AtomicOrdering::Monotonic);
+                instr_type = AtomicRMWInst::UMax;
             }
-            return;
+            break;
         }
         case MathOp::MIN: {
             if (e.addr->type.is_float()) {
-                builder()->CreateAtomicRMW(AtomicRMWInst::FMin, addr, val,
-                                           MaybeAlign(),
-                                           AtomicOrdering::Monotonic);
+                instr_type = AtomicRMWInst::FMin;
             } else if (e.addr->type.is_signed()) {
-                builder()->CreateAtomicRMW(AtomicRMWInst::Min, addr, val,
-                                           MaybeAlign(),
-                                           AtomicOrdering::Monotonic);
+                instr_type = AtomicRMWInst::Min;
             } else {
-                builder()->CreateAtomicRMW(AtomicRMWInst::UMin, addr, val,
-                                           MaybeAlign(),
-                                           AtomicOrdering::Monotonic);
+                instr_type = AtomicRMWInst::UMin;
             }
-            return;
+            break;
         }
         case MathOp::AND: {
-            builder()->CreateAtomicRMW(AtomicRMWInst::And, addr, val,
-                                       MaybeAlign(), AtomicOrdering::Monotonic);
-            return;
+            instr_type = AtomicRMWInst::And;
+            break;
         }
         case MathOp::OR: {
-            builder()->CreateAtomicRMW(AtomicRMWInst::Or, addr, val,
-                                       MaybeAlign(), AtomicOrdering::Monotonic);
-            return;
+            instr_type = AtomicRMWInst::Or;
+            break;
         }
         default:
             throw std::runtime_error("Invalid atomic operation");
-            break;
+            return;
     }
+    builder()->CreateAtomicRMW(instr_type, addr, val, MaybeAlign(),
+                               AtomicOrdering::Monotonic);
 }
 
 Value* LLVMGen::visit(StructGEP& gep)
