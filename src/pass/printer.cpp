@@ -429,7 +429,9 @@ void IRPrinter::Visit(Length& len) { emitfunc("length", {len.vec}); }
 
 void IRPrinter::Visit(FetchDataPtr& fetch_data_ptr)
 {
-    emitfunc("fetch_data_ptr<" + std::to_string(fetch_data_ptr.col) + ">",
+    emitfunc("fetch_data_ptr<" + std::to_string(fetch_data_ptr.col) +
+                 ", is_buffer=" + std::to_string(fetch_data_ptr.is_buffer) +
+                 ">",
              {fetch_data_ptr.vec, fetch_data_ptr.idx});
 }
 

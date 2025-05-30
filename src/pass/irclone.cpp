@@ -93,7 +93,7 @@ Expr IRClone::visit(Call& call)
 
 Expr IRClone::visit(FetchDataPtr& fetch)
 {
-    return _fetch(eval(fetch.vec), eval(fetch.idx), fetch.col);
+    return _fetch(eval(fetch.vec), eval(fetch.idx), fetch.col, fetch.is_buffer);
 }
 
 Expr IRClone::visit(Load& load) { return _load(eval(load.addr)); }
