@@ -116,6 +116,21 @@ struct AtomicAdd : public StmtNode {
     void Accept(Visitor&) final;
 };
 
+struct AtomicOp : public StmtNode {
+    MathOp op;
+    Expr addr;
+    Expr val;
+
+    AtomicOp(MathOp op, Expr addr, Expr val)
+        : StmtNode(), op(op), addr(addr), val(val)
+    {
+        ASSERT(addr->type.is_ptr());
+        ASSERT(addr->type == val->type.ptr());
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct ThreadIdx : public ExprNode {
     ThreadIdx() : ExprNode(types::IDX) {}
 

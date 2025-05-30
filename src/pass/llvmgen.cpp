@@ -405,6 +405,83 @@ void LLVMGen::visit(AtomicAdd& add)
 #endif
 }
 
+void LLVMGen::visit(AtomicOp& e)
+{
+    auto addr = eval(e.addr);
+    auto val = eval(e.val);
+    switch (e.op) {
+        case MathOp::ADD: {
+            if (e.addr->type.is_float()) {
+                builder()->CreateAtomicRMW(AtomicRMWInst::FAdd, addr, val,
+                                           MaybeAlign(),
+                                           AtomicOrdering::Monotonic);
+            } else {
+                builder()->CreateAtomicRMW(AtomicRMWInst::Add, addr, val,
+                                           MaybeAlign(),
+                                           AtomicOrdering::Monotonic);
+            }
+            return;
+        }
+        case MathOp::SUB: {
+            if (e.addr->type.is_float()) {
+                builder()->CreateAtomicRMW(AtomicRMWInst::FSub, addr, val,
+                                           MaybeAlign(),
+                                           AtomicOrdering::Monotonic);
+            } else {
+                builder()->CreateAtomicRMW(AtomicRMWInst::Sub, addr, val,
+                                           MaybeAlign(),
+                                           AtomicOrdering::Monotonic);
+            }
+            return;
+        }
+        case MathOp::MAX: {
+            if (e.addr->type.is_float()) {
+                builder()->CreateAtomicRMW(AtomicRMWInst::FMax, addr, val,
+                                           MaybeAlign(),
+                                           AtomicOrdering::Monotonic);
+            } else if (e.addr->type.is_signed()) {
+                builder()->CreateAtomicRMW(AtomicRMWInst::Max, addr, val,
+                                           MaybeAlign(),
+                                           AtomicOrdering::Monotonic);
+            } else {
+                builder()->CreateAtomicRMW(AtomicRMWInst::UMin, addr, val,
+                                           MaybeAlign(),
+                                           AtomicOrdering::Monotonic);
+            }
+            return;
+        }
+        case MathOp::MIN: {
+            if (e.addr->type.is_float()) {
+                builder()->CreateAtomicRMW(AtomicRMWInst::FMin, addr, val,
+                                           MaybeAlign(),
+                                           AtomicOrdering::Monotonic);
+            } else if (e.addr->type.is_signed()) {
+                builder()->CreateAtomicRMW(AtomicRMWInst::Min, addr, val,
+                                           MaybeAlign(),
+                                           AtomicOrdering::Monotonic);
+            } else {
+                builder()->CreateAtomicRMW(AtomicRMWInst::UMin, addr, val,
+                                           MaybeAlign(),
+                                           AtomicOrdering::Monotonic);
+            }
+            return;
+        }
+        case MathOp::AND: {
+            builder()->CreateAtomicRMW(AtomicRMWInst::And, addr, val,
+                                       MaybeAlign(), AtomicOrdering::Monotonic);
+            return;
+        }
+        case MathOp::OR: {
+            builder()->CreateAtomicRMW(AtomicRMWInst::Or, addr, val,
+                                       MaybeAlign(), AtomicOrdering::Monotonic);
+            return;
+        }
+        default:
+            throw std::runtime_error("Invalid atomic operation");
+            break;
+    }
+}
+
 Value* LLVMGen::visit(StructGEP& gep)
 {
     return builder()->CreateStructGEP(lltype(gep.addr->type.deref()),
