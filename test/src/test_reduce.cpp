@@ -83,21 +83,26 @@ shared_ptr<Func> vector_op()
 
     auto sum = _red(
         op,
-        []() { return _new(vector<Expr>{_i64(0), _i64(0), _i64(0), _i64(0)}); },
+        []() { return _new(vector<Expr>{
+            _new(vector<Expr>{_i64(0), _i64(0)}),
+            _new(vector<Expr>{_i64(0), _i64(0)}),
+        }); },
         [](Expr s, Expr v) {
             auto v0 = _get(_get(v, 1), 0);
             auto v1 = _get(_get(v, 1), 1);
             auto v2 = _get(_get(v, 1), 2);
             auto v3 = _get(_get(v, 1), 3);
-            auto s0 = _get(s, 0);
-            auto s1 = _get(s, 1);
-            auto s2 = _get(s, 2);
-            auto s3 = _get(s, 3);
-            return _new(vector<Expr>{_add(s0, v0), _add(s1, v1), _add(s2, v2),
-                                     _add(s3, v3)});
+            auto s0 = _get(_get(s, 0), 0);
+            auto s1 = _get(_get(s, 0), 1);
+            auto s2 = _get(_get(s, 1), 0);
+            auto s3 = _get(_get(s, 1), 1);
+            return _new(vector<Expr>{
+                _new(vector<Expr>{_add(s0, v0), _add(s1, v1)}),
+                _new(vector<Expr>{_add(s2, v2), _add(s3, v3)}),
+            });
         });
     auto sum_sym = _sym("sum", sum);
-    auto res = _get(sum_sym, 2);
+    auto res = _get(_get(sum_sym, 1), 0);
     auto res_sym = _sym("res", res);
 
     auto foo_fn = _func("foo", res_sym, vector<Sym>{vec_in_sym});
