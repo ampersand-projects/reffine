@@ -29,7 +29,8 @@ Expr LoadStoreExpand::visit(Store& store)
 
         vector<Stmt> stmt_list;
         for (size_t i = 0; i < store.val->type.dtypes.size(); i++) {
-            stmt_list.push_back(eval(_store(_structgep(addr, i), _get(val, i))));
+            stmt_list.push_back(
+                eval(_store(_structgep(addr, i), _get(val, i))));
         }
 
         return _stmtexpr(_stmts(stmt_list));

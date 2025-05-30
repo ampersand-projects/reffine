@@ -73,20 +73,22 @@ shared_ptr<Func> vector_op()
           {
               vec_in_sym[{t_sym}][3],
               _new(vector<Expr>{
-                vec_in_sym[{t_sym}][2],
-                vec_in_sym[{t_sym}][3],
-                vec_in_sym[{t_sym}][1],
-                vec_in_sym[{t_sym}][4],
+                  vec_in_sym[{t_sym}][2],
+                  vec_in_sym[{t_sym}][3],
+                  vec_in_sym[{t_sym}][1],
+                  vec_in_sym[{t_sym}][4],
               }),
               vec_in_sym[{t_sym}][4],
           });
 
     auto sum = _red(
         op,
-        []() { return _new(vector<Expr>{
-            _new(vector<Expr>{_i64(0), _i64(0)}),
-            _new(vector<Expr>{_i64(0), _i64(0)}),
-        }); },
+        []() {
+            return _new(vector<Expr>{
+                _new(vector<Expr>{_i64(0), _i64(0)}),
+                _new(vector<Expr>{_i64(0), _i64(0)}),
+            });
+        },
         [](Expr s, Expr v) {
             auto v0 = _get(_get(v, 1), 0);
             auto v1 = _get(_get(v, 1), 1);
