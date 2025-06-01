@@ -69,6 +69,7 @@ private:
     llvm::Value* visit(IsValid&) final;
     llvm::Value* visit(SetValid&) final;
     llvm::Value* visit(FetchDataPtr&) final;
+    llvm::Value* visit(FetchBuffer&) final;
     void visit(Func&) final;
 
     llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);

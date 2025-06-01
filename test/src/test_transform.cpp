@@ -32,17 +32,33 @@ shared_ptr<Func> transform_loop()
     auto idx = make_shared<Load>(idx_addr);
 
     auto id_valid = make_shared<IsValid>(vec_in_sym, idx, 0);
-    auto id_data_ptr = make_shared<FetchDataPtr>(vec_in_sym, idx, 0);
+    auto id_buf = _fetch_buf(vec_in_sym, 0);
+    auto id_buf_sym = _sym("id_buf", id_buf);
+    auto id_data_ptr = make_shared<FetchDataPtr>(id_buf, idx);
     auto id_data = make_shared<Load>(id_data_ptr);
     auto hours_valid = make_shared<IsValid>(vec_in_sym, idx, 1);
-    auto hours_data_ptr = make_shared<FetchDataPtr>(vec_in_sym, idx, 1);
+
+    auto hours_data_buf = _fetch_buf(vec_in_sym, 1);
+    auto hours_buf_sym = _sym("hour_data_buf", hours_data_buf);
+    auto hours_data_ptr = _fetch(hours_buf_sym, idx);
     auto hours_data = make_shared<Load>(hours_data_ptr);
-    auto hours_slept_data_ptr = make_shared<FetchDataPtr>(vec_in_sym, idx, 3);
+
+    auto hours_slept_buf = _fetch_buf(vec_in_sym, 3);
+    auto hours_slept_buf_sym = _sym("hours_slept_buf", hours_slept_buf);
+    auto hours_slept_data_ptr = make_shared<FetchDataPtr>(hours_slept_buf_sym, idx);
     auto hours_slept_data = make_shared<Load>(hours_slept_data_ptr);
 
-    auto out_id_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 0);
-    auto out_minutes_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 1);
-    auto out_sleep_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 2);
+    auto out_id_buf = _fetch_buf(vec_out_sym, 0);
+    auto out_id_buf_sym = _sym("out_id_buf", out_id_buf);
+    auto out_id_data_ptr = make_shared<FetchDataPtr>(out_id_buf_sym, idx);
+
+    auto out_min_buf = _fetch_buf(vec_out_sym, 1);
+    auto out_min_buf_sym = _sym("out_min_buf", out_min_buf);
+    auto out_minutes_data_ptr = make_shared<FetchDataPtr>(out_min_buf_sym, idx);
+
+    auto out_sleep_buf = _fetch_buf(vec_out_sym, 2);
+    auto out_sleep_buf_sym = _sym("out_sleep_buf", out_sleep_buf);
+    auto out_sleep_data_ptr = make_shared<FetchDataPtr>(out_sleep_buf_sym, idx);
     auto out_minutes = make_shared<Mul>(hours_data, sixty);
 
     auto loop = _loop(vec_out_sym);
@@ -86,6 +102,12 @@ shared_ptr<Func> transform_loop()
     foo_fn->tbl[len_sym] = len;
     foo_fn->tbl[idx_addr] = idx_alloc;
     foo_fn->tbl[loop_sym] = loop;
+    foo_fn->tbl[hours_buf_sym] = hours_data_buf;
+    foo_fn->tbl[id_buf_sym] = id_buf;
+    foo_fn->tbl[hours_slept_buf_sym] = hours_slept_buf;
+    foo_fn->tbl[out_id_buf_sym] = out_id_buf;
+    foo_fn->tbl[out_min_buf_sym] = out_min_buf;
+    foo_fn->tbl[out_sleep_buf_sym] = out_sleep_buf;
 
     return foo_fn;
 }

@@ -24,7 +24,9 @@ shared_ptr<Func> vector_loop()
     auto sum_addr = make_shared<SymNode>("sum_addr", sum_alloc);
     auto sum = make_shared<Load>(sum_addr);
 
-    auto val_ptr = make_shared<FetchDataPtr>(vec_sym, idx, 1);
+    auto col_ptr = _fetch_buf(vec_sym, 1);
+    auto col_sym = _sym("col_" + std::to_string(1), col_ptr);
+    auto val_ptr = _fetch(col_sym, idx);
     auto val = make_shared<Load>(val_ptr);
 
     auto loop = _loop(make_shared<Load>(sum_addr));
@@ -45,6 +47,7 @@ shared_ptr<Func> vector_loop()
     foo_fn->tbl[idx_addr] = idx_alloc;
     foo_fn->tbl[sum_addr] = sum_alloc;
     foo_fn->tbl[loop_sym] = loop;
+    foo_fn->tbl[col_sym] = col_ptr;
 
     return foo_fn;
 }
