@@ -98,6 +98,10 @@ public:
     {
         throw runtime_error("FetchDataPtr operation not supported");
     }
+    virtual void Visit(FetchBuffer&)
+    {
+        throw runtime_error("FetchBuffer operation not supported");
+    }
     virtual void Visit(Stmts&)
     {
         throw runtime_error("Stmts operation not supported");

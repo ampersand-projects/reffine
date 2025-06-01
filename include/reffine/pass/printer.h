@@ -68,6 +68,7 @@ public:
     void Visit(Locate&) final;
     void Visit(Length&) final;
     void Visit(FetchDataPtr&) final;
+    void Visit(FetchBuffer&) final;
     void Visit(NoOp&) final;
 
     string str() { return this->ostr.str(); }

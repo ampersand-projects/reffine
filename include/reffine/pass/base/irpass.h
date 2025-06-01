@@ -195,6 +195,8 @@ public:
         expr.idx->Accept(*this);
     }
 
+    void Visit(FetchBuffer& expr) override { expr.vec->Accept(*this); }
+
     void Visit(NoOp& stmt) override {}
 
 protected:
