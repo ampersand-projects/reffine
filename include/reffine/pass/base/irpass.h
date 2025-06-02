@@ -191,7 +191,7 @@ public:
 
     void Visit(FetchDataPtr& expr) override
     {
-        expr.vec->Accept(*this);
+        expr.buf->Accept(*this);
         expr.idx->Accept(*this);
     }
 

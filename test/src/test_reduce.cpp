@@ -25,7 +25,7 @@ shared_ptr<Func> vector_loop()
     auto sum = make_shared<Load>(sum_addr);
 
     auto col_ptr = _fetch_buf(vec_sym, 1);
-    auto col_sym = _sym("col_" + std::to_string(1), col_ptr);
+    auto col_sym = _sym("buf", col_ptr);
     auto val_ptr = _fetch(col_sym, idx);
     auto val = make_shared<Load>(val_ptr);
 

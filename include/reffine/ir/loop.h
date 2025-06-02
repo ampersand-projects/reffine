@@ -28,13 +28,14 @@ struct FetchBuffer : public ExprNode {
 };
 
 struct FetchDataPtr : public ExprNode {
-    Expr vec;
+    Expr buf;
     Expr idx;
 
-    FetchDataPtr(Expr vec, Expr idx)
-        : ExprNode(vec->type.dtypes[0].ptr()), vec(vec), idx(idx)
+    FetchDataPtr(Expr buf, Expr idx)
+        : ExprNode(buf->type), buf(buf), idx(idx)
     {
         ASSERT(idx->type.is_idx());
+        ASSERT(buf->type.is_ptr());
     }
 
     void Accept(Visitor&) final;
