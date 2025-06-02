@@ -7,13 +7,30 @@
 namespace reffine {
 
 struct IterSpace {
-    Sym space;
-    Expr lower_bound;
-    Expr upper_bound;
-    Expr body_cond;
-    std::function<Expr(Expr)> iter_to_idx;
-    std::function<Expr(Expr)> idx_to_iter;
-    std::function<Expr(Expr)> idx_incr;
+};
+using Iter = shared_ptr<IterSpace>;
+
+struct UniSpace : public IterSpace {
+};
+
+struct VecSpace : public IterSpace {
+    Sym vec;
+
+    VecSpace(Sym vec) : IterSpace(), vec(vec) {}
+};
+
+struct UnionSpace : public IterSpace {
+    Iter left;
+    Iter right;
+
+    UnionSpace(Iter left, Iter right) : IterSpace(), left(left), right(right) {}
+};
+
+struct InterSpace : public IterSpace {
+    Iter left;
+    Iter right;
+
+    InterSpace(Iter left, Iter right) : IterSpace(), left(left), right(right) {}
 };
 
 using ReffineCtx = ValGenCtx<IterSpace>;
