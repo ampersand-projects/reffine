@@ -51,17 +51,28 @@ struct SetValid : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-struct FetchDataPtr : public ExprNode {
+struct FetchBuffer : public ExprNode {
     Expr vec;
-    Expr idx;
     size_t col;
 
-    FetchDataPtr(Expr vec, Expr idx, size_t col)
-        : ExprNode(vec->type.dtypes[col].ptr()), vec(vec), idx(idx), col(col)
+    FetchBuffer(Expr vec, size_t col)
+        : ExprNode(vec->type.dtypes[col].ptr()), vec(vec), col(col)
     {
         ASSERT(vec->type.is_vector());
-        ASSERT(idx->type.is_idx());
         ASSERT(col < vec->type.dtypes.size());
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct FetchDataPtr : public ExprNode {
+    Expr buf;
+    Expr idx;
+
+    FetchDataPtr(Expr buf, Expr idx) : ExprNode(buf->type), buf(buf), idx(idx)
+    {
+        ASSERT(idx->type.is_idx());
+        ASSERT(buf->type.is_ptr());
     }
 
     void Accept(Visitor&) final;

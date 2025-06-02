@@ -411,8 +411,13 @@ void IRPrinter::Visit(Locate& locate)
 
 void IRPrinter::Visit(FetchDataPtr& fetch_data_ptr)
 {
-    emitfunc("fetch_data_ptr<" + std::to_string(fetch_data_ptr.col) + ">",
-             {fetch_data_ptr.vec, fetch_data_ptr.idx});
+    emitfunc("fetch_data_ptr", {fetch_data_ptr.buf, fetch_data_ptr.idx});
+}
+
+void IRPrinter::Visit(FetchBuffer& fetch_buffer)
+{
+    emitfunc("fetch_buffer<" + std::to_string(fetch_buffer.col) + ">",
+             {fetch_buffer.vec});
 }
 
 string IRPrinter::Build(Stmt stmt)

@@ -66,6 +66,7 @@ public:
     void Visit(Lookup&) final;
     void Visit(Locate&) final;
     void Visit(FetchDataPtr&) final;
+    void Visit(FetchBuffer&) final;
     void Visit(NoOp&) final;
 
 private:
