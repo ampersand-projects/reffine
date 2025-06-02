@@ -45,7 +45,8 @@ shared_ptr<Func> transform_loop()
 
     auto hours_slept_buf = _fetch_buf(vec_in_sym, 3);
     auto hours_slept_buf_sym = _sym("hours_slept_buf", hours_slept_buf);
-    auto hours_slept_data_ptr = make_shared<FetchDataPtr>(hours_slept_buf_sym, idx);
+    auto hours_slept_data_ptr =
+        make_shared<FetchDataPtr>(hours_slept_buf_sym, idx);
     auto hours_slept_data = make_shared<Load>(hours_slept_data_ptr);
 
     auto out_id_buf = _fetch_buf(vec_out_sym, 0);
