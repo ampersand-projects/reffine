@@ -41,8 +41,8 @@ Expr LoopGen::visit(Lookup& lookup)
         auto col_ptr = _fetch_buf(vec, i);
         auto col_sym = _sym("col_" + std::to_string(i), col_ptr);
         this->assign(col_sym, col_ptr);
-
         auto data_ptr = _fetch(col_sym, idx);
+        
         auto data = _load(data_ptr);
         vals.push_back(data);
     }
