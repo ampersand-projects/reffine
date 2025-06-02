@@ -18,7 +18,7 @@ Expr LoopGen::visit(Element& elem)
 
     vector<Expr> vals;
     for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
-        auto col_ptr = _fetch_buf(vec,  i);
+        auto col_ptr = _fetch_buf(vec, i);
         auto col_sym = _sym("col_" + std::to_string(i), col_ptr);
         this->assign(col_sym, col_ptr);
 

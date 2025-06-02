@@ -363,7 +363,7 @@ Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
     auto idx_val = eval(fetch_data_ptr.idx);
 
     auto data_addr = builder()->CreateGEP(lltype(fetch_data_ptr.type.deref()),
-                                         vec_val, idx_val);
+                                          vec_val, idx_val);
 
     return data_addr;
 }
@@ -373,13 +373,12 @@ Value* LLVMGen::visit(FetchBuffer& fetch_buf)
     auto vec_val = eval(fetch_buf.vec);
     auto idx_val = eval(_idx(0));
 
-    auto col_val =
-            ConstantInt::get(lltype(types::UINT32), fetch_buf.col);
+    auto col_val = ConstantInt::get(lltype(types::UINT32), fetch_buf.col);
 
-    auto buf_addr = llcall("get_vector_data_buf", lltype(fetch_buf),
-                            {vec_val, col_val});
-    auto data_addr = builder()->CreateGEP(lltype(fetch_buf.type.deref()),
-                                         buf_addr, idx_val);
+    auto buf_addr =
+        llcall("get_vector_data_buf", lltype(fetch_buf), {vec_val, col_val});
+    auto data_addr =
+        builder()->CreateGEP(lltype(fetch_buf.type.deref()), buf_addr, idx_val);
     return data_addr;
 }
 
