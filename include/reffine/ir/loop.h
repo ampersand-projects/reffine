@@ -31,8 +31,7 @@ struct FetchDataPtr : public ExprNode {
     Expr buf;
     Expr idx;
 
-    FetchDataPtr(Expr buf, Expr idx)
-        : ExprNode(buf->type), buf(buf), idx(idx)
+    FetchDataPtr(Expr buf, Expr idx) : ExprNode(buf->type), buf(buf), idx(idx)
     {
         ASSERT(idx->type.is_idx());
         ASSERT(buf->type.is_ptr());
