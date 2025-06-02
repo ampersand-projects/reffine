@@ -4,7 +4,6 @@
 #include "reffine/ir/expr.h"
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
-#include "reffine/ir/iter.h"
 #include "reffine/ir/stmt.h"
 
 namespace reffine {
