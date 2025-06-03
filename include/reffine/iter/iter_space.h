@@ -11,7 +11,10 @@ namespace reffine {
 struct IterSpace {
     const DataType type;
 
-    IterSpace(DataType type) : type(type) {}
+    IterSpace(DataType type) : type(type)
+    {
+        ASSERT(type.is_val());
+    }
 
     virtual ~IterSpace() {}
 
@@ -34,56 +37,51 @@ struct VecSpace : public IterSpace {
 };
 
 struct BoundSpace : public IterSpace {
-    ISpace iter;
     Expr bound;
 
-    BoundSpace(ISpace iter, Expr bound) : IterSpace(iter->type), iter(iter), bound(bound)
-    {
-        ASSERT(iter->type == bound->type);
-        ASSERT(bound->type.is_val());
-    }
+    BoundSpace(Expr bound) : IterSpace(bound->type), bound(bound) {}
 };
 
 struct LBoundSpace : public BoundSpace {
-    LBoundSpace(ISpace iter, Expr bound) : BoundSpace(iter, bound) {}
+    LBoundSpace(Expr bound) : BoundSpace(bound) {}
 
     Expr lower_bound() final;
-    Expr upper_bound() final;
 };
 
 struct UBoundSpace : public BoundSpace {
-    UBoundSpace(ISpace iter, Expr bound) : BoundSpace(iter, bound) {}
+    UBoundSpace(Expr bound) : BoundSpace(bound) {}
 
-    Expr lower_bound() final;
     Expr upper_bound() final;
 };
 
-struct JoinSpace : public IterSpace {
+struct JointSpace : public IterSpace {
     ISpace left;
     ISpace right;
 
-    JoinSpace(ISpace left, ISpace right) : IterSpace(left->type), left(left), right(right)
+    JointSpace(ISpace left, ISpace right) : IterSpace(left->type), left(left), right(right)
     {
         ASSERT(left->type == right->type);
     }
 };
 
-struct UnionSpace : public JoinSpace {
-    UnionSpace(ISpace left, ISpace right) : JoinSpace(left, right) {}
+struct UnionSpace : public JointSpace {
+    UnionSpace(ISpace left, ISpace right) : JointSpace(left, right) {}
 
     Expr lower_bound() override;
     Expr upper_bound() override;
 };
 
-struct InterSpace : public JoinSpace {
-    InterSpace(ISpace left, ISpace right) : JoinSpace(left, right) {}
+struct InterSpace : public JointSpace {
+    InterSpace(ISpace left, ISpace right) : JointSpace(left, right) {}
 
     Expr lower_bound() override;
     Expr upper_bound() override;
 };
 
-shared_ptr<InterSpace> operator&(ISpace, ISpace);
-shared_ptr<UnionSpace> operator|(ISpace, ISpace);
+ISpace operator&(ISpace, ISpace);
+ISpace operator|(ISpace, ISpace);
+ISpace operator>=(ISpace, Expr);
+ISpace operator<=(ISpace, Expr);
 
 }  // namespace reffine
 

@@ -51,9 +51,9 @@ ISpace Reffine::visit(NaryExpr& e)
             auto pred = this->tmp_expr(e);
 
             if (auto lb = get_lower_bound(iter, pred)) {
-                return make_shared<LBoundSpace>(eval(iter), lb);
+                return eval(iter) >= lb;
             } else if (auto ub = get_upper_bound(iter, pred)) {
-                return make_shared<UBoundSpace>(eval(iter), ub);
+                return eval(iter) <= ub;
             } else {
                 throw runtime_error("Unabled to identify the bounds");
             }
