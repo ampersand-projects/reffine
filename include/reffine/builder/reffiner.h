@@ -4,6 +4,7 @@
 #include "reffine/ir/expr.h"
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
+#include "reffine/ir/op_to_loop.h"
 #include "reffine/ir/stmt.h"
 
 namespace reffine::reffiner {
@@ -117,11 +118,14 @@ REGISTER_EXPR(_loop, reffine::Loop)
 
 // Ops
 REGISTER_EXPR(_elem, Element)
-REGISTER_EXPR(_lookup, Lookup)
-REGISTER_EXPR(_locate, Locate)
 REGISTER_EXPR(_op, Op)
 REGISTER_EXPR(_red, Reduce)
 REGISTER_EXPR(_notnull, NotNull)
+
+// Op to Loop
+REGISTER_EXPR(_lookup, Lookup)
+REGISTER_EXPR(_locate, Locate)
+REGISTER_EXPR(_len, Length)
 
 // CUDA
 REGISTER_EXPR(_tidx, ThreadIdx)

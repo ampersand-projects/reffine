@@ -41,8 +41,7 @@ T compile_loop(std::shared_ptr<reffine::Func> loop)
 template <typename T>
 T compile_op(std::shared_ptr<reffine::Func> op)
 {
-    auto op_to_loop = reffine::OpToLoop::Build(op);
-    auto loop = reffine::LoopGen::Build(op_to_loop);
+    auto loop = reffine::LoopGen::Build(op);
     return compile_loop<T>(loop);
 }
 

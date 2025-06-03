@@ -590,10 +590,7 @@ int main()
     //auto table = load_arrow_file("../students.arrow");
     auto fn = vector_op();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
-    auto fn2 = OpToLoop::Build(fn);
-    cout << "OpToLoop IR: " << endl << IRPrinter::Build(fn2) << endl;
-
-    auto loop = LoopGen::Build(fn2);
+    auto loop = LoopGen::Build(fn);
     cout << "Loop IR (raw):" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
     cout << "Loop IR (canon):" << endl << IRPrinter::Build(loop) << endl;

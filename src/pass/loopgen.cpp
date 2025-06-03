@@ -44,42 +44,7 @@ Expr LoopGen::visit(Lookup& lookup)
 
 shared_ptr<Loop> LoopGen::build_loop(Op& op)
 {
-    ASSERT(op.iters.size() == 1);
-    ASSERT(op._lower != nullptr);
-    ASSERT(op._upper != nullptr);
-    ASSERT(op._incr != nullptr);
-
-    // Loop index allocation
-    auto idx_alloc = _alloc(_idx_t);
-    auto idx_addr = _sym(op.iters[0]->name + "_addr", idx_alloc);
-    this->assign(idx_addr, idx_alloc);
-
-    // Map op idx to loop idx
-    auto idx_load = _load(idx_addr);
-    auto idx = _sym(op.iters[0]->name, idx_load);
-    this->map_sym(op.iters[0], idx);
-    this->assign(idx, idx_load);
-
-    // Loop bound and increment
-    auto lb_expr = eval(op._lower);
-    auto ub_expr = eval(op._upper);
-    auto incr_expr = eval(op._incr);
-    auto cond_expr = eval(op.pred);
-
-    // Loop output
-    vector<Expr> outputs;
-    for (auto output : op.outputs) { outputs.push_back(eval(output)); }
-
-    // Loop definition
-    auto loop = _loop(_new(outputs));
-    loop->init = _store(idx_addr, lb_expr);
-    loop->incr = _store(idx_addr, incr_expr);
-    loop->exit_cond = _gt(idx, ub_expr);
-    loop->body_cond = nullptr;  // TODO: need to use cond_expr
-    loop->body = nullptr;
-    loop->post = nullptr;
-
-    return loop;
+    return nullptr;
 }
 
 Expr LoopGen::visit(Reduce& red)
