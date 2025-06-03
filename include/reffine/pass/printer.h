@@ -65,6 +65,7 @@ public:
     void Visit(SetValid&) final;
     void Visit(Lookup&) final;
     void Visit(Locate&) final;
+    void Visit(Length&) final;
     void Visit(FetchDataPtr&) final;
     void Visit(NoOp&) final;
 
