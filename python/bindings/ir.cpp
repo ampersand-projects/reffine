@@ -16,8 +16,6 @@ using namespace reffine::reffiner;
 
 namespace py = pybind11;
 
-string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
-
 #define REGISTER_CLASS(CLASS, PARENT, MODULE, NAME, ...)       \
     py::class_<CLASS, shared_ptr<CLASS>, PARENT>(MODULE, NAME) \
         .def(py::init<__VA_ARGS__>());
@@ -214,6 +212,4 @@ PYBIND11_MODULE(ir, m)
     m.attr("_idx_t") = types::IDX;
     m.attr("_ch_t") = types::INT8;
     m.attr("_bool_t") = types::BOOL;
-
-    m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
 }
