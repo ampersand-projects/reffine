@@ -1,4 +1,5 @@
 import ir
+import exec
 
 def transform_fn(n):
     vec_in_sym = ir._sym("x", ir._i64_t.ptr())
@@ -35,3 +36,6 @@ def transform_fn(n):
 
 fn = transform_fn(100)
 print(f"Example Function:\n{ir.to_string(fn)}")
+print(f"Example Function:\n{exec.to_string(fn)}")
+
+print(f"Example LLVM IR:\n{exec.print_llvm(fn)}")
