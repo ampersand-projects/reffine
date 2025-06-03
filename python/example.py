@@ -1,4 +1,5 @@
 import ir
+import exec
 
 in_sym_1 = ir._sym("x", ir._i32_t)
 in_sym_2 = ir._sym("y", ir._i32_t)
@@ -10,4 +11,6 @@ res = ir._select(cond, temp1, temp2)
 
 func = ir._func("foo", res, [in_sym_1, in_sym_2], {})
 
-print(f"Example Function:\n{ir.to_string(func)}")
+print(f"Example Function:\n{exec.to_string(func)}")
+
+print(f"Example LLVM IR:\n{exec.print_llvm(func)}")
