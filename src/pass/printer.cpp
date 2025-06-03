@@ -158,25 +158,6 @@ void IRPrinter::Visit(Op& op)
     if (op.iters.size() > 0) { ostr << "\b\b"; }
     ostr << ": ";
 
-    ostr << "(";
-    if (op._lower) {
-        ostr << " >= ";
-        op._lower->Accept(*this);
-        ostr << "; ";
-    }
-    if (op._upper) {
-        ostr << " <= ";
-        op._upper->Accept(*this);
-        ostr << "; ";
-    }
-    if (op._incr) {
-        ostr << " <- ";
-        op._incr->Accept(*this);
-        ostr << "; ";
-    }
-    op.pred->Accept(*this);
-    ostr << ")";
-
     ostr << "{";
     for (const auto& output : op.outputs) {
         output->Accept(*this);

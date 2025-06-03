@@ -32,8 +32,7 @@ T compile_loop(std::shared_ptr<Func> loop)
 template <typename T>
 T compile_op(std::shared_ptr<Func> op)
 {
-    auto op_to_loop = OpToLoop::Build(op);
-    auto loop = LoopGen::Build(op_to_loop);
+    auto loop = LoopGen::Build(op);
     return compile_loop<T>(loop);
 }
 
