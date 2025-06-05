@@ -22,6 +22,32 @@ namespace py = pybind11;
 string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
 string to_string(llvm::Module& m) { return IRPrinter::Build(m); }
 
+template<typename... Args>
+void execute_loop(std::shared_ptr<Func> fn, Args... inputs) {
+    CanonPass::Build(fn);
+    auto exp_loop = LoadStoreExpand::Build(fn);
+    auto ngelm_loop = NewGetElimination::Build(exp_loop);
+
+    auto jit = ExecEngine::Get();
+    auto llmod = std::make_unique<llvm::Module>("test", jit->GetCtx());
+    LLVMGen::Build(ngelm_loop, *llmod);
+
+    jit->AddModule(std::move(llmod));
+
+    using FuncType = void (*)(Args...);
+    auto query = jit->Lookup<FuncType>(fn->name);
+    query((inputs)...);
+}
+
+template<typename... Args>
+void execute_op(shared_ptr<Func> fn, Args... inputs)
+{
+    auto fn2 = OpToLoop::Build(fn);
+    auto loop = LoopGen::Build(fn2);
+
+    execute_loop<Args...>(loop, inputs...);
+}
+
 std::unique_ptr<llvm::Module> compile_loop(shared_ptr<Func> fn)
 {
     CanonPass::Build(fn);
@@ -52,7 +78,11 @@ string print_llvm(shared_ptr<Func> fn)
 PYBIND11_MODULE(exec, m)
 {
     m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
-    m.def("compile_loop",
+    m.def("execute_loop",
+          [](std::shared_ptr<Func> fn) { return execute_loop(fn); });
+    m.def("execute_op",
+          [](std::shared_ptr<Func> fn) { return execute_op(fn); });
+     m.def("compile_loop",
           [](std::shared_ptr<Func> fn) { return compile_loop(fn); });
     m.def("compile_op",
           [](std::shared_ptr<Func> fn) { return compile_op(fn); });
