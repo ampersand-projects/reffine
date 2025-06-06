@@ -8,16 +8,18 @@ using namespace reffine::reffiner;
 void SymAnalysis::Visit(SymNode& symbol)
 {
     auto tmp = this->tmp_sym(symbol);
+    if (_syminfo_map[tmp].count == 0) { _ordered_syms.push_back(tmp); }
     _syminfo_map[tmp].count++;
 
     IRPass::Visit(symbol);
 }
 
-map<Sym, SymInfo> SymAnalysis::Build(shared_ptr<Func> func)
+std::pair<std::map<Sym, SymInfo>, std::vector<Sym>> SymAnalysis::Build(Func& func)
 {
-    IRPassCtx ctx(func->tbl);
+    IRPassCtx ctx(func.tbl);
     SymAnalysis pass(ctx);
-    func->Accept(pass);
+    func.Accept(pass);
 
-    return pass._syminfo_map;
+    return { pass._syminfo_map, pass._ordered_syms };
+
 }

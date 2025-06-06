@@ -1,4 +1,5 @@
 #include "reffine/pass/printer.h"
+#include "reffine/pass/symanalysis.h"
 
 #include <unordered_set>
 
@@ -268,6 +269,7 @@ void IRPrinter::Visit(Func& fn)
     for (auto& input : fn.inputs) { ostr << input->name << ", "; }
     ostr << (fn.inputs.size() > 0 ? "\b\b" : "") << ") {";
 
+    auto [syminfo_map, ordered_symbols] = SymAnalysis::Build(fn);
     enter_block();
     for (auto& [sym, val] : fn.tbl) {
         emitassign(sym, val);
