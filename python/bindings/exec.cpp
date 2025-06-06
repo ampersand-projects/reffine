@@ -1,6 +1,7 @@
 #include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/numpy.h>
 
 #include "reffine/builder/reffiner.h"
 #include "reffine/engine/engine.h"
@@ -23,14 +24,15 @@ string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
 string to_string(llvm::Module& m) { return IRPrinter::Build(m); }
 
 template<typename Output, typename... Inputs>
-Output execute_loop(std::shared_ptr<Func> fn, Output output, Inputs... inputs) {
+Output execute_loop(std::shared_ptr<Func> fn, Output output, Inputs... inputs) 
+{
     CanonPass::Build(fn);
     auto exp_loop = LoadStoreExpand::Build(fn);
     auto ngelm_loop = NewGetElimination::Build(exp_loop);
 
     auto jit = ExecEngine::Get();
     auto llmod = std::make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(ngelm_loop, *llmod);
+    LLVMGen::Build(fn, *llmod);
 
     jit->AddModule(std::move(llmod));
 
@@ -41,13 +43,13 @@ Output execute_loop(std::shared_ptr<Func> fn, Output output, Inputs... inputs) {
     return output;
 }
 
-template<typename... Args>
-void execute_op(shared_ptr<Func> fn, Args... inputs)
+template<typename Output, typename... Inputs>
+void execute_op(std::shared_ptr<Func> fn, Output output, Inputs... inputs)
 {
     auto fn2 = OpToLoop::Build(fn);
     auto loop = LoopGen::Build(fn2);
 
-    // execute_loop<Args...>(loop, inputs...);
+    execute_loop<Output, Inputs...>(loop, output, inputs...);
 }
 
 std::unique_ptr<llvm::Module> compile_loop(shared_ptr<Func> fn)
@@ -79,38 +81,33 @@ string print_llvm(shared_ptr<Func> fn)
 
 PYBIND11_MODULE(exec, m)
 {
-    m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
+    m.def("to_string",
+          [](std::shared_ptr<Func> fn) { return to_string(fn); });
 
-    m.def("execute_loop", [](std::shared_ptr<Func> fn, py::args args) { 
-        // if (args.size() == 2) {
+    m.def("execute_loop", [](std::shared_ptr<Func> fn, pybind11::array_t<int64_t> output, pybind11::array_t<int64_t> input) {
+        auto output_buf = output.request();
+        auto input_buf = input.request();
 
-        //     auto output_buf = args[0].cast<py::list>();
-        //     auto input_buf = args[1].cast<py::list>();
+        int64_t* output_ptr = static_cast<int64_t*>(output_buf.ptr);
+        int64_t* input_ptr = static_cast<int64_t*>(input_buf.ptr);
 
-        //     std::vector<int64_t> output_buf(output_list.size());
-        //     std::vector<int64_t> input_buf(input_list.size());
-
-        //     // Copy from Python list to C++ vector
-        //     for (size_t i = 0; i < input_list.size(); ++i)
-        //         input_buf[i] = py::cast<int64_t>(input_list[i]);
-
-        //     int64_t* out_ptr = output_buf.data();
-        //     int64_t* in_ptr  = input_buf.data();
-
-        //     execute_loop(fn, out_ptr, in_ptr);
-
-        //     // Copy back from C++ buffer to Python list
-        //     for (size_t i = 0; i < output_list.size(); ++i)
-        //         output_list[i] = py::int_(output_buf[i]);
-
-        //     return output_list;
-        // }
-
-        // throw std::runtime_error("Unsupported argument types or count. Only supports 1 int64 input and int64 output atm");
+        execute_loop(fn, output_ptr, output_ptr, input_ptr);
+        
+        return output;
     });
 
-    m.def("execute_op",
-          [](std::shared_ptr<Func> fn) { return execute_op(fn); });
+    m.def("execute_op", [](std::shared_ptr<Func> fn, pybind11::array_t<int64_t> output, pybind11::array_t<int64_t> input) {
+        auto output_buf = output.request();
+        auto input_buf = input.request();
+
+        int64_t* output_ptr = static_cast<int64_t*>(output_buf.ptr);
+        int64_t* input_ptr = static_cast<int64_t*>(input_buf.ptr);
+
+        execute_op(fn, output_ptr, output_ptr, input_ptr);
+
+        return output_ptr;
+    });
+
     m.def("compile_loop",
           [](std::shared_ptr<Func> fn) { return compile_loop(fn); });
     m.def("compile_op",
