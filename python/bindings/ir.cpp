@@ -16,6 +16,8 @@ using namespace reffine::reffiner;
 
 namespace py = pybind11;
 
+string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
+
 #define REGISTER_CLASS(CLASS, PARENT, MODULE, NAME, ...)       \
     py::class_<CLASS, shared_ptr<CLASS>, PARENT>(MODULE, NAME) \
         .def(py::init<__VA_ARGS__>());
