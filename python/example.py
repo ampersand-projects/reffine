@@ -1,5 +1,6 @@
 import ir
 import exec
+import numpy as np
 
 def transform_fn(n):
     vec_in_sym = ir._sym("x", ir._i64_t.ptr())
@@ -35,7 +36,10 @@ def transform_fn(n):
 
 
 fn = transform_fn(100)
-print(f"Example Function:\n{ir.to_string(fn)}")
-print(f"Example Function:\n{exec.to_string(fn)}")
+print(f"Example Function:\n{exec.to_string(fn)}\n\n")
+print(f"Example LLVM IR:\n{exec.print_llvm(fn)}\n\n")
 
-print(f"Example LLVM IR:\n{exec.print_llvm(fn)}")
+out_arr = np.zeros(100, dtype=np.int64)
+in_arr = np.arange(100, dtype=np.int64)
+in_arr2 = np.arange(100, dtype=np.int64)
+print(f"Loop execution:\n{exec.execute_loop(fn, out_arr, [in_arr, in_arr2])}\n\n")
