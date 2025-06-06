@@ -12,6 +12,8 @@ using namespace std;
 
 namespace reffine {
 
+#define INF 1 << 32
+
 enum class BaseType {
     UNKNOWN,  // never use this type
     VOID,

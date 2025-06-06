@@ -13,44 +13,6 @@ using namespace std;
 
 namespace reffine {
 
-struct IsValid : public ExprNode {
-    Expr vec;
-    Expr idx;
-    size_t col;
-
-    IsValid(Expr vec, Expr idx, size_t col)
-        : ExprNode(types::BOOL), vec(vec), idx(idx), col(col)
-    {
-        ASSERT(vec->type.is_vector());
-        ASSERT(idx->type.is_idx());
-        ASSERT(col < vec->type.dtypes.size());
-    }
-
-    void Accept(Visitor&) final;
-};
-
-struct SetValid : public ExprNode {
-    Expr vec;
-    Expr idx;
-    Expr validity;
-    size_t col;
-
-    SetValid(Expr vec, Expr idx, Expr validity, size_t col)
-        : ExprNode(types::BOOL),
-          vec(vec),
-          idx(idx),
-          validity(validity),
-          col(col)
-    {
-        ASSERT(vec->type.is_vector());
-        ASSERT(idx->type.is_idx());
-        ASSERT(validity->type == types::BOOL);
-        ASSERT(col < vec->type.dtypes.size());
-    }
-
-    void Accept(Visitor&) final;
-};
-
 struct FetchDataPtr : public ExprNode {
     Expr vec;
     Expr idx;
