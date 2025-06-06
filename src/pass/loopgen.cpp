@@ -44,6 +44,12 @@ Expr LoopGen::visit(Lookup& lookup)
 
 shared_ptr<Loop> LoopGen::build_loop(Op& op)
 {
+    // Only support 1d operators now
+    ASSERT(op.iters.size() == 1);
+
+    auto ispace = Reffine::Build(op);
+    ispace->lower_bound();
+
     return nullptr;
 }
 

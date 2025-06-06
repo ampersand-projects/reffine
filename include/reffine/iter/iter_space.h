@@ -18,8 +18,53 @@ struct IterSpace {
 
     virtual ~IterSpace() {}
 
-    virtual Expr lower_bound() { return nullptr; }
-    virtual Expr upper_bound() { return nullptr; }
+    Expr lower_bound()
+    {
+        auto lb = this->_lower_bound();
+        ASSERT(!lb || lb->type == this->type);
+        return lb;
+    }
+
+    Expr upper_bound()
+    {
+        auto ub = this->_upper_bound();
+        ASSERT(!ub || ub->type == this->type);
+        return ub;
+    }
+
+    Expr init_index()
+    {
+        return this->_init_index();
+    }
+
+    Expr condition(Expr idx)
+    {
+        auto cond = this->_condition(idx);
+        ASSERT(!cond || cond->type == types::BOOL);
+        return cond;
+    }
+
+    Expr idx_to_iter(Expr idx)
+    {
+        auto iter = this->_idx_to_iter(idx);
+        ASSERT(iter->type == this->type);
+        return iter;
+    }
+
+    Expr advance(Expr idx)
+    {
+        auto new_idx = this->_advance(idx);
+        ASSERT(new_idx->type == idx->type);
+        return new_idx;
+    }
+
+protected:
+    virtual Expr _lower_bound();
+    virtual Expr _upper_bound();
+    virtual Expr _init_index();
+    virtual Expr _condition(Expr);
+    virtual Expr _idx_to_iter(Expr);
+    virtual Expr _advance(Expr);
 };
 using ISpace = shared_ptr<IterSpace>;
 
@@ -32,8 +77,13 @@ struct VecSpace : public IterSpace {
         ASSERT(vec->type.dim == 1); // currently only support 1d vectors
     }
 
-    Expr lower_bound() final;
-    Expr upper_bound() final;
+private:
+    Expr _lower_bound() final;
+    Expr _upper_bound() final;
+    Expr _init_index() final;
+    Expr _condition(Expr) final;
+    Expr _idx_to_iter(Expr) final;
+    Expr _advance(Expr) final;
 };
 
 struct BoundSpace : public IterSpace {
@@ -45,13 +95,15 @@ struct BoundSpace : public IterSpace {
 struct LBoundSpace : public BoundSpace {
     LBoundSpace(Expr bound) : BoundSpace(bound) {}
 
-    Expr lower_bound() final;
+private:
+    Expr _lower_bound() final;
 };
 
 struct UBoundSpace : public BoundSpace {
     UBoundSpace(Expr bound) : BoundSpace(bound) {}
 
-    Expr upper_bound() final;
+private:
+    Expr _upper_bound() final;
 };
 
 struct JointSpace : public IterSpace {
@@ -62,20 +114,30 @@ struct JointSpace : public IterSpace {
     {
         ASSERT(left->type == right->type);
     }
+
+protected:
+    Expr _init_index() final;
+    Expr _idx_to_iter(Expr) final;
+    Expr _advance(Expr) final;
+
 };
 
 struct UnionSpace : public JointSpace {
     UnionSpace(ISpace left, ISpace right) : JointSpace(left, right) {}
 
-    Expr lower_bound() override;
-    Expr upper_bound() override;
+private:
+    Expr _lower_bound() final;
+    Expr _upper_bound() final;
+    Expr _condition(Expr) final;
 };
 
 struct InterSpace : public JointSpace {
     InterSpace(ISpace left, ISpace right) : JointSpace(left, right) {}
 
-    Expr lower_bound() override;
-    Expr upper_bound() override;
+private;
+    Expr _lower_bound() final;
+    Expr _upper_bound() final;
+    Expr _condition(Expr) final;
 };
 
 ISpace operator&(ISpace, ISpace);

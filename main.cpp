@@ -592,6 +592,8 @@ int main()
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto loop = LoopGen::Build(fn);
     cout << "Loop IR (raw):" << endl << IRPrinter::Build(loop) << endl;
+    return 0;
+
     CanonPass::Build(loop);
     cout << "Loop IR (canon):" << endl << IRPrinter::Build(loop) << endl;
     auto exp_loop = LoadStoreExpand::Build(loop);
