@@ -76,8 +76,6 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(FetchDataPtr, ExprNode, m, "_fetch", Expr, Expr, size_t)
     REGISTER_CLASS(Alloc, ExprNode, m, "_alloc", DataType, Expr)
     REGISTER_CLASS(Load, ExprNode, m, "_load", Expr)
-    // REGISTER_CLASS(Loop, ExprNode, m, "_loop", Expr)
-
     py::class_<Loop, shared_ptr<Loop>, ExprNode>(m, "_loop")
         .def(py::init<Expr>())
         .def_readwrite("init", &Loop::init)
@@ -91,10 +89,12 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(NotNull, ExprNode, m, "_notnull", Expr)
 
     /* Statements */
-    // REGISTER_CLASS(Func, StmtNode, m, "_func", string, Expr, vector<Sym>,
-    //                SymTable, bool)
+    REGISTER_CLASS(Stmts, StmtNode, m, "_stmts", vector<Stmt>)
+    REGISTER_CLASS(IfElse, StmtNode, m, "_ifelse", Expr, Stmt, Stmt)
+    REGISTER_CLASS(NoOp, StmtNode, m, "_noop")
+    REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr)
     py::class_<Func, shared_ptr<Func>, StmtNode>(m, "_func")
-        .def(py::init<string, Expr, vector<Sym>, SymTable, bool>(),  // Correct constructor
+        .def(py::init<string, Expr, vector<Sym>, SymTable, bool>(),
             py::arg("name"), py::arg("output"), py::arg("inputs"),
             py::arg("tbl") = SymTable(), py::arg("is_kernel") = false)
         .def_readwrite("name", &Func::name)
@@ -105,11 +105,6 @@ PYBIND11_MODULE(ir, m)
         .def("insert_sym", [](Func &f, const Sym& sym, Expr& expr) {
             f.tbl[sym] = expr;
         });
-
-    REGISTER_CLASS(Stmts, StmtNode, m, "_stmts", vector<Stmt>)
-    REGISTER_CLASS(IfElse, StmtNode, m, "_ifelse", Expr, Stmt, Stmt)
-    REGISTER_CLASS(NoOp, StmtNode, m, "_noop")
-    REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr)
 
     /* Misc Expressions */
     REGISTER_CLASS(Call, ExprNode, m, "_call", string, DataType, vector<Expr>)
