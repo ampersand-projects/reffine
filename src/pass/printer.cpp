@@ -422,15 +422,7 @@ void IRPrinter::Visit(Lookup& lookup)
 
 void IRPrinter::Visit(Locate& locate)
 {
-    ostr << "locate(";
-    locate.vec->Accept(*this);
-    ostr << ", {";
-    for (const auto& iter : locate.iters) {
-        iter->Accept(*this);
-        ostr << ", ";
-    }
-    ostr << "\b\b";
-    ostr << ")";
+    return emitfunc("locate", {locate.vec, locate.iter});
 }
 
 void IRPrinter::Visit(Length& len)

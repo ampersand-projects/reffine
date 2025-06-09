@@ -48,10 +48,7 @@ Expr IRClone::visit(Lookup& lookup)
 
 Expr IRClone::visit(Locate& locate)
 {
-    vector<Expr> new_iters;
-    for (auto& old_iter : locate.iters) { new_iters.push_back(eval(old_iter)); }
-
-    return _locate(eval(locate.vec), new_iters);
+    return _locate(eval(locate.vec), eval(locate.iter));
 }
 
 Expr IRClone::visit(NotNull& not_null) { return _notnull(eval(not_null.elem)); }
