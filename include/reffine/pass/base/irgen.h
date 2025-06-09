@@ -93,7 +93,7 @@ protected:
     {
         throw runtime_error("Store visit not supported");
     }
-    virtual void visit(AtomicOp&)
+    virtual ValTy visit(AtomicOp&)
     {
         throw runtime_error("AtomicOp visit not supported");
     }

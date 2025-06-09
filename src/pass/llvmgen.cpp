@@ -445,7 +445,6 @@ Value* LLVMGen::visit(AtomicOp& e)
         }
         default:
             throw std::runtime_error("Invalid atomic operation");
-            return;
     }
     return builder()->CreateAtomicRMW(instr_type, addr, val, MaybeAlign(),
                                       AtomicOrdering::Monotonic);
