@@ -393,7 +393,7 @@ Value* LLVMGen::visit(Store& store)
     return CreateStore(val, addr);
 }
 
-void LLVMGen::visit(AtomicOp& e)
+Value* LLVMGen::visit(AtomicOp& e)
 {
     auto addr = eval(e.addr);
     auto val = eval(e.val);
@@ -447,8 +447,8 @@ void LLVMGen::visit(AtomicOp& e)
             throw std::runtime_error("Invalid atomic operation");
             return;
     }
-    builder()->CreateAtomicRMW(instr_type, addr, val, MaybeAlign(),
-                               AtomicOrdering::Monotonic);
+    return builder()->CreateAtomicRMW(instr_type, addr, val, MaybeAlign(),
+                                      AtomicOrdering::Monotonic);
 }
 
 Value* LLVMGen::visit(StructGEP& gep)
