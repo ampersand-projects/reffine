@@ -303,6 +303,33 @@ void IRPrinter::Visit(Store& store)
     emitfunc("store", vector<Expr>{store.addr, store.val});
 }
 
+void IRPrinter::Visit(AtomicOp& e)
+{
+    switch (e.op) {
+        case MathOp::ADD:
+            emitfunc("atomic_add", {e.addr, e.val});
+            break;
+        case MathOp::SUB:
+            emitfunc("atomic_sub", {e.addr, e.val});
+            break;
+        case MathOp::MAX:
+            emitfunc("atomic_max", {e.addr, e.val});
+            break;
+        case MathOp::MIN:
+            emitfunc("atomic_min", {e.addr, e.val});
+            break;
+        case MathOp::AND:
+            emitfunc("atomic_and", {e.addr, e.val});
+            break;
+        case MathOp::OR:
+            emitfunc("atomic_or", {e.addr, e.val});
+            break;
+        default:
+            throw std::runtime_error("Invalid atomic operation");
+            break;
+    }
+}
+
 void IRPrinter::Visit(StructGEP& gep)
 {
     emitfunc("structgep", vector<Expr>{gep.addr, _idx(gep.col)});
