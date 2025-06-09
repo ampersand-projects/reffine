@@ -64,7 +64,7 @@ Expr VecSpace::_init_index()
 
 Expr VecSpace::_condition(Expr idx)
 {
-    return _isval(this->vec, idx);
+    return _isval(this->vec, idx, 0);
 }
 
 Expr VecSpace::_idx_to_iter(Expr idx)
@@ -107,6 +107,16 @@ Expr JointSpace::_advance(Expr idx)
     auto ridx = this->right->advance(_get(idx, 1));
     auto new_liter = this->left->idx_to_iter(lidx);
     auto new_riter = this->right->idx_to_iter(ridx);
+
+    return _sel(
+        _lt(liter, riter),
+        _new(vector<Expr>{new_liter, riter}),
+        _sel(
+            _lt(riter, liter),
+            _new(vector<Expr>{liter, new_riter}),
+            _new(vector<Expr>{new_liter, new_riter})
+        )
+    );
 }
 
 Expr UnionSpace::_lower_bound()
@@ -125,8 +135,8 @@ Expr UnionSpace::_upper_bound()
 
 Expr UnionSpace::_condition(Expr idx)
 {
-    auto lcond = this->left->condition(iter, _get(idx, 0));
-    auto rcond = this->right->condition(iter, _get(idx, 1));
+    auto lcond = this->left->condition(_get(idx, 0));
+    auto rcond = this->right->condition(_get(idx, 1));
     return (lcond && rcond) ? _or(lcond, rcond) : (lcond ? lcond : rcond);
 }
 

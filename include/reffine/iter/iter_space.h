@@ -134,7 +134,7 @@ private:
 struct InterSpace : public JointSpace {
     InterSpace(ISpace left, ISpace right) : JointSpace(left, right) {}
 
-private;
+private:
     Expr _lower_bound() final;
     Expr _upper_bound() final;
     Expr _condition(Expr) final;
