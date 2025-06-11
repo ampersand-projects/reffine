@@ -51,6 +51,11 @@ Expr IRClone::visit(Locate& locate)
     return _locate(eval(locate.vec), eval(locate.iter));
 }
 
+Expr IRClone::visit(Length& len)
+{
+    return _len(eval(len.vec));
+}
+
 Expr IRClone::visit(NotNull& not_null) { return _notnull(eval(not_null.elem)); }
 
 Expr IRClone::visit(NaryExpr& nexpr)
