@@ -92,7 +92,7 @@ public:
     }
     virtual void Visit(Length&)
     {
-        throw runtime_error("Locate operation not supported");
+        throw runtime_error("Length operation not supported");
     }
     virtual void Visit(FetchDataPtr&)
     {
