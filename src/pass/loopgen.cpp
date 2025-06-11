@@ -46,11 +46,35 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
 {
     // Only support 1d operators now
     ASSERT(op.iters.size() == 1);
+    auto iter_name = op.iters[0]->name;
 
     auto ispace = Reffine::Build(op);
-    ispace->lower_bound();
 
-    return nullptr;
+    // Loop index allocation
+    auto idx_init = ispace->init_index();
+    auto idx_alloc = _alloc(idx_init->type);
+    auto idx_addr = _sym(iter_name + "_idx_addr", idx_alloc);
+    this->assign(idx_addr, idx_alloc);
+    auto idx = _load(idx_addr);
+
+    // Loop bounds and increments
+    auto lb_expr = eval(ispace->lower_bound());
+    auto ub_expr = eval(ispace->upper_bound());
+    auto cond_expr = eval(ispace->condition(idx));
+    auto incr_expr = eval(ispace->advance(idx));
+
+    // Loop output
+    vector<Expr> outputs;
+    for (auto output : op.outputs) { outputs.push_back(eval(output)); }
+
+    // Loop definition
+    auto loop = _loop(_new(outputs));
+    loop->init = _store(idx_addr, lb_expr);
+    loop->incr = _store(idx_addr, incr_expr);
+    loop->exit_cond = _gt(idx, ub_expr);
+    loop->body_cond = cond_expr;
+
+    return loop;
 }
 
 Expr LoopGen::visit(Reduce& red)
@@ -58,9 +82,9 @@ Expr LoopGen::visit(Reduce& red)
     auto tmp_loop = this->build_loop(red.op);
 
     // State allocation and initialization
-    auto state_addr_expr = _alloc(red.type);
-    auto state_addr = _sym("state_addr", state_addr_expr);
-    this->assign(state_addr, state_addr_expr);
+    auto state_alloc = _alloc(red.type);
+    auto state_addr = _sym("state_addr", state_alloc);
+    this->assign(state_addr, state_alloc);
 
     // Build reduce loop
     auto red_loop = _loop(state_addr);
