@@ -109,7 +109,7 @@ struct NaryExpr : public ExprNode {
     NaryExpr(DataType type, MathOp op, vector<Expr> args)
         : ExprNode(type), op(op), args(std::move(args))
     {
-        ASSERT(!arg(0)->type.is_ptr() && !arg(0)->type.is_struct());
+        ASSERT(!arg(0)->type.is_ptr());
     }
 
     Expr arg(size_t i) { return args[i]; }
