@@ -101,20 +101,20 @@ Expr JointSpace::_idx_to_iter(Expr idx)
 
 Expr JointSpace::_advance(Expr idx)
 {
-    auto liter = this->left->idx_to_iter(_get(idx, 0));
-    auto riter = this->right->idx_to_iter(_get(idx, 1));
-    auto lidx = this->left->advance(_get(idx, 0));
-    auto ridx = this->right->advance(_get(idx, 1));
-    auto new_liter = this->left->idx_to_iter(lidx);
-    auto new_riter = this->right->idx_to_iter(ridx);
+    auto lidx = _get(idx, 0);
+    auto ridx = _get(idx, 1);
+    auto liter = this->left->idx_to_iter(lidx);
+    auto riter = this->right->idx_to_iter(ridx);
+    auto new_lidx = this->left->advance(lidx);
+    auto new_ridx = this->right->advance(ridx);
 
     return _sel(
         _lt(liter, riter),
-        _new(vector<Expr>{new_liter, riter}),
+        _new(vector<Expr>{new_lidx, ridx}),
         _sel(
             _lt(riter, liter),
-            _new(vector<Expr>{liter, new_riter}),
-            _new(vector<Expr>{new_liter, new_riter})
+            _new(vector<Expr>{lidx, new_ridx}),
+            _new(vector<Expr>{new_lidx, new_ridx})
         )
     );
 }
