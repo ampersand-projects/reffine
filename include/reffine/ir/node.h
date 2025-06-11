@@ -19,6 +19,8 @@ struct StmtNode {
     virtual ~StmtNode() {}
 
     virtual void Accept(Visitor&) = 0;
+
+    string str();
 };
 typedef shared_ptr<StmtNode> Stmt;
 
