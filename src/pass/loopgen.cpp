@@ -27,35 +27,27 @@ Expr LoopGen::visit(Element& elem)
     return _new(vals);
 }
 
-Expr LoopGen::visit(Lookup& lookup)
-{
-    auto vec = eval(lookup.vec);
-    auto idx = eval(lookup.idx);
-
-    vector<Expr> vals;
-    for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
-        auto data_ptr = _fetch(vec, idx, i);
-        auto data = _load(data_ptr);
-        vals.push_back(data);
-    }
-
-    return _new(vals);
-}
-
 shared_ptr<Loop> LoopGen::build_loop(Op& op)
 {
     // Only support 1d operators now
     ASSERT(op.iters.size() == 1);
-    auto iter_name = op.iters[0]->name;
+    auto iter = op.iters[0];
 
     auto ispace = Reffine::Build(op);
 
     // Loop index allocation
     auto idx_init = ispace->init_index();
     auto idx_alloc = _alloc(idx_init->type);
-    auto idx_addr = _sym(iter_name + "_idx_addr", idx_alloc);
+    auto idx_addr = _sym(iter->name + "_idx_addr", idx_alloc);
     this->assign(idx_addr, idx_alloc);
+    this->map_sym(idx_addr, idx_addr);
     auto idx = _load(idx_addr);
+
+    // Loop iterator
+    auto loop_iter = _sym(iter->name, iter->type);
+    auto loop_iter_expr = eval(ispace->idx_to_iter(idx));
+    this->assign(loop_iter, loop_iter_expr);
+    this->map_sym(iter, loop_iter);
 
     // Loop bounds and increments
     auto lb_expr = eval(ispace->lower_bound());
@@ -65,7 +57,9 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
 
     // Loop output
     vector<Expr> outputs;
-    for (auto output : op.outputs) { outputs.push_back(eval(output)); }
+    for (auto output : op.outputs) {
+        outputs.push_back(eval(output));
+    }
 
     // Loop definition
     auto loop = _loop(_new(outputs));
