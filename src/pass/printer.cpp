@@ -440,7 +440,7 @@ string IRPrinter::Build(Stmt stmt)
 {
     IRPrinter printer;
     stmt->Accept(printer);
-    return printer.ostr.str();
+    return printer.str();
 }
 
 string IRPrinter::Build(llvm::Module& llmod)

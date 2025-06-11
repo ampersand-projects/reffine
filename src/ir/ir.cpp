@@ -1,4 +1,5 @@
 #include "reffine/pass/base/visitor.h"
+#include "reffine/pass/printer.h"
 
 using namespace reffine;
 
@@ -35,3 +36,10 @@ void Locate::Accept(Visitor& v) { v.Visit(*this); }
 void Length::Accept(Visitor& v) { v.Visit(*this); }
 void FetchDataPtr::Accept(Visitor& v) { v.Visit(*this); }
 void NoOp::Accept(Visitor& v) { v.Visit(*this); }
+
+string StmtNode::str()
+{
+    IRPrinter printer;
+    this->Accept(printer);
+    return printer.str();
+}

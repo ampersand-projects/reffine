@@ -70,6 +70,11 @@ public:
     void Visit(FetchDataPtr&) final;
     void Visit(NoOp&) final;
 
+    string str()
+    {
+        return this->ostr.str();
+    }
+
 private:
     void enter_block()
     {
