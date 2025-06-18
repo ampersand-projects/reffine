@@ -5,9 +5,6 @@
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/IntrinsicsNVPTX.h"
 #include "reffine/base/type.h"
-#ifdef ENABLE_CUDA
-#include "llvm/IR/IntrinsicsNVPTX.h"
-#endif
 
 using namespace reffine;
 using namespace llvm;
