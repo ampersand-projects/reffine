@@ -58,7 +58,6 @@ void test_aggregate_kernel(int len, int expected_res)
     /* Test kernel generation and execution*/
     auto fn = aggregate_kernel(len);
     CanonPass::Build(fn);
-    cout << "Loop IR (canon):" << endl << IRPrinter::Build(fn) << endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
