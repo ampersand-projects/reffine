@@ -3,6 +3,7 @@
 #include <unordered_set>
 
 #include "reffine/builder/reffiner.h"
+#include "reffine/pass/symanalysis.h"
 
 using namespace std;
 using namespace reffine;
@@ -268,8 +269,18 @@ void IRPrinter::Visit(Func& fn)
     for (auto& input : fn.inputs) { ostr << input->name << ", "; }
     ostr << (fn.inputs.size() > 0 ? "\b\b" : "") << ") {";
 
+    auto [syminfo_map, ordered_symbols] =
+        SymAnalysis::Build(std::make_shared<Func>(fn));
     enter_block();
-    for (auto& [sym, val] : fn.tbl) {
+    for (auto it = ordered_symbols.rbegin(); it != ordered_symbols.rend();
+         ++it) {
+        const auto& sym = *it;
+        auto found = fn.tbl.find(sym);
+        if (found == fn.tbl.end()) {
+            continue;  // skip past input symbols
+        }
+        const auto& val = found->second;
+
         emitassign(sym, val);
         emitnewline();
     }

@@ -14,12 +14,14 @@ class SymAnalysis : public IRPass {
 public:
     explicit SymAnalysis(IRPassCtx& ctx) : IRPass(ctx) {}
 
-    static map<Sym, SymInfo> Build(shared_ptr<Func>);
+    static std::pair<std::map<Sym, SymInfo>, std::vector<Sym>> Build(
+        shared_ptr<Func>);
 
 private:
     void Visit(SymNode&) final;
 
     map<Sym, SymInfo> _syminfo_map;
+    std::vector<Sym> _ordered_syms;
 };
 
 }  // namespace reffine
