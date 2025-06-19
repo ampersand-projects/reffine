@@ -57,16 +57,7 @@ void test_aggregate_kernel(int len, int expected_res)
 {
     /* Test kernel generation and execution*/
     auto fn = aggregate_kernel(len);
-    CanonPass::Build(fn);
-
-    auto jit = ExecEngine::Get();
-    auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
-    LLVMGen::Build(fn, *llmod);
-    jit->Optimize(*llmod);
-
-    auto cuda_engine = CudaEngine::Get();
-    auto cuda_module = cuda_engine->Build(*llmod);
-    auto kernel = cuda_engine->Lookup(cuda_module, llmod->getName().str());
+    auto kernel = compile_kernel(fn);
 
     int64_t* in_array = new int64_t[len];
     for (int i = 0; i < len; i++) { in_array[i] = i; }
@@ -99,8 +90,6 @@ void test_aggregate_kernel(int len, int expected_res)
 
     cuMemFree(d_arr);
     cuMemFree(d_res_out);
-
-    cuda_engine->Cleanup(cuda_module);
 
     return;
 }

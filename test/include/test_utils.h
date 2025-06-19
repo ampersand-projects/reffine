@@ -12,6 +12,7 @@
 #include <string>
 
 #include "reffine/arrow/defs.h"
+#include "reffine/engine/cuda_engine.h"
 #include "reffine/engine/engine.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/llvmgen.h"
@@ -23,5 +24,6 @@
 
 arrow::Result<reffine::ArrowTable> get_input_vector();
 std::string print_arrow_table(reffine::ArrowTable&);
+CUfunction compile_kernel(std::shared_ptr<reffine::Func>);
 
 #endif  // TEST_INCLUDE_TEST_UTILS_H_
