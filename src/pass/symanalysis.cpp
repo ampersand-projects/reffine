@@ -14,12 +14,12 @@ void SymAnalysis::Visit(SymNode& symbol)
     IRPass::Visit(symbol);
 }
 
-std::pair<std::map<Sym, SymInfo>, std::vector<Sym>> SymAnalysis::Build(Func& func)
+std::pair<std::map<Sym, SymInfo>, std::vector<Sym>> SymAnalysis::Build(
+    shared_ptr<Func> func)
 {
-    IRPassCtx ctx(func.tbl);
+    IRPassCtx ctx(func->tbl);
     SymAnalysis pass(ctx);
-    func.Accept(pass);
+    func->Accept(pass);
 
-    return { pass._syminfo_map, pass._ordered_syms };
-
+    return {pass._syminfo_map, pass._ordered_syms};
 }

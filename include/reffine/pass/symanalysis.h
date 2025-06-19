@@ -14,7 +14,8 @@ class SymAnalysis : public IRPass {
 public:
     explicit SymAnalysis(IRPassCtx& ctx) : IRPass(ctx) {}
 
-    static std::pair<std::map<Sym, SymInfo>, std::vector<Sym>> Build(Func&);
+    static std::pair<std::map<Sym, SymInfo>, std::vector<Sym>> Build(
+        shared_ptr<Func>);
 
 private:
     void Visit(SymNode&) final;
