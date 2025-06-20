@@ -68,7 +68,7 @@ shared_ptr<Func> vector_op()
         _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
                               int8_t, int64_t>());
     Op op({t_sym},
-          ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(48)) &&
+          ~(vec_in_sym[{t_sym}]) & _lte(t_sym, _i64(48)) &
               _gte(t_sym, _i64(10)),
           {
               vec_in_sym[{t_sym}][3],
