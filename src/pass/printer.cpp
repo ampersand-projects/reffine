@@ -48,7 +48,7 @@ void IRPrinter::Visit(Const& cnst)
             ostr << cnst.val << "f";
             break;
         case BaseType::IDX:
-            ostr << (uint64_t)cnst.val << "x";
+            ostr << (int64_t)cnst.val << "x";
             break;
         default:
             throw std::runtime_error("Invalid constant type");
