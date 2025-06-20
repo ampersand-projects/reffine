@@ -84,28 +84,28 @@ PYBIND11_MODULE(exec, m)
     m.def("to_string",
           [](std::shared_ptr<Func> fn) { return to_string(fn); });
 
-    m.def("execute_loop", [](std::shared_ptr<Func> fn, pybind11::array_t<int64_t> output, pybind11::array_t<int64_t> input) {
+    m.def("execute_loop", [](std::shared_ptr<Func> fn, py::array output, std::vector<py::array> inputs) {
+
         auto output_buf = output.request();
-        auto input_buf = input.request();
+        auto output_ptr = output_buf.ptr;
 
-        int64_t* output_ptr = static_cast<int64_t*>(output_buf.ptr);
-        int64_t* input_ptr = static_cast<int64_t*>(input_buf.ptr);
+        std::vector<void*> input_ptrs;
+        for (auto& input : inputs) {
+            auto input_buf = input.request();
+            input_ptrs.push_back(input_buf.ptr);
+        }
 
-        execute_loop(fn, output_ptr, output_ptr, input_ptr);
-        
+        if (input_ptrs.size() == 1) {
+            execute_loop(fn, output_ptr, output_ptr, input_ptrs[0]);
+        } else if (input_ptrs.size() == 2) {
+            execute_loop(fn, output_ptr, output_ptr, input_ptrs[0], input_ptrs[1]);
+        } else if (input_ptrs.size() == 3) {
+            execute_loop(fn, output_ptr, output_ptr, input_ptrs[0], input_ptrs[1], input_ptrs[2]);
+        } else {
+            throw std::runtime_error("Unsupported number of inputs.");
+        }
+
         return output;
-    });
-
-    m.def("execute_op", [](std::shared_ptr<Func> fn, pybind11::array_t<int64_t> output, pybind11::array_t<int64_t> input) {
-        auto output_buf = output.request();
-        auto input_buf = input.request();
-
-        int64_t* output_ptr = static_cast<int64_t*>(output_buf.ptr);
-        int64_t* input_ptr = static_cast<int64_t*>(input_buf.ptr);
-
-        execute_op(fn, output_ptr, output_ptr, input_ptr);
-
-        return output_ptr;
     });
 
     m.def("compile_loop",
