@@ -1,5 +1,3 @@
-#include <limits>
-
 #include "reffine/iter/iter_space.h"
 #include "reffine/builder/reffiner.h"
 
@@ -32,7 +30,7 @@ Expr IterSpace::_upper_bound() { return nullptr; }
 
 Expr IterSpace::_init_index()
 {
-    return _idx(std::numeric_limits<long>::max());
+    return _idx(0);
 }
 
 Expr IterSpace::_condition(Expr idx) { return nullptr; }
