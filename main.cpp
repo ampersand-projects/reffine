@@ -351,7 +351,7 @@ shared_ptr<Func> reduce_op_fn()
 
     Op op(
         { idx_sym },
-        _gte(idx_sym, _idx(0)) && _lt(idx_sym, _idx(2880404)),
+        _gte(idx_sym, _idx(0)) & _lt(idx_sym, _idx(2880404)),
         { _get(make_shared<Lookup>(vec_in_sym, idx_sym), 1) }
     );
     auto sum = _red(
@@ -386,7 +386,7 @@ shared_ptr<Func> tpcds_query9(ArrowTable& table)
 
     Op op(
         { idx_sym },
-        _gte(idx_sym, _idx(0)) && _lt(idx_sym, _idx(2880404)),
+        _gte(idx_sym, _idx(0)) & _lt(idx_sym, _idx(2880404)),
         { ss_quant_sym, ss_ext_tax_sym, ss_inc_tax_sym }
     );
     auto sum = _red(
@@ -426,19 +426,19 @@ shared_ptr<Func> tpcds_query9(ArrowTable& table)
                 return _new(vector<Expr>{count, ext_sum, inc_sum});
             };
             return _sel(
-                    _gt(ss_quant, _0) && _lte(ss_quant, _20),
+                    _gt(ss_quant, _0) & _lte(ss_quant, _20),
                     _new(vector<Expr>{update_state(s1, ext_tax, inc_tax), s2, s3, s4, s5}),
                     _sel(
-                        _gt(ss_quant, _20) && _lte(ss_quant, _40),
+                        _gt(ss_quant, _20) & _lte(ss_quant, _40),
                         _new(vector<Expr>{s1, update_state(s2, ext_tax, inc_tax), s3, s4, s5}),
                         _sel(
-                            _gt(ss_quant, _40) && _lte(ss_quant, _60),
+                            _gt(ss_quant, _40) & _lte(ss_quant, _60),
                             _new(vector<Expr>{s1, s2, update_state(s3, ext_tax, inc_tax), s4, s5}),
                             _sel(
-                                _gt(ss_quant, _60) && _lte(ss_quant, _80),
+                                _gt(ss_quant, _60) & _lte(ss_quant, _80),
                                 _new(vector<Expr>{s1, s2, s3, update_state(s4, ext_tax, inc_tax), s5}),
                                 _sel(
-                                    _gt(ss_quant, _80) && _lte(ss_quant, _100),
+                                    _gt(ss_quant, _80) & _lte(ss_quant, _100),
                                     _new(vector<Expr>{s1, s2, s3, s4, update_state(s5, ext_tax, inc_tax)}),
                                     s
                                     )
@@ -530,7 +530,7 @@ shared_ptr<Func> vector_op()
         _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
                               int8_t, int64_t>());
     Op op({t_sym},
-          ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(48)) &&
+          ~(vec_in_sym[{t_sym}]) & _lte(t_sym, _i64(48)) &
               _gte(t_sym, _i64(10)),
           {
               vec_in_sym[{t_sym}][1],
@@ -592,10 +592,9 @@ int main()
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto loop = LoopGen::Build(fn);
     cout << "Loop IR (raw):" << endl << IRPrinter::Build(loop) << endl;
-    return 0;
-
     CanonPass::Build(loop);
     cout << "Loop IR (canon):" << endl << IRPrinter::Build(loop) << endl;
+    return 0;
     auto exp_loop = LoadStoreExpand::Build(loop);
     cout << "Loop IR (expand):" << endl << IRPrinter::Build(exp_loop) << endl;
     auto ngelm_loop = NewGetElimination::Build(exp_loop);

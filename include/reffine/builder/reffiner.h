@@ -57,8 +57,8 @@ struct _expr : public shared_ptr<T> {
     }
     _expr<Equals> operator==(Expr o) const { return _expr_eq(*this, o); }
     _expr<Not> operator!() const { return _expr_not(*this); }
-    _expr<And> operator&&(Expr o) const { return _expr_and(*this, o); }
-    _expr<Or> operator||(Expr o) const { return _expr_or(*this, o); }
+    _expr<And> operator&(Expr o) const { return _expr_and(*this, o); }
+    _expr<Or> operator|(Expr o) const { return _expr_or(*this, o); }
     _expr<Get> operator[](size_t n) const { return _expr_get(*this, n); }
     _expr<Element> operator[](std::initializer_list<Expr> iters) const
     {

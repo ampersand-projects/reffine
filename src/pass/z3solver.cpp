@@ -103,10 +103,10 @@ void Z3Solver::Visit(NaryExpr& e)
             assign(!eval(e.arg(0)));
             break;
         case MathOp::AND:
-            assign(eval(e.arg(0)) && eval(e.arg(1)));
+            assign(eval(e.arg(0)) & eval(e.arg(1)));
             break;
         case MathOp::OR:
-            assign(eval(e.arg(0)) || eval(e.arg(1)));
+            assign(eval(e.arg(0)) | eval(e.arg(1)));
             break;
         case MathOp::IMPLIES:
             assign(z3::implies(eval(e.arg(0)), eval(e.arg(1))));
