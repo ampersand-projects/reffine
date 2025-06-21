@@ -397,7 +397,7 @@ Value* LLVMGen::visit(AtomicOp& e)
     llvm::AtomicRMWInst::BinOp instr_type;
     switch (e.op) {
         case MathOp::ADD: {
-            if (e.addr->type.is_float()) {
+            if (e.val->type.is_float()) {
                 instr_type = AtomicRMWInst::FAdd;
             } else {
                 instr_type = AtomicRMWInst::Add;
@@ -405,7 +405,7 @@ Value* LLVMGen::visit(AtomicOp& e)
             break;
         }
         case MathOp::SUB: {
-            if (e.addr->type.is_float()) {
+            if (e.val->type.is_float()) {
                 instr_type = AtomicRMWInst::FSub;
             } else {
                 instr_type = AtomicRMWInst::Sub;
@@ -413,9 +413,9 @@ Value* LLVMGen::visit(AtomicOp& e)
             break;
         }
         case MathOp::MAX: {
-            if (e.addr->type.is_float()) {
+            if (e.val->type.is_float()) {
                 instr_type = AtomicRMWInst::FMax;
-            } else if (e.addr->type.is_signed()) {
+            } else if (e.val->type.is_signed()) {
                 instr_type = AtomicRMWInst::Max;
             } else {
                 instr_type = AtomicRMWInst::UMax;
@@ -423,9 +423,9 @@ Value* LLVMGen::visit(AtomicOp& e)
             break;
         }
         case MathOp::MIN: {
-            if (e.addr->type.is_float()) {
+            if (e.val->type.is_float()) {
                 instr_type = AtomicRMWInst::FMin;
-            } else if (e.addr->type.is_signed()) {
+            } else if (e.val->type.is_signed()) {
                 instr_type = AtomicRMWInst::Min;
             } else {
                 instr_type = AtomicRMWInst::UMin;
@@ -443,6 +443,11 @@ Value* LLVMGen::visit(AtomicOp& e)
         default:
             throw std::runtime_error("Invalid atomic operation");
     }
+    /*
+    AtomicOrdering::Monotonic - guarantees consistent ordering of operations for
+    a specific address. MaybeAlign - when no arg is passed, LLVM automatically
+    determines the optimal alignment.
+    */
     return builder()->CreateAtomicRMW(instr_type, addr, val, MaybeAlign(),
                                       AtomicOrdering::Monotonic);
 }
