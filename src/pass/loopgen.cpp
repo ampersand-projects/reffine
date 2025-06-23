@@ -13,7 +13,7 @@ Expr LoopGen::visit(Element& elem)
     auto vec = eval(elem.vec);
     auto iter = eval(elem.iters[0]);
 
-    auto idx_expr = _call("vector_locate", _idx_t, vector<Expr>{vec, iter});
+    auto idx_expr = _locate(vec, iter);
     auto idx = _sym("elem_idx", idx_expr);
     this->assign(idx, idx_expr);
 
@@ -33,27 +33,20 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
     ASSERT(op.iters.size() == 1);
     auto iter = op.iters[0];
 
-    auto ispace = Reffine::Build(op);
+    auto ispace = Reffine::Build(op, this->ctx().in_sym_tbl);
 
-    // Loop index allocation
-    auto idx_init = ispace->init_index();
+    // Loop index initialization
+    auto idx_init = eval(ispace->iter_to_idx(ispace->lower_bound()));
     auto idx_alloc = _alloc(idx_init->type);
     auto idx_addr = _sym(iter->name + "_idx_addr", idx_alloc);
     this->assign(idx_addr, idx_alloc);
     this->map_sym(idx_addr, idx_addr);
-    auto idx = _load(idx_addr);
 
-    // Loop iterator
-    auto loop_iter = _sym(iter->name, iter->type);
-    auto loop_iter_expr = eval(ispace->idx_to_iter(idx));
-    this->assign(loop_iter, loop_iter_expr);
+    // Derive op iterator from loop idx
+    auto loop_iter = _sym(iter->name, iter);
+    auto iter_expr = eval(ispace->idx_to_iter(_load(idx_addr)));
+    this->assign(loop_iter, iter_expr);
     this->map_sym(iter, loop_iter);
-
-    // Loop bounds and increments
-    auto lb_expr = eval(ispace->lower_bound());
-    auto ub_expr = eval(ispace->upper_bound());
-    auto cond_expr = eval(ispace->condition(idx));
-    auto incr_expr = eval(ispace->advance(idx));
 
     // Loop output
     vector<Expr> outputs;
@@ -63,10 +56,10 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
 
     // Loop definition
     auto loop = _loop(_new(outputs));
-    loop->init = _store(idx_addr, lb_expr);
-    loop->incr = _store(idx_addr, incr_expr);
-    loop->exit_cond = _gt(idx, ub_expr);
-    loop->body_cond = cond_expr;
+    loop->init = _store(idx_addr, idx_init);
+    loop->incr = _store(idx_addr, eval(ispace->advance(_load(idx_addr))));
+    loop->exit_cond = _gt(loop_iter, eval(ispace->upper_bound()));
+    loop->body_cond = nullptr; // TODO: eval(ispace->condition(_load(idx_addr)));
 
     return loop;
 }

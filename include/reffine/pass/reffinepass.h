@@ -13,7 +13,7 @@ class Reffine : public ValGen<ISpace> {
 public:
     Reffine(ReffineCtx& ctx, Op& op) : ValGen<ISpace>(ctx), _op(op) {}
 
-    static ISpace Build(Op&);
+    static ISpace Build(Op&, const SymTable&);
 
 private:
     ISpace visit(NaryExpr&) final;

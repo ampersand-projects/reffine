@@ -32,11 +32,6 @@ struct IterSpace {
         return ub;
     }
 
-    Expr init_index()
-    {
-        return this->_init_index();
-    }
-
     Expr condition(Expr idx)
     {
         auto cond = this->_condition(idx);
@@ -51,6 +46,11 @@ struct IterSpace {
         return iter;
     }
 
+    Expr iter_to_idx(Expr iter)
+    {
+        return this->_iter_to_idx(iter);
+    }
+
     Expr advance(Expr idx)
     {
         auto new_idx = this->_advance(idx);
@@ -61,9 +61,9 @@ struct IterSpace {
 protected:
     virtual Expr _lower_bound();
     virtual Expr _upper_bound();
-    virtual Expr _init_index();
     virtual Expr _condition(Expr);
     virtual Expr _idx_to_iter(Expr);
+    virtual Expr _iter_to_idx(Expr);
     virtual Expr _advance(Expr);
 };
 using ISpace = shared_ptr<IterSpace>;
@@ -80,9 +80,9 @@ struct VecSpace : public IterSpace {
 private:
     Expr _lower_bound() final;
     Expr _upper_bound() final;
-    Expr _init_index() final;
     Expr _condition(Expr) final;
     Expr _idx_to_iter(Expr) final;
+    Expr _iter_to_idx(Expr) final;
     Expr _advance(Expr) final;
 };
 
@@ -116,10 +116,9 @@ struct JointSpace : public IterSpace {
     }
 
 protected:
-    Expr _init_index() final;
     Expr _idx_to_iter(Expr) final;
+    Expr _iter_to_idx(Expr) final;
     Expr _advance(Expr) final;
-
 };
 
 struct UnionSpace : public JointSpace {

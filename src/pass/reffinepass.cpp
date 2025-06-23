@@ -71,7 +71,7 @@ ISpace Reffine::visit(Sym sym)
     } else if (sym->type.is_vector()) {
         return make_shared<VecSpace>(sym);
     } else {
-        throw runtime_error("Unrecognized symbol in reffine pass");
+        return eval(this->ctx().in_sym_tbl.at(sym));
     }
 }
 
@@ -91,12 +91,12 @@ ISpace Reffine::visit(NotNull& not_null)
     return eval(not_null.elem);
 }
 
-ISpace Reffine::Build(Op& op)
+ISpace Reffine::Build(Op& op, const SymTable& tbl)
 {
     // Only support single iterator for now
     ASSERT(op.iters.size() == 1);
 
-    ReffineCtx ctx;
+    ReffineCtx ctx(tbl);
     Reffine rpass(ctx, op);
 
     return rpass.eval(op.pred);
