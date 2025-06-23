@@ -99,16 +99,15 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr)
     py::class_<Func, shared_ptr<Func>, StmtNode>(m, "_func")
         .def(py::init<string, Expr, vector<Sym>, SymTable, bool>(),
-            py::arg("name"), py::arg("output"), py::arg("inputs"),
-            py::arg("tbl") = SymTable(), py::arg("is_kernel") = false)
+             py::arg("name"), py::arg("output"), py::arg("inputs"),
+             py::arg("tbl") = SymTable(), py::arg("is_kernel") = false)
         .def_readwrite("name", &Func::name)
         .def_readwrite("output", &Func::output)
         .def_readwrite("inputs", &Func::inputs)
         .def_readwrite("tbl", &Func::tbl)
         .def_readwrite("is_kernel", &Func::is_kernel)
-        .def("insert_sym", [](Func &f, const Sym& sym, Expr& expr) {
-            f.tbl[sym] = expr;
-        });
+        .def("insert_sym",
+             [](Func& f, const Sym& sym, Expr& expr) { f.tbl[sym] = expr; });
 
     /* Misc Expressions */
     REGISTER_CLASS(Call, ExprNode, m, "_call", string, DataType, vector<Expr>)
@@ -179,7 +178,7 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(LessThanEqual, BinaryExpr, m, "_lte", Expr, Expr)
     REGISTER_CLASS(GreaterThanEqual, BinaryExpr, m, "_gte", Expr, Expr)
 
-    /* CUDA Construct s*/
+    /* CUDA */
     REGISTER_CLASS(ThreadIdx, ExprNode, m, "_tidx")
     REGISTER_CLASS(BlockIdx, ExprNode, m, "_bidx")
     REGISTER_CLASS(GridDim, ExprNode, m, "_gdim")
@@ -217,4 +216,4 @@ PYBIND11_MODULE(ir, m)
     m.attr("_bool_t") = types::BOOL;
 
     m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
-}    
+}
