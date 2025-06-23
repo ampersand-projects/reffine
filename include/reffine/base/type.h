@@ -140,6 +140,12 @@ struct DataType {
         }
     }
 
+    DataType rowty() const
+    {
+        ASSERT(this->is_vector());
+        return DataType(BaseType::STRUCT, this->dtypes);
+    }
+
     string str() const
     {
         switch (btype) {

@@ -529,14 +529,16 @@ shared_ptr<Func> vector_op()
     auto vec_in_sym =
         _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
                               int8_t, int64_t>());
+    auto elem_expr = vec_in_sym[{t_sym}];
+    auto elem = _sym("elem", elem_expr);
     Op op({t_sym},
-          ~(vec_in_sym[{t_sym}]) & _lte(t_sym, _i64(48)) &
+          ~(elem) & _lte(t_sym, _i64(48)) &
               _gte(t_sym, _i64(10)),
           {
-              vec_in_sym[{t_sym}][1],
-              vec_in_sym[{t_sym}][2],
-              vec_in_sym[{t_sym}][3],
-              vec_in_sym[{t_sym}][4]
+              elem[1],
+              elem[2],
+              elem[3],
+              elem[4]
           }
     );
 
@@ -559,6 +561,7 @@ shared_ptr<Func> vector_op()
     auto res_sym = _sym("res", res);
 
     auto foo_fn = _func("foo", res_sym, vector<Sym>{vec_in_sym});
+    foo_fn->tbl[elem] = elem_expr;
     foo_fn->tbl[sum_sym] = sum;
     foo_fn->tbl[res_sym] = res;
 

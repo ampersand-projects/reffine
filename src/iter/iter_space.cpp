@@ -28,16 +28,16 @@ Expr IterSpace::_lower_bound() { return nullptr; }
 
 Expr IterSpace::_upper_bound() { return nullptr; }
 
-Expr IterSpace::_init_index()
-{
-    return _idx(0);
-}
-
 Expr IterSpace::_condition(Expr idx) { return nullptr; }
 
 Expr IterSpace::_idx_to_iter(Expr idx)
 {
     return _cast(this->type, idx);
+}
+
+Expr IterSpace::_iter_to_idx(Expr iter)
+{
+    return _cast(types::IDX, iter);
 }
 
 Expr IterSpace::_advance(Expr idx)
@@ -47,17 +47,12 @@ Expr IterSpace::_advance(Expr idx)
 
 Expr VecSpace::_lower_bound()
 {
-    return _lookup(this->vec, _idx(0));
+    return this->idx_to_iter(_idx(0));
 }
 
 Expr VecSpace::_upper_bound()
 {
-    return _lookup(this->vec, _len(this->vec) - _idx(1));
-}
-
-Expr VecSpace::_init_index()
-{
-    return _idx(0);
+    return this->idx_to_iter(_len(this->vec) - _idx(1));
 }
 
 Expr VecSpace::_condition(Expr idx)
@@ -68,6 +63,11 @@ Expr VecSpace::_condition(Expr idx)
 Expr VecSpace::_idx_to_iter(Expr idx)
 {
     return _lookup(this->vec, idx);
+}
+
+Expr VecSpace::_iter_to_idx(Expr iter)
+{
+    return _locate(this->vec, iter);
 }
 
 Expr VecSpace::_advance(Expr idx)
@@ -85,16 +85,18 @@ Expr UBoundSpace::_upper_bound()
     return this->bound;
 }
 
-Expr JointSpace::_init_index()
-{
-    return _new(vector<Expr>{this->left->init_index(), this->right->init_index()});
-}
-
 Expr JointSpace::_idx_to_iter(Expr idx)
 {
     auto liter = this->left->idx_to_iter(_get(idx, 0));
     auto riter = this->right->idx_to_iter(_get(idx, 1));
     return _min(liter, riter);
+}
+
+Expr JointSpace::_iter_to_idx(Expr iter)
+{
+    auto lidx = this->left->iter_to_idx(iter);
+    auto ridx = this->right->iter_to_idx(iter);
+    return _new(vector<Expr>{lidx, ridx});
 }
 
 Expr JointSpace::_advance(Expr idx)
