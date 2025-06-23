@@ -1,4 +1,5 @@
 import ir
+import numpy as np
 
 def transform_fn(n):
     vec_in_sym = ir._sym("x", ir._i64_t.ptr())
