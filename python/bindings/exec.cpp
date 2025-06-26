@@ -23,35 +23,6 @@ namespace py = pybind11;
 string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
 string to_string(llvm::Module& m) { return IRPrinter::Build(m); }
 
-template<typename Output, typename... Inputs>
-Output execute_loop(std::shared_ptr<Func> fn, Output output, Inputs... inputs) 
-{
-    CanonPass::Build(fn);
-    auto exp_loop = LoadStoreExpand::Build(fn);
-    auto ngelm_loop = NewGetElimination::Build(exp_loop);
-
-    auto jit = ExecEngine::Get();
-    auto llmod = std::make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(fn, *llmod);
-
-    jit->AddModule(std::move(llmod));
-
-    using FuncType = void (*)(Output, Inputs...);
-    auto query = jit->Lookup<FuncType>(fn->name);
-    query(output, (inputs)...);
-
-    return output;
-}
-
-template<typename Output, typename... Inputs>
-void execute_op(std::shared_ptr<Func> fn, Output output, Inputs... inputs)
-{
-    auto fn2 = OpToLoop::Build(fn);
-    auto loop = LoopGen::Build(fn2);
-
-    execute_loop<Output, Inputs...>(loop, output, inputs...);
-}
-
 void* compile_loop(shared_ptr<Func> fn)
 {
      CanonPass::Build(fn);
@@ -75,6 +46,16 @@ void* compile_op(shared_ptr<Func> fn)
     return compile_loop(loop);
 }
 
+template<typename Output, typename... Inputs>
+Output execute_query(void* query, Output output, Inputs... inputs) 
+{
+    using FuncType = void (*)(Output, Inputs...);
+    auto query2 = reinterpret_cast<FuncType>(query);
+    query2(output, (inputs)...);
+
+    return output;
+}
+
 auto print_llvm(shared_ptr<Func> fn)
 {
     // auto m = compile_op(fn);
@@ -86,7 +67,7 @@ PYBIND11_MODULE(exec, m)
     m.def("to_string",
           [](std::shared_ptr<Func> fn) { return to_string(fn); });
 
-    m.def("execute_loop", [](std::shared_ptr<Func> fn, py::array output, std::vector<py::array> inputs) {
+    m.def("execute_query", [](void* fn, py::array output, std::vector<py::array> inputs) {
 
         auto output_buf = output.request();
         auto output_ptr = output_buf.ptr;
@@ -98,11 +79,11 @@ PYBIND11_MODULE(exec, m)
         }
 
         if (input_ptrs.size() == 1) {
-            execute_loop(fn, output_ptr, output_ptr, input_ptrs[0]);
+            execute_query(fn, output_ptr, output_ptr, input_ptrs[0]);
         } else if (input_ptrs.size() == 2) {
-            execute_loop(fn, output_ptr, output_ptr, input_ptrs[0], input_ptrs[1]);
+            execute_query(fn, output_ptr, output_ptr, input_ptrs[0], input_ptrs[1]);
         } else if (input_ptrs.size() == 3) {
-            execute_loop(fn, output_ptr, output_ptr, input_ptrs[0], input_ptrs[1], input_ptrs[2]);
+            execute_query(fn, output_ptr, output_ptr, input_ptrs[0], input_ptrs[1], input_ptrs[2]);
         } else {
             throw std::runtime_error("Unsupported number of inputs.");
         }
