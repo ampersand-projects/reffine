@@ -16,8 +16,6 @@ using namespace reffine::reffiner;
 
 namespace py = pybind11;
 
-string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
-
 #define REGISTER_CLASS(CLASS, PARENT, MODULE, NAME, ...)       \
     py::class_<CLASS, shared_ptr<CLASS>, PARENT>(MODULE, NAME) \
         .def(py::init<__VA_ARGS__>());
@@ -99,8 +97,8 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr)
     py::class_<Func, shared_ptr<Func>, StmtNode>(m, "_func")
         .def(py::init<string, Expr, vector<Sym>, SymTable, bool>(),
-             py::arg("name"), py::arg("output"), py::arg("inputs"),
-             py::arg("tbl") = SymTable(), py::arg("is_kernel") = false)
+            py::arg("name"), py::arg("output"), py::arg("inputs"),
+            py::arg("tbl") = SymTable(), py::arg("is_kernel") = false)
         .def_readwrite("name", &Func::name)
         .def_readwrite("output", &Func::output)
         .def_readwrite("inputs", &Func::inputs)
@@ -214,6 +212,4 @@ PYBIND11_MODULE(ir, m)
     m.attr("_idx_t") = types::IDX;
     m.attr("_ch_t") = types::INT8;
     m.attr("_bool_t") = types::BOOL;
-
-    m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
 }

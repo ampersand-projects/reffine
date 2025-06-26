@@ -52,20 +52,22 @@ void execute_op(std::shared_ptr<Func> fn, Output output, Inputs... inputs)
     execute_loop<Output, Inputs...>(loop, output, inputs...);
 }
 
-std::unique_ptr<llvm::Module> compile_loop(shared_ptr<Func> fn)
+void* compile_loop(shared_ptr<Func> fn)
 {
-    CanonPass::Build(fn);
+     CanonPass::Build(fn);
     auto exp_loop = LoadStoreExpand::Build(fn);
     auto ngelm_loop = NewGetElimination::Build(exp_loop);
 
     auto jit = ExecEngine::Get();
-    auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(ngelm_loop, *llmod);
+    auto llmod = std::make_unique<llvm::Module>("test", jit->GetCtx());
+    LLVMGen::Build(fn, *llmod);
 
-    return llmod;
+    jit->AddModule(std::move(llmod));
+
+    return jit->Lookup<void*>(fn->name);
 }
 
-std::unique_ptr<llvm::Module> compile_op(shared_ptr<Func> fn)
+void* compile_op(shared_ptr<Func> fn)
 {
     auto fn2 = OpToLoop::Build(fn);
     auto loop = LoopGen::Build(fn2);
@@ -73,10 +75,10 @@ std::unique_ptr<llvm::Module> compile_op(shared_ptr<Func> fn)
     return compile_loop(loop);
 }
 
-string print_llvm(shared_ptr<Func> fn)
+auto print_llvm(shared_ptr<Func> fn)
 {
-    auto m = compile_op(fn);
-    return IRPrinter::Build(*m);
+    // auto m = compile_op(fn);
+    // return IRPrinter::Build(*m);
 }
 
 PYBIND11_MODULE(exec, m)
