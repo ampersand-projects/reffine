@@ -38,7 +38,8 @@ def transform_fn(n):
 fn = transform_fn(100)
 print(f"Loop IR:\n{exec.to_string(fn)}\n\n")
 
-out_arr = np.zeros(100, dtype=np.int64)
-in_arr = np.arange(100, dtype=np.int64)
+out_arr = np.ones(100, dtype=np.int64)
+in_arr = np.arange(100, 200, dtype=np.int64)
 in_arr2 = np.arange(100, dtype=np.int64)
-print(f"Loop execution:\n{exec.execute_loop(fn, out_arr, [in_arr, in_arr2])}\n\n")
+query = exec.compile_loop(fn)
+print(f"Loop execution:\n{exec.execute_query(query, out_arr, [in_arr, in_arr2])}\n\n")
