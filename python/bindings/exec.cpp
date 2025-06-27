@@ -50,12 +50,9 @@ PYBIND11_MODULE(exec, m)
               auto output_buf = output.request();
               auto output_ptr = output_buf.ptr;
 
-              cout << "output: " << output_buf.format << endl;
-
               std::vector<void*> input_ptrs;
               for (auto& input : inputs) {
                   auto input_buf = input.request();
-                  cout << "inputs: " << input_buf.format << endl;
                   input_ptrs.push_back(input_buf.ptr);
               }
 
