@@ -15,6 +15,8 @@
 #include "reffine/pass/z3solver.h"
 #include "reffine/utils/utils.h"
 
+#include "stdbool.h"
+
 using namespace std;
 using namespace reffine;
 using namespace reffine::reffiner;
@@ -33,6 +35,12 @@ Output execute_query(void* query, Output output, Inputs... inputs)
     return output;
 }
 
+template<>
+ArrowArray* execute_query(void*, ArrowArray*, ArrowArray*);
+
+template<>
+ArrowArray* execute_query(void*, ArrowArray*, ArrowArray*, ArrowArray*);
+
 PYBIND11_MODULE(exec, m)
 {
     m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
@@ -42,23 +50,22 @@ PYBIND11_MODULE(exec, m)
               auto output_buf = output.request();
               auto output_ptr = output_buf.ptr;
 
+              cout << "output: " << output_buf.format << endl;
+
               std::vector<void*> input_ptrs;
               for (auto& input : inputs) {
                   auto input_buf = input.request();
+                  cout << "inputs: " << input_buf.format << endl;
                   input_ptrs.push_back(input_buf.ptr);
               }
 
               if (input_ptrs.size() == 1) {
                   execute_query(fn, output_ptr, output_ptr, input_ptrs[0]);
               } else if (input_ptrs.size() == 2) {
-                  execute_query(fn, output_ptr, output_ptr, input_ptrs[0],
-                                input_ptrs[1]);
+                  execute_query(fn, output_ptr, output_ptr, input_ptrs[0], input_ptrs[1]);
               } else if (input_ptrs.size() == 3) {
                   execute_query(fn, output_ptr, output_ptr, input_ptrs[0],
                                 input_ptrs[1], input_ptrs[2]);
-              } else if (input_ptrs.size() == 4) {
-                  execute_query(fn, output_ptr, output_ptr, input_ptrs[0],
-                                input_ptrs[1], input_ptrs[2], input_ptrs[3]);
               } else {
                   throw std::runtime_error("Unsupported number of inputs.");
               }
