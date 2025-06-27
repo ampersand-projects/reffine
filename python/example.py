@@ -23,7 +23,7 @@ def transform_fn(n):
     loop = ir._loop(ir._load(vec_out_sym))
     loop.init = ir._stmts([idx_alloc, ir._store(idx_addr, ir._idx(0))])
     loop.body = ir._stmts([
-        ir._store(out_ptr, ir._add(ir._add(ir._i64(1), val), val2)),
+        ir._store(out_ptr, ir._add(val, val2)),
         ir._store(idx_addr, ir._add(idx, ir._idx(1))),
     ])
     loop.exit_cond = ir._gte(idx, length)
@@ -39,7 +39,8 @@ def transform_fn(n):
 fn = transform_fn(100)
 print(f"Loop IR:\n{exec.to_string(fn)}\n\n")
 
-out_arr = np.zeros(100, dtype=np.int64)
-in_arr = np.arange(100, dtype=np.int64)
+out_arr = np.ones(100, dtype=np.int64)
+in_arr = np.arange(100, 200, dtype=np.int64)
 in_arr2 = np.arange(100, dtype=np.int64)
-print(f"Loop execution:\n{exec.execute_loop(fn, out_arr, [in_arr, in_arr2])}\n\n")
+query = exec.compile_loop(fn)
+print(f"Loop execution:\n{exec.execute_query(query, out_arr, [in_arr, in_arr2])}\n\n")
