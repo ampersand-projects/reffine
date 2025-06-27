@@ -37,8 +37,7 @@ def transform_fn(n):
 
 
 fn = transform_fn(100)
-print(f"Example Function:\n{exec.to_string(fn)}\n\n")
-print(f"Example LLVM IR:\n{exec.print_llvm(fn)}\n\n")
+print(f"Loop IR:\n{exec.to_string(fn)}\n\n")
 
 out_arr = np.zeros(100, dtype=np.int64)
 in_arr = np.arange(100, dtype=np.int64)

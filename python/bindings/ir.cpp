@@ -97,8 +97,8 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr)
     py::class_<Func, shared_ptr<Func>, StmtNode>(m, "_func")
         .def(py::init<string, Expr, vector<Sym>, SymTable, bool>(),
-            py::arg("name"), py::arg("output"), py::arg("inputs"),
-            py::arg("tbl") = SymTable(), py::arg("is_kernel") = false)
+             py::arg("name"), py::arg("output"), py::arg("inputs"),
+             py::arg("tbl") = SymTable(), py::arg("is_kernel") = false)
         .def_readwrite("name", &Func::name)
         .def_readwrite("output", &Func::output)
         .def_readwrite("inputs", &Func::inputs)
