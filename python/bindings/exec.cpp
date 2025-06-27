@@ -35,12 +35,6 @@ Output execute_query(void* query, Output output, Inputs... inputs)
     return output;
 }
 
-template<>
-ArrowArray* execute_query(void*, ArrowArray*, ArrowArray*);
-
-template<>
-ArrowArray* execute_query(void*, ArrowArray*, ArrowArray*, ArrowArray*);
-
 PYBIND11_MODULE(exec, m)
 {
     m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
@@ -63,6 +57,30 @@ PYBIND11_MODULE(exec, m)
               } else if (input_ptrs.size() == 3) {
                   execute_query(fn, output_ptr, output_ptr, input_ptrs[0],
                                 input_ptrs[1], input_ptrs[2]);
+              } else {
+                  throw std::runtime_error("Unsupported number of inputs.");
+              }
+
+              return output;
+          });
+
+    m.def("execute_query",
+          [](void* fn, py::capsule output, std::vector<py::capsule> inputs) {
+              auto out_arr = static_cast<ArrowArray*>(output.get_pointer());
+              auto out_ptr = const_cast<void*>(out_arr->buffers[1]);
+              
+              std::vector<void*> input_ptrs;
+              for (auto& in : inputs) {
+                  auto in_arr = static_cast<ArrowArray*>(in.get_pointer());
+                  input_ptrs.push_back(const_cast<void*>(in_arr->buffers[1]));
+              }
+
+              if (input_ptrs.size() == 1) {
+                  execute_query(fn, out_ptr, out_ptr, input_ptrs[0]);
+              } else if (input_ptrs.size() == 2) {
+                  execute_query(fn, out_ptr, out_ptr, input_ptrs[0], input_ptrs[1]);
+              } else if (input_ptrs.size() == 3) {
+                  execute_query(fn, out_ptr, out_ptr, input_ptrs[0], input_ptrs[1], input_ptrs[2]);
               } else {
                   throw std::runtime_error("Unsupported number of inputs.");
               }

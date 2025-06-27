@@ -1,6 +1,8 @@
 import ir
 import exec
 import numpy as np
+import pyarrow as pa
+import ctypes
 
 def transform_fn(n):
     vec_in_sym = ir._sym("x", ir._i64_t.ptr())
@@ -36,11 +38,29 @@ def transform_fn(n):
     return fn
 
 
-fn = transform_fn(100)
-print(f"Loop IR:\n{exec.to_string(fn)}\n\n")
+def test_numpy():
+    fn = transform_fn(100)
+    print(f"Loop IR:\n{exec.to_string(fn)}\n\n")
 
-out_arr = np.ones(100, dtype=np.int64)
-in_arr = np.arange(100, 200, dtype=np.int64)
-in_arr2 = np.arange(100, dtype=np.int64)
-query = exec.compile_loop(fn)
-print(f"Loop execution:\n{exec.execute_query(query, out_arr, [in_arr, in_arr2])}\n\n")
+    out_arr = np.ones(100, dtype=np.int64)
+    in_arr = np.arange(100, 200, dtype=np.int64)
+    in_arr2 = np.arange(100, dtype=np.int64)
+    query = exec.compile_loop(fn)
+    print(f"Loop execution:\n{exec.execute_query(query, out_arr, [in_arr, in_arr2])}\n\n")
+    
+    
+def test_arrow():
+    in_arr = pa.array([x for x in range(100)])
+    in_arr2 = pa.array([x for x in range(100, 200)])
+    out_arr = pa.array([0 for x in range(100)])
+
+    _, c_in_arr = in_arr.__arrow_c_array__()
+    _, c_in_arr2 = in_arr2.__arrow_c_array__()
+    _, c_out_arr = out_arr.__arrow_c_array__()
+    
+    fn = transform_fn(100)
+    query = exec.compile_loop(fn)
+    print(f"Loop execution:\n{exec.execute_query(query, c_out_arr, [c_in_arr, c_in_arr2])}\n\n")
+    print(f"Output array:\n{out_arr}\n\n")
+
+test_arrow()
