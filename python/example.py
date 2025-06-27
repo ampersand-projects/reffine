@@ -63,4 +63,5 @@ def test_arrow():
     print(f"Loop execution:\n{exec.execute_query(query, c_out_arr, [c_in_arr, c_in_arr2])}\n\n")
     print(f"Output array:\n{out_arr}\n\n")
 
-test_arrow()
+# test_arrow()
+test_numpy()
