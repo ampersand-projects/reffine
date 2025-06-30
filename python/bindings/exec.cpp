@@ -3,21 +3,10 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "reffine/builder/reffiner.h"
-#include "reffine/engine/engine.h"
-#include "reffine/pass/canonpass.h"
-#include "reffine/pass/llvmgen.h"
-#include "reffine/pass/loopgen.h"
-#include "reffine/pass/printer.h"
-#include "reffine/pass/reffinepass.h"
-#include "reffine/pass/scalarpass.h"
-#include "reffine/pass/symanalysis.h"
-#include "reffine/pass/z3solver.h"
 #include "reffine/utils/utils.h"
 
 using namespace std;
 using namespace reffine;
-using namespace reffine::reffiner;
 
 namespace py = pybind11;
 
@@ -37,15 +26,17 @@ Output execute_query(void* query, Output output, Inputs... inputs)
     return llmod;
 }
 
-void execute_handler(void* fn, void* out_ptr, std::vector<void*> input_ptrs)
+template <typename Output, typename... Inputs>
+void execute_handler(void* fn, Output out_ptr, std::vector<ArrowArray*> input_ptrs)
 {
     if (input_ptrs.size() == 1) {
-        execute_query(fn, out_ptr, out_ptr, input_ptrs[0]);
+        execute_query<Output, Inputs...>(fn, out_ptr, out_ptr, input_ptrs[0]);
     } else if (input_ptrs.size() == 2) {
-        execute_query(fn, out_ptr, out_ptr, input_ptrs[0], input_ptrs[1]);
+        execute_query<Output, Inputs...>(fn, out_ptr, out_ptr, input_ptrs[0],
+                                         input_ptrs[1]);
     } else if (input_ptrs.size() == 3) {
-        execute_query(fn, out_ptr, out_ptr, input_ptrs[0], input_ptrs[1],
-                      input_ptrs[2]);
+        execute_query<Output, Inputs...>(fn, out_ptr, out_ptr, input_ptrs[0],
+                                         input_ptrs[1], input_ptrs[2]);
     } else {
         throw std::runtime_error("Unsupported number of inputs.");
     }
@@ -66,23 +57,32 @@ PYBIND11_MODULE(exec, m)
                   input_ptrs.push_back(input_buf.ptr);
               }
 
-              execute_handler(fn, output_ptr, input_ptrs);
+            //   execute_handler(fn, output_ptr, input_ptrs);
 
               return output;
           });
 
-    m.def("execute_query",
+    m.def("execute_query2",
           [](void* fn, py::capsule output, std::vector<py::capsule> inputs) {
-              auto out_arr = static_cast<ArrowArray*>(output.get_pointer());
-              auto out_ptr = const_cast<void*>(out_arr->buffers[1]);
+            //   auto out_arr = static_cast<ArrowArray*>(output.get_pointer());
+            //   auto out_ptr = const_cast<void*>(out_arr->buffers[1]);
+            // auto out_ptr = out_arr->buffers[1];
 
-              std::vector<void*> input_ptrs;
+            //   std::vector<void*> input_ptrs;
+            //   for (auto& in : inputs) {
+            //       auto in_arr = static_cast<ArrowArray*>(in.get_pointer());
+            //       input_ptrs.push_back(const_cast<void*>(in_arr->buffers[1]));
+            //   }
+
+              auto out_arr = static_cast<ArrowArray*>(output.get_pointer());
+
+              std::vector<ArrowArray*> input_ptrs;
               for (auto& in : inputs) {
                   auto in_arr = static_cast<ArrowArray*>(in.get_pointer());
-                  input_ptrs.push_back(const_cast<void*>(in_arr->buffers[1]));
+                  input_ptrs.push_back(in_arr);
               }
-
-              execute_handler(fn, out_ptr, input_ptrs);
+            
+              execute_handler(fn, out_arr, input_ptrs);
 
               return output;
           });
