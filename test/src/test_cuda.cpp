@@ -40,7 +40,7 @@ shared_ptr<Func> aggregate_kernel(int n)
         _store(idx_addr, idx + _idx(1)),
     });
     loop->exit_cond = _gte(idx, len);
-    loop->post = _atomic_add(sum_out_sym, temp_sum);
+    loop->post = _atomic_op(MathOp::ADD, sum_out_sym, temp_sum);
     auto loop_sym = _sym("loop", loop);
 
     auto foo_fn = make_shared<Func>("foo", _stmtexpr(loop_sym),
