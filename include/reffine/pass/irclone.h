@@ -44,6 +44,7 @@ protected:
     Expr visit(Alloc&) override;
     Expr visit(Load&) override;
     Expr visit(Store&) override;
+    Expr visit(AtomicOp&) override;
     Expr visit(StructGEP&) override;
     Expr visit(ThreadIdx&) override;
     Expr visit(BlockIdx&) override;
