@@ -8,6 +8,8 @@
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/stmt.h"
+#include "reffine/base/type.h"
+#include "reffine/pass/printer.h"
 
 using namespace std;
 using namespace reffine;
@@ -20,6 +22,15 @@ string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
 #define REGISTER_CLASS(CLASS, PARENT, MODULE, NAME, ...)       \
     py::class_<CLASS, shared_ptr<CLASS>, PARENT>(MODULE, NAME) \
         .def(py::init<__VA_ARGS__>());
+
+#define PYBIND11_DEBUG
+
+
+// DataType VECTOR(std::vector<DataType> types, size_t dim) {
+//     if (dim == 2) return types::VECTOR<2>(types);
+//     else if (dim == 3) return types::VECTOR<3>(types);
+//     else throw std::invalid_argument("Unsupported dimension");
+// }
 
 PYBIND11_MODULE(ir, m)
 {
@@ -217,5 +228,8 @@ PYBIND11_MODULE(ir, m)
     });
     m.def("VECTOR", [](size_t dim, std::vector<DataType> types) {
         return DataType(BaseType::VECTOR, types, dim);
+    });
+    m.def("VEC", [](size_t dim, std::vector<BaseType> btypes) {
+        throw std::runtime_error("VEC currently unsupported in pybind.");
     });
 }
