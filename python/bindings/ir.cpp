@@ -8,6 +8,7 @@
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/stmt.h"
+#include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 
 using namespace std;
@@ -19,6 +20,15 @@ namespace py = pybind11;
 #define REGISTER_CLASS(CLASS, PARENT, MODULE, NAME, ...)       \
     py::class_<CLASS, shared_ptr<CLASS>, PARENT>(MODULE, NAME) \
         .def(py::init<__VA_ARGS__>());
+
+#define PYBIND11_DEBUG
+
+
+// DataType VECTOR(std::vector<DataType> types, size_t dim) {
+//     if (dim == 2) return types::VECTOR<2>(types);
+//     else if (dim == 3) return types::VECTOR<3>(types);
+//     else throw std::invalid_argument("Unsupported dimension");
+// }
 
 PYBIND11_MODULE(ir, m)
 {
@@ -212,4 +222,20 @@ PYBIND11_MODULE(ir, m)
     m.attr("_idx_t") = types::IDX;
     m.attr("_ch_t") = types::INT8;
     m.attr("_bool_t") = types::BOOL;
+
+    m.def("STRUCT", [](std::vector<BaseType> btypes) {
+        throw std::runtime_error("STRUCT currently unsupported in pybind.");
+    });
+    m.def("VECTOR", [](size_t dim, std::vector<DataType> types) {
+        switch (dim) {
+            case 1: return types::VECTOR<1>(types);
+            case 2: return types::VECTOR<2>(types);
+            case 3: return types::VECTOR<3>(types);
+            case 4: return types::VECTOR<4>(types);
+            default: throw std::runtime_error("Unsupported dim.");
+        }
+    });
+    m.def("VEC", [](size_t dim, std::vector<BaseType> btypes) {
+        throw std::runtime_error("VEC currently unsupported in pybind.");
+    });
 }
