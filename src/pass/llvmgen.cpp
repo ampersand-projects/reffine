@@ -3,10 +3,8 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
-#include "reffine/base/type.h"
-#ifdef ENABLE_CUDA
 #include "llvm/IR/IntrinsicsNVPTX.h"
-#endif
+#include "reffine/base/type.h"
 
 using namespace reffine;
 using namespace llvm;
@@ -390,6 +388,68 @@ Value* LLVMGen::visit(Store& store)
     auto addr = eval(store.addr);
     auto val = eval(store.val);
     return CreateStore(val, addr);
+}
+
+Value* LLVMGen::visit(AtomicOp& e)
+{
+    auto addr = eval(e.addr);
+    auto val = eval(e.val);
+    llvm::AtomicRMWInst::BinOp instr_type;
+    switch (e.op) {
+        case MathOp::ADD: {
+            if (e.val->type.is_float()) {
+                instr_type = AtomicRMWInst::FAdd;
+            } else {
+                instr_type = AtomicRMWInst::Add;
+            }
+            break;
+        }
+        case MathOp::SUB: {
+            if (e.val->type.is_float()) {
+                instr_type = AtomicRMWInst::FSub;
+            } else {
+                instr_type = AtomicRMWInst::Sub;
+            }
+            break;
+        }
+        case MathOp::MAX: {
+            if (e.val->type.is_float()) {
+                instr_type = AtomicRMWInst::FMax;
+            } else if (e.val->type.is_signed()) {
+                instr_type = AtomicRMWInst::Max;
+            } else {
+                instr_type = AtomicRMWInst::UMax;
+            }
+            break;
+        }
+        case MathOp::MIN: {
+            if (e.val->type.is_float()) {
+                instr_type = AtomicRMWInst::FMin;
+            } else if (e.val->type.is_signed()) {
+                instr_type = AtomicRMWInst::Min;
+            } else {
+                instr_type = AtomicRMWInst::UMin;
+            }
+            break;
+        }
+        case MathOp::AND: {
+            instr_type = AtomicRMWInst::And;
+            break;
+        }
+        case MathOp::OR: {
+            instr_type = AtomicRMWInst::Or;
+            break;
+        }
+        default:
+            throw std::runtime_error("Invalid atomic operation");
+    }
+    /*
+    AtomicOrdering::Monotonic - guarantees consistent ordering of operations for
+    a specific address. MaybeAlign - when no arg is passed, LLVM automatically
+    determines the optimal alignment.
+    */
+    return builder()->CreateAtomicRMW(instr_type, addr, val, MaybeAlign(),
+                                      AtomicOrdering::Monotonic);
 }
 
 Value* LLVMGen::visit(StructGEP& gep)

@@ -128,6 +128,11 @@ Expr IRClone::visit(Store& store)
     return _stmtexpr(_store(eval(store.addr), eval(store.val)));
 }
 
+Expr IRClone::visit(AtomicOp& op)
+{
+    return _stmtexpr(_atomic_op(op.op, eval(op.addr), eval(op.val)));
+}
+
 Expr IRClone::visit(StructGEP& gep)
 {
     return _structgep(eval(gep.addr), gep.col);

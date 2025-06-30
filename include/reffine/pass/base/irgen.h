@@ -93,6 +93,10 @@ protected:
     {
         throw runtime_error("Store visit not supported");
     }
+    virtual ValTy visit(AtomicOp&)
+    {
+        throw runtime_error("AtomicOp visit not supported");
+    }
     virtual ValTy visit(StructGEP&)
     {
         throw runtime_error("StructGEP visit not supported");
@@ -153,6 +157,7 @@ protected:
     void Visit(Alloc& expr) final { val() = visit(expr); }
     void Visit(Load& expr) final { val() = visit(expr); }
     void Visit(Store& expr) final { val() = visit(expr); }
+    void Visit(AtomicOp& stmt) final { val() = visit(stmt); }
     void Visit(StructGEP& expr) final { val() = visit(expr); }
     void Visit(ThreadIdx& expr) final { val() = visit(expr); }
     void Visit(BlockIdx& expr) final { val() = visit(expr); }
