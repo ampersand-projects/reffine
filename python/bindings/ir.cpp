@@ -20,14 +20,6 @@ namespace py = pybind11;
     py::class_<CLASS, shared_ptr<CLASS>, PARENT>(MODULE, NAME) \
         .def(py::init<__VA_ARGS__>());
 
-#define PYBIND11_DEBUG
-
-// DataType VECTOR(std::vector<DataType> types, size_t dim) {
-//     if (dim == 2) return types::VECTOR<2>(types);
-//     else if (dim == 3) return types::VECTOR<3>(types);
-//     else throw std::invalid_argument("Unsupported dimension");
-// }
-
 PYBIND11_MODULE(ir, m)
 {
     /* Structures related to Reffine typing */
@@ -237,8 +229,5 @@ PYBIND11_MODULE(ir, m)
             default:
                 throw std::runtime_error("Unsupported dim.");
         }
-    });
-    m.def("VEC", [](size_t dim, std::vector<BaseType> btypes) {
-        throw std::runtime_error("VEC currently unsupported in pybind.");
     });
 }
