@@ -5,8 +5,8 @@ import pyarrow as pa
 
 def transform_fn(n):
     vec_in_sym = ir._sym("x", ir._i64_t.ptr())
-    vec_in_sym2 = ir._sym("z", ir._i64_t.ptr())
-    vec_out_sym = ir._sym("y", ir._i64_t.ptr())
+    vec_in_sym2 = ir._sym("y", ir._i64_t.ptr())
+    vec_out_sym = ir._sym("z", ir._i64_t.ptr())
 
     length = ir._idx(n)
     idx_alloc = ir._alloc(ir._idx_t, ir._u32(1))
@@ -44,14 +44,18 @@ def test_numpy():
     out_arr = np.ones(100, dtype=np.int64)
     in_arr = np.arange(100, 200, dtype=np.int64)
     in_arr2 = np.arange(100, dtype=np.int64)
+    
+    print(f"Input 1:\n{in_arr}\n\n")
+    print(f"Input 2:\n{in_arr2}\n\n")
+    
     query = exec.compile_loop(fn)
-    print(f"Loop execution:\n{exec.execute_query(query, out_arr, [in_arr, in_arr2])}\n\n")
+    print("Executing query...\n")
+    print(f"Output:\n{exec.execute_query(query, out_arr, [in_arr, in_arr2])}\n\n")
 
     
 def transform_fn_arrow(n=100):
     vec_out_sym = ir._sym("out", ir.VECTOR(1, [ir._i64_t]))
     vec_sym = ir._sym("in", ir.VECTOR(1, [ir._i64_t, ir._i64_t]))
-    # vec_sym = ir._sym("in", ir.VECTOR(1, [ir._i64_t]))
 
     length = ir._call("get_vector_len", ir._idx_t, [vec_sym])
 
@@ -71,7 +75,6 @@ def transform_fn_arrow(n=100):
     loop = ir._loop(vec_out_sym)
     loop.init = ir._stmts([idx_alloc, ir._store(idx_addr, ir._idx(0))])
     loop.body = ir._stmts([
-        # ir._store(out_ptr, ir._add(val, ir._i64(1))),
         ir._store(out_ptr, ir._add(val, val2)),
         ir._store(idx_addr, ir._add(idx, ir._idx(1))),
     ])
@@ -89,24 +92,23 @@ def test_arrow():
     in_arr = pa.StructArray.from_arrays([
         pa.array([x for x in range(100)]),
         pa.array([x for x in range(100, 200)])
-    ], names=['field1', 'field2'])
+    ], names=['x', 'y'])
     
     print(in_arr)
 
     out_arr = pa.StructArray.from_arrays([
         pa.array([0 for x in range(100)])
-    ], names=['out'])
-    print(out_arr)
+    ], names=['z'])
 
     _, c_in_arr = in_arr.__arrow_c_array__()
     _, c_out_arr = out_arr.__arrow_c_array__()
     
     fn = transform_fn_arrow(100)
-    query = exec.compile_loop(fn)
-    print(exec.to_string(fn))
+    print(f"Loop IR:\n{exec.to_string(fn)}\n\n")
     
+    query = exec.compile_loop(fn)    
     print("Executing query...\n")
-    exec.execute_query2(query, c_out_arr, [c_in_arr])
+    exec.execute_query(query, c_out_arr, [c_in_arr])
     print(f"Output:\n{out_arr}\n\n")
 
 test_arrow()

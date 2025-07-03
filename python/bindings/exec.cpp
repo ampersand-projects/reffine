@@ -57,12 +57,21 @@ PYBIND11_MODULE(exec, m)
                   input_ptrs.push_back(input_buf.ptr);
               }
 
-            //   execute_handler(fn, output_ptr, input_ptrs);
+              if (input_ptrs.size() == 1) {
+                  execute_query(fn, output_ptr, output_ptr, input_ptrs[0]);
+              } else if (input_ptrs.size() == 2) {
+                  execute_query(fn, output_ptr, output_ptr, input_ptrs[0], input_ptrs[1]);
+              } else if (input_ptrs.size() == 3) {
+                  execute_query(fn, output_ptr, output_ptr, input_ptrs[0],
+                                input_ptrs[1], input_ptrs[2]);
+              } else {
+                  throw std::runtime_error("Unsupported number of inputs.");
+              }
 
               return output;
           });
 
-    m.def("execute_query2",
+    m.def("execute_query",
           [](void* fn, py::capsule output, std::vector<py::capsule> inputs) {
               auto out_arr = static_cast<ArrowArray*>(output.get_pointer());
 
