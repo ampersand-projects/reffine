@@ -64,16 +64,6 @@ PYBIND11_MODULE(exec, m)
 
     m.def("execute_query2",
           [](void* fn, py::capsule output, std::vector<py::capsule> inputs) {
-            //   auto out_arr = static_cast<ArrowArray*>(output.get_pointer());
-            //   auto out_ptr = const_cast<void*>(out_arr->buffers[1]);
-            // auto out_ptr = out_arr->buffers[1];
-
-            //   std::vector<void*> input_ptrs;
-            //   for (auto& in : inputs) {
-            //       auto in_arr = static_cast<ArrowArray*>(in.get_pointer());
-            //       input_ptrs.push_back(const_cast<void*>(in_arr->buffers[1]));
-            //   }
-
               auto out_arr = static_cast<ArrowArray*>(output.get_pointer());
 
               std::vector<ArrowArray*> input_ptrs;

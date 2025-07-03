@@ -45,26 +45,12 @@ def test_numpy():
     in_arr2 = np.arange(100, dtype=np.int64)
     query = exec.compile_loop(fn)
     print(f"Loop execution:\n{exec.execute_query(query, out_arr, [in_arr, in_arr2])}\n\n")
-    
-    
-def test_arrow():
-    in_arr = pa.array([x for x in range(100)])
-    in_arr2 = pa.array([x for x in range(100, 200)])
-    out_arr = pa.array([0 for x in range(100)])
 
-    _, c_in_arr = in_arr.__arrow_c_array__()
-    _, c_in_arr2 = in_arr2.__arrow_c_array__()
-    _, c_out_arr = out_arr.__arrow_c_array__()
-    
-    fn = transform_fn(100)
-    query = exec.compile_loop(fn)
-    print(f"Loop execution:\n{exec.execute_query(query, c_out_arr, [c_in_arr, c_in_arr2])}\n\n")
-    print(f"Output array:\n{out_arr}\n\n")
-    
     
 def transform_fn_arrow(n=100):
     vec_out_sym = ir._sym("out", ir.VECTOR(1, [ir._i64_t]))
     vec_sym = ir._sym("in", ir.VECTOR(1, [ir._i64_t, ir._i64_t]))
+    # vec_sym = ir._sym("in", ir.VECTOR(1, [ir._i64_t]))
 
     length = ir._call("get_vector_len", ir._idx_t, [vec_sym])
 
@@ -84,6 +70,7 @@ def transform_fn_arrow(n=100):
     loop = ir._loop(vec_out_sym)
     loop.init = ir._stmts([idx_alloc, ir._store(idx_addr, ir._idx(0))])
     loop.body = ir._stmts([
+        # ir._store(out_ptr, ir._add(val, ir._i64(1))),
         ir._store(out_ptr, ir._add(val, val2)),
         ir._store(idx_addr, ir._add(idx, ir._idx(1))),
     ])
@@ -95,41 +82,31 @@ def transform_fn_arrow(n=100):
     fn.insert_sym(idx_addr, idx_alloc)
     
     return fn
+
     
-def test_arrow2():
-    # in_arr = pa.StructArray.from_arrays([
-    #     pa.array([x for x in range(100)]),
-    #     pa.array([x for x in range(100, 200)])
-    # ], names=['field1', 'field2'])
-    
+def test_arrow():
     in_arr = pa.StructArray.from_arrays([
-        pa.array([x for x in range(100)])
-    ], names=['field1'])
-    in_arr2 = pa.StructArray.from_arrays([
-        pa.array([x for x in range(100)])
-    ], names=['field1'])
+        pa.array([x for x in range(100)]),
+        pa.array([x for x in range(100, 200)])
+    ], names=['field1', 'field2'])
     
     print(in_arr)
-    
-    # out_arr = pa.array([0 for x in range(100)])
+
     out_arr = pa.StructArray.from_arrays([
         pa.array([0 for x in range(100)])
     ], names=['out'])
     print(out_arr)
 
-    # _, c_in_arr = in_arr.__arrow_c_array__()
-    # print(c_in_arr)
-    # _, c_out_arr = out_arr.__arrow_c_array__()
-    # print(c_out_arr)
     _, c_in_arr = in_arr.__arrow_c_array__()
-    _, c_in_arr2 = in_arr2.__arrow_c_array__()
     _, c_out_arr = out_arr.__arrow_c_array__()
     
-    fn = transform_fn(100)
+    fn = transform_fn_arrow(100)
     query = exec.compile_loop(fn)
     print(exec.to_string(fn))
-    print(f"Loop execution:\n{exec.execute_query2(query, c_out_arr, [c_in_arr, c_in_arr2])}\n\n")
-    # print(f"Output array:\n{out_arr}\n\n")
+    
+    print("Executing query...\n")
+    exec.execute_query2(query, c_out_arr, [c_in_arr])
+    print(f"Output:\n{out_arr}\n\n")
 
-test_arrow2()
+test_arrow()
 # test_numpy()
