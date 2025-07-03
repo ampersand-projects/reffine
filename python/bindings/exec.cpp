@@ -26,22 +26,6 @@ Output execute_query(void* query, Output output, Inputs... inputs)
     return llmod;
 }
 
-template <typename Output, typename... Inputs>
-void execute_handler(void* fn, Output out_ptr, std::vector<ArrowArray*> input_ptrs)
-{
-    if (input_ptrs.size() == 1) {
-        execute_query<Output, Inputs...>(fn, out_ptr, out_ptr, input_ptrs[0]);
-    } else if (input_ptrs.size() == 2) {
-        execute_query<Output, Inputs...>(fn, out_ptr, out_ptr, input_ptrs[0],
-                                         input_ptrs[1]);
-    } else if (input_ptrs.size() == 3) {
-        execute_query<Output, Inputs...>(fn, out_ptr, out_ptr, input_ptrs[0],
-                                         input_ptrs[1], input_ptrs[2]);
-    } else {
-        throw std::runtime_error("Unsupported number of inputs.");
-    }
-}
-
 PYBIND11_MODULE(exec, m)
 {
     m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
@@ -60,7 +44,8 @@ PYBIND11_MODULE(exec, m)
               if (input_ptrs.size() == 1) {
                   execute_query(fn, output_ptr, output_ptr, input_ptrs[0]);
               } else if (input_ptrs.size() == 2) {
-                  execute_query(fn, output_ptr, output_ptr, input_ptrs[0], input_ptrs[1]);
+                  execute_query(fn, output_ptr, output_ptr, input_ptrs[0],
+                                input_ptrs[1]);
               } else if (input_ptrs.size() == 3) {
                   execute_query(fn, output_ptr, output_ptr, input_ptrs[0],
                                 input_ptrs[1], input_ptrs[2]);
@@ -71,20 +56,29 @@ PYBIND11_MODULE(exec, m)
               return output;
           });
 
-    m.def("execute_query",
-          [](void* fn, py::capsule output, std::vector<py::capsule> inputs) {
-              auto out_arr = static_cast<ArrowArray*>(output.get_pointer());
+    m.def("execute_query", [](void* fn, py::capsule output,
+                              std::vector<py::capsule> inputs) {
+        auto out_arr = static_cast<ArrowArray*>(output.get_pointer());
 
-              std::vector<ArrowArray*> input_ptrs;
-              for (auto& in : inputs) {
-                  auto in_arr = static_cast<ArrowArray*>(in.get_pointer());
-                  input_ptrs.push_back(in_arr);
-              }
-            
-              execute_handler(fn, out_arr, input_ptrs);
+        std::vector<ArrowArray*> input_ptrs;
+        for (auto& in : inputs) {
+            auto in_arr = static_cast<ArrowArray*>(in.get_pointer());
+            input_ptrs.push_back(in_arr);
+        }
 
-              return output;
-          });
+        if (input_ptrs.size() == 1) {
+            execute_query(fn, out_arr, out_arr, input_ptrs[0]);
+        } else if (input_ptrs.size() == 2) {
+            execute_query(fn, out_arr, out_arr, input_ptrs[0], input_ptrs[1]);
+        } else if (input_ptrs.size() == 3) {
+            execute_query(fn, out_arr, out_arr, input_ptrs[0], input_ptrs[1],
+                          input_ptrs[2]);
+        } else {
+            throw std::runtime_error("Unsupported number of inputs.");
+        }
+
+        return output;
+    });
 
     m.def("compile_loop",
           [](std::shared_ptr<Func> fn) { return compile_loop<void*>(fn); });

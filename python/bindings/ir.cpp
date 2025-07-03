@@ -8,7 +8,6 @@
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/stmt.h"
-#include "reffine/base/type.h"
 #include "reffine/pass/printer.h"
 
 using namespace std;
@@ -24,7 +23,6 @@ string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
         .def(py::init<__VA_ARGS__>());
 
 #define PYBIND11_DEBUG
-
 
 // DataType VECTOR(std::vector<DataType> types, size_t dim) {
 //     if (dim == 2) return types::VECTOR<2>(types);
