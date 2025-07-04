@@ -16,7 +16,7 @@ void SymAnalysis::Visit(SymNode& symbol)
     _syminfo_map[tmp].count++;
 }
 
-std::map<Sym, SymInfo> SymAnalysis::Build(shared_ptr<Func> func)
+map<Sym, SymInfo> SymAnalysis::Build(shared_ptr<Func> func)
 {
     IRPassCtx ctx(func->tbl);
     SymAnalysis pass(ctx);
