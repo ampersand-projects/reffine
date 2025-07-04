@@ -8,20 +8,20 @@ namespace reffine {
 
 struct SymInfo {
     int count = 0;
+    int order;
 };
 
 class SymAnalysis : public IRPass {
 public:
     explicit SymAnalysis(IRPassCtx& ctx) : IRPass(ctx) {}
 
-    static std::pair<std::map<Sym, SymInfo>, std::vector<Sym>> Build(
-        shared_ptr<Func>);
+    static map<Sym, SymInfo> Build(shared_ptr<Func>);
 
 private:
     void Visit(SymNode&) final;
 
     map<Sym, SymInfo> _syminfo_map;
-    std::vector<Sym> _ordered_syms;
+    int _cur_order = 0;
 };
 
 }  // namespace reffine

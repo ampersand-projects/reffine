@@ -269,20 +269,25 @@ void IRPrinter::Visit(Func& fn)
     for (auto& input : fn.inputs) { ostr << input->name << ", "; }
     ostr << (fn.inputs.size() > 0 ? "\b\b" : "") << ") {";
 
-    auto [syminfo_map, ordered_symbols] =
-        SymAnalysis::Build(std::make_shared<Func>(fn));
-    enter_block();
-    for (auto it = ordered_symbols.rbegin(); it != ordered_symbols.rend();
-         ++it) {
-        const auto& sym = *it;
-        auto found = fn.tbl.find(sym);
-        if (found == fn.tbl.end()) {
-            continue;  // skip past input symbols
-        }
-        const auto& val = found->second;
+    auto syminfo_map = SymAnalysis::Build(std::make_shared<Func>(fn));
 
-        emitassign(sym, val);
-        emitnewline();
+    std::vector<std::pair<Sym, SymInfo>> ordered_symbols;
+    for (const auto& [sym, info] : syminfo_map) {
+        ordered_symbols.emplace_back(sym, info);
+    }
+
+    std::sort(ordered_symbols.begin(), ordered_symbols.end(),
+              [](const auto& x, const auto& y) {
+                  return x.second.order < y.second.order;
+              });
+
+    enter_block();
+    for (const auto& [sym, info] : ordered_symbols) {
+        auto it = fn.tbl.find(sym);
+        if (it != fn.tbl.end()) {
+            emitassign(sym, it->second);
+            emitnewline();
+        }
     }
 
     emitnewline();
