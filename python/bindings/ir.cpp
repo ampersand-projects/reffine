@@ -43,12 +43,28 @@ PYBIND11_MODULE(ir, m)
     py::class_<DataType>(m, "DataType")
         .def(py::init<BaseType, vector<DataType>, size_t>(), py::arg("btype"),
              py::arg("dtypes") = vector<DataType>{}, py::arg("size") = 0)
+        .def("__eq__", &DataType::operator==)
+        .def("is_struct", &DataType::is_struct)
+        .def("is_ptr", &DataType::is_ptr)
+        .def("is_idx", &DataType::is_idx)
+        .def("is_vector", &DataType::is_vector)
+        .def("is_void", &DataType::is_void)
+        .def("is_val", &DataType::is_val)
+        .def("is_float", &DataType::is_float)
+        .def("is_primitive", &DataType::is_primitive)
+        .def("is_int", &DataType::is_int)
+        .def("is_signed", &DataType::is_signed)
+        .def("ptr", &DataType::ptr)
+        .def("deref", &DataType::deref)
+        .def("valty", &DataType::valty)
         .def("str", &DataType::str);
 
     /* StmtNode and Derived Structures Declarations
      */
     py::class_<StmtNode, Stmt>(m, "_stmt");
     py::class_<ExprNode, Expr, StmtNode>(m, "_expr");
+    py::class_<StmtExprNode, StmtExpr, ExprNode>(m, "_stmtexpr")
+        .def(py::init<Stmt>());
 
     /* Symbol Definition */
     py::class_<SymNode, Sym, ExprNode>(m, "_sym")
@@ -64,7 +80,11 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(FetchDataPtr, ExprNode, m, "_fetch", Expr, Expr, size_t)
     REGISTER_CLASS(Alloc, ExprNode, m, "_alloc", DataType, Expr)
     REGISTER_CLASS(Load, ExprNode, m, "_load", Expr)
-    REGISTER_CLASS(Loop, ExprNode, m, "_loop", Expr)
+    py::class_<Loop, shared_ptr<Loop>, ExprNode>(m, "_loop")
+        .def(py::init<Expr>())
+        .def_readwrite("init", &Loop::init)
+        .def_readwrite("body", &Loop::body)
+        .def_readwrite("exit_cond", &Loop::exit_cond);
 
     /* Op */
     REGISTER_CLASS(Element, ExprNode, m, "_elem", Expr, vector<Expr>)
@@ -73,12 +93,21 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(NotNull, ExprNode, m, "_notnull", Expr)
 
     /* Statements */
-    REGISTER_CLASS(Func, StmtNode, m, "_func", string, Expr, vector<Sym>,
-                   SymTable)
     REGISTER_CLASS(Stmts, StmtNode, m, "_stmts", vector<Stmt>)
     REGISTER_CLASS(IfElse, StmtNode, m, "_ifelse", Expr, Stmt, Stmt)
     REGISTER_CLASS(NoOp, StmtNode, m, "_noop")
     REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr)
+    py::class_<Func, shared_ptr<Func>, StmtNode>(m, "_func")
+        .def(py::init<string, Expr, vector<Sym>, SymTable, bool>(),
+             py::arg("name"), py::arg("output"), py::arg("inputs"),
+             py::arg("tbl") = SymTable(), py::arg("is_kernel") = false)
+        .def_readwrite("name", &Func::name)
+        .def_readwrite("output", &Func::output)
+        .def_readwrite("inputs", &Func::inputs)
+        .def_readwrite("tbl", &Func::tbl)
+        .def_readwrite("is_kernel", &Func::is_kernel)
+        .def("insert_sym",
+             [](Func& f, const Sym& sym, Expr& expr) { f.tbl[sym] = expr; });
 
     /* Misc Expressions */
     REGISTER_CLASS(Call, ExprNode, m, "_call", string, DataType, vector<Expr>)
@@ -86,6 +115,7 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(Cast, ExprNode, m, "_cast", DataType, Expr)
     REGISTER_CLASS(Get, ExprNode, m, "_get", Expr, size_t)
     REGISTER_CLASS(New, ExprNode, m, "_new", vector<Expr>)
+    REGISTER_CLASS(StructGEP, ExprNode, m, "_structgep", Expr, size_t)
 
     /* Math Operators for Nary Expressions */
     py::enum_<MathOp>(m, "MathOp")
@@ -147,6 +177,12 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(GreaterThan, BinaryExpr, m, "_gt", Expr, Expr)
     REGISTER_CLASS(LessThanEqual, BinaryExpr, m, "_lte", Expr, Expr)
     REGISTER_CLASS(GreaterThanEqual, BinaryExpr, m, "_gte", Expr, Expr)
+
+    /* CUDA */
+    REGISTER_CLASS(ThreadIdx, ExprNode, m, "_tidx")
+    REGISTER_CLASS(BlockIdx, ExprNode, m, "_bidx")
+    REGISTER_CLASS(GridDim, ExprNode, m, "_gdim")
+    REGISTER_CLASS(BlockDim, ExprNode, m, "_bdim")
 
     /* Constants */
     m.def("_i8", [](int8_t val) { return Const(types::INT8, val); });
