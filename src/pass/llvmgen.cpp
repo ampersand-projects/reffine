@@ -359,11 +359,11 @@ Value* LLVMGen::visit(Locate& locate)
 
 Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
 {
-    auto vec_val = eval(fetch_data_ptr.buf);
-    auto idx_val = eval(fetch_data_ptr.idx);
+    if (fetch_data_ptr.idx == nullptr) fetch_data_ptr.idx = _idx(0);
 
-    auto data_addr = builder()->CreateGEP(lltype(fetch_data_ptr.type.deref()),
-                                          vec_val, idx_val);
+    auto data_addr = builder()->CreateGEP(
+        lltype(fetch_data_ptr.addr->type.deref()), eval(fetch_data_ptr.addr),
+        eval(fetch_data_ptr.idx));
 
     return data_addr;
 }
