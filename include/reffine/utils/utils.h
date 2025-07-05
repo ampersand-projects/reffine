@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "reffine/arrow/defs.h"
+#include "reffine/engine/cuda_engine.h"
 #include "reffine/engine/engine.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/llvmgen.h"
@@ -36,5 +36,7 @@ T compile_op(std::shared_ptr<Func> op)
     auto loop = LoopGen::Build(op_to_loop);
     return compile_loop<T>(loop);
 }
+
+CUfunction compile_kernel(std::shared_ptr<Func>);
 
 #endif  // INCLUDE_REFFINE_UTILS_H_

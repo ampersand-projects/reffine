@@ -24,6 +24,5 @@
 
 arrow::Result<reffine::ArrowTable> get_input_vector();
 std::string print_arrow_table(reffine::ArrowTable&);
-CUfunction compile_kernel(std::shared_ptr<reffine::Func>);
 
 #endif  // TEST_INCLUDE_TEST_UTILS_H_
