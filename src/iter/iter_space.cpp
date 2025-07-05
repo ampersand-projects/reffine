@@ -62,7 +62,7 @@ Expr VecSpace::_condition(Expr idx)
 
 Expr VecSpace::_idx_to_iter(Expr idx)
 {
-    return _lookup(this->vec, idx);
+    return _load(_fetch(this->vec, idx, 0));
 }
 
 Expr VecSpace::_iter_to_idx(Expr iter)

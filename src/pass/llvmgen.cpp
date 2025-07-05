@@ -345,6 +345,16 @@ Value* LLVMGen::visit(SetValid& set_valid)
                   {vec_val, idx_val, validity_val, col_val});
 }
 
+Value* LLVMGen::visit(Length& len)
+{
+    return llcall("get_vector_len", lltype(len), {len.vec});
+}
+
+Value* LLVMGen::visit(Locate& locate)
+{
+    return llcall("vector_locate", lltype(locate), {locate.vec, locate.iter});
+}
+
 Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
 {
     auto vec_val = eval(fetch_data_ptr.vec);
