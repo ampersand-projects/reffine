@@ -80,7 +80,7 @@ arrow::Result<ArrowTable> load_arrow_file(string filename)
     return ArrowTable(std::move(schema), std::move(array));
 }
 
-arrow::Status query_arrow_file(ArrowTable& in_table, long (*query_fn)(void*))
+arrow::Status query_arrow_file(ArrowTable& in_table, void (*query_fn)(long*, void*))
 {
     auto& in_array = in_table.array;
 
@@ -93,10 +93,12 @@ arrow::Status query_arrow_file(ArrowTable& in_table, long (*query_fn)(void*))
     out_array.add_child<Int64Array>(in_array.length);
     out_array.add_child<BooleanArray>(in_array.length);
 
-    cout << "SUM: " << query_fn(&in_array) << endl;
+    long sum;
+    query_fn(&sum, &in_array);
+    cout << "SUM: " << sum << endl;
 
-    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(&out_array, &out_schema));
-    cout << "Output: " << endl << res->ToString() << endl;
+    //ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(&out_array, &out_schema));
+    //cout << "Output: " << endl << res->ToString() << endl;
 
     return arrow::Status::OK();
 }
@@ -568,6 +570,31 @@ shared_ptr<Func> vector_op()
     return foo_fn;
 }
 
+shared_ptr<Func> vector_op2()
+{
+    auto t_sym = _sym("t", _i64_t);
+    auto vec_in_sym =
+        _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
+                              int8_t, int64_t>());
+    auto elem_expr = vec_in_sym[{t_sym}];
+    auto elem = _sym("elem", elem_expr);
+    Op op({t_sym}, ~(elem), {elem[1]});
+
+    auto sum = _red(
+        op, []() { return _i64(0); },
+        [](Expr s, Expr v) {
+            auto v0 = _get(v, 0);
+            return _add(s, _get(v, 0));
+        });
+    auto sum_sym = _sym("sum", sum);
+
+    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
+    foo_fn->tbl[elem] = elem_expr;
+    foo_fn->tbl[sum_sym] = sum;
+
+    return foo_fn;
+}
+
 int main()
 {   
     /*
@@ -590,14 +617,12 @@ int main()
         }
     }
 
-    //auto table = load_arrow_file("../students.arrow");
-    auto fn = vector_op();
+    auto fn = vector_op2();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto loop = LoopGen::Build(fn);
     cout << "Loop IR (raw):" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
     cout << "Loop IR (canon):" << endl << IRPrinter::Build(loop) << endl;
-    return 0;
     auto exp_loop = LoadStoreExpand::Build(loop);
     cout << "Loop IR (expand):" << endl << IRPrinter::Build(exp_loop) << endl;
     auto ngelm_loop = NewGetElimination::Build(exp_loop);
@@ -615,5 +640,12 @@ int main()
     llfile.close();
 
     jit->AddModule(std::move(llmod));
+    auto query_fn = jit->Lookup<void (*)(long*, void*)>(ngelm_loop->name);
+
+    auto table = load_arrow_file("../students.arrow");
+    auto status = query_arrow_file(*table, query_fn);
+    if (!status.ok()) {
+        cerr << status.ToString() << endl;
+    }
     return 0;
 }

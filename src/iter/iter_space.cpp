@@ -32,17 +32,17 @@ Expr IterSpace::_condition(Expr idx) { return nullptr; }
 
 Expr IterSpace::_idx_to_iter(Expr idx)
 {
-    return _cast(this->type, idx);
+    return idx;
 }
 
 Expr IterSpace::_iter_to_idx(Expr iter)
 {
-    return _cast(types::IDX, iter);
+    return iter;
 }
 
 Expr IterSpace::_advance(Expr idx)
 {
-    return _add(idx, _idx(1));
+    return _add(idx, _const(this->type, 1));
 }
 
 Expr VecSpace::_lower_bound()
@@ -156,7 +156,14 @@ Expr InterSpace::_upper_bound()
 
 Expr InterSpace::_condition(Expr idx)
 {
-    auto lcond = this->left->condition(_get(idx, 0));
-    auto rcond = this->right->condition(_get(idx, 1));
-    return (lcond && rcond) ? _and(lcond, rcond) : (lcond ? lcond : rcond);
+    auto lidx = _get(idx, 0);
+    auto ridx = _get(idx, 1);
+
+    auto lcond = this->left->condition(lidx);
+    auto rcond = this->right->condition(ridx);
+    auto cond = (lcond && rcond) ? _and(lcond, rcond) : (lcond ? lcond : rcond);
+
+    auto liter = this->left->idx_to_iter(lidx);
+    auto riter = this->left->idx_to_iter(ridx);
+    return _and(_eq(liter, riter), cond);
 }
