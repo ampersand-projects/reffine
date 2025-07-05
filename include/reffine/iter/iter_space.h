@@ -86,21 +86,38 @@ private:
     Expr _advance(Expr) final;
 };
 
-struct BoundSpace : public IterSpace {
+struct SuperSpace : public IterSpace {
+    ISpace ispace;
+
+    SuperSpace(ISpace ispace) : IterSpace(ispace->type), ispace(ispace) {}
+
+protected:
+    Expr _lower_bound() override;
+    Expr _upper_bound() override;
+    Expr _condition(Expr) override;
+    Expr _idx_to_iter(Expr) override;
+    Expr _iter_to_idx(Expr) override;
+    Expr _advance(Expr) override;
+};
+
+struct BoundSpace : public SuperSpace {
     Expr bound;
 
-    BoundSpace(Expr bound) : IterSpace(bound->type), bound(bound) {}
+    BoundSpace(ISpace ispace, Expr bound) : SuperSpace(ispace), bound(bound)
+    {
+        ASSERT(bound->type == ispace->type);
+    }
 };
 
 struct LBoundSpace : public BoundSpace {
-    LBoundSpace(Expr bound) : BoundSpace(bound) {}
+    LBoundSpace(ISpace ispace, Expr bound) : BoundSpace(ispace, bound) {}
 
 private:
     Expr _lower_bound() final;
 };
 
 struct UBoundSpace : public BoundSpace {
-    UBoundSpace(Expr bound) : BoundSpace(bound) {}
+    UBoundSpace(ISpace ispace, Expr bound) : BoundSpace(ispace, bound) {}
 
 private:
     Expr _upper_bound() final;

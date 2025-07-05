@@ -16,12 +16,12 @@ ISpace reffine::operator|(ISpace left, ISpace right)
 
 ISpace reffine::operator>=(ISpace iter, Expr bound)
 {
-    return iter & make_shared<LBoundSpace>(bound);
+    return make_shared<LBoundSpace>(iter, bound);
 }
 
 ISpace reffine::operator<=(ISpace iter, Expr bound)
 {
-    return iter & make_shared<UBoundSpace>(bound);
+    return make_shared<UBoundSpace>(iter, bound);
 }
 
 Expr IterSpace::_lower_bound() { return nullptr; }
@@ -79,14 +79,46 @@ Expr VecSpace::_advance(Expr idx)
     return _add(idx, _idx(1));
 }
 
+Expr SuperSpace::_lower_bound()
+{
+    return this->ispace->lower_bound();
+}
+
+Expr SuperSpace::_upper_bound()
+{
+    return this->ispace->upper_bound();
+}
+
+Expr SuperSpace::_condition(Expr idx)
+{
+    return this->ispace->condition(idx);
+}
+
+Expr SuperSpace::_idx_to_iter(Expr idx)
+{
+    return this->ispace->idx_to_iter(idx);
+}
+
+Expr SuperSpace::_iter_to_idx(Expr iter)
+{
+    return this->ispace->iter_to_idx(iter);
+}
+
+Expr SuperSpace::_advance(Expr idx)
+{
+    return this->ispace->advance(idx);
+}
+
 Expr LBoundSpace::_lower_bound()
 {
-    return this->bound;
+    auto lb = this->ispace->lower_bound();
+    return lb ? _max(this->bound, lb) : this->bound;
 }
 
 Expr UBoundSpace::_upper_bound()
 {
-    return this->bound;
+    auto ub = this->ispace->upper_bound();
+    return ub ? _min(this->bound, ub) : this->bound;
 }
 
 Expr JointSpace::_idx_to_iter(Expr idx)

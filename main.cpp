@@ -597,6 +597,27 @@ shared_ptr<Func> vector_op2()
     return foo_fn;
 }
 
+shared_ptr<Func> vector_op3()
+{
+    auto t_sym = _sym("t", _i64_t);
+    Op op({t_sym}, _lt(t_sym, _i64(10)) & _gte(t_sym, _i64(0)), {
+        t_sym
+    });
+
+    auto sum = _red(
+        op, []() { return _i64(0); },
+        [](Expr s, Expr v) {
+            auto v0 = _get(v, 0);
+            return _add(s, _get(v, 0));
+        });
+    auto sum_sym = _sym("sum", sum);
+
+    auto foo_fn = _func("foo", sum_sym, vector<Sym>{});
+    foo_fn->tbl[sum_sym] = sum;
+
+    return foo_fn;
+}
+
 int main()
 {   
     /*
@@ -619,7 +640,7 @@ int main()
         }
     }
 
-    auto fn = vector_op2();
+    auto fn = vector_op3();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto loop = LoopGen::Build(fn);
     cout << "Loop IR (raw):" << endl << IRPrinter::Build(loop) << endl;
