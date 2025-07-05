@@ -578,7 +578,9 @@ shared_ptr<Func> vector_op2()
                               int8_t, int64_t>());
     auto elem_expr = vec_in_sym[{t_sym}];
     auto elem = _sym("elem", elem_expr);
-    Op op({t_sym}, ~(elem), {elem[1]});
+    Op op({t_sym}, ~(elem), {
+        _call("_print", types::INT64, vector<Expr>{elem[0]})
+    });
 
     auto sum = _red(
         op, []() { return _i64(0); },
