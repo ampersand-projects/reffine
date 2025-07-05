@@ -134,9 +134,10 @@ struct DataType {
         if (this->dim == 1) {
             return this->dtypes[0];
         } else {
-            return DataType(BaseType::STRUCT,
-                            std::vector<DataType>(this->dtypes.begin(),
-                                                  this->dtypes.begin() + this->dim));
+            return DataType(
+                BaseType::STRUCT,
+                std::vector<DataType>(this->dtypes.begin(),
+                                      this->dtypes.begin() + this->dim));
         }
     }
 

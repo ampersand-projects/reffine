@@ -2,6 +2,7 @@
 #define INCLUDE_REFFINE_PASS_VINSTR_H_
 
 #include <cstdio>
+
 #include "reffine/arrow/abi.h"
 
 #define REFFINE_VINSTR_ATTR __attribute__((always_inline))

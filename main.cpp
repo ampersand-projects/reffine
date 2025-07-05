@@ -640,7 +640,7 @@ int main()
         }
     }
 
-    auto fn = vector_op3();
+    auto fn = vector_op();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
     auto loop = LoopGen::Build(fn);
     cout << "Loop IR (raw):" << endl << IRPrinter::Build(loop) << endl;

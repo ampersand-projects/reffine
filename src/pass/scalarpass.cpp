@@ -1,7 +1,7 @@
 #include "reffine/pass/scalarpass.h"
-#include "reffine/pass/printer.h"
 
 #include "reffine/builder/reffiner.h"
+#include "reffine/pass/printer.h"
 
 using namespace reffine;
 using namespace reffine::reffiner;
@@ -65,8 +65,7 @@ Expr NewGetElimination::visit(Select& sel)
             auto new_true_body_i = _new_get_map.at(new_true_body)[i];
             auto new_false_body_i = _new_get_map.at(new_false_body)[i];
             new_sel_exprs.push_back(
-                eval(_sel(new_cond, new_true_body_i, new_false_body_i))
-            );
+                eval(_sel(new_cond, new_true_body_i, new_false_body_i)));
         }
 
         _new_get_map[new_sel] = new_sel_exprs;
@@ -110,9 +109,7 @@ Expr NewGetElimination::visit(Get& get)
 void NewGetElimination::visit(Func& func)
 {
     // Struct type inputs are not supported yet
-    for (const auto& input : func.inputs) {
-        ASSERT(!input->type.is_struct());
-    }
+    for (const auto& input : func.inputs) { ASSERT(!input->type.is_struct()); }
 
     IRClone::visit(func);
 }

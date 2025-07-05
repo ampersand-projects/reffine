@@ -425,10 +425,7 @@ void IRPrinter::Visit(Locate& locate)
     return emitfunc("locate", {locate.vec, locate.iter});
 }
 
-void IRPrinter::Visit(Length& len)
-{
-    emitfunc("length", {len.vec});
-}
+void IRPrinter::Visit(Length& len) { emitfunc("length", {len.vec}); }
 
 void IRPrinter::Visit(FetchDataPtr& fetch_data_ptr)
 {

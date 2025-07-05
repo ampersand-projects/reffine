@@ -1,9 +1,9 @@
 #ifndef INCLUDE_REFFINE_PASS_REFFINEPASS_H_
 #define INCLUDE_REFFINE_PASS_REFFINEPASS_H_
 
+#include "reffine/iter/iter_space.h"
 #include "reffine/pass/base/irgen.h"
 #include "reffine/pass/irclone.h"
-#include "reffine/iter/iter_space.h"
 
 namespace reffine {
 

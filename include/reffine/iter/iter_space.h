@@ -11,10 +11,7 @@ namespace reffine {
 struct IterSpace {
     const DataType type;
 
-    IterSpace(DataType type) : type(type)
-    {
-        ASSERT(type.is_val());
-    }
+    IterSpace(DataType type) : type(type) { ASSERT(type.is_val()); }
 
     virtual ~IterSpace() {}
 
@@ -46,10 +43,7 @@ struct IterSpace {
         return iter;
     }
 
-    Expr iter_to_idx(Expr iter)
-    {
-        return this->_iter_to_idx(iter);
-    }
+    Expr iter_to_idx(Expr iter) { return this->_iter_to_idx(iter); }
 
     Expr advance(Expr idx)
     {
@@ -74,7 +68,7 @@ struct VecSpace : public IterSpace {
     VecSpace(Sym vec) : IterSpace(vec->type.iterty()), vec(vec)
     {
         ASSERT(vec->type.is_vector());
-        ASSERT(vec->type.dim == 1); // currently only support 1d vectors
+        ASSERT(vec->type.dim == 1);  // currently only support 1d vectors
     }
 
 private:
@@ -127,7 +121,8 @@ struct JointSpace : public IterSpace {
     ISpace left;
     ISpace right;
 
-    JointSpace(ISpace left, ISpace right) : IterSpace(left->type), left(left), right(right)
+    JointSpace(ISpace left, ISpace right)
+        : IterSpace(left->type), left(left), right(right)
     {
         ASSERT(left->type == right->type);
     }

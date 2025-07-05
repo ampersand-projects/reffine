@@ -50,16 +50,15 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
 
     // Loop output
     vector<Expr> outputs;
-    for (auto output : op.outputs) {
-        outputs.push_back(eval(output));
-    }
+    for (auto output : op.outputs) { outputs.push_back(eval(output)); }
 
     // Loop definition
     auto loop = _loop(_new(outputs));
     loop->init = _store(idx_addr, idx_init);
     loop->incr = _store(idx_addr, eval(ispace->advance(_load(idx_addr))));
     loop->exit_cond = _gt(loop_iter, eval(ispace->upper_bound()));
-    loop->body_cond = nullptr; // TODO: eval(ispace->condition(_load(idx_addr)));
+    loop->body_cond =
+        nullptr;  // TODO: eval(ispace->condition(_load(idx_addr)));
 
     return loop;
 }

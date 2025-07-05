@@ -1,4 +1,5 @@
 #include "reffine/iter/iter_space.h"
+
 #include "reffine/builder/reffiner.h"
 
 using namespace reffine;
@@ -30,69 +31,36 @@ Expr IterSpace::_upper_bound() { return nullptr; }
 
 Expr IterSpace::_condition(Expr idx) { return nullptr; }
 
-Expr IterSpace::_idx_to_iter(Expr idx)
-{
-    return idx;
-}
+Expr IterSpace::_idx_to_iter(Expr idx) { return idx; }
 
-Expr IterSpace::_iter_to_idx(Expr iter)
-{
-    return iter;
-}
+Expr IterSpace::_iter_to_idx(Expr iter) { return iter; }
 
-Expr IterSpace::_advance(Expr idx)
-{
-    return _add(idx, _const(this->type, 1));
-}
+Expr IterSpace::_advance(Expr idx) { return _add(idx, _const(this->type, 1)); }
 
-Expr VecSpace::_lower_bound()
-{
-    return this->idx_to_iter(_idx(0));
-}
+Expr VecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
 
 Expr VecSpace::_upper_bound()
 {
     return this->idx_to_iter(_len(this->vec) - _idx(1));
 }
 
-Expr VecSpace::_condition(Expr idx)
-{
-    return _isval(this->vec, idx, 0);
-}
+Expr VecSpace::_condition(Expr idx) { return _isval(this->vec, idx, 0); }
 
 Expr VecSpace::_idx_to_iter(Expr idx)
 {
-    return _sel(
-        _lt(idx, _len(this->vec)),
-        _load(_fetch(this->vec, idx, 0)),
-        _const(this->type, INF)
-    );
+    return _sel(_lt(idx, _len(this->vec)), _load(_fetch(this->vec, idx, 0)),
+                _const(this->type, INF));
 }
 
-Expr VecSpace::_iter_to_idx(Expr iter)
-{
-    return _locate(this->vec, iter);
-}
+Expr VecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
 
-Expr VecSpace::_advance(Expr idx)
-{
-    return _add(idx, _idx(1));
-}
+Expr VecSpace::_advance(Expr idx) { return _add(idx, _idx(1)); }
 
-Expr SuperSpace::_lower_bound()
-{
-    return this->ispace->lower_bound();
-}
+Expr SuperSpace::_lower_bound() { return this->ispace->lower_bound(); }
 
-Expr SuperSpace::_upper_bound()
-{
-    return this->ispace->upper_bound();
-}
+Expr SuperSpace::_upper_bound() { return this->ispace->upper_bound(); }
 
-Expr SuperSpace::_condition(Expr idx)
-{
-    return this->ispace->condition(idx);
-}
+Expr SuperSpace::_condition(Expr idx) { return this->ispace->condition(idx); }
 
 Expr SuperSpace::_idx_to_iter(Expr idx)
 {
@@ -104,10 +72,7 @@ Expr SuperSpace::_iter_to_idx(Expr iter)
     return this->ispace->iter_to_idx(iter);
 }
 
-Expr SuperSpace::_advance(Expr idx)
-{
-    return this->ispace->advance(idx);
-}
+Expr SuperSpace::_advance(Expr idx) { return this->ispace->advance(idx); }
 
 Expr LBoundSpace::_lower_bound()
 {
@@ -144,15 +109,9 @@ Expr JointSpace::_advance(Expr idx)
     auto new_lidx = this->left->advance(lidx);
     auto new_ridx = this->right->advance(ridx);
 
-    return _sel(
-        _lt(liter, riter),
-        _new(vector<Expr>{new_lidx, ridx}),
-        _sel(
-            _lt(riter, liter),
-            _new(vector<Expr>{lidx, new_ridx}),
-            _new(vector<Expr>{new_lidx, new_ridx})
-        )
-    );
+    return _sel(_lt(liter, riter), _new(vector<Expr>{new_lidx, ridx}),
+                _sel(_lt(riter, liter), _new(vector<Expr>{lidx, new_ridx}),
+                     _new(vector<Expr>{new_lidx, new_ridx})));
 }
 
 Expr UnionSpace::_lower_bound()
