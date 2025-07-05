@@ -2,8 +2,8 @@ import pyarrow as pa
 
 def run_query(arr):
     total = 0
-    print(type(arr))
-    for n in arr['id']:
+    print(arr)
+    for n in arr['hours_studied']:
         total += n.as_py()
 
     print(total)

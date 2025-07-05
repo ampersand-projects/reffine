@@ -12,7 +12,7 @@ using namespace std;
 
 namespace reffine {
 
-#define INF 1 << 32
+#define INF 1 << 22
 
 enum class BaseType {
     UNKNOWN,  // never use this type
