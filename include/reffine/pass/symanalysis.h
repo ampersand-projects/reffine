@@ -8,6 +8,7 @@ namespace reffine {
 
 struct SymInfo {
     int count = 0;
+    int order;
 };
 
 class SymAnalysis : public IRPass {
@@ -20,6 +21,7 @@ private:
     void Visit(SymNode&) final;
 
     map<Sym, SymInfo> _syminfo_map;
+    int _cur_order = 0;
 };
 
 }  // namespace reffine

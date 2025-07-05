@@ -8,9 +8,12 @@ using namespace reffine::reffiner;
 void SymAnalysis::Visit(SymNode& symbol)
 {
     auto tmp = this->tmp_sym(symbol);
-    _syminfo_map[tmp].count++;
 
     IRPass::Visit(symbol);
+    if (_syminfo_map[tmp].count == 0) {
+        _syminfo_map[tmp].order = _cur_order++;
+    }
+    _syminfo_map[tmp].count++;
 }
 
 map<Sym, SymInfo> SymAnalysis::Build(shared_ptr<Func> func)
