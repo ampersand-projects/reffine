@@ -1,4 +1,5 @@
 #include "reffine/pass/scalarpass.h"
+#include "reffine/pass/printer.h"
 
 #include "reffine/builder/reffiner.h"
 
@@ -64,7 +65,7 @@ Expr NewGetElimination::visit(Select& sel)
             auto new_true_body_i = _new_get_map.at(new_true_body)[i];
             auto new_false_body_i = _new_get_map.at(new_false_body)[i];
             new_sel_exprs.push_back(
-                _sel(new_cond, new_true_body_i, new_false_body_i)
+                eval(_sel(new_cond, new_true_body_i, new_false_body_i))
             );
         }
 
@@ -99,6 +100,8 @@ Expr NewGetElimination::visit(Get& get)
             auto expr = this->ctx().out_sym_tbl.at(maybe_sym);
             return _new_get_map[expr][get.col];
         } else {
+            cout << "TEST: " << IRPrinter::Build(get.val) << endl;
+            cout << "TEST2: " << IRPrinter::Build(val) << endl;
             throw runtime_error("Unable to eliminate Get expression");
         }
     }
