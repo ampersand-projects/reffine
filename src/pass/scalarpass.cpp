@@ -99,8 +99,6 @@ Expr NewGetElimination::visit(Get& get)
             auto expr = this->ctx().out_sym_tbl.at(maybe_sym);
             return _new_get_map[expr][get.col];
         } else {
-            cout << "TEST: " << IRPrinter::Build(get.val) << endl;
-            cout << "TEST2: " << IRPrinter::Build(val) << endl;
             throw runtime_error("Unable to eliminate Get expression");
         }
     }
