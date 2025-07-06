@@ -10,12 +10,10 @@ using namespace reffine::reffiner;
 
 Expr LoopGen::visit(Element& elem)
 {
+    eval(elem.iters[0]);
     auto vec = eval(elem.vec);
-    auto iter = eval(elem.iters[0]);
 
-    auto idx_expr = _locate(vec, iter);
-    auto idx = _sym("elem_idx", idx_expr);
-    this->assign(idx, idx_expr);
+    auto idx = this->_loopgenctx.vec_iter_idx_map.at(elem.vec).at(elem.iters[0]);
 
     vector<Expr> vals;
     for (size_t i = 0; i < vec->type.dtypes.size(); i++) {
@@ -41,6 +39,11 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
     auto idx_addr = _sym(iter->name + "_idx_addr", idx_alloc);
     this->assign(idx_addr, idx_alloc);
     this->map_sym(idx_addr, idx_addr);
+
+    // Popular iter_elem_map
+    for (auto& [vec, idx] : ispace->vec_idxs(_load(idx_addr))) {
+        this->_loopgenctx.vec_iter_idx_map[vec][iter] = idx;
+    }
 
     // Derive op iterator from loop idx
     auto loop_iter = _sym(iter->name, iter);
