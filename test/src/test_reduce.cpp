@@ -67,19 +67,19 @@ shared_ptr<Func> vector_op()
     auto vec_in_sym =
         _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
                               int8_t, int64_t>());
-    Op op({t_sym},
-          ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(48)) &&
-              _gte(t_sym, _i64(10)),
-          {
-              vec_in_sym[{t_sym}][3],
-              _new(vector<Expr>{
-                  vec_in_sym[{t_sym}][2],
-                  vec_in_sym[{t_sym}][3],
-                  vec_in_sym[{t_sym}][1],
-                  vec_in_sym[{t_sym}][4],
-              }),
-              vec_in_sym[{t_sym}][4],
-          });
+    Op op(
+        {t_sym},
+        ~(vec_in_sym[{t_sym}]) & _lte(t_sym, _i64(48)) & _gte(t_sym, _i64(10)),
+        {
+            vec_in_sym[{t_sym}][3],
+            _new(vector<Expr>{
+                vec_in_sym[{t_sym}][2],
+                vec_in_sym[{t_sym}][3],
+                vec_in_sym[{t_sym}][1],
+                vec_in_sym[{t_sym}][4],
+            }),
+            vec_in_sym[{t_sym}][4],
+        });
 
     auto sum = _red(
         op,

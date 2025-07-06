@@ -15,11 +15,6 @@ struct Op : public ExprNode {
     Expr pred;
     vector<Expr> outputs;
 
-    /* internal use only */
-    Expr _lower;
-    Expr _upper;
-    Expr _incr;
-
     Op(vector<Sym> iters, Expr pred, vector<Expr> outputs)
         : ExprNode(extract_type(iters, outputs)),
           iters(std::move(iters)),
@@ -59,9 +54,7 @@ struct Element : public ExprNode {
     vector<Expr> iters;
 
     Element(Expr vec, vector<Expr> iters)
-        : ExprNode(DataType(BaseType::STRUCT, vec->type.dtypes)),
-          vec(vec),
-          iters(std::move(iters))
+        : ExprNode(vec->type.rowty()), vec(vec), iters(std::move(iters))
     {
         const auto& vtype = vec->type;
 
@@ -76,51 +69,6 @@ struct Element : public ExprNode {
     Element(Expr vec, std::initializer_list<Expr> iters)
         : Element(vec, vector<Expr>(iters))
     {
-    }
-
-    void Accept(Visitor&) final;
-};
-
-struct Lookup : public ExprNode {
-    Expr vec;
-    Expr idx;
-
-    Lookup(Expr vec, Expr idx) : ExprNode(extract_type(vec)), vec(vec), idx(idx)
-    {
-        ASSERT(idx->type.is_idx());
-    }
-
-    void Accept(Visitor&) final;
-
-private:
-    static DataType extract_type(Expr vec)
-    {
-        ASSERT(vec->type.is_vector());
-        auto& vtype = vec->type;
-
-        vector<DataType> dtypes;
-        for (size_t i = vtype.dim; i < vtype.dtypes.size(); i++) {
-            dtypes.push_back(vtype.dtypes[i]);
-        }
-
-        return DataType(BaseType::STRUCT, dtypes);
-    }
-};
-
-struct Locate : public ExprNode {
-    Expr vec;
-    vector<Expr> iters;
-
-    Locate(Expr vec, vector<Expr> iters)
-        : ExprNode(types::IDX), vec(vec), iters(iters)
-    {
-        auto& vtype = vec->type;
-
-        ASSERT(vtype.is_vector());
-        ASSERT(vtype.dim >= this->iters.size());
-        for (size_t i = 0; i < this->iters.size(); i++) {
-            ASSERT(vtype.dtypes[i] == this->iters[i]->type);
-        }
     }
 
     void Accept(Visitor&) final;

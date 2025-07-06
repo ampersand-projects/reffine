@@ -69,6 +69,8 @@ private:
     llvm::Value* visit(Loop&) final;
     llvm::Value* visit(IsValid&) final;
     llvm::Value* visit(SetValid&) final;
+    llvm::Value* visit(Length&) final;
+    llvm::Value* visit(Locate&) final;
     llvm::Value* visit(FetchDataPtr&) final;
     void visit(Func&) final;
 

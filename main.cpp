@@ -80,7 +80,7 @@ arrow::Result<ArrowTable> load_arrow_file(string filename)
     return ArrowTable(std::move(schema), std::move(array));
 }
 
-arrow::Status query_arrow_file(ArrowTable& in_table, long (*query_fn)(void*))
+arrow::Status query_arrow_file(ArrowTable& in_table, void (*query_fn)(long*, void*))
 {
     auto& in_array = in_table.array;
 
@@ -93,10 +93,12 @@ arrow::Status query_arrow_file(ArrowTable& in_table, long (*query_fn)(void*))
     out_array.add_child<Int64Array>(in_array.length);
     out_array.add_child<BooleanArray>(in_array.length);
 
-    cout << "SUM: " << query_fn(&in_array) << endl;
+    long sum;
+    query_fn(&sum, &in_array);
+    cout << "SUM: " << sum << endl;
 
-    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(&out_array, &out_schema));
-    cout << "Output: " << endl << res->ToString() << endl;
+    //ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(&out_array, &out_schema));
+    //cout << "Output: " << endl << res->ToString() << endl;
 
     return arrow::Status::OK();
 }
@@ -351,7 +353,7 @@ shared_ptr<Func> reduce_op_fn()
 
     Op op(
         { idx_sym },
-        _gte(idx_sym, _idx(0)) && _lt(idx_sym, _idx(2880404)),
+        _gte(idx_sym, _idx(0)) & _lt(idx_sym, _idx(2880404)),
         { _get(make_shared<Lookup>(vec_in_sym, idx_sym), 1) }
     );
     auto sum = _red(
@@ -386,7 +388,7 @@ shared_ptr<Func> tpcds_query9(ArrowTable& table)
 
     Op op(
         { idx_sym },
-        _gte(idx_sym, _idx(0)) && _lt(idx_sym, _idx(2880404)),
+        _gte(idx_sym, _idx(0)) & _lt(idx_sym, _idx(2880404)),
         { ss_quant_sym, ss_ext_tax_sym, ss_inc_tax_sym }
     );
     auto sum = _red(
@@ -426,19 +428,19 @@ shared_ptr<Func> tpcds_query9(ArrowTable& table)
                 return _new(vector<Expr>{count, ext_sum, inc_sum});
             };
             return _sel(
-                    _gt(ss_quant, _0) && _lte(ss_quant, _20),
+                    _gt(ss_quant, _0) & _lte(ss_quant, _20),
                     _new(vector<Expr>{update_state(s1, ext_tax, inc_tax), s2, s3, s4, s5}),
                     _sel(
-                        _gt(ss_quant, _20) && _lte(ss_quant, _40),
+                        _gt(ss_quant, _20) & _lte(ss_quant, _40),
                         _new(vector<Expr>{s1, update_state(s2, ext_tax, inc_tax), s3, s4, s5}),
                         _sel(
-                            _gt(ss_quant, _40) && _lte(ss_quant, _60),
+                            _gt(ss_quant, _40) & _lte(ss_quant, _60),
                             _new(vector<Expr>{s1, s2, update_state(s3, ext_tax, inc_tax), s4, s5}),
                             _sel(
-                                _gt(ss_quant, _60) && _lte(ss_quant, _80),
+                                _gt(ss_quant, _60) & _lte(ss_quant, _80),
                                 _new(vector<Expr>{s1, s2, s3, update_state(s4, ext_tax, inc_tax), s5}),
                                 _sel(
-                                    _gt(ss_quant, _80) && _lte(ss_quant, _100),
+                                    _gt(ss_quant, _80) & _lte(ss_quant, _100),
                                     _new(vector<Expr>{s1, s2, s3, s4, update_state(s5, ext_tax, inc_tax)}),
                                     s
                                     )
@@ -529,14 +531,16 @@ shared_ptr<Func> vector_op()
     auto vec_in_sym =
         _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
                               int8_t, int64_t>());
+    auto elem_expr = vec_in_sym[{t_sym}];
+    auto elem = _sym("elem", elem_expr);
     Op op({t_sym},
-          ~(vec_in_sym[{t_sym}]) && _lte(t_sym, _i64(48)) &&
+          ~(elem) & _lte(t_sym, _i64(48)) &
               _gte(t_sym, _i64(10)),
           {
-              vec_in_sym[{t_sym}][1],
-              vec_in_sym[{t_sym}][2],
-              vec_in_sym[{t_sym}][3],
-              vec_in_sym[{t_sym}][4]
+              elem[1],
+              elem[2],
+              elem[3],
+              elem[4]
           }
     );
 
@@ -559,8 +563,57 @@ shared_ptr<Func> vector_op()
     auto res_sym = _sym("res", res);
 
     auto foo_fn = _func("foo", res_sym, vector<Sym>{vec_in_sym});
+    foo_fn->tbl[elem] = elem_expr;
     foo_fn->tbl[sum_sym] = sum;
     foo_fn->tbl[res_sym] = res;
+
+    return foo_fn;
+}
+
+shared_ptr<Func> vector_op2()
+{
+    auto t_sym = _sym("t", _i64_t);
+    auto vec_in_sym =
+        _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
+                              int8_t, int64_t>());
+    auto elem_expr = vec_in_sym[{t_sym}];
+    auto elem = _sym("elem", elem_expr);
+    Op op({t_sym}, ~(elem), {
+        _call("_print", types::INT64, vector<Expr>{elem[0]})
+    });
+
+    auto sum = _red(
+        op, []() { return _i64(0); },
+        [](Expr s, Expr v) {
+            auto v0 = _get(v, 0);
+            return _add(s, _get(v, 0));
+        });
+    auto sum_sym = _sym("sum", sum);
+
+    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
+    foo_fn->tbl[elem] = elem_expr;
+    foo_fn->tbl[sum_sym] = sum;
+
+    return foo_fn;
+}
+
+shared_ptr<Func> vector_op3()
+{
+    auto t_sym = _sym("t", _i64_t);
+    Op op({t_sym}, _lt(t_sym, _i64(10)) & _gte(t_sym, _i64(0)), {
+        t_sym
+    });
+
+    auto sum = _red(
+        op, []() { return _i64(0); },
+        [](Expr s, Expr v) {
+            auto v0 = _get(v, 0);
+            return _add(s, _get(v, 0));
+        });
+    auto sum_sym = _sym("sum", sum);
+
+    auto foo_fn = _func("foo", sum_sym, vector<Sym>{});
+    foo_fn->tbl[sum_sym] = sum;
 
     return foo_fn;
 }
@@ -587,13 +640,9 @@ int main()
         }
     }
 
-    //auto table = load_arrow_file("../students.arrow");
     auto fn = vector_op();
     cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
-    auto fn2 = OpToLoop::Build(fn);
-    cout << "OpToLoop IR: " << endl << IRPrinter::Build(fn2) << endl;
-
-    auto loop = LoopGen::Build(fn2);
+    auto loop = LoopGen::Build(fn);
     cout << "Loop IR (raw):" << endl << IRPrinter::Build(loop) << endl;
     CanonPass::Build(loop);
     cout << "Loop IR (canon):" << endl << IRPrinter::Build(loop) << endl;
@@ -614,5 +663,12 @@ int main()
     llfile.close();
 
     jit->AddModule(std::move(llmod));
+    auto query_fn = jit->Lookup<void (*)(long*, void*)>(ngelm_loop->name);
+
+    auto table = load_arrow_file("../students.arrow");
+    auto status = query_arrow_file(*table, query_fn);
+    if (!status.ok()) {
+        cerr << status.ToString() << endl;
+    }
     return 0;
 }

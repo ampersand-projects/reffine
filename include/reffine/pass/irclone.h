@@ -37,6 +37,7 @@ protected:
     Expr visit(Element&) override;
     Expr visit(Lookup&) override;
     Expr visit(Locate&) override;
+    Expr visit(Length&) override;
     Expr visit(NotNull&) override;
     Expr visit(Reduce&) override;
     Expr visit(Call&) override;
@@ -55,7 +56,7 @@ protected:
     Expr visit(SetValid&) override;
     Expr visit(FetchDataPtr&) override;
     Expr visit(NoOp&) override;
-    void visit(Func&) final;
+    void visit(Func&) override;
 
 private:
     shared_ptr<Op> visit_op(Op&);

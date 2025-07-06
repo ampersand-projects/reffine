@@ -48,7 +48,7 @@ void IRPrinter::Visit(Const& cnst)
             ostr << cnst.val << "f";
             break;
         case BaseType::IDX:
-            ostr << (uint64_t)cnst.val << "x";
+            ostr << (int64_t)cnst.val << "x";
             break;
         default:
             throw std::runtime_error("Invalid constant type");
@@ -157,25 +157,6 @@ void IRPrinter::Visit(Op& op)
     for (const auto& iter : op.iters) { ostr << iter->name << ", "; }
     if (op.iters.size() > 0) { ostr << "\b\b"; }
     ostr << ": ";
-
-    ostr << "(";
-    if (op._lower) {
-        ostr << " >= ";
-        op._lower->Accept(*this);
-        ostr << "; ";
-    }
-    if (op._upper) {
-        ostr << " <= ";
-        op._upper->Accept(*this);
-        ostr << "; ";
-    }
-    if (op._incr) {
-        ostr << " <- ";
-        op._incr->Accept(*this);
-        ostr << "; ";
-    }
-    op.pred->Accept(*this);
-    ostr << ")";
 
     ostr << "{";
     for (const auto& output : op.outputs) {
@@ -441,16 +422,10 @@ void IRPrinter::Visit(Lookup& lookup)
 
 void IRPrinter::Visit(Locate& locate)
 {
-    ostr << "locate(";
-    locate.vec->Accept(*this);
-    ostr << ", {";
-    for (const auto& iter : locate.iters) {
-        iter->Accept(*this);
-        ostr << ", ";
-    }
-    ostr << "\b\b";
-    ostr << ")";
+    return emitfunc("locate", {locate.vec, locate.iter});
 }
+
+void IRPrinter::Visit(Length& len) { emitfunc("length", {len.vec}); }
 
 void IRPrinter::Visit(FetchDataPtr& fetch_data_ptr)
 {
@@ -462,7 +437,7 @@ string IRPrinter::Build(Stmt stmt)
 {
     IRPrinter printer;
     stmt->Accept(printer);
-    return printer.ostr.str();
+    return printer.str();
 }
 
 string IRPrinter::Build(llvm::Module& llmod)

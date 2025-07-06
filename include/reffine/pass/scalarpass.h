@@ -26,8 +26,10 @@ public:
     static shared_ptr<Func> Build(shared_ptr<Func>);
 
 private:
+    Expr visit(Select&) final;
     Expr visit(New&) final;
     Expr visit(Get&) final;
+    void visit(Func&) final;
 
     map<Expr, vector<Expr>> _new_get_map;
 };

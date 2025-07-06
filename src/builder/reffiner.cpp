@@ -1,6 +1,7 @@
 #include "reffine/builder/reffiner.h"
 
 #include "reffine/base/type.h"
+#include "reffine/pass/printer.h"
 
 namespace reffine::reffiner {
 
