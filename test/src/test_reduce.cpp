@@ -71,14 +71,14 @@ shared_ptr<Func> vector_op()
         {t_sym},
         ~(vec_in_sym[{t_sym}]) & _lte(t_sym, _i64(48)) & _gte(t_sym, _i64(10)),
         {
-            vec_in_sym[{t_sym}][3],
+            vec_in_sym[{t_sym}][2],
             _new(vector<Expr>{
-                vec_in_sym[{t_sym}][2],
-                vec_in_sym[{t_sym}][3],
                 vec_in_sym[{t_sym}][1],
-                vec_in_sym[{t_sym}][4],
+                vec_in_sym[{t_sym}][2],
+                vec_in_sym[{t_sym}][0],
+                vec_in_sym[{t_sym}][3],
             }),
-            vec_in_sym[{t_sym}][4],
+            vec_in_sym[{t_sym}][3],
         });
 
     auto sum = _red(
