@@ -5,11 +5,22 @@
 
 namespace reffine {
 
-using LoopGenCtx = IRCloneCtx;
+class LoopGenCtx : public IRCloneCtx {
+public:
+    LoopGenCtx(shared_ptr<Func> old_func, shared_ptr<Func> new_func)
+        : IRCloneCtx(old_func, new_func)
+    {
+    }
+
+private:
+    map<Expr, map<Expr, Expr>> vec_iter_idx_map;  // vec -> iter -> idx
+
+    friend class LoopGen;
+};
 
 class LoopGen : public IRClone {
 public:
-    explicit LoopGen(LoopGenCtx& ctx) : IRClone(ctx) {}
+    explicit LoopGen(LoopGenCtx& ctx) : IRClone(ctx), _loopgenctx(ctx) {}
 
     static shared_ptr<Func> Build(shared_ptr<Func>);
 
@@ -21,6 +32,8 @@ private:
     {
         throw runtime_error("NotNull visit not supported");
     }
+
+    LoopGenCtx& _loopgenctx;
 };
 
 }  // namespace reffine

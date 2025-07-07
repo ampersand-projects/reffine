@@ -8,6 +8,8 @@ using namespace std;
 
 namespace reffine {
 
+using VecIdxs = vector<pair<Expr, Expr>>;
+
 struct IterSpace {
     const DataType type;
 
@@ -52,6 +54,8 @@ struct IterSpace {
         return new_idx;
     }
 
+    VecIdxs vec_idxs(Expr idx) { return this->_vec_idxs(idx); }
+
 protected:
     virtual Expr _lower_bound();
     virtual Expr _upper_bound();
@@ -59,6 +63,7 @@ protected:
     virtual Expr _idx_to_iter(Expr);
     virtual Expr _iter_to_idx(Expr);
     virtual Expr _advance(Expr);
+    virtual VecIdxs _vec_idxs(Expr);
 };
 using ISpace = shared_ptr<IterSpace>;
 
@@ -78,6 +83,7 @@ private:
     Expr _idx_to_iter(Expr) final;
     Expr _iter_to_idx(Expr) final;
     Expr _advance(Expr) final;
+    VecIdxs _vec_idxs(Expr) final;
 };
 
 struct SuperSpace : public IterSpace {
@@ -92,6 +98,7 @@ protected:
     Expr _idx_to_iter(Expr) override;
     Expr _iter_to_idx(Expr) override;
     Expr _advance(Expr) override;
+    VecIdxs _vec_idxs(Expr) final;
 };
 
 struct BoundSpace : public SuperSpace {
@@ -131,6 +138,7 @@ protected:
     Expr _idx_to_iter(Expr) final;
     Expr _iter_to_idx(Expr) final;
     Expr _advance(Expr) final;
+    VecIdxs _vec_idxs(Expr) final;
 };
 
 struct UnionSpace : public JointSpace {

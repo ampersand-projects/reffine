@@ -38,6 +38,7 @@
 #include "reffine/arrow/defs.h"
 #include "reffine/builder/reffiner.h"
 #include "reffine/pass/vinstr.h"
+#include "reffine/utils/utils.h"
 
 using namespace reffine;
 using namespace std;
@@ -641,30 +642,7 @@ int main()
     }
 
     auto fn = vector_op();
-    cout << "Reffine IR:" << endl << IRPrinter::Build(fn) << endl;
-    auto loop = LoopGen::Build(fn);
-    cout << "Loop IR (raw):" << endl << IRPrinter::Build(loop) << endl;
-    CanonPass::Build(loop);
-    cout << "Loop IR (canon):" << endl << IRPrinter::Build(loop) << endl;
-    auto exp_loop = LoadStoreExpand::Build(loop);
-    cout << "Loop IR (expand):" << endl << IRPrinter::Build(exp_loop) << endl;
-    auto ngelm_loop = NewGetElimination::Build(exp_loop);
-    cout << "Loop IR (eliminate):" << endl << IRPrinter::Build(ngelm_loop) << endl;
-
-    auto jit = ExecEngine::Get();
-    auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(ngelm_loop, *llmod);
-    
-    //jit->Optimize(*llmod);
-
-    // dump llvm IR to .ll file
-    ofstream llfile(llmod->getName().str() + ".ll");
-    llfile << IRPrinter::Build(*llmod);
-    llfile.close();
-
-    jit->AddModule(std::move(llmod));
-    auto query_fn = jit->Lookup<void (*)(long*, void*)>(ngelm_loop->name);
-
+    auto query_fn = compile_op<void (*)(long*, void*)>(fn);
     auto table = load_arrow_file("../students.arrow");
     auto status = query_arrow_file(*table, query_fn);
     if (!status.ok()) {

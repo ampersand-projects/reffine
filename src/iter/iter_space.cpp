@@ -37,6 +37,8 @@ Expr IterSpace::_iter_to_idx(Expr iter) { return iter; }
 
 Expr IterSpace::_advance(Expr idx) { return _add(idx, _const(this->type, 1)); }
 
+VecIdxs IterSpace::_vec_idxs(Expr idx) { return VecIdxs{}; }
+
 Expr VecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
 
 Expr VecSpace::_upper_bound()
@@ -56,6 +58,11 @@ Expr VecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
 
 Expr VecSpace::_advance(Expr idx) { return _add(idx, _idx(1)); }
 
+VecIdxs VecSpace::_vec_idxs(Expr idx)
+{
+    return VecIdxs{make_pair(this->vec, idx)};
+}
+
 Expr SuperSpace::_lower_bound() { return this->ispace->lower_bound(); }
 
 Expr SuperSpace::_upper_bound() { return this->ispace->upper_bound(); }
@@ -73,6 +80,8 @@ Expr SuperSpace::_iter_to_idx(Expr iter)
 }
 
 Expr SuperSpace::_advance(Expr idx) { return this->ispace->advance(idx); }
+
+VecIdxs SuperSpace::_vec_idxs(Expr idx) { return this->ispace->vec_idxs(idx); }
 
 Expr LBoundSpace::_lower_bound()
 {
@@ -112,6 +121,18 @@ Expr JointSpace::_advance(Expr idx)
     return _sel(_lt(liter, riter), _new(vector<Expr>{new_lidx, ridx}),
                 _sel(_lt(riter, liter), _new(vector<Expr>{lidx, new_ridx}),
                      _new(vector<Expr>{new_lidx, new_ridx})));
+}
+
+VecIdxs JointSpace::_vec_idxs(Expr idx)
+{
+    VecIdxs vec_idxs;
+
+    auto l_vec_idxs = this->left->vec_idxs(_get(idx, 0));
+    auto r_vec_idxs = this->right->vec_idxs(_get(idx, 1));
+    vec_idxs.insert(vec_idxs.end(), l_vec_idxs.begin(), l_vec_idxs.end());
+    vec_idxs.insert(vec_idxs.end(), r_vec_idxs.begin(), r_vec_idxs.end());
+
+    return vec_idxs;
 }
 
 Expr UnionSpace::_lower_bound()
