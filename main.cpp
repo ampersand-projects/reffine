@@ -538,10 +538,10 @@ shared_ptr<Func> vector_op()
           ~(elem) & _lte(t_sym, _i64(48)) &
               _gte(t_sym, _i64(10)),
           {
+              elem[0],
               elem[1],
               elem[2],
-              elem[3],
-              elem[4]
+              elem[3]
           }
     );
 
