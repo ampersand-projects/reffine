@@ -16,11 +16,7 @@ void CanonPass::Visit(Loop& loop)
     }
 
     if (loop.body_cond) {
-        loop.body = _ifelse(
-            loop.body_cond,
-            loop.body,
-            _noop()
-        );
+        loop.body = _ifelse(loop.body_cond, loop.body, _noop());
 
         loop.body_cond = nullptr;
     }
