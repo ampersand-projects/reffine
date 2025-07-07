@@ -54,10 +54,7 @@ struct IterSpace {
         return new_idx;
     }
 
-    VecIdxs vec_idxs(Expr idx)
-    {
-        return this->_vec_idxs(idx);
-    }
+    VecIdxs vec_idxs(Expr idx) { return this->_vec_idxs(idx); }
 
 protected:
     virtual Expr _lower_bound();

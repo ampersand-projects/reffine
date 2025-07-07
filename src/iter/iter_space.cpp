@@ -37,7 +37,7 @@ Expr IterSpace::_iter_to_idx(Expr iter) { return iter; }
 
 Expr IterSpace::_advance(Expr idx) { return _add(idx, _const(this->type, 1)); }
 
-VecIdxs IterSpace::_vec_idxs(Expr idx) {  return VecIdxs{}; }
+VecIdxs IterSpace::_vec_idxs(Expr idx) { return VecIdxs{}; }
 
 Expr VecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
 

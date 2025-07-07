@@ -7,12 +7,13 @@ namespace reffine {
 
 class LoopGenCtx : public IRCloneCtx {
 public:
-    LoopGenCtx(shared_ptr<Func> old_func, shared_ptr<Func> new_func) :
-        IRCloneCtx(old_func, new_func)
-    {}
+    LoopGenCtx(shared_ptr<Func> old_func, shared_ptr<Func> new_func)
+        : IRCloneCtx(old_func, new_func)
+    {
+    }
 
 private:
-    map<Expr, map<Expr, Expr>> vec_iter_idx_map; // vec -> iter -> idx
+    map<Expr, map<Expr, Expr>> vec_iter_idx_map;  // vec -> iter -> idx
 
     friend class LoopGen;
 };

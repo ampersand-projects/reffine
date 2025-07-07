@@ -3,8 +3,8 @@
 
 #include <string>
 
-#include "reffine/base/log.h"
 #include "reffine/arrow/defs.h"
+#include "reffine/base/log.h"
 #include "reffine/engine/engine.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/llvmgen.h"
@@ -24,14 +24,17 @@ T compile_loop(std::shared_ptr<Func> loop)
     loop = LoadStoreExpand::Build(loop);
     LOG(INFO) << "Loop IR (expand):" << std::endl << loop->str() << std::endl;
     loop = NewGetElimination::Build(loop);
-    LOG(INFO) << "Loop IR (eliminate):" << std::endl << loop->str() << std::endl;
+    LOG(INFO) << "Loop IR (eliminate):" << std::endl
+              << loop->str() << std::endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
     LLVMGen::Build(loop, *llmod);
-    LOG(INFO) << "LLVM IR (raw):" << std::endl << IRPrinter::Build(*llmod) << std::endl;
+    LOG(INFO) << "LLVM IR (raw):" << std::endl
+              << IRPrinter::Build(*llmod) << std::endl;
     jit->Optimize(*llmod);
-    LOG(INFO) << "LLVM IR (optimized):" << std::endl << IRPrinter::Build(*llmod) << std::endl;
+    LOG(INFO) << "LLVM IR (optimized):" << std::endl
+              << IRPrinter::Build(*llmod) << std::endl;
     jit->AddModule(std::move(llmod));
     return jit->Lookup<T>(loop->name);
 }

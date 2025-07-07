@@ -13,7 +13,8 @@ Expr LoopGen::visit(Element& elem)
     eval(elem.iters[0]);
     auto vec = eval(elem.vec);
 
-    auto idx = this->_loopgenctx.vec_iter_idx_map.at(elem.vec).at(elem.iters[0]);
+    auto idx =
+        this->_loopgenctx.vec_iter_idx_map.at(elem.vec).at(elem.iters[0]);
 
     vector<Expr> vals;
     for (size_t i = 0; i < vec->type.dtypes.size(); i++) {
