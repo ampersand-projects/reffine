@@ -176,7 +176,7 @@ Expr InterSpace::_condition(Expr idx)
     auto ridx = _get(idx, 1);
 
     auto liter = this->left->idx_to_iter(lidx);
-    auto riter = this->left->idx_to_iter(ridx);
+    auto riter = this->right->idx_to_iter(ridx);
     auto iter_cond = _eq(liter, riter);
 
     auto lcond = this->left->condition(lidx);
