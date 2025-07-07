@@ -368,7 +368,7 @@ void IRPrinter::Visit(Loop& loop)
         emitnewline();
         ostr << "if (!";
         loop.body_cond->Accept(*this);
-        ostr << ") break";
+        ostr << ") continue";
         emitnewline();
         emitnewline();
     }

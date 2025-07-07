@@ -61,8 +61,8 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
     loop->init = _store(idx_addr, idx_init);
     loop->incr = _store(idx_addr, eval(ispace->advance(_load(idx_addr))));
     loop->exit_cond = _gt(loop_iter, eval(ispace->upper_bound()));
-    loop->body_cond =
-        nullptr;  // TODO: eval(ispace->condition(_load(idx_addr)));
+    auto cond = ispace->condition(_load(idx_addr));
+    loop->body_cond = cond ? eval(cond) : nullptr;
 
     return loop;
 }

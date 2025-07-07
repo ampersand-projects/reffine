@@ -175,11 +175,17 @@ Expr InterSpace::_condition(Expr idx)
     auto lidx = _get(idx, 0);
     auto ridx = _get(idx, 1);
 
+    auto liter = this->left->idx_to_iter(lidx);
+    auto riter = this->right->idx_to_iter(ridx);
+    auto iter_cond = _eq(liter, riter);
+
     auto lcond = this->left->condition(lidx);
     auto rcond = this->right->condition(ridx);
     auto cond = (lcond && rcond) ? _and(lcond, rcond) : (lcond ? lcond : rcond);
 
-    auto liter = this->left->idx_to_iter(lidx);
-    auto riter = this->left->idx_to_iter(ridx);
-    return _and(_eq(liter, riter), cond);
+    if (cond) {
+        return _and(iter_cond, cond);
+    } else {
+        return iter_cond;
+    }
 }
