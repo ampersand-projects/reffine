@@ -14,6 +14,16 @@ void CanonPass::Visit(Loop& loop)
 
         loop.incr = nullptr;
     }
+
+    if (loop.body_cond) {
+        loop.body = _ifelse(
+            loop.body_cond,
+            loop.body,
+            _noop()
+        );
+
+        loop.body_cond = nullptr;
+    }
 }
 
 void CanonPass::Visit(Func& func)
