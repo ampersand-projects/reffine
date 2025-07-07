@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "reffine/base/log.h"
 #include "reffine/arrow/defs.h"
 #include "reffine/engine/engine.h"
 #include "reffine/pass/canonpass.h"
@@ -17,14 +18,20 @@ using namespace reffine;
 template <typename T>
 T compile_loop(std::shared_ptr<Func> loop)
 {
+    LOG(INFO) << "Loop IR (raw):" << std::endl << loop->str() << std::endl;
     CanonPass::Build(loop);
-    auto exp_loop = LoadStoreExpand::Build(loop);
-    auto elm_loop = NewGetElimination::Build(exp_loop);
+    LOG(INFO) << "Loop IR (canon):" << std::endl << loop->str() << std::endl;
+    loop = LoadStoreExpand::Build(loop);
+    LOG(INFO) << "Loop IR (expand):" << std::endl << loop->str() << std::endl;
+    loop = NewGetElimination::Build(loop);
+    LOG(INFO) << "Loop IR (eliminate):" << std::endl << loop->str() << std::endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-
-    LLVMGen::Build(elm_loop, *llmod);
+    LLVMGen::Build(loop, *llmod);
+    LOG(INFO) << "LLVM IR (raw):" << std::endl << IRPrinter::Build(*llmod) << std::endl;
+    jit->Optimize(*llmod);
+    LOG(INFO) << "LLVM IR (optimized):" << std::endl << IRPrinter::Build(*llmod) << std::endl;
     jit->AddModule(std::move(llmod));
     return jit->Lookup<T>(loop->name);
 }
@@ -32,6 +39,7 @@ T compile_loop(std::shared_ptr<Func> loop)
 template <typename T>
 T compile_op(std::shared_ptr<Func> op)
 {
+    LOG(INFO) << "Reffine IR:" << std::endl << op->str() << std::endl;
     auto loop = LoopGen::Build(op);
     return compile_loop<T>(loop);
 }
