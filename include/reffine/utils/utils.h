@@ -3,7 +3,6 @@
 
 #include <string>
 
-#include "reffine/arrow/defs.h"
 #include "reffine/base/log.h"
 #include "reffine/engine/cuda_engine.h"
 #include "reffine/engine/engine.h"
