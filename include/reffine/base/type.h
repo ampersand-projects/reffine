@@ -12,6 +12,8 @@ using namespace std;
 
 namespace reffine {
 
+#define INF 1 << 22
+
 enum class BaseType {
     UNKNOWN,  // never use this type
     VOID,
@@ -124,6 +126,25 @@ struct DataType {
         return DataType(BaseType::STRUCT,
                         std::vector<DataType>(this->dtypes.begin() + this->dim,
                                               this->dtypes.end()));
+    }
+
+    DataType iterty() const
+    {
+        ASSERT(this->is_vector());
+        if (this->dim == 1) {
+            return this->dtypes[0];
+        } else {
+            return DataType(
+                BaseType::STRUCT,
+                std::vector<DataType>(this->dtypes.begin(),
+                                      this->dtypes.begin() + this->dim));
+        }
+    }
+
+    DataType rowty() const
+    {
+        ASSERT(this->is_vector());
+        return DataType(BaseType::STRUCT, this->dtypes);
     }
 
     string str() const

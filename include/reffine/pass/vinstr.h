@@ -1,6 +1,8 @@
 #ifndef INCLUDE_REFFINE_PASS_VINSTR_H_
 #define INCLUDE_REFFINE_PASS_VINSTR_H_
 
+#include <cstdio>
+
 #include "reffine/arrow/abi.h"
 
 #define REFFINE_VINSTR_ATTR __attribute__((always_inline))
@@ -75,6 +77,13 @@ int64_t vector_lookup(ArrowArray* arr, int64_t idx)
 {
     auto buf = (int64_t*)get_vector_data_buf(arr, 0);
     return buf[idx];
+}
+
+REFFINE_VINSTR_ATTR
+int64_t _print(int64_t elem)
+{
+    printf("elem: %ld\n", elem);
+    return elem;
 }
 
 REFFINE_VINSTR_ATTR

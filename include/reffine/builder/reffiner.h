@@ -4,6 +4,7 @@
 #include "reffine/ir/expr.h"
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
+#include "reffine/ir/op_to_loop.h"
 #include "reffine/ir/stmt.h"
 
 namespace reffine::reffiner {
@@ -56,8 +57,8 @@ struct _expr : public shared_ptr<T> {
     }
     _expr<Equals> operator==(Expr o) const { return _expr_eq(*this, o); }
     _expr<Not> operator!() const { return _expr_not(*this); }
-    _expr<And> operator&&(Expr o) const { return _expr_and(*this, o); }
-    _expr<Or> operator||(Expr o) const { return _expr_or(*this, o); }
+    _expr<And> operator&(Expr o) const { return _expr_and(*this, o); }
+    _expr<Or> operator|(Expr o) const { return _expr_or(*this, o); }
     _expr<Get> operator[](size_t n) const { return _expr_get(*this, n); }
     _expr<Element> operator[](std::initializer_list<Expr> iters) const
     {
@@ -117,11 +118,14 @@ REGISTER_EXPR(_loop, reffine::Loop)
 
 // Ops
 REGISTER_EXPR(_elem, Element)
-REGISTER_EXPR(_lookup, Lookup)
-REGISTER_EXPR(_locate, Locate)
 REGISTER_EXPR(_op, Op)
 REGISTER_EXPR(_red, Reduce)
 REGISTER_EXPR(_notnull, NotNull)
+
+// Op to Loop
+REGISTER_EXPR(_lookup, Lookup)
+REGISTER_EXPR(_locate, Locate)
+REGISTER_EXPR(_len, Length)
 
 // CUDA
 REGISTER_EXPR(_tidx, ThreadIdx)

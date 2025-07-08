@@ -1,6 +1,7 @@
 #include "reffine/pass/scalarpass.h"
 
 #include "reffine/builder/reffiner.h"
+#include "reffine/pass/printer.h"
 
 using namespace reffine;
 using namespace reffine::reffiner;
@@ -50,6 +51,29 @@ shared_ptr<Func> LoadStoreExpand::Build(shared_ptr<Func> func)
     return new_func;
 }
 
+Expr NewGetElimination::visit(Select& sel)
+{
+    auto new_cond = eval(sel.cond);
+    auto new_true_body = eval(sel.true_body);
+    auto new_false_body = eval(sel.false_body);
+    auto new_sel = _sel(new_cond, new_true_body, new_false_body);
+
+    if (new_sel->type.is_struct()) {
+        vector<Expr> new_sel_exprs;
+
+        for (size_t i = 0; i < new_sel->type.dtypes.size(); i++) {
+            auto new_true_body_i = _new_get_map.at(new_true_body)[i];
+            auto new_false_body_i = _new_get_map.at(new_false_body)[i];
+            new_sel_exprs.push_back(
+                eval(_sel(new_cond, new_true_body_i, new_false_body_i)));
+        }
+
+        _new_get_map[new_sel] = new_sel_exprs;
+    }
+
+    return new_sel;
+}
+
 Expr NewGetElimination::visit(New& expr)
 {
     vector<Expr> new_vals;
@@ -78,6 +102,14 @@ Expr NewGetElimination::visit(Get& get)
             throw runtime_error("Unable to eliminate Get expression");
         }
     }
+}
+
+void NewGetElimination::visit(Func& func)
+{
+    // Struct type inputs are not supported yet
+    for (const auto& input : func.inputs) { ASSERT(!input->type.is_struct()); }
+
+    IRClone::visit(func);
 }
 
 shared_ptr<Func> NewGetElimination::Build(shared_ptr<Func> func)
