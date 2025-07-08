@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include "reffine/engine/cuda_engine.h"
 #include "reffine/arrow/defs.h"
 #include "reffine/base/log.h"
+#include "reffine/engine/cuda_engine.h"
 #include "reffine/engine/engine.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/llvmgen.h"
