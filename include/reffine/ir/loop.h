@@ -13,17 +13,29 @@ using namespace std;
 
 namespace reffine {
 
-struct FetchDataPtr : public ExprNode {
+struct FetchBuffer : public ExprNode {
     Expr vec;
-    Expr idx;
     size_t col;
 
-    FetchDataPtr(Expr vec, Expr idx, size_t col)
-        : ExprNode(vec->type.dtypes[col].ptr()), vec(vec), idx(idx), col(col)
+    FetchBuffer(Expr vec, size_t col)
+        : ExprNode(vec->type.dtypes[col].ptr()), vec(vec), col(col)
     {
         ASSERT(vec->type.is_vector());
-        ASSERT(idx->type.is_idx());
         ASSERT(col < vec->type.dtypes.size());
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct FetchDataPtr : public ExprNode {
+    Expr addr;
+    Expr idx;
+
+    FetchDataPtr(Expr addr, Expr idx = nullptr)
+        : ExprNode(addr->type), addr(addr), idx(idx)
+    {
+        ASSERT(idx->type.is_idx());
+        ASSERT(addr->type.is_ptr());
     }
 
     void Accept(Visitor&) final;

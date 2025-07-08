@@ -191,9 +191,11 @@ public:
 
     void Visit(FetchDataPtr& expr) override
     {
-        expr.vec->Accept(*this);
+        expr.addr->Accept(*this);
         expr.idx->Accept(*this);
     }
+
+    void Visit(FetchBuffer& expr) override { expr.vec->Accept(*this); }
 
     void Visit(NoOp& stmt) override {}
 

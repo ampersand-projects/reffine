@@ -55,6 +55,7 @@ protected:
     Expr visit(IsValid&) override;
     Expr visit(SetValid&) override;
     Expr visit(FetchDataPtr&) override;
+    Expr visit(FetchBuffer&) override;
     Expr visit(NoOp&) override;
     void visit(Func&) override;
 

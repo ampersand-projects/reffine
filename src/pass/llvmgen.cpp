@@ -5,8 +5,10 @@
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/IntrinsicsNVPTX.h"
 #include "reffine/base/type.h"
+#include "reffine/builder/reffiner.h"
 
 using namespace reffine;
+using namespace reffine::reffiner;
 using namespace llvm;
 
 Function* LLVMGen::llfunc(const string name, llvm::Type* ret_type,
@@ -357,15 +359,26 @@ Value* LLVMGen::visit(Locate& locate)
 
 Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
 {
-    auto vec_val = eval(fetch_data_ptr.vec);
-    auto idx_val = eval(fetch_data_ptr.idx);
-    auto col_val = ConstantInt::get(lltype(types::UINT32), fetch_data_ptr.col);
+    if (fetch_data_ptr.idx == nullptr) fetch_data_ptr.idx = _idx(0);
 
-    auto buf_addr = llcall("get_vector_data_buf", lltype(fetch_data_ptr),
-                           {vec_val, col_val});
-    auto data_addr = builder()->CreateGEP(lltype(fetch_data_ptr.type.deref()),
-                                          buf_addr, idx_val);
+    auto data_addr = builder()->CreateGEP(
+        lltype(fetch_data_ptr.addr->type.deref()), eval(fetch_data_ptr.addr),
+        eval(fetch_data_ptr.idx));
 
+    return data_addr;
+}
+
+Value* LLVMGen::visit(FetchBuffer& fetch_buf)
+{
+    auto vec_val = eval(fetch_buf.vec);
+    auto idx_val = eval(_idx(0));
+
+    auto col_val = ConstantInt::get(lltype(types::UINT32), fetch_buf.col);
+
+    auto buf_addr =
+        llcall("get_vector_data_buf", lltype(fetch_buf), {vec_val, col_val});
+    auto data_addr =
+        builder()->CreateGEP(lltype(fetch_buf.type.deref()), buf_addr, idx_val);
     return data_addr;
 }
 

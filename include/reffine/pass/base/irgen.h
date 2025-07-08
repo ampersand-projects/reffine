@@ -137,6 +137,10 @@ protected:
     {
         throw runtime_error("FetchDataPtr visit not supported");
     }
+    virtual ValTy visit(FetchBuffer&)
+    {
+        throw runtime_error("FetchBuffer visit not supported");
+    }
     virtual ValTy visit(NoOp&)
     {
         throw runtime_error("NoOp visit not supported");
@@ -172,6 +176,7 @@ protected:
     void Visit(IsValid& expr) final { val() = visit(expr); }
     void Visit(SetValid& expr) final { val() = visit(expr); }
     void Visit(FetchDataPtr& expr) final { val() = visit(expr); }
+    void Visit(FetchBuffer& expr) final { val() = visit(expr); }
     void Visit(NoOp& stmt) final { val() = visit(stmt); }
     void Visit(Func& stmt) final { visit(stmt); }
     void Visit(SymNode& symbol) override
