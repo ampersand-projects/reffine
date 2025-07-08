@@ -3,9 +3,9 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
-#include "reffine/builder/reffiner.h"
 #include "llvm/IR/IntrinsicsNVPTX.h"
 #include "reffine/base/type.h"
+#include "reffine/builder/reffiner.h"
 
 using namespace reffine;
 using namespace reffine::reffiner;
