@@ -15,15 +15,11 @@ string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
 template <typename Output, typename... Inputs>
 Output execute_query(void* query, Output output, Inputs... inputs)
 {
-    CanonPass::Build(fn);
-    auto exp_loop = LoadStoreExpand::Build(fn);
-    auto ngelm_loop = NewGetElimination::Build(exp_loop);
+    using FuncType = void (*)(Output, Inputs...);
+    auto query2 = reinterpret_cast<FuncType>(query);
+    query2(output, (inputs)...);
 
-    auto jit = ExecEngine::Get();
-    auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(ngelm_loop, *llmod);
-
-    return llmod;
+    return output;
 }
 
 PYBIND11_MODULE(exec, m)
