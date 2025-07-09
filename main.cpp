@@ -639,24 +639,16 @@ shared_ptr<Func> vector_op3()
 shared_ptr<Func> transform_op(ArrowTable& table)
 {
     auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym = _sym("vec_in", table.vecty(0));
+    auto vec_in_sym = _sym("vec_in", table.vecty(1));
     auto elem_expr = vec_in_sym[{t_sym}];
     auto elem = _sym("elem", elem_expr);
-    Op op({t_sym}, ~(elem), {
-        _call("_print", types::INT64, vector<Expr>{elem[0]})
+    auto op = _op(vector<Sym>{t_sym}, ~(vec_in_sym[{t_sym}]), vector<Expr>{
+        _add(vec_in_sym[{t_sym}][1], _i64(10))
     });
+    auto op_sym = _sym("op", op);
 
-    auto sum = _red(
-        op, []() { return _i64(0); },
-        [](Expr s, Expr v) {
-            auto v0 = _get(v, 0);
-            return _add(s, _get(v, 0));
-        });
-    auto sum_sym = _sym("sum", sum);
-
-    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
-    foo_fn->tbl[elem] = elem_expr;
-    foo_fn->tbl[sum_sym] = sum;
+    auto foo_fn = _func("foo", op_sym, vector<Sym>{vec_in_sym});
+    foo_fn->tbl[op_sym] = op;
 
     return foo_fn;
 }

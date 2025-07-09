@@ -156,14 +156,16 @@ void IRPrinter::Visit(Op& op)
     ostr << FORALL << " ";
     for (const auto& iter : op.iters) { ostr << iter->name << ", "; }
     if (op.iters.size() > 0) { ostr << "\b\b"; }
-    ostr << ": ";
+    ostr << ": [";
+    op.pred->Accept(*this);
+    ostr << "] {";
 
-    ostr << "{";
+    enter_block();
     for (const auto& output : op.outputs) {
         output->Accept(*this);
         ostr << ", ";
     }
-    ostr << "\b\b";
+    exit_block();
     ostr << "}";
 }
 
