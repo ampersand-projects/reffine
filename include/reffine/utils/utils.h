@@ -13,7 +13,8 @@
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/scalarpass.h"
 
-using namespace reffine;
+// using namespace reffine;
+namespace reffine {
 
 template <typename T>
 T compile_loop(std::shared_ptr<Func> loop)
@@ -48,5 +49,7 @@ T compile_op(std::shared_ptr<Func> op)
 }
 
 CUfunction compile_kernel(std::shared_ptr<Func>);
+
+}  // namespace reffine
 
 #endif  // INCLUDE_REFFINE_UTILS_H_
