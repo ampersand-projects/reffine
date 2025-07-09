@@ -17,6 +17,19 @@ struct PrivateData {
 };
 
 struct ArrowSchema2 : public ArrowSchema {
+    ArrowSchema2(ArrowSchema& schema)
+    {
+        this->format = schema.format;
+        this->name = schema.name;
+        this->metadata = schema.metadata;
+        this->flags = schema.flags;
+        this->n_children = schema.n_children;
+        this->children = schema.children;
+        this->dictionary = schema.dictionary;
+        this->release = schema.release;
+        this->private_data = schema.private_data;
+    }
+
     ArrowSchema2(std::string name, std::string format)
     {
         arrow_make_schema(this);
@@ -69,6 +82,20 @@ struct ArrowArray2 : public ArrowArray {
         arrow_make_array(this);
         this->private_data = (void*)new PrivateData();
         this->release = (void (*)(ArrowArray*)) & arrow_release_array2;
+    }
+
+    ArrowArray2(ArrowArray& array)
+    {
+        this->length = array.length;
+        this->null_count = array.null_count;
+        this->offset = array.offset;
+        this->n_buffers = array.n_buffers;
+        this->n_children = array.n_children;
+        this->buffers = array.buffers;
+        this->children = array.children;
+        this->dictionary = array.dictionary;
+        this->release = array.release;
+        this->private_data = array.private_data;
     }
 
     static void arrow_release_array2(ArrowArray2* array)
@@ -149,6 +176,8 @@ struct ArrowTable {
                 dtypes.push_back(types::FLOAT32);
             } else if (fmt == "g") {
                 dtypes.push_back(types::FLOAT64);
+            } else if (fmt == "u") {
+                dtypes.push_back(types::STR);
             } else {
                 throw std::runtime_error("schema type not supported: " + fmt);
             }

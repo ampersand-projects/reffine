@@ -104,6 +104,23 @@ arrow::Status query_arrow_file(ArrowTable& in_table, void (*query_fn)(long*, voi
     return arrow::Status::OK();
 }
 
+arrow::Status query_arrow_file2(ArrowTable& in_table, void (*query_fn)(void*, void*))
+{
+    auto& in_array = in_table.array;
+
+    VectorSchema out_schema("output");
+    VectorArray out_array(in_array.length);
+    out_schema.add_child<Int64Schema>("out");
+    out_array.add_child<Int64Array>(in_array.length);
+
+    query_fn(&out_array, &in_array);
+
+    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(&out_array, &out_schema));
+    cout << "Output: " << endl << res->ToString() << endl;
+
+    return arrow::Status::OK();
+}
+
 shared_ptr<Func> vector_fn()
 {
     auto vec_sym = _sym("vec", types::VECTOR<1>(vector<DataType>{
@@ -378,7 +395,7 @@ shared_ptr<Func> reduce_op_fn()
 shared_ptr<Func> tpcds_query9(ArrowTable& table)
 {
     auto idx_sym = _sym("i", _idx_t);
-    auto vec_in_sym = _sym("vec_in", table.get_data_type(0));
+    auto vec_in_sym = _sym("vec_in", table.vecty(0));
 
     auto ss_quant = _get(make_shared<Lookup>(vec_in_sym, idx_sym), 10);
     auto ss_quant_sym = _sym("ss_quant", ss_quant);
@@ -619,6 +636,31 @@ shared_ptr<Func> vector_op3()
     return foo_fn;
 }
 
+shared_ptr<Func> transform_op(ArrowTable& table)
+{
+    auto t_sym = _sym("t", _i64_t);
+    auto vec_in_sym = _sym("vec_in", table.vecty(0));
+    auto elem_expr = vec_in_sym[{t_sym}];
+    auto elem = _sym("elem", elem_expr);
+    Op op({t_sym}, ~(elem), {
+        _call("_print", types::INT64, vector<Expr>{elem[0]})
+    });
+
+    auto sum = _red(
+        op, []() { return _i64(0); },
+        [](Expr s, Expr v) {
+            auto v0 = _get(v, 0);
+            return _add(s, _get(v, 0));
+        });
+    auto sum_sym = _sym("sum", sum);
+
+    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
+    foo_fn->tbl[elem] = elem_expr;
+    foo_fn->tbl[sum_sym] = sum;
+
+    return foo_fn;
+}
+
 int main()
 {   
     /*
@@ -641,10 +683,11 @@ int main()
         }
     }
 
-    auto fn = vector_op();
-    auto query_fn = compile_op<void (*)(long*, void*)>(fn);
-    auto table = load_arrow_file("../students.arrow");
-    auto status = query_arrow_file(*table, query_fn);
+    auto table = load_arrow_file("../students.arrow").ValueOrDie();
+    auto fn = transform_op(table);
+    auto query_fn = compile_op<void (*)(void*, void*)>(fn);
+    return 0;
+    auto status = query_arrow_file2(table, query_fn);
     if (!status.ok()) {
         cerr << status.ToString() << endl;
     }

@@ -28,6 +28,7 @@ enum class BaseType {
     UINT64,
     FLOAT32,
     FLOAT64,
+    STR,
     STRUCT,
     PTR,
 
@@ -87,7 +88,7 @@ struct DataType {
     bool is_primitive() const
     {
         return (this->is_int() || this->is_float() || this->is_idx() ||
-                this->btype == BaseType::BOOL);
+                this->btype == BaseType::BOOL || this->btype == BaseType::STR);
     }
 
     bool is_int() const
@@ -174,6 +175,8 @@ struct DataType {
                 return "f32";
             case BaseType::FLOAT64:
                 return "f64";
+            case BaseType::STR:
+                return "s";
             case BaseType::PTR:
                 return "*" + dtypes[0].str();
             case BaseType::STRUCT: {
@@ -246,6 +249,7 @@ static const DataType UINT32(BaseType::UINT32);
 static const DataType UINT64(BaseType::UINT64);
 static const DataType FLOAT32(BaseType::FLOAT32);
 static const DataType FLOAT64(BaseType::FLOAT64);
+static const DataType STR(BaseType::STR);
 static const DataType CHAR_PTR(BaseType::PTR, {types::INT8});
 static const DataType IDX(BaseType::IDX);
 
@@ -300,6 +304,10 @@ struct Converter<float> {
 template <>
 struct Converter<double> {
     static const BaseType btype = BaseType::FLOAT64;
+};
+template <>
+struct Converter<string> {
+    static const BaseType btype = BaseType::STR;
 };
 
 template <size_t n>
