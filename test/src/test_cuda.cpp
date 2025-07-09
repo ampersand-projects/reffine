@@ -3,11 +3,51 @@
 
 #include "reffine/builder/reffiner.h"
 #include "reffine/engine/cuda_engine.h"
+#include "reffine/utils/utils.h"
 #include "test_base.h"
 #include "test_utils.h"
 
 using namespace reffine;
 using namespace reffine::reffiner;
+
+shared_ptr<ExprNode> get_start_idx(Expr tid, Expr bid, Expr bdim, Expr gdim,
+                                   Expr len)
+{
+    auto tidx = _cast(_idx_t, tid);
+    auto bidx = _cast(_idx_t, bid);
+    auto bdimx = _cast(_idx_t, bdim);
+    auto gdimx = _cast(_idx_t, gdim);
+    auto n = _cast(_idx_t, len);
+
+    auto elem_per_block = (n + gdimx - _idx(1)) / gdimx;
+    auto block_start = bidx * elem_per_block;
+    auto block_end = _min(block_start + elem_per_block, n);
+
+    auto elem_per_thread = (block_end - block_start + bdimx - _idx(1)) / bdimx;
+    auto thread_start = block_start + (tidx * elem_per_thread);
+
+    return thread_start;
+}
+
+shared_ptr<ExprNode> get_end_idx(Expr tid, Expr bid, Expr bdim, Expr gdim,
+                                 Expr len)
+{
+    auto tidx = _cast(_idx_t, tid);
+    auto bidx = _cast(_idx_t, bid);
+    auto bdimx = _cast(_idx_t, bdim);
+    auto gdimx = _cast(_idx_t, gdim);
+    auto n = _cast(_idx_t, len);
+
+    auto elem_per_block = (n + gdimx - _idx(1)) / gdimx;
+    auto block_start = bidx * elem_per_block;
+    auto block_end = _min(block_start + elem_per_block, n);
+
+    auto elem_per_thread = (block_end - block_start + bdimx - _idx(1)) / bdimx;
+    auto thread_start = block_start + (tidx * elem_per_thread);
+    auto thread_end = _min(thread_start + elem_per_thread, block_end);
+
+    return thread_end;
+}
 
 shared_ptr<Func> aggregate_kernel(int n)
 {
@@ -18,6 +58,9 @@ shared_ptr<Func> aggregate_kernel(int n)
     auto idx_alloc = _alloc(_idx_t);
     auto idx_addr = _sym("idx_addr", idx_alloc);
     auto idx = _load(idx_addr);
+
+    auto idx_start = get_start_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
+    auto idx_end = get_end_idx(_tidx(), _bidx(), _bdim(), _gdim(), len);
 
     auto temp_alloc = _alloc(_i64_t);
     auto temp_addr = _sym("temp_addr", temp_alloc);
@@ -31,7 +74,7 @@ shared_ptr<Func> aggregate_kernel(int n)
 
     loop->init = _stmts(vector<Stmt>{
         idx_alloc,
-        _store(idx_addr, _idx(0)),
+        _store(idx_addr, idx_start),
         temp_alloc,
         _store(temp_addr, _i64(0)),
     });
@@ -39,7 +82,7 @@ shared_ptr<Func> aggregate_kernel(int n)
         _store(temp_addr, _add(temp_sum, val)),
         _store(idx_addr, idx + _idx(1)),
     });
-    loop->exit_cond = _gte(idx, len);
+    loop->exit_cond = _gte(idx, idx_end);
     loop->post = _atomic_op(MathOp::ADD, sum_out_sym, temp_sum);
     auto loop_sym = _sym("loop", loop);
 
@@ -76,7 +119,9 @@ void test_aggregate_kernel(int len, int expected_res)
         &d_arr,
     };
 
-    cuLaunchKernel(kernel, 1, 1, 1, 1, 1, 1,
+    int blockDimX = 32;  // num of threads per block
+    int gridDimX = (len + blockDimX - 1) / blockDimX;  // num of blocks
+    cuLaunchKernel(kernel, gridDimX, 1, 1, blockDimX, 1, 1,
                    0,  // shared memory size
                    0,  // stream handle
                    kernelParams, NULL);
