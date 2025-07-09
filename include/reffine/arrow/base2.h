@@ -129,7 +129,7 @@ struct ArrowTable {
         ASSERT(fmt == "+s");
     }
 
-    DataType get_data_type(size_t dim)
+    DataType vecty(size_t dim)
     {
         vector<DataType> dtypes;
 
@@ -150,7 +150,7 @@ struct ArrowTable {
             } else if (fmt == "g") {
                 dtypes.push_back(types::FLOAT64);
             } else {
-                throw std::runtime_error("schema type not supported");
+                throw std::runtime_error("schema type not supported: " + fmt);
             }
         }
 
