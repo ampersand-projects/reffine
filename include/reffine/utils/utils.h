@@ -13,7 +13,6 @@
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/scalarpass.h"
 
-// using namespace reffine;
 namespace reffine {
 
 template <typename T>
