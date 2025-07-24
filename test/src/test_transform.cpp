@@ -98,13 +98,13 @@ void transform_test()
     auto tbl = get_input_vector();
     auto in_array = tbl->array;
     VectorSchema out_schema("output");
-    VectorArray out_array(in_array.length);
+    VectorArray out_array(in_array->length);
     out_schema.add_child<Int64Schema>("id");
     out_schema.add_child<Int64Schema>("minutes_studied");
     out_schema.add_child<BooleanSchema>("slept_enough");
-    out_array.add_child<Int64Array>(in_array.length);
-    out_array.add_child<Int64Array>(in_array.length);
-    out_array.add_child<BooleanArray>(in_array.length);
+    out_array.add_child<Int64Array>(in_array->length);
+    out_array.add_child<Int64Array>(in_array->length);
+    out_array.add_child<BooleanArray>(in_array->length);
 
     query_fn(&in_array, &out_array);
 

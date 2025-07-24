@@ -2,21 +2,20 @@
 #define INCLUDE_REFFINE_ARROW_BASE2_H_
 
 #include <cstring>
+#include <vector>
+#include <memory>
 
 #include "reffine/arrow/base.h"
 #include "reffine/base/log.h"
 #include "reffine/base/type.h"
 
+using namespace std;
+
 namespace reffine {
 
-struct PrivateData {
-    int count;
-    void* ptrs[100];
-
-    PrivateData() : count(0) {}
-};
-
 struct ArrowSchema2 : public ArrowSchema {
+    vector<ArrowSchema2*> allocs;
+
     ArrowSchema2(ArrowSchema& schema)
     {
         this->format = schema.format;
@@ -30,7 +29,7 @@ struct ArrowSchema2 : public ArrowSchema {
         this->private_data = schema.private_data;
     }
 
-    ArrowSchema2(std::string name, std::string format)
+    ArrowSchema2(string name, string format)
     {
         arrow_make_schema(this);
 
@@ -38,34 +37,27 @@ struct ArrowSchema2 : public ArrowSchema {
         strcpy((char*)this->name, name.c_str());
         this->flags = ARROW_FLAG_NULLABLE;
 
-        this->private_data = (void*)new PrivateData();
         this->release = (void (*)(ArrowSchema*)) & arrow_release_schema2;
     }
 
     static void arrow_release_schema2(ArrowSchema2* schema)
     {
-        if (!schema->release) return;
-
         arrow_release_schema(schema);
 
-        auto* pdata = (PrivateData*)schema->private_data;
-        for (int i = 0; i < pdata->count; i++) {
-            delete (ArrowSchema2*)pdata->ptrs[i];
+        for (auto* alloc : schema->allocs) {
+            delete alloc;
         }
-        delete pdata;
+        schema->allocs.clear();
     }
 
-    ~ArrowSchema2() { arrow_release_schema2(this); }
+    ~ArrowSchema2() { if (this->release) { this->release(this); } }
 
     template <typename T, typename... Args>
     T* add_child(Args... args)
     {
         auto* schema = new T(args...);
         arrow_add_child_schema(this, schema);
-
-        auto* pdata = (PrivateData*)this->private_data;
-        pdata->ptrs[pdata->count] = schema;
-        pdata->count++;
+        this->allocs.push_back(schema);
 
         return schema;
     }
@@ -77,12 +69,7 @@ struct ArrowSchema2 : public ArrowSchema {
 };
 
 struct ArrowArray2 : public ArrowArray {
-    ArrowArray2()
-    {
-        arrow_make_array(this);
-        this->private_data = (void*)new PrivateData();
-        this->release = (void (*)(ArrowArray*)) & arrow_release_array2;
-    }
+    vector<ArrowArray2*> allocs;
 
     ArrowArray2(ArrowArray& array)
     {
@@ -98,30 +85,30 @@ struct ArrowArray2 : public ArrowArray {
         this->private_data = array.private_data;
     }
 
-    static void arrow_release_array2(ArrowArray2* array)
+    ArrowArray2()
     {
-        if (!array->release) return;
-
-        arrow_release_array(array);
-
-        auto* pdata = (PrivateData*)array->private_data;
-        for (int i = 0; i < pdata->count; i++) {
-            delete (ArrowArray2*)pdata->ptrs[i];
-        }
-        delete pdata;
+        arrow_make_array(this);
+        this->release = (void (*)(ArrowArray*)) & arrow_release_array2;
     }
 
-    ~ArrowArray2() { arrow_release_array2(this); }
+    static void arrow_release_array2(ArrowArray2* array)
+    {
+        arrow_release_array(array);
+
+        for (auto* alloc : array->allocs) {
+            delete alloc;
+        }
+        array->allocs.clear();
+    }
+
+    virtual ~ArrowArray2() { if (this->release) { this->release(this); } }
 
     template <typename T, typename... Args>
     T* add_child(Args... args)
     {
         auto* array = new T(args...);
         arrow_add_child_array(this, array);
-
-        auto* pdata = (PrivateData*)this->private_data;
-        pdata->ptrs[pdata->count] = (void*)array;
-        pdata->count++;
+        this->allocs.push_back(array);
 
         return array;
     }
@@ -146,45 +133,16 @@ struct ArrowArray2 : public ArrowArray {
 };
 
 struct ArrowTable {
-    ArrowSchema schema;
-    ArrowArray array;
+    shared_ptr<ArrowSchema2> schema;
+    shared_ptr<ArrowArray2> array;
 
-    ArrowTable(ArrowSchema schema, ArrowArray array)
-        : schema(std::move(schema)), array(std::move(array))
-    {
-        auto fmt = std::string(schema.format);
-        ASSERT(fmt == "+s");
-    }
+    ArrowTable(string name) :
+        schema(make_shared<ArrowSchema2>(name, "+s")), array(make_shared<ArrowArray2>())
+    {}
 
-    DataType vecty(size_t dim)
-    {
-        vector<DataType> dtypes;
+    ArrowTable(string, vector<DataType>, size_t);
 
-        for (size_t i = 0; i < this->schema.n_children; i++) {
-            auto child = schema.children[i];
-            auto fmt = std::string(child->format);
-
-            if (fmt == "c") {
-                dtypes.push_back(types::INT8);
-            } else if (fmt == "s") {
-                dtypes.push_back(types::INT16);
-            } else if (fmt == "i") {
-                dtypes.push_back(types::INT32);
-            } else if (fmt == "l") {
-                dtypes.push_back(types::INT64);
-            } else if (fmt == "f") {
-                dtypes.push_back(types::FLOAT32);
-            } else if (fmt == "g") {
-                dtypes.push_back(types::FLOAT64);
-            } else if (fmt == "u") {
-                dtypes.push_back(types::STR);
-            } else {
-                throw std::runtime_error("schema type not supported: " + fmt);
-            }
-        }
-
-        return DataType(BaseType::VECTOR, dtypes, dim);
-    }
+    DataType vecty(size_t);
 };
 
 }  // namespace reffine

@@ -74,11 +74,10 @@ arrow::Result<ArrowTable> load_arrow_file(string filename)
 
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
 
-    ArrowSchema schema;
-    ArrowArray array;
-    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &array, &schema));
+    ArrowTable tbl("input");
+    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, tbl.array.get(), tbl.schema.get()));
 
-    return ArrowTable(std::move(schema), std::move(array));
+    return std::move(tbl);
 }
 
 arrow::Status query_arrow_file(ArrowTable& in_table, void (*query_fn)(long*, void*))
@@ -86,13 +85,13 @@ arrow::Status query_arrow_file(ArrowTable& in_table, void (*query_fn)(long*, voi
     auto& in_array = in_table.array;
 
     VectorSchema out_schema("output");
-    VectorArray out_array(in_array.length);
+    VectorArray out_array(in_array->length);
     out_schema.add_child<Int64Schema>("id");
     out_schema.add_child<Int64Schema>("minutes_studied");
     out_schema.add_child<BooleanSchema>("slept_enough");
-    out_array.add_child<Int64Array>(in_array.length);
-    out_array.add_child<Int64Array>(in_array.length);
-    out_array.add_child<BooleanArray>(in_array.length);
+    out_array.add_child<Int64Array>(in_array->length);
+    out_array.add_child<Int64Array>(in_array->length);
+    out_array.add_child<BooleanArray>(in_array->length);
 
     long sum;
     query_fn(&sum, &in_array);
@@ -109,9 +108,9 @@ arrow::Status query_arrow_file2(ArrowTable& in_table, void (*query_fn)(void*, vo
     auto& in_array = in_table.array;
 
     VectorSchema out_schema("output");
-    VectorArray out_array(in_array.length);
+    VectorArray out_array(in_array->length);
     out_schema.add_child<Int64Schema>("out");
-    out_array.add_child<Int64Array>(in_array.length);
+    out_array.add_child<Int64Array>(in_array->length);
 
     query_fn(&out_array, &in_array);
 
@@ -675,7 +674,12 @@ int main()
         }
     }
 
-    auto table = load_arrow_file("../students.arrow").ValueOrDie();
+    ArrowTable tbl2("test");
+    cout << "Test2\n";
+
+    auto resp = load_arrow_file("../students.arrow");
+    cout << "TEST\n";
+    auto table = resp.ValueOrDie();
     auto fn = transform_op(table);
     auto query_fn = compile_op<void (*)(void*, void*)>(fn);
     return 0;

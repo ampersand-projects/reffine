@@ -9,18 +9,15 @@ arrow::Result<reffine::ArrowTable> get_input_vector()
                           arrow::ipc::RecordBatchFileReader::Open(infile));
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
 
-    ArrowSchema schema;
-    ArrowArray array;
-    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &array, &schema));
+    reffine::ArrowTable tbl("input");
+    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, tbl.array.get(), tbl.schema.get()));
 
-    return reffine::ArrowTable(schema, array);
+    return std::move(tbl);
 }
 
 std::string print_arrow_table(reffine::ArrowTable& tbl)
 {
-    auto& schema = tbl.schema;
-    auto& array = tbl.array;
-    auto res = *arrow::ImportRecordBatch(&array, &schema);
+    auto res = *arrow::ImportRecordBatch(tbl.array.get(), tbl.schema.get());
 
     return res->ToString();
 }
