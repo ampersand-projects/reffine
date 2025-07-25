@@ -26,7 +26,7 @@ PYBIND11_MODULE(exec, m)
 {
     m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
 
-    m.def("execute_query",
+    m.def("run",
           [](void* fn, py::array output, std::vector<py::array> inputs) {
               auto output_buf = output.request();
               auto output_ptr = output_buf.ptr;
@@ -52,7 +52,7 @@ PYBIND11_MODULE(exec, m)
               return output;
           });
 
-    m.def("execute_query", [](void* fn, py::capsule output,
+    m.def("run", [](void* fn, py::capsule output,
                               std::vector<py::capsule> inputs) {
         auto out_arr = static_cast<ArrowArray*>(output.get_pointer());
 

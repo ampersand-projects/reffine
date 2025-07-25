@@ -215,21 +215,10 @@ PYBIND11_MODULE(ir, m)
     m.attr("_ch_t") = types::INT8;
     m.attr("_bool_t") = types::BOOL;
 
-    m.def("STRUCT", [](std::vector<BaseType> btypes) {
-        throw std::runtime_error("STRUCT currently unsupported in pybind.");
+    m.def("STRUCT", [](std::vector<DataType> btypes) {
+        return DataType(BaseType::STRUCT, btypes, 0);
     });
     m.def("VECTOR", [](size_t dim, std::vector<DataType> types) {
-        switch (dim) {
-            case 1:
-                return types::VECTOR<1>(types);
-            case 2:
-                return types::VECTOR<2>(types);
-            case 3:
-                return types::VECTOR<3>(types);
-            case 4:
-                return types::VECTOR<4>(types);
-            default:
-                throw std::runtime_error("Unsupported dim.");
-        }
+        return DataType(BaseType::VECTOR, types, dim);
     });
 }
