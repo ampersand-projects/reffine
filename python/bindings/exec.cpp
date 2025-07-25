@@ -43,28 +43,26 @@ PYBIND11_MODULE(exec, m)
 {
     m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
 
-    m.def("run", [](void* fn, py::array output, std::vector<py::array> inputs) {
-        py::buffer_info output_buf = output.request();
-        std::vector<void*> input_ptrs = {output_buf.ptr};
+    m.def("run", [](void* fn, std::vector<py::array> inputs) {
+        std::vector<void*> input_ptrs;
         for (auto& input : inputs) {
             auto input_buf = input.request();
             input_ptrs.push_back(input_buf.ptr);
         }
         run(fn, input_ptrs);
 
-        return output;
+        return inputs;
     });
 
-    m.def("run",
-          [](void* fn, py::capsule output, std::vector<py::capsule> inputs) {
-              std::vector<void*> input_ptrs = {output.get_pointer()};
-              for (auto& in : inputs) {
-                  input_ptrs.push_back(in.get_pointer());
-              }
-              run(fn, input_ptrs);
+    m.def("run", [](void* fn, std::vector<py::capsule> inputs) {
+        std::vector<void*> input_ptrs;
+        for (auto& in : inputs) {
+            input_ptrs.push_back(in.get_pointer());
+        }
+        run(fn, input_ptrs);
 
-              return output;
-          });
+        return inputs;
+    });
 
     m.def("compile_loop",
           [](std::shared_ptr<Func> fn) { return compile_loop<void*>(fn); });

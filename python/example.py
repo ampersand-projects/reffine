@@ -29,8 +29,6 @@ def transform_fn(n):
     ])
     loop.exit_cond = ir._gte(idx, length)
 
-    loop_sym = ir._sym("loop", loop)
-
     fn = ir._func("foo", loop, [vec_out_sym, vec_in_sym, vec_in_sym2], {}, False)
     fn.insert_sym(idx_addr, idx_alloc)
     
@@ -50,7 +48,8 @@ def test_numpy():
     
     query = exec.compile_loop(fn)
     print("Executing query...\n")
-    print(f"Output:\n{exec.run(query, out_arr, [in_arr, in_arr2])}\n\n")
+    exec.run(query, [out_arr, in_arr, in_arr2])
+    print(f"Output:\n{out_arr}\n\n")
 
     
 def transform_fn_arrow(n=100):
@@ -80,8 +79,6 @@ def transform_fn_arrow(n=100):
     ])
     loop.exit_cond = ir._gte(idx, length)
 
-    loop_sym = ir._sym("loop", loop)
-
     fn = ir._func("foo", loop, [vec_out_sym, vec_sym], {}, False)
     fn.insert_sym(idx_addr, idx_alloc)
     
@@ -108,7 +105,7 @@ def test_arrow():
     
     query = exec.compile_loop(fn)    
     print("Executing query...\n")
-    exec.run(query, c_out_arr, [c_in_arr])
+    exec.run(query, [c_out_arr, c_in_arr])
     print(f"Output:\n{out_arr}\n\n")
 
 test_arrow()
