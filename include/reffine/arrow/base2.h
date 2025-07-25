@@ -132,19 +132,6 @@ struct ArrowArray2 : public ArrowArray {
     }
 };
 
-struct ArrowTable {
-    shared_ptr<ArrowSchema2> schema;
-    shared_ptr<ArrowArray2> array;
-
-    ArrowTable(string name) :
-        schema(make_shared<ArrowSchema2>(name, "+s")), array(make_shared<ArrowArray2>())
-    {}
-
-    ArrowTable(string, vector<DataType>, size_t);
-
-    DataType vecty(size_t);
-};
-
 }  // namespace reffine
 
 #endif  // INCLUDE_REFFINE_ARROW_BASE2_H_

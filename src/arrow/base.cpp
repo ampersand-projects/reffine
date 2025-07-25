@@ -147,36 +147,34 @@ void* arrow_get_buffer(ArrowArray* array, int idx)
     return (void*)array->buffers[idx];
 }
 
-ArrowTable::ArrowTable(std::string name, std::vector<DataType> dtypes, size_t len)
-    : schema(make_shared<ArrowSchema2>(name, "+s")), array(make_shared<ArrowArray2>())
+void ArrowTable::add_column(string name, DataType dtype)
 {
-    for (auto& dtype : dtypes) {
-        ASSERT(dtype.is_primitive());
+    ASSERT(dtype.is_primitive());
+    size_t len = this->array->length;
 
-        if (dtype == types::INT8) {
-            this->schema->add_child<Int8Schema>(name);
-            this->array->add_child<Int8Array>(len);
-        } else if (dtype == types::INT16) {
-            this->schema->add_child<Int16Schema>(name);
-            this->array->add_child<Int16Array>(len);
-        } else if (dtype == types::INT32) {
-            this->schema->add_child<Int32Schema>(name);
-            this->array->add_child<Int32Array>(len);
-        } else if (dtype == types::INT64) {
-            this->schema->add_child<Int64Schema>(name);
-            this->array->add_child<Int64Array>(len);
-        } else if (dtype == types::FLOAT32) {
-            this->schema->add_child<FloatSchema>(name);
-            this->array->add_child<FloatArray>(len);
-        } else if (dtype == types::FLOAT64) {
-            this->schema->add_child<DoubleSchema>(name);
-            this->array->add_child<DoubleArray>(len);
-        } else if (dtype == types::BOOL) {
-            this->schema->add_child<BooleanSchema>(name);
-            this->array->add_child<BooleanArray>(len);
-        } else {
-            throw std::runtime_error("data type not supported: " + dtype.str());
-        }
+    if (dtype == types::INT8) {
+        this->schema->add_child<Int8Schema>(name);
+        this->array->add_child<Int8Array>(len);
+    } else if (dtype == types::INT16) {
+        this->schema->add_child<Int16Schema>(name);
+        this->array->add_child<Int16Array>(len);
+    } else if (dtype == types::INT32) {
+        this->schema->add_child<Int32Schema>(name);
+        this->array->add_child<Int32Array>(len);
+    } else if (dtype == types::INT64) {
+        this->schema->add_child<Int64Schema>(name);
+        this->array->add_child<Int64Array>(len);
+    } else if (dtype == types::FLOAT32) {
+        this->schema->add_child<FloatSchema>(name);
+        this->array->add_child<FloatArray>(len);
+    } else if (dtype == types::FLOAT64) {
+        this->schema->add_child<DoubleSchema>(name);
+        this->array->add_child<DoubleArray>(len);
+    } else if (dtype == types::BOOL) {
+        this->schema->add_child<BooleanSchema>(name);
+        this->array->add_child<BooleanArray>(len);
+    } else {
+        throw std::runtime_error("data type not supported: " + dtype.str());
     }
 }
 

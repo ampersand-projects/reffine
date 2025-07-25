@@ -84,14 +84,10 @@ arrow::Status query_arrow_file(ArrowTable& in_table, void (*query_fn)(long*, voi
 {
     auto& in_array = in_table.array;
 
-    VectorSchema out_schema("output");
-    VectorArray out_array(in_array->length);
-    out_schema.add_child<Int64Schema>("id");
-    out_schema.add_child<Int64Schema>("minutes_studied");
-    out_schema.add_child<BooleanSchema>("slept_enough");
-    out_array.add_child<Int64Array>(in_array->length);
-    out_array.add_child<Int64Array>(in_array->length);
-    out_array.add_child<BooleanArray>(in_array->length);
+    ArrowTable out_table("output");
+    out_table.add_column("id", types::INT64, in_array->length);
+    out_table.add_column("minutes_studied", types::INT64, in_array->length);
+    out_table.add_column("slept_enough", types::BOOL, in_array->length);
 
     long sum;
     query_fn(&sum, &in_array);

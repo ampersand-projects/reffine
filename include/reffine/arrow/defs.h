@@ -58,6 +58,19 @@ using DoubleArray = PrimArray<double>;
 using BooleanArray = PrimArray<int8_t>;
 using VectorArray = StructArray;
 
+
+struct ArrowTable {
+    shared_ptr<VectorSchema> schema;
+    shared_ptr<VectorArray> array;
+
+    ArrowTable(string name, size_t len) :
+        schema(make_shared<VectorSchema>(name)), array(make_shared<VectorArray>(len))
+    {}
+
+    void add_column(string, DataType);
+    DataType vecty(size_t);
+};
+
 }  // namespace reffine
 
 #endif  // INCLUDE_REFFINE_ARROW_DEFS_H_
