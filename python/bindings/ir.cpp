@@ -215,8 +215,8 @@ PYBIND11_MODULE(ir, m)
     m.attr("_ch_t") = types::INT8;
     m.attr("_bool_t") = types::BOOL;
 
-    m.def("STRUCT", [](std::vector<DataType> btypes) {
-        return DataType(BaseType::STRUCT, btypes, 0);
+    m.def("STRUCT", [](std::vector<DataType> types) {
+        return DataType(BaseType::STRUCT, types);
     });
     m.def("VECTOR", [](size_t dim, std::vector<DataType> types) {
         return DataType(BaseType::VECTOR, types, dim);
