@@ -49,7 +49,7 @@ def test_numpy():
     
     query = exec.compile_loop(fn)
     print("Executing query...\n")
-    print(f"Output:\n{exec.execute_query(query, out_arr, [in_arr, in_arr2])}\n\n")
+    print(f"Output:\n{exec.run(query, out_arr, [in_arr, in_arr2])}\n\n")
 
     
 def transform_fn_arrow(n=100):
@@ -107,7 +107,7 @@ def test_arrow():
     
     query = exec.compile_loop(fn)    
     print("Executing query...\n")
-    exec.execute_query(query, c_out_arr, [c_in_arr])
+    exec.run(query, c_out_arr, [c_in_arr])
     print(f"Output:\n{out_arr}\n\n")
 
 test_arrow()
