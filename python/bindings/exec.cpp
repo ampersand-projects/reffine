@@ -56,9 +56,7 @@ PYBIND11_MODULE(exec, m)
 
     m.def("run", [](void* fn, std::vector<py::capsule> inputs) {
         std::vector<void*> input_ptrs;
-        for (auto& in : inputs) {
-            input_ptrs.push_back(in.get_pointer());
-        }
+        for (auto& in : inputs) { input_ptrs.push_back(in.get_pointer()); }
         run(fn, input_ptrs);
 
         return inputs;
