@@ -1,7 +1,7 @@
 #ifndef INCLUDE_REFFINE_ARROW_DEFS_H_
 #define INCLUDE_REFFINE_ARROW_DEFS_H_
 
-#include "reffine/arrow/base2.h"
+#include "reffine/arrow/base.h"
 
 namespace reffine {
 
