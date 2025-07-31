@@ -21,6 +21,10 @@ add_subdirectory(src)
 add_executable(main main.cpp)
 target_link_libraries(main reffine Arrow::arrow_shared)
 
+add_subdirectory(third_party/googletest)
+enable_testing()
+add_subdirectory(test)
+
 add_subdirectory(third_party/pybind11)
 add_subdirectory(python)
 
