@@ -31,113 +31,138 @@ void* arrow_get_buffer(ArrowArray*, int);
 
 namespace reffine {
 
-struct PrivateData {
-    int count;
-    void* ptrs[100];
-
-    PrivateData() : count(0) {}
-};
+using namespace std;
 
 struct ArrowSchema2 : public ArrowSchema {
+    struct Private {
+        Private(std::string format, std::string name) :
+            format(format), name(name), children(0), schemas(0)
+        {}
+
+        string format;
+        string name;
+        vector<ArrowSchema*> children;
+        vector<shared_ptr<ArrowSchema2>> schemas;
+    };
+
+    ArrowSchema2() {}
+
     ArrowSchema2(std::string name, std::string format)
     {
-        arrow_make_schema(this);
+        auto pdata = new Private(format, name);
 
-        strcpy((char*)this->format, format.c_str());
-        strcpy((char*)this->name, name.c_str());
+        this->format = pdata->format.c_str();
+        this->name = pdata->name.c_str();
+        this->metadata = nullptr;
         this->flags = ARROW_FLAG_NULLABLE;
-
-        this->private_data = (void*)new PrivateData();
-        this->release = (void (*)(ArrowSchema*)) & arrow_release_schema2;
+        this->n_children = pdata->children.size();
+        this->children = pdata->children.data();
+        this->dictionary = nullptr;
+        this->release = (void (*)(ArrowSchema*)) &arrow_release_schema2;
+        this->private_data = pdata;
     }
 
     static void arrow_release_schema2(ArrowSchema2* schema)
     {
-        if (!schema->release) return;
-
-        arrow_release_schema(schema);
-
-        auto* pdata = (PrivateData*)schema->private_data;
-        for (int i = 0; i < pdata->count; i++) {
-            delete (ArrowSchema2*)pdata->ptrs[i];
-        }
-        delete pdata;
+        delete schema->pdata();
+        schema->release = nullptr;
     }
 
-    ~ArrowSchema2() { arrow_release_schema2(this); }
+    ~ArrowSchema2() { if (this->release) this->release(this); }
 
-    template <typename T, typename... Args>
-    T* add_child(Args... args)
+    void add_child(shared_ptr<ArrowSchema2> schema)
     {
-        auto* schema = new T(args...);
-        arrow_add_child_schema(this, schema);
-
-        auto* pdata = (PrivateData*)this->private_data;
-        pdata->ptrs[pdata->count] = schema;
-        pdata->count++;
-
-        return schema;
+        this->pdata()->schemas.push_back(schema);
+        this->pdata()->children.push_back(schema.get());
+        this->children = (ArrowSchema**) this->pdata()->children.data();
+        this->n_children = this->pdata()->children.size();
     }
 
-    ArrowSchema* get_child(int idx)
+    shared_ptr<ArrowSchema2> get_child(int idx)
     {
-        return arrow_get_child_schema(this, idx);
+        return this->pdata()->schemas[idx];
+    }
+
+    Private* pdata()
+    {
+        return (Private*) this->private_data;
     }
 };
 
 struct ArrowArray2 : public ArrowArray {
+    struct Private {
+        Private() : children(0), arrays(0), buffers(0), buf_vecs(0) {}
+
+        vector<ArrowArray*> children;
+        vector<shared_ptr<ArrowArray2>> arrays;
+        vector<const void*> buffers;
+        vector<vector<char>> buf_vecs;
+    };
+
     ArrowArray2()
     {
-        arrow_make_array(this);
-        this->private_data = (void*)new PrivateData();
+        auto pdata = new Private();
+
+        this->length = 0;
+        this->null_count = 0;
+        this->offset = 0;
+        this->n_buffers = 0;
+        this->n_children = 0;
+        this->buffers = nullptr;
+        this->children = nullptr;
+        this->dictionary = nullptr;
         this->release = (void (*)(ArrowArray*)) & arrow_release_array2;
+        this->private_data = pdata;
     }
 
     static void arrow_release_array2(ArrowArray2* array)
     {
-        if (!array->release) return;
-
-        arrow_release_array(array);
-
-        auto* pdata = (PrivateData*)array->private_data;
-        for (int i = 0; i < pdata->count; i++) {
-            delete (ArrowArray2*)pdata->ptrs[i];
-        }
-        delete pdata;
+        delete array->pdata();
+        array->private_data = nullptr;
+        array->release = nullptr;
     }
 
-    ~ArrowArray2() { arrow_release_array2(this); }
-
-    template <typename T, typename... Args>
-    T* add_child(Args... args)
+    ~ArrowArray2()
     {
-        auto* array = new T(args...);
-        arrow_add_child_array(this, array);
+        if (this->release) { this->release(this); }
+    }
 
-        auto* pdata = (PrivateData*)this->private_data;
-        pdata->ptrs[pdata->count] = (void*)array;
-        pdata->count++;
-
-        return array;
+    void add_child(shared_ptr<ArrowArray2> array)
+    {
+        this->pdata()->arrays.push_back(array);
+        this->pdata()->children.push_back(array.get());
+        this->children = this->pdata()->children.data();
+        this->n_children = this->pdata()->children.size();
     }
 
     template <typename T>
     T* add_buffer(size_t len)
     {
-        return (T*)arrow_add_buffer(this, len * sizeof(T));
+        auto& buf = this->pdata()->buf_vecs.emplace_back(len * sizeof(T));
+
+        this->pdata()->buffers.push_back(buf.data());
+        this->buffers = (const void**) this->pdata()->buffers.data();
+        this->n_buffers = this->pdata()->buffers.size();
+
+        return (T*) buf.data();
     }
 
-    template <typename T>
-    T* get_child(int idx)
+    ArrowArray2* get_child(int idx)
     {
-        return (T*)arrow_get_child_array(this, idx);
+        return this->pdata()->arrays[idx].get();
     }
 
     template <typename T>
     T* get_buffer(int idx)
     {
-        return (T*)arrow_get_buffer(this, idx);
+        return (T*) this->pdata()->buffers[idx];
     }
+
+    Private* pdata()
+    {
+        return (Private*) this->private_data;
+    }
+
 };
 
 struct ArrowTable {
