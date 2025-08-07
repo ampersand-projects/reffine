@@ -90,23 +90,33 @@ shared_ptr<Func> transform_loop()
     return foo_fn;
 }
 
+arrow::Status print_out_array(ArrowSchema* schema, ArrowArray* array)
+{
+    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(array, schema));
+    return arrow::Status::OK();
+}
+
 void transform_test()
 {
     auto loop = transform_loop();
-    auto query_fn = compile_loop<void (*)(void*, void*)>(loop);
+    auto query_fn = compile_loop<void (*)(void*, void*, void*)>(loop);
 
-    auto tbl = get_input_vector();
-    auto in_array = tbl->array;
-    VectorSchema out_schema("output");
-    VectorArray out_array(in_array.length);
-    out_schema.add_child<Int64Schema>("id");
-    out_schema.add_child<Int64Schema>("minutes_studied");
-    out_schema.add_child<BooleanSchema>("slept_enough");
-    out_array.add_child<Int64Array>(in_array.length);
-    out_array.add_child<Int64Array>(in_array.length);
-    out_array.add_child<BooleanArray>(in_array.length);
+    auto tbl = get_input_vector().ValueOrDie();
+    auto& in_array = tbl->array;
+    auto out_table = std::make_shared<ArrowTable>(
+        "output", in_array.length,
+        std::vector<std::string>{"id", "minutes_studied", "slept_enough"},
+        std::vector<reffine::DataType>{types::INT64, types::INT64,
+                                       types::BOOL});
+    auto& out_schema = out_table->schema;
+    auto& out_array = out_table->array;
 
-    query_fn(&in_array, &out_array);
+    query_fn(&out_array, &in_array, &out_array);
 
-    ASSERT_EQ(1, 1);
+    auto status = print_out_array(&out_schema, &out_array);
+    if (!status.ok()) {
+        ASSERT_EQ(1, 2);
+    } else {
+        ASSERT_EQ(1, 1);
+    }
 }

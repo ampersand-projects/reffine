@@ -1,7 +1,7 @@
 #ifndef INCLUDE_REFFINE_ARROW_DEFS_H_
 #define INCLUDE_REFFINE_ARROW_DEFS_H_
 
-#include "reffine/arrow/base2.h"
+#include "reffine/arrow/base.h"
 
 namespace reffine {
 
@@ -30,7 +30,7 @@ using VectorSchema = StructSchema;
  * Array definitions
  */
 struct NullableArray : public ArrowArray2 {
-    NullableArray(size_t len) : ArrowArray2()
+    NullableArray(size_t len) : ArrowArray2(len)
     {
         this->add_buffer<char>(len / 8 + 1);
     }
@@ -57,6 +57,76 @@ using FloatArray = PrimArray<float>;
 using DoubleArray = PrimArray<double>;
 using BooleanArray = PrimArray<int8_t>;
 using VectorArray = StructArray;
+
+struct ArrowTable {
+    ArrowSchema2 schema;
+    ArrowArray2 array;
+
+    ArrowTable() {}
+
+    ArrowTable(std::string name, size_t len, std::vector<std::string> cols,
+               std::vector<DataType> dtypes)
+        : schema(name, "+s"), array(len)
+    {
+        this->array.add_buffer<char>(len / 8 + 1);
+
+        ASSERT(cols.size() == dtypes.size());
+        for (size_t i = 0; i < cols.size(); i++) {
+            auto& col = cols[i];
+            auto& dtype = dtypes[i];
+
+            if (dtype == types::BOOL || dtype == types::INT8) {
+                this->schema.add_child(make_shared<Int8Schema>(col));
+                this->array.add_child(make_shared<Int8Array>(len));
+            } else if (dtype == types::INT16) {
+                this->schema.add_child(make_shared<Int16Schema>(col));
+                this->array.add_child(make_shared<Int16Array>(len));
+            } else if (dtype == types::INT32) {
+                this->schema.add_child(make_shared<Int32Schema>(col));
+                this->array.add_child(make_shared<Int32Array>(len));
+            } else if (dtype == types::INT64) {
+                this->schema.add_child(make_shared<Int64Schema>(col));
+                this->array.add_child(make_shared<Int64Array>(len));
+            } else if (dtype == types::FLOAT32) {
+                this->schema.add_child(make_shared<FloatSchema>(col));
+                this->array.add_child(make_shared<FloatArray>(len));
+            } else if (dtype == types::FLOAT64) {
+                this->schema.add_child(make_shared<DoubleSchema>(col));
+                this->array.add_child(make_shared<DoubleArray>(len));
+            } else {
+                throw std::runtime_error("data type not supported");
+            }
+        }
+    }
+
+    DataType get_data_type(size_t dim)
+    {
+        vector<DataType> dtypes;
+
+        for (long i = 0; i < this->schema.n_children; i++) {
+            auto child = this->schema.children[i];
+            auto fmt = std::string(child->format);
+
+            if (fmt == "c") {
+                dtypes.push_back(types::INT8);
+            } else if (fmt == "s") {
+                dtypes.push_back(types::INT16);
+            } else if (fmt == "i") {
+                dtypes.push_back(types::INT32);
+            } else if (fmt == "l") {
+                dtypes.push_back(types::INT64);
+            } else if (fmt == "f") {
+                dtypes.push_back(types::FLOAT32);
+            } else if (fmt == "g") {
+                dtypes.push_back(types::FLOAT64);
+            } else {
+                throw std::runtime_error("schema type not supported");
+            }
+        }
+
+        return DataType(BaseType::VECTOR, dtypes, dim);
+    }
+};
 
 }  // namespace reffine
 
