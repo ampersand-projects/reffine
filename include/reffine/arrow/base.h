@@ -68,7 +68,10 @@ struct ArrowSchema2 : public ArrowSchema {
         schema->release = nullptr;
     }
 
-    ~ArrowSchema2() { if (this->release) this->release(this); }
+    ~ArrowSchema2()
+    {
+        if (this->release) this->release(this);
+    }
 
     void add_child(shared_ptr<ArrowSchema2> schema)
     {
@@ -91,17 +94,20 @@ struct ArrowSchema2 : public ArrowSchema {
 
 struct ArrowArray2 : public ArrowArray {
     struct Private {
-        Private() : children(0), arrays(0), buffers(0), buf_vecs(0) {}
+        Private(size_t len) : children(0), arrays(0), buffers(0), buf_vecs(0) {}
 
+        size_t len;
         vector<ArrowArray*> children;
         vector<shared_ptr<ArrowArray2>> arrays;
         vector<const void*> buffers;
         vector<vector<char>> buf_vecs;
     };
 
-    ArrowArray2()
+    ArrowArray2() {}
+
+    ArrowArray2(size_t len)
     {
-        auto pdata = new Private();
+        auto pdata = new Private(len);
 
         this->length = 0;
         this->null_count = 0;
@@ -163,46 +169,6 @@ struct ArrowArray2 : public ArrowArray {
         return (Private*) this->private_data;
     }
 
-};
-
-struct ArrowTable {
-    ArrowSchema schema;
-    ArrowArray array;
-
-    ArrowTable(ArrowSchema schema, ArrowArray array)
-        : schema(std::move(schema)), array(std::move(array))
-    {
-        auto fmt = std::string(schema.format);
-        ASSERT(fmt == "+s");
-    }
-
-    DataType get_data_type(size_t dim)
-    {
-        vector<DataType> dtypes;
-
-        for (long i = 0; i < this->schema.n_children; i++) {
-            auto child = schema.children[i];
-            auto fmt = std::string(child->format);
-
-            if (fmt == "c") {
-                dtypes.push_back(types::INT8);
-            } else if (fmt == "s") {
-                dtypes.push_back(types::INT16);
-            } else if (fmt == "i") {
-                dtypes.push_back(types::INT32);
-            } else if (fmt == "l") {
-                dtypes.push_back(types::INT64);
-            } else if (fmt == "f") {
-                dtypes.push_back(types::FLOAT32);
-            } else if (fmt == "g") {
-                dtypes.push_back(types::FLOAT64);
-            } else {
-                throw std::runtime_error("schema type not supported");
-            }
-        }
-
-        return DataType(BaseType::VECTOR, dtypes, dim);
-    }
 };
 
 }  // namespace reffine

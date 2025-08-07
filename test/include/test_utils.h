@@ -10,6 +10,7 @@
 #include <arrow/status.h>
 
 #include <string>
+#include <memory>
 
 #include "reffine/arrow/defs.h"
 #include "reffine/engine/engine.h"
@@ -21,7 +22,7 @@
 #include "reffine/pass/scalarpass.h"
 #include "reffine/utils/utils.h"
 
-arrow::Result<reffine::ArrowTable> get_input_vector();
+arrow::Result<std::shared_ptr<reffine::ArrowTable>> get_input_vector();
 std::string print_arrow_table(reffine::ArrowTable&);
 
 #endif  // TEST_INCLUDE_TEST_UTILS_H_

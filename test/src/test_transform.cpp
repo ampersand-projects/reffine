@@ -101,16 +101,16 @@ void transform_test()
     auto loop = transform_loop();
     auto query_fn = compile_loop<void (*)(void*, void*, void*)>(loop);
 
-    auto tbl = get_input_vector();
-    auto in_array = tbl->array;
-    VectorSchema out_schema("output");
-    VectorArray out_array(in_array.length);
-    out_schema.add_child(make_shared<Int64Schema>("id"));
-    out_schema.add_child(make_shared<Int64Schema>("minutes_studied"));
-    out_schema.add_child(make_shared<BooleanSchema>("slept_enough"));
-    out_array.add_child(make_shared<Int64Array>(in_array.length));
-    out_array.add_child(make_shared<Int64Array>(in_array.length));
-    out_array.add_child(make_shared<BooleanArray>(in_array.length));
+    auto tbl = get_input_vector().ValueOrDie();
+    auto& in_array = tbl->array;
+    auto out_table = std::make_shared<ArrowTable>(
+        "output",
+        in_array.length,
+        std::vector<std::string>{"id", "minutes_studied", "slept_enough"},
+        std::vector<reffine::DataType>{types::INT64, types::INT64, types::BOOL}
+    );
+    auto& out_schema = out_table->schema;
+    auto& out_array = out_table->array;
 
     query_fn(&out_array, &in_array, &out_array);
 

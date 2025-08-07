@@ -65,7 +65,7 @@ arrow::Status csv_to_arrow()
     return arrow::Status::OK();
 }
 
-arrow::Result<ArrowTable> load_arrow_file(string filename)
+arrow::Result<shared_ptr<ArrowTable>> load_arrow_file(string filename)
 {
     ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(
                 filename, arrow::default_memory_pool()));
@@ -75,11 +75,10 @@ arrow::Result<ArrowTable> load_arrow_file(string filename)
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
     cout << "Input: " << endl << rbatch->ToString() << endl;
 
-    ArrowSchema schema;
-    ArrowArray array;
-    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &array, &schema));
+    auto tbl = make_shared<ArrowTable>();
+    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &tbl->array, &tbl->schema));
 
-    return ArrowTable(std::move(schema), std::move(array));
+    return tbl;
 }
 
 
@@ -94,18 +93,18 @@ arrow::Status query_arrow_file(ArrowTable& in_table, void (*query_fn)(long*, voi
     return arrow::Status::OK();
 }
 
-arrow::Status query_arrow_file2(ArrowTable& in_table, void (*query_fn)(void*, void*, void*))
+arrow::Status query_arrow_file2(shared_ptr<ArrowTable> in_table, void (*query_fn)(void*, void*, void*))
 {
-    auto& in_array = in_table.array;
+    auto& in_array = in_table->array;
 
-    VectorSchema out_schema("output");
-    VectorArray out_array(in_array.length);
-    out_schema.add_child(make_shared<Int64Schema>("id"));
-    out_schema.add_child(make_shared<Int64Schema>("minutes_studied"));
-    out_schema.add_child(make_shared<BooleanSchema>("slept_enough"));
-    out_array.add_child(make_shared<Int64Array>(in_array.length));
-    out_array.add_child(make_shared<Int64Array>(in_array.length));
-    out_array.add_child(make_shared<BooleanArray>(in_array.length));
+    auto out_table = make_shared<ArrowTable>(
+        "output",
+        in_array.length,
+        vector<string>{"id", "minutes_studied", "slept_enough"},
+        vector<DataType>{types::INT64, types::INT64, types::BOOL}
+    );
+    auto& out_schema = out_table->schema;
+    auto& out_array = out_table->array;
 
     query_fn(&out_array, &in_array, &out_array);
 
@@ -740,9 +739,8 @@ int main()
     auto loop = transform_loop();
     auto query_fn = compile_loop<void (*)(void*, void*, void*)>(loop);
 
-    auto tbl = load_arrow_file("../students.arrow");
-    auto in_array = tbl->array;
-    auto status = query_arrow_file2(*tbl, query_fn);
+    auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
+    auto status = query_arrow_file2(tbl, query_fn);
 
     if (!status.ok()) {
         cerr << status.ToString() << endl;
