@@ -10,7 +10,8 @@ arrow::Result<std::shared_ptr<reffine::ArrowTable>> get_input_vector()
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
 
     auto table = std::make_shared<ArrowTable>();
-    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &table->array, &table->schema));
+    ARROW_RETURN_NOT_OK(
+        arrow::ExportRecordBatch(*rbatch, &table->array, &table->schema));
 
     return table;
 }

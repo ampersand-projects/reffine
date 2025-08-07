@@ -1,8 +1,9 @@
 #ifndef INCLUDE_REFFINE_PASS_VINSTR_H_
 #define INCLUDE_REFFINE_PASS_VINSTR_H_
 
-#include <cstdio>
 #include <arrow/c/abi.h>
+
+#include <cstdio>
 
 #define REFFINE_VINSTR_ATTR __attribute__((always_inline))
 

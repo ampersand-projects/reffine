@@ -1,12 +1,12 @@
 #ifndef INCLUDE_REFFINE_ARROW_BASE_H_
 #define INCLUDE_REFFINE_ARROW_BASE_H_
 
+#include <arrow/c/abi.h>
+
 #include <cstdint>
 #include <cstdlib>
-#include <iostream>
 #include <cstring>
-
-#include <arrow/c/abi.h>
+#include <iostream>
 
 #include "reffine/base/log.h"
 #include "reffine/base/type.h"
@@ -35,9 +35,10 @@ using namespace std;
 
 struct ArrowSchema2 : public ArrowSchema {
     struct Private {
-        Private(std::string format, std::string name) :
-            format(format), name(name), children(0), schemas(0)
-        {}
+        Private(std::string format, std::string name)
+            : format(format), name(name), children(0), schemas(0)
+        {
+        }
 
         string format;
         string name;
@@ -58,7 +59,7 @@ struct ArrowSchema2 : public ArrowSchema {
         this->n_children = pdata->children.size();
         this->children = pdata->children.data();
         this->dictionary = nullptr;
-        this->release = (void (*)(ArrowSchema*)) &arrow_release_schema2;
+        this->release = (void (*)(ArrowSchema*)) & arrow_release_schema2;
         this->private_data = pdata;
     }
 
@@ -77,7 +78,7 @@ struct ArrowSchema2 : public ArrowSchema {
     {
         this->pdata()->schemas.push_back(schema);
         this->pdata()->children.push_back(schema.get());
-        this->children = (ArrowSchema**) this->pdata()->children.data();
+        this->children = (ArrowSchema**)this->pdata()->children.data();
         this->n_children = this->pdata()->children.size();
     }
 
@@ -86,10 +87,7 @@ struct ArrowSchema2 : public ArrowSchema {
         return this->pdata()->schemas[idx];
     }
 
-    Private* pdata()
-    {
-        return (Private*) this->private_data;
-    }
+    Private* pdata() { return (Private*)this->private_data; }
 };
 
 struct ArrowArray2 : public ArrowArray {
@@ -147,28 +145,21 @@ struct ArrowArray2 : public ArrowArray {
         auto& buf = this->pdata()->buf_vecs.emplace_back(len * sizeof(T));
 
         this->pdata()->buffers.push_back(buf.data());
-        this->buffers = (const void**) this->pdata()->buffers.data();
+        this->buffers = (const void**)this->pdata()->buffers.data();
         this->n_buffers = this->pdata()->buffers.size();
 
-        return (T*) buf.data();
+        return (T*)buf.data();
     }
 
-    ArrowArray2* get_child(int idx)
-    {
-        return this->pdata()->arrays[idx].get();
-    }
+    ArrowArray2* get_child(int idx) { return this->pdata()->arrays[idx].get(); }
 
     template <typename T>
     T* get_buffer(int idx)
     {
-        return (T*) this->pdata()->buffers[idx];
+        return (T*)this->pdata()->buffers[idx];
     }
 
-    Private* pdata()
-    {
-        return (Private*) this->private_data;
-    }
-
+    Private* pdata() { return (Private*)this->private_data; }
 };
 
 }  // namespace reffine

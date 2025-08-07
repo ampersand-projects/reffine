@@ -64,12 +64,9 @@ struct ArrowTable {
 
     ArrowTable() {}
 
-    ArrowTable(
-        std::string name,
-        size_t len,
-        std::vector<std::string> cols,
-        std::vector<DataType> dtypes) :
-        schema(name, "+s"), array(len)
+    ArrowTable(std::string name, size_t len, std::vector<std::string> cols,
+               std::vector<DataType> dtypes)
+        : schema(name, "+s"), array(len)
     {
         this->array.add_buffer<char>(len / 8 + 1);
 

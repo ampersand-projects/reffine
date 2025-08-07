@@ -9,8 +9,8 @@
 #include <arrow/result.h>
 #include <arrow/status.h>
 
-#include <string>
 #include <memory>
+#include <string>
 
 #include "reffine/arrow/defs.h"
 #include "reffine/engine/engine.h"
