@@ -67,6 +67,11 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
     return loop;
 }
 
+Expr LoopGen::visit(Op& op)
+{
+    return nullptr;
+}
+
 Expr LoopGen::visit(Reduce& red)
 {
     auto tmp_loop = this->build_loop(red.op);

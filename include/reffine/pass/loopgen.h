@@ -26,12 +26,9 @@ public:
 
 private:
     shared_ptr<Loop> build_loop(Op&);
+    Expr visit(Op&) final;
     Expr visit(Reduce&) final;
     Expr visit(Element&) final;
-    Expr visit(NotNull&) final
-    {
-        throw runtime_error("NotNull visit not supported");
-    }
 
     LoopGenCtx& _loopgenctx;
 };

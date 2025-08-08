@@ -146,11 +146,6 @@ Expr IRClone::visit(Stmts& stmts)
     return _stmtexpr(_stmts(stmt_list));
 }
 
-Expr IRClone::visit(IsValid& is_valid)
-{
-    return _isval(eval(is_valid.vec), eval(is_valid.idx), is_valid.col);
-}
-
 Expr IRClone::visit(Alloc& alloc)
 {
     return _alloc(alloc.type.deref(), eval(alloc.size));

@@ -49,20 +49,17 @@ struct Length : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-struct IsValid : public ExprNode {
-    Expr vec;
-    Expr idx;
-    size_t col;
-
+struct IsValid : public Call {
     IsValid(Expr vec, Expr idx, size_t col)
-        : ExprNode(types::BOOL), vec(vec), idx(idx), col(col)
+        : Call("get_vector_null_bit",
+            types::BOOL,
+            vector<Expr>{vec, idx, make_shared<Const>(types::UINT32, col)}
+          )
     {
         ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
         ASSERT(col < vec->type.dtypes.size());
     }
-
-    void Accept(Visitor&) final;
 };
 
 struct SetValid : public ExprNode {

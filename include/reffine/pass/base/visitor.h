@@ -74,10 +74,6 @@ public:
     /**
      * Loop IR
      */
-    virtual void Visit(IsValid&)
-    {
-        throw runtime_error("IsValid operation not supported");
-    }
     virtual void Visit(SetValid&)
     {
         throw runtime_error("SetValid operation not supported");

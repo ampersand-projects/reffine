@@ -125,10 +125,6 @@ protected:
     {
         throw runtime_error("Loop visit not supported");
     }
-    virtual ValTy visit(IsValid&)
-    {
-        throw runtime_error("IsValid visit not supported");
-    }
     virtual ValTy visit(SetValid&)
     {
         throw runtime_error("SetValid visit not supported");
@@ -169,7 +165,6 @@ protected:
     void Visit(BlockDim& expr) final { val() = visit(expr); }
     void Visit(GridDim& expr) final { val() = visit(expr); }
     void Visit(Loop& expr) final { val() = visit(expr); }
-    void Visit(IsValid& expr) final { val() = visit(expr); }
     void Visit(SetValid& expr) final { val() = visit(expr); }
     void Visit(FetchDataPtr& expr) final { val() = visit(expr); }
     void Visit(NoOp& stmt) final { val() = visit(stmt); }
