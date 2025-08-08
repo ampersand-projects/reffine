@@ -94,7 +94,7 @@ struct ArrowTable {
                 this->schema.add_child(make_shared<DoubleSchema>(col));
                 this->array.add_child(make_shared<DoubleArray>(len));
             } else {
-                throw std::runtime_error("data type not supported");
+                throw std::runtime_error("data type not supported " + dtype.str());
             }
         }
     }
@@ -119,8 +119,10 @@ struct ArrowTable {
                 dtypes.push_back(types::FLOAT32);
             } else if (fmt == "g") {
                 dtypes.push_back(types::FLOAT64);
+            } else if (fmt == "u") {
+                dtypes.push_back(types::STR);
             } else {
-                throw std::runtime_error("schema type not supported");
+                throw std::runtime_error("schema type not supported " + fmt);
             }
         }
 

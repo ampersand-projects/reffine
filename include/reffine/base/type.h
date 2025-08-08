@@ -30,6 +30,7 @@ enum class BaseType {
     FLOAT64,
     STRUCT,
     PTR,
+    STR,
 
     // Reffine IR types
     IDX,
@@ -176,6 +177,8 @@ struct DataType {
                 return "f64";
             case BaseType::PTR:
                 return "*" + dtypes[0].str();
+            case BaseType::STR:
+                return "str";
             case BaseType::STRUCT: {
                 string res = "";
                 for (const auto& dtype : dtypes) { res += dtype.str() + ", "; }
@@ -246,6 +249,7 @@ static const DataType UINT32(BaseType::UINT32);
 static const DataType UINT64(BaseType::UINT64);
 static const DataType FLOAT32(BaseType::FLOAT32);
 static const DataType FLOAT64(BaseType::FLOAT64);
+static const DataType STR(BaseType::STR);
 static const DataType CHAR_PTR(BaseType::PTR, {types::INT8});
 static const DataType IDX(BaseType::IDX);
 
