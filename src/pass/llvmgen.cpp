@@ -324,17 +324,6 @@ Value* LLVMGen::visit(IfElse& ifelse)
 
 Value* LLVMGen::visit(NoOp&) { return nullptr; }
 
-Value* LLVMGen::visit(SetValid& set_valid)
-{
-    auto vec_val = eval(set_valid.vec);
-    auto idx_val = eval(set_valid.idx);
-    auto validity_val = eval(set_valid.validity);
-    auto col_val = ConstantInt::get(lltype(types::UINT32), set_valid.col);
-
-    return llcall("set_vector_null_bit", lltype(set_valid),
-                  {vec_val, idx_val, validity_val, col_val});
-}
-
 Value* LLVMGen::visit(Locate& locate)
 {
     return llcall("vector_locate", lltype(locate), {locate.vec, locate.iter});

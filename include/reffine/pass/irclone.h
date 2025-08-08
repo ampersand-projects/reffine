@@ -51,7 +51,6 @@ protected:
     Expr visit(BlockDim&) override;
     Expr visit(GridDim&) override;
     Expr visit(Loop&) override;
-    Expr visit(SetValid&) override;
     Expr visit(FetchDataPtr&) override;
     Expr visit(NoOp&) override;
     void visit(Func&) override;

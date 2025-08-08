@@ -155,12 +155,6 @@ Expr IRClone::visit(IfElse& ifelse)
                              eval(ifelse.false_body)));
 }
 
-Expr IRClone::visit(SetValid& set_valid)
-{
-    return _setval(eval(set_valid.vec), eval(set_valid.idx),
-                   eval(set_valid.validity), set_valid.col);
-}
-
 Expr IRClone::visit(Loop& loop)
 {
     auto new_loop = _loop(eval(loop.output));

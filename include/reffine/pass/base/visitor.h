@@ -74,10 +74,6 @@ public:
     /**
      * Loop IR
      */
-    virtual void Visit(SetValid&)
-    {
-        throw runtime_error("SetValid operation not supported");
-    }
     virtual void Visit(Lookup&)
     {
         throw runtime_error("Lookup operation not supported");

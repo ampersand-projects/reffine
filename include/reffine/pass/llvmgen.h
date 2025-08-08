@@ -67,7 +67,6 @@ private:
     llvm::Value* visit(BlockDim&) final;
     llvm::Value* visit(GridDim&) final;
     llvm::Value* visit(Loop&) final;
-    llvm::Value* visit(SetValid&) final;
     llvm::Value* visit(Locate&) final;
     llvm::Value* visit(FetchDataPtr&) final;
     void visit(Func&) final;

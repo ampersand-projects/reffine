@@ -62,7 +62,6 @@ public:
     void Visit(BlockDim&) final;
     void Visit(GridDim&) final;
     void Visit(Loop&) final;
-    void Visit(SetValid&) final;
     void Visit(Lookup&) final;
     void Visit(Locate&) final;
     void Visit(FetchDataPtr&) final;

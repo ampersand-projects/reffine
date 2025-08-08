@@ -403,12 +403,6 @@ void IRPrinter::Visit(Loop& loop)
     ostr << "}";
 }
 
-void IRPrinter::Visit(SetValid& set_valid)
-{
-    emitfunc("set_valid<" + std::to_string(set_valid.col) + ">",
-             {set_valid.vec, set_valid.idx, set_valid.validity});
-}
-
 void IRPrinter::Visit(Lookup& lookup)
 {
     emitfunc("lookup", {lookup.vec, lookup.idx});

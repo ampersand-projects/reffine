@@ -162,13 +162,6 @@ public:
         expr.output->Accept(*this);
     }
 
-    void Visit(SetValid& expr) override
-    {
-        expr.vec->Accept(*this);
-        expr.idx->Accept(*this);
-        expr.validity->Accept(*this);
-    }
-
     void Visit(Lookup& expr) override
     {
         expr.vec->Accept(*this);

@@ -58,26 +58,18 @@ struct IsValid : public Call {
     }
 };
 
-struct SetValid : public ExprNode {
-    Expr vec;
-    Expr idx;
-    Expr validity;
-    size_t col;
-
+struct SetValid : public Call {
     SetValid(Expr vec, Expr idx, Expr validity, size_t col)
-        : ExprNode(types::BOOL),
-          vec(vec),
-          idx(idx),
-          validity(validity),
-          col(col)
+        : Call("set_vector_null_bit",
+            types::BOOL,
+            vector<Expr>{vec, idx, validity, make_shared<Const>(types::UINT32, col)}
+          )
     {
         ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
         ASSERT(validity->type == types::BOOL);
         ASSERT(col < vec->type.dtypes.size());
     }
-
-    void Accept(Visitor&) final;
 };
 
 }  // namespace reffine
