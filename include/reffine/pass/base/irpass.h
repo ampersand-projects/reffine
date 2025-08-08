@@ -168,12 +168,6 @@ public:
         expr.idx->Accept(*this);
     }
 
-    void Visit(Locate& expr) override
-    {
-        expr.vec->Accept(*this);
-        expr.iter->Accept(*this);
-    }
-
     void Visit(FetchDataPtr& expr) override
     {
         expr.vec->Accept(*this);

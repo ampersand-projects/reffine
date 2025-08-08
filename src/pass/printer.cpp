@@ -408,11 +408,6 @@ void IRPrinter::Visit(Lookup& lookup)
     emitfunc("lookup", {lookup.vec, lookup.idx});
 }
 
-void IRPrinter::Visit(Locate& locate)
-{
-    return emitfunc("locate", {locate.vec, locate.iter});
-}
-
 void IRPrinter::Visit(FetchDataPtr& fetch_data_ptr)
 {
     emitfunc("fetch_data_ptr<" + std::to_string(fetch_data_ptr.col) + ">",

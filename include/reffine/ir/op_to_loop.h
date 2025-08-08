@@ -22,11 +22,11 @@ struct Lookup : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-struct Locate : public ExprNode {
+struct Locate : public Call {
     Expr vec;
     Expr iter;
 
-    Locate(Expr vec, Expr iter) : ExprNode(types::IDX), vec(vec), iter(iter)
+    Locate(Expr vec, Expr iter) : Call("vector_locate", types::IDX, vector<Expr>{vec, iter})
     {
         auto& vtype = vec->type;
 
@@ -34,8 +34,6 @@ struct Locate : public ExprNode {
         ASSERT(vtype.dim == 1);
         ASSERT(vtype.iterty() == iter->type);
     }
-
-    void Accept(Visitor&) final;
 };
 
 struct Length : public Call {

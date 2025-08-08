@@ -324,11 +324,6 @@ Value* LLVMGen::visit(IfElse& ifelse)
 
 Value* LLVMGen::visit(NoOp&) { return nullptr; }
 
-Value* LLVMGen::visit(Locate& locate)
-{
-    return llcall("vector_locate", lltype(locate), {locate.vec, locate.iter});
-}
-
 Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
 {
     auto vec_val = eval(fetch_data_ptr.vec);
