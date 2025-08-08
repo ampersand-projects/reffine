@@ -3,8 +3,8 @@
 
 #include <string>
 
-#include "reffine/arrow/defs.h"
 #include "reffine/base/log.h"
+#include "reffine/engine/cuda_engine.h"
 #include "reffine/engine/engine.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/llvmgen.h"
@@ -13,7 +13,7 @@
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/scalarpass.h"
 
-using namespace reffine;
+namespace reffine {
 
 template <typename T>
 T compile_loop(std::shared_ptr<Func> loop)
@@ -46,5 +46,9 @@ T compile_op(std::shared_ptr<Func> op)
     auto loop = LoopGen::Build(op);
     return compile_loop<T>(loop);
 }
+
+CUfunction compile_kernel(std::shared_ptr<Func>);
+
+}  // namespace reffine
 
 #endif  // INCLUDE_REFFINE_UTILS_H_
