@@ -37,7 +37,6 @@ protected:
     Expr visit(Element&) override;
     Expr visit(Lookup&) override;
     Expr visit(Locate&) override;
-    Expr visit(Length&) override;
     Expr visit(NotNull&) override;
     Expr visit(Reduce&) override;
     Expr visit(Call&) override;

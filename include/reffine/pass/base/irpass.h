@@ -181,8 +181,6 @@ public:
         expr.iter->Accept(*this);
     }
 
-    void Visit(Length& expr) override { expr.vec->Accept(*this); }
-
     void Visit(FetchDataPtr& expr) override
     {
         expr.vec->Accept(*this);

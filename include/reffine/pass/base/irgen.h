@@ -61,10 +61,6 @@ protected:
     {
         throw runtime_error("Locate visit not supported");
     }
-    virtual ValTy visit(Length&)
-    {
-        throw runtime_error("Length visit not supported");
-    }
     virtual ValTy visit(NotNull&)
     {
         throw runtime_error("NotNull visit not supported");
@@ -150,7 +146,6 @@ protected:
     void Visit(Element& expr) final { val() = visit(expr); }
     void Visit(Lookup& expr) final { val() = visit(expr); }
     void Visit(Locate& expr) final { val() = visit(expr); }
-    void Visit(Length& expr) final { val() = visit(expr); }
     void Visit(NotNull& expr) final { val() = visit(expr); }
     void Visit(Reduce& expr) final { val() = visit(expr); }
     void Visit(Call& expr) final { val() = visit(expr); }

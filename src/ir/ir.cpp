@@ -32,7 +32,6 @@ void Loop::Accept(Visitor& v) { v.Visit(*this); }
 void SetValid::Accept(Visitor& v) { v.Visit(*this); }
 void Lookup::Accept(Visitor& v) { v.Visit(*this); }
 void Locate::Accept(Visitor& v) { v.Visit(*this); }
-void Length::Accept(Visitor& v) { v.Visit(*this); }
 void FetchDataPtr::Accept(Visitor& v) { v.Visit(*this); }
 void NoOp::Accept(Visitor& v) { v.Visit(*this); }
 

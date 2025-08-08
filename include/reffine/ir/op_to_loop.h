@@ -38,15 +38,11 @@ struct Locate : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-struct Length : public ExprNode {
-    Expr vec;
-
-    Length(Expr vec) : ExprNode(types::IDX), vec(vec)
+struct Length : public Call {
+    Length(Expr vec) : Call("get_vector_len", types::IDX, vector<Expr>{vec})
     {
         ASSERT(vec->type.is_vector());
     }
-
-    void Accept(Visitor&) final;
 };
 
 struct IsValid : public Call {
