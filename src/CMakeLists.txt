@@ -13,10 +13,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # execute_process is for configure (cmake) and target is for build (make)
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp
-    COMMAND ${CMAKE_CXX_COMPILER} -emit-llvm -S ${CMAKE_CURRENT_SOURCE_DIR}/pass/vinstr.cpp -I ${CMAKE_CURRENT_SOURCE_DIR}/../include/ -o ${CMAKE_CURRENT_BINARY_DIR}/vinstr.ll
+    COMMAND ${CMAKE_CXX_COMPILER} -emit-llvm -S ${CMAKE_CURRENT_SOURCE_DIR}/pass/vinstr/vinstr.cpp -I ${CMAKE_CURRENT_SOURCE_DIR}/../include/ -o ${CMAKE_CURRENT_BINARY_DIR}/vinstr.ll
     COMMAND xxd -n vinstr_str -i ${CMAKE_CURRENT_BINARY_DIR}/vinstr.ll > ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp
-    DEPENDS pass/vinstr.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../include/reffine/pass/vinstr.h
-    COMMENT "Compile pass/vinstr.cpp to LLVM IR and embed into a char array in vinstr_str.cpp"
+    DEPENDS pass/vinstr/vinstr.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../include/reffine/pass/vinstr/vinstr.h
+    COMMENT "Compile vinstr.cpp to LLVM IR and embed into a char array in vinstr_str.cpp"
 )
 
 set(SRC_FILES

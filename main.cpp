@@ -37,7 +37,6 @@
 #include "reffine/engine/cuda_engine.h"
 #include "reffine/arrow/table.h"
 #include "reffine/builder/reffiner.h"
-#include "reffine/pass/vinstr.h"
 #include "reffine/utils/utils.h"
 
 using namespace reffine;
