@@ -76,23 +76,23 @@ struct ArrowTable {
             auto& dtype = dtypes[i];
 
             if (dtype == types::BOOL || dtype == types::INT8) {
-                this->schema.add_child(make_shared<Int8Schema>(col));
-                this->array.add_child(make_shared<Int8Array>(len));
+                this->schema.add_child(new Int8Schema(col));
+                this->array.add_child(new Int8Array(len));
             } else if (dtype == types::INT16) {
-                this->schema.add_child(make_shared<Int16Schema>(col));
-                this->array.add_child(make_shared<Int16Array>(len));
+                this->schema.add_child(new Int16Schema(col));
+                this->array.add_child(new Int16Array(len));
             } else if (dtype == types::INT32) {
-                this->schema.add_child(make_shared<Int32Schema>(col));
-                this->array.add_child(make_shared<Int32Array>(len));
+                this->schema.add_child(new Int32Schema(col));
+                this->array.add_child(new Int32Array(len));
             } else if (dtype == types::INT64) {
-                this->schema.add_child(make_shared<Int64Schema>(col));
-                this->array.add_child(make_shared<Int64Array>(len));
+                this->schema.add_child(new Int64Schema(col));
+                this->array.add_child(new Int64Array(len));
             } else if (dtype == types::FLOAT32) {
-                this->schema.add_child(make_shared<FloatSchema>(col));
-                this->array.add_child(make_shared<FloatArray>(len));
+                this->schema.add_child(new FloatSchema(col));
+                this->array.add_child(new FloatArray(len));
             } else if (dtype == types::FLOAT64) {
-                this->schema.add_child(make_shared<DoubleSchema>(col));
-                this->array.add_child(make_shared<DoubleArray>(len));
+                this->schema.add_child(new DoubleSchema(col));
+                this->array.add_child(new DoubleArray(len));
             } else {
                 throw std::runtime_error("data type not supported " + dtype.str());
             }
