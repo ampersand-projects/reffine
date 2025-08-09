@@ -69,6 +69,10 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
 
 Expr LoopGen::visit(Op& op)
 {
+    auto tmp_loop = this->build_loop(op);
+
+    auto out_vec = _make(op.type);
+
     return nullptr;
 }
 

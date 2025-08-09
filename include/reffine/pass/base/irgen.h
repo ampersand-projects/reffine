@@ -57,6 +57,10 @@ protected:
     {
         throw runtime_error("Lookup visit not supported");
     }
+    virtual ValTy visit(MakeVector&)
+    {
+        throw runtime_error("MakeVector visit not supported");
+    }
     virtual ValTy visit(NotNull&)
     {
         throw runtime_error("NotNull visit not supported");
@@ -137,6 +141,7 @@ protected:
     void Visit(Op& expr) final { val() = visit(expr); }
     void Visit(Element& expr) final { val() = visit(expr); }
     void Visit(Lookup& expr) final { val() = visit(expr); }
+    void Visit(MakeVector& expr) final { val() = visit(expr); }
     void Visit(NotNull& expr) final { val() = visit(expr); }
     void Visit(Reduce& expr) final { val() = visit(expr); }
     void Visit(Call& expr) final { val() = visit(expr); }

@@ -487,6 +487,11 @@ Value* LLVMGen::visit(GridDim& gdim)
 #endif
 }
 
+Value* LLVMGen::visit(MakeVector& make)
+{
+    return llcall("make_vector", lltype(make), vector<Expr>{});
+}
+
 Value* LLVMGen::visit(Loop& loop)
 {
     // Loop body condition and incr needs to be merged into loop body before

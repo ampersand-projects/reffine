@@ -70,6 +70,15 @@ struct SetValid : public Call {
     }
 };
 
+struct MakeVector : public ExprNode {
+    MakeVector(DataType type) : ExprNode(type)
+    {
+        ASSERT(type.is_vector());
+    }
+
+    void Accept(Visitor&) final;
+};
+
 }  // namespace reffine
 
 #endif  // INCLUDE_REFFINE_IR_OP_TO_LOOP_H_
