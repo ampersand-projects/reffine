@@ -35,7 +35,7 @@
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
 #include "reffine/engine/cuda_engine.h"
-#include "reffine/arrow/defs.h"
+#include "reffine/arrow/table.h"
 #include "reffine/builder/reffiner.h"
 #include "reffine/pass/vinstr.h"
 #include "reffine/utils/utils.h"

@@ -12,7 +12,7 @@
 #include <memory>
 #include <string>
 
-#include "reffine/arrow/defs.h"
+#include "reffine/arrow/table.h"
 #include "reffine/engine/engine.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/llvmgen.h"
