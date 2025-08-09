@@ -102,7 +102,12 @@ int64_t* get_elem_ptr(int64_t* arr, int64_t idx) { return arr + idx; }
 REFFINE_VINSTR_ATTR
 ArrowArray* make_vector()
 {
-    return nullptr;
+    size_t len = 1000;
+
+    auto* arr = new VectorArray(len);
+    arr->add_child(new Int64Array(len));
+
+    return arr;
 }
 
 }  // extern "C"
