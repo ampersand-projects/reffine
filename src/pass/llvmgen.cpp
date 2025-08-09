@@ -590,8 +590,9 @@ void LLVMGen::visit(Func& func)
 
 void LLVMGen::register_vinstrs()
 {
+    std::string vinstr(reinterpret_cast<char*>(vinstr_str), vinstr_str_len);
     const auto buffer =
-        llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(vinstr_str));
+        llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(vinstr.c_str()));
 
     llvm::SMDiagnostic error;
     std::unique_ptr<llvm::Module> vinstr_mod =
