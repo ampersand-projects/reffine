@@ -1,15 +1,9 @@
 #ifndef INCLUDE_REFFINE_ARROW_BASE_H_
 #define INCLUDE_REFFINE_ARROW_BASE_H_
 
+#include <vector>
+#include <string>
 #include <arrow/c/abi.h>
-
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-
-#include "reffine/base/log.h"
-#include "reffine/base/type.h"
 
 extern "C" {
 

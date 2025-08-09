@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "reffine/arrow/base.h"
 
 void arrow_print_schema(ArrowSchema* schema)

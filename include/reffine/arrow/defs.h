@@ -2,6 +2,7 @@
 #define INCLUDE_REFFINE_ARROW_DEFS_H_
 
 #include "reffine/arrow/base.h"
+#include "reffine/base/type.h"
 
 namespace reffine {
 

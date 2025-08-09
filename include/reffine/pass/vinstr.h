@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <arrow/c/abi.h>
 
+#include "reffine/arrow/base.h"
+
 #define REFFINE_VINSTR_ATTR __attribute__((always_inline))
 
 namespace reffine {
