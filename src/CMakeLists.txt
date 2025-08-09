@@ -13,10 +13,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # execute_process is for configure (cmake) and target is for build (make)
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp
-    COMMAND ${CMAKE_CXX_COMPILER} -emit-llvm -S ${CMAKE_CURRENT_SOURCE_DIR}/pass/vinstr/vinstr.cpp -I ${CMAKE_CURRENT_SOURCE_DIR}/../include/ -o ${CMAKE_CURRENT_BINARY_DIR}/vinstr.ll
+    COMMAND ${CMAKE_CXX_COMPILER} -emit-llvm -S ${CMAKE_CURRENT_SOURCE_DIR}/pass/vinstr/internal.cpp -I ${CMAKE_CURRENT_SOURCE_DIR}/../include/ -o ${CMAKE_CURRENT_BINARY_DIR}/vinstr.ll
     COMMAND xxd -n vinstr_str -i ${CMAKE_CURRENT_BINARY_DIR}/vinstr.ll > ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp
-    DEPENDS pass/vinstr/vinstr.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../include/reffine/pass/vinstr/vinstr.h
-    COMMENT "Compile vinstr.cpp to LLVM IR and embed into a char array in vinstr_str.cpp"
+    DEPENDS pass/vinstr/internal.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../include/reffine/pass/vinstr/vinstr.h
+    COMMENT "Compile vinstr/internal.cpp to LLVM IR and embed into a char array in vinstr_str.cpp"
 )
 
 set(SRC_FILES
@@ -32,10 +32,11 @@ set(SRC_FILES
     pass/irclone.cpp
     pass/z3solver.cpp
     pass/llvmgen.cpp
+    pass/vinstr/external.cpp
+    ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp
     engine/engine.cpp
     engine/cuda_engine.cpp
     builder/reffiner.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp
 )
 
 find_package(LLVM REQUIRED CONFIG)

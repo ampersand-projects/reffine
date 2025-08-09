@@ -7,6 +7,9 @@
 
 extern "C" {
 
+/**
+ * Internal
+ */
 REFFINE_VINSTR_ATTR
 int64_t get_vector_len(ArrowArray*);
 
@@ -35,14 +38,15 @@ REFFINE_VINSTR_ATTR
 int64_t vector_lookup(ArrowArray*, int64_t);
 
 REFFINE_VINSTR_ATTR
-int64_t _print(int64_t);
-
-REFFINE_VINSTR_ATTR
 int64_t vector_locate(ArrowArray*, int64_t);
 
 REFFINE_VINSTR_ATTR
 int64_t* get_elem_ptr(int64_t*, int64_t);
 
+
+/**
+ * External
+ */
 REFFINE_VINSTR_ATTR
 ArrowArray* make_vector();
 

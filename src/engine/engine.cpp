@@ -1,4 +1,5 @@
 #include "reffine/engine/engine.h"
+#include "reffine/pass/vinstr/vinstr.h"
 
 #include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
 #include "llvm/IR/Verifier.h"
@@ -78,8 +79,7 @@ unique_ptr<ExecutionSession> ExecEngine::createExecutionSession()
 void ExecEngine::register_symbols()
 {
     cantFail(jd.define(absoluteSymbols(SymbolMap({
-        //{ mangler("get_vector_len"), { ExecutorAddr::fromPtr(&get_vector_len),
-        // JITSymbolFlags::Callable } }
+        { mangler("make_vector"), { ExecutorAddr::fromPtr(&make_vector), JITSymbolFlags::Callable } }
     }))));
 }
 

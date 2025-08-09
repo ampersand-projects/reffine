@@ -62,12 +62,6 @@ int64_t vector_lookup(ArrowArray* arr, int64_t idx)
     return buf[idx];
 }
 
-int64_t _print(int64_t elem)
-{
-    printf("elem: %ld\n", elem);
-    return elem;
-}
-
 int64_t vector_locate(ArrowArray* arr, int64_t t)
 {
     for (int i = 0; i < get_vector_len(arr); i++) {
