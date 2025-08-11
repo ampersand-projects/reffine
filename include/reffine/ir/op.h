@@ -61,7 +61,7 @@ struct Element : public ExprNode {
         for (const auto& iter : iters) { ASSERT(iter->type.is_val()); }
         ASSERT(vtype.is_vector());
 
-        ASSERT(vtype.dim >= this->iters.size());
+        ASSERT(vtype.dim == this->iters.size());
         for (size_t i = 0; i < this->iters.size(); i++) {
             ASSERT(vtype.dtypes[i] == this->iters[i]->type);
         }
@@ -94,7 +94,7 @@ struct Reduce : public ExprNode {
         : ExprNode(init()->type), op(std::move(op)), init(init), acc(acc)
     {
         auto tmp_state = init();
-        auto tmp_val = make_shared<SymNode>("tmp_val", op.type.valty());
+        auto tmp_val = make_shared<SymNode>("tmp_val", op.type.rowty());
         auto tmp_state2 = acc(tmp_state, tmp_val);
 
         ASSERT(tmp_state2->type == tmp_state->type);

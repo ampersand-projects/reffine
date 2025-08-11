@@ -54,6 +54,7 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
 
     // Loop output
     vector<Expr> outputs;
+    outputs.push_back(loop_iter);
     for (auto output : op.outputs) { outputs.push_back(eval(output)); }
 
     // Loop definition

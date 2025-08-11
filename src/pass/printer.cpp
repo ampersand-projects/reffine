@@ -188,7 +188,7 @@ void IRPrinter::Visit(NotNull& not_null)
 void IRPrinter::Visit(Reduce& red)
 {
     auto init_val = red.init();
-    auto val = _sym("val", red.op.type.valty());
+    auto val = _sym("val", red.op.type.rowty());
     auto state = _sym("state", init_val->type);
     auto state2 = red.acc(state, val);
 
