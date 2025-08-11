@@ -71,9 +71,28 @@ Expr LoopGen::visit(Op& op)
 {
     auto tmp_loop = this->build_loop(op);
 
+    // Initialize output vector
     auto out_vec = _make(op.type);
+    auto out_vec_addr = _sym("out_vec", out_vec);
+    this->assign(out_vec_addr, out_vec);
 
-    return nullptr;
+    // Build loop
+    auto loop = _loop(out_vec);
+    loop->init = _stmts(vector<Stmt>{
+        tmp_loop->init,
+        out_vec_addr,
+    });
+    loop->incr = tmp_loop->incr;
+    loop->exit_cond = tmp_loop->exit_cond;
+    loop->body_cond = tmp_loop->body_cond;
+    loop->body = nullptr;
+    loop->post = _stmts(vector<Stmt>{
+    });
+
+    auto loop_sym = _sym("loop", loop);
+    this->assign(loop_sym, loop);
+
+    return loop_sym;
 }
 
 Expr LoopGen::visit(Reduce& red)
@@ -96,7 +115,6 @@ Expr LoopGen::visit(Reduce& red)
     red_loop->body_cond = tmp_loop->body_cond;
     red_loop->body =
         _store(state_addr, red.acc(_load(state_addr), tmp_loop->output));
-    red_loop->output = state_addr;
 
     auto red_loop_sym = _sym("red_loop", red_loop);
     this->assign(red_loop_sym, red_loop);
