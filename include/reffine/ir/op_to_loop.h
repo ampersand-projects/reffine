@@ -43,6 +43,14 @@ struct Length : public Call {
     }
 };
 
+struct SetLength : public Call {
+    SetLength(Expr vec, Expr idx) : Call("set_vector_len", types::IDX, vector<Expr>{vec, idx})
+    {
+        ASSERT(vec->type.is_vector());
+        ASSERT(idx->type.is_idx());
+    }
+};
+
 struct IsValid : public Call {
     IsValid(Expr vec, Expr idx, size_t col)
         : Call("get_vector_null_bit",
