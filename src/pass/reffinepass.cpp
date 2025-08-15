@@ -36,13 +36,82 @@ static Expr get_upper_bound(Sym iter, Expr pred)
     return nullptr;
 }
 
+static bool contains_vecspace(ISpace ispace)
+{
+    if (dynamic_cast<VecSpace*>(ispace.get())) { return true; }
+
+    if (auto jspace = dynamic_cast<JointSpace*>(ispace.get())) {
+        auto left = jspace->left;
+        auto right = jspace->right;
+        if (contains_vecspace(left) || contains_vecspace(right)) {
+            return true;
+        }
+    }
+
+    if (auto bspace = dynamic_cast<BoundSpace*>(ispace.get())) {
+        auto child = bspace->ispace;
+        if (contains_vecspace(child)) { return true; }
+    }
+
+    return false;
+}
+
+static ISpace apply_intersection(ISpace ispace, ISpace bspace)
+{
+    if (auto lbspace = dynamic_cast<LBoundSpace*>(bspace.get())) {
+        return ispace >= lbspace->lower_bound();
+    }
+    if (auto ubspace = dynamic_cast<UBoundSpace*>(bspace.get())) {
+        return ispace <= ubspace->upper_bound();
+    }
+    return ispace;
+}
+
+static ISpace apply_union(ISpace ispace, ISpace bspace)
+{
+    if (auto lbspace = dynamic_cast<LBoundSpace*>(bspace.get())) {
+        auto lb1 = ispace->lower_bound();
+        auto lb2 = lbspace->lower_bound();
+        return ispace >= (lb1 ? _min(lb2, lb1) : lb2);
+    }
+    if (auto ubspace = dynamic_cast<UBoundSpace*>(bspace.get())) {
+        auto ub1 = ispace->upper_bound();
+        auto ub2 = ubspace->upper_bound();
+        return ispace <= (ub1 ? _min(ub2, ub1) : ub2);
+        ;
+    }
+    return ispace;
+}
+
+static ISpace intersect_ispaces(ISpace left, ISpace right)
+{
+    if (contains_vecspace(left) && contains_vecspace(right)) {
+        return left & right;
+    }
+    if (contains_vecspace(left)) { return apply_intersection(left, right); }
+    if (contains_vecspace(right)) { return apply_intersection(right, left); }
+    return apply_intersection(left, right);
+}
+
+static ISpace union_ispaces(ISpace left, ISpace right)
+{
+    if (contains_vecspace(left) && contains_vecspace(right)) {
+        return left | right;
+    }
+    if (contains_vecspace(left)) { return apply_union(left, right); }
+    if (contains_vecspace(right)) { return apply_union(right, left); }
+    return apply_union(left, right);
+}
+
 ISpace Reffine::visit(NaryExpr& e)
 {
     switch (e.op) {
-        case MathOp::AND:
-            return eval(e.arg(0)) & eval(e.arg(1));
-        case MathOp::OR:
-            return eval(e.arg(0)) | eval(e.arg(1));
+        case MathOp::AND: {
+            return intersect_ispaces(eval(e.arg(0)), eval(e.arg(1)));
+        }
+        case MathOp::OR: {
+            return union_ispaces(eval(e.arg(0)), eval(e.arg(1)));
+        }
         case MathOp::LT:
         case MathOp::LTE:
         case MathOp::GT:
