@@ -9,6 +9,7 @@ ArrowArray* make_vector()
 
     auto* arr = new VectorArray(len);
     arr->add_child(new Int64Array(len));
+    arr->add_child(new Int64Array(len));
 
     return arr;
 }

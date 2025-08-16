@@ -99,16 +99,17 @@ arrow::Status query_arrow_file2(shared_ptr<ArrowTable> in_table, void (*query_fn
     auto out_table = make_shared<ArrowTable>(
         "output",
         in_array.length,
-        vector<string>{"id", "minutes_studied", "slept_enough"},
-        vector<DataType>{types::INT64, types::INT64, types::BOOL}
+        vector<string>{"t", "out"},
+        vector<DataType>{types::INT64, types::INT64}
     );
     auto& out_schema = out_table->schema;
-    auto& out_array = out_table->array;
+    ArrowArray* out_array;
 
     query_fn(&out_array, &in_array);
 
-    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(&out_array, &out_schema));
+    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(out_array, &out_schema));
     cout << "Output: " << endl << res->ToString() << endl;
+    delete out_array;
 
     return arrow::Status::OK();
 }
