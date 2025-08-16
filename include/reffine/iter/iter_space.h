@@ -56,6 +56,8 @@ struct IterSpace {
 
     VecIdxs vec_idxs(Expr idx) { return this->_vec_idxs(idx); }
 
+    bool contains_vecspace() { return this->_contains_vecspace(); }
+
 protected:
     virtual Expr _lower_bound();
     virtual Expr _upper_bound();
@@ -64,6 +66,7 @@ protected:
     virtual Expr _iter_to_idx(Expr);
     virtual Expr _advance(Expr);
     virtual VecIdxs _vec_idxs(Expr);
+    virtual bool _contains_vecspace();
 };
 using ISpace = shared_ptr<IterSpace>;
 

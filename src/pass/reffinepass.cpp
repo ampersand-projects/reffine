@@ -36,26 +36,6 @@ static Expr get_upper_bound(Sym iter, Expr pred)
     return nullptr;
 }
 
-static bool contains_vecspace(ISpace ispace)
-{
-    if (dynamic_cast<VecSpace*>(ispace.get())) { return true; }
-
-    if (auto jspace = dynamic_cast<JointSpace*>(ispace.get())) {
-        auto left = jspace->left;
-        auto right = jspace->right;
-        if (contains_vecspace(left) || contains_vecspace(right)) {
-            return true;
-        }
-    }
-
-    if (auto bspace = dynamic_cast<BoundSpace*>(ispace.get())) {
-        auto child = bspace->ispace;
-        if (contains_vecspace(child)) { return true; }
-    }
-
-    return false;
-}
-
 static ISpace apply_intersection(ISpace ispace, ISpace bspace)
 {
     if (auto lbspace = dynamic_cast<LBoundSpace*>(bspace.get())) {
@@ -85,21 +65,21 @@ static ISpace apply_union(ISpace ispace, ISpace bspace)
 
 static ISpace intersect_ispaces(ISpace left, ISpace right)
 {
-    if (contains_vecspace(left) && contains_vecspace(right)) {
+    if (left->contains_vecspace() && right->contains_vecspace()) {
         return left & right;
     }
-    if (contains_vecspace(left)) { return apply_intersection(left, right); }
-    if (contains_vecspace(right)) { return apply_intersection(right, left); }
+    if (left->contains_vecspace()) { return apply_intersection(left, right); }
+    if (right->contains_vecspace()) { return apply_intersection(right, left); }
     return apply_intersection(left, right);
 }
 
 static ISpace union_ispaces(ISpace left, ISpace right)
 {
-    if (contains_vecspace(left) && contains_vecspace(right)) {
+    if (left->contains_vecspace() && right->contains_vecspace()) {
         return left | right;
     }
-    if (contains_vecspace(left)) { return apply_union(left, right); }
-    if (contains_vecspace(right)) { return apply_union(right, left); }
+    if (left->contains_vecspace()) { return apply_union(left, right); }
+    if (right->contains_vecspace()) { return apply_union(right, left); }
     return apply_union(left, right);
 }
 
