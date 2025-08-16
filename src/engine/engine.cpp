@@ -1,5 +1,4 @@
 #include "reffine/engine/engine.h"
-#include "reffine/pass/vinstr/vinstr.h"
 
 #include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
 #include "llvm/IR/Verifier.h"
@@ -17,6 +16,7 @@
 #include "llvm/Transforms/Utils/LoopSimplify.h"
 #include "llvm/Transforms/Vectorize/LoopVectorize.h"
 #include "llvm/Transforms/Vectorize/SLPVectorizer.h"
+#include "reffine/pass/vinstr/vinstr.h"
 
 using namespace reffine;
 using namespace std::placeholders;
@@ -78,9 +78,9 @@ unique_ptr<ExecutionSession> ExecEngine::createExecutionSession()
 
 void ExecEngine::register_symbols()
 {
-    cantFail(jd.define(absoluteSymbols(SymbolMap({
-        { mangler("make_vector"), { ExecutorAddr::fromPtr(&make_vector), JITSymbolFlags::Callable } }
-    }))));
+    cantFail(jd.define(absoluteSymbols(SymbolMap(
+        {{mangler("make_vector"),
+          {ExecutorAddr::fromPtr(&make_vector), JITSymbolFlags::Callable}}}))));
 }
 
 void ExecEngine::add_opt_passes()

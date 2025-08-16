@@ -26,7 +26,8 @@ struct Locate : public Call {
     Expr vec;
     Expr iter;
 
-    Locate(Expr vec, Expr iter) : Call("vector_locate", types::IDX, vector<Expr>{vec, iter})
+    Locate(Expr vec, Expr iter)
+        : Call("vector_locate", types::IDX, vector<Expr>{vec, iter})
     {
         auto& vtype = vec->type;
 
@@ -44,7 +45,8 @@ struct Length : public Call {
 };
 
 struct SetLength : public Call {
-    SetLength(Expr vec, Expr idx) : Call("set_vector_len", types::IDX, vector<Expr>{vec, idx})
+    SetLength(Expr vec, Expr idx)
+        : Call("set_vector_len", types::IDX, vector<Expr>{vec, idx})
     {
         ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
@@ -53,10 +55,8 @@ struct SetLength : public Call {
 
 struct IsValid : public Call {
     IsValid(Expr vec, Expr idx, size_t col)
-        : Call("get_vector_null_bit",
-            types::BOOL,
-            vector<Expr>{vec, idx, make_shared<Const>(types::UINT32, col)}
-          )
+        : Call("get_vector_null_bit", types::BOOL,
+               vector<Expr>{vec, idx, make_shared<Const>(types::UINT32, col)})
     {
         ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
@@ -66,10 +66,9 @@ struct IsValid : public Call {
 
 struct SetValid : public Call {
     SetValid(Expr vec, Expr idx, Expr validity, size_t col)
-        : Call("set_vector_null_bit",
-            types::BOOL,
-            vector<Expr>{vec, idx, validity, make_shared<Const>(types::UINT32, col)}
-          )
+        : Call("set_vector_null_bit", types::BOOL,
+               vector<Expr>{vec, idx, validity,
+                            make_shared<Const>(types::UINT32, col)})
     {
         ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
@@ -79,10 +78,7 @@ struct SetValid : public Call {
 };
 
 struct MakeVector : public ExprNode {
-    MakeVector(DataType type) : ExprNode(type)
-    {
-        ASSERT(type.is_vector());
-    }
+    MakeVector(DataType type) : ExprNode(type) { ASSERT(type.is_vector()); }
 
     void Accept(Visitor&) final;
 };

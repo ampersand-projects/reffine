@@ -408,10 +408,7 @@ void IRPrinter::Visit(Lookup& lookup)
     emitfunc("lookup", {lookup.vec, lookup.idx});
 }
 
-void IRPrinter::Visit(MakeVector& make)
-{
-    emitfunc("make_vector", {});
-}
+void IRPrinter::Visit(MakeVector& make) { emitfunc("make_vector", {}); }
 
 void IRPrinter::Visit(FetchDataPtr& fetch_data_ptr)
 {

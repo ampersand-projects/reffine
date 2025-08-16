@@ -1,5 +1,5 @@
-#include "reffine/pass/vinstr/vinstr.h"
 #include "reffine/arrow/base.h"
+#include "reffine/pass/vinstr/vinstr.h"
 
 using namespace reffine;
 

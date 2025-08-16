@@ -1,9 +1,10 @@
 #ifndef INCLUDE_REFFINE_ARROW_BASE_H_
 #define INCLUDE_REFFINE_ARROW_BASE_H_
 
-#include <vector>
-#include <string>
 #include <arrow/c/abi.h>
+
+#include <string>
+#include <vector>
 
 extern "C" {
 
@@ -25,9 +26,7 @@ struct ArrowSchema2 : public ArrowSchema {
 
         ~Private()
         {
-            for (auto* child : this->children) {
-                delete child;
-            }
+            for (auto* child : this->children) { delete child; }
         }
 
         string format;
@@ -70,10 +69,7 @@ struct ArrowSchema2 : public ArrowSchema {
         this->n_children = this->pdata()->children.size();
     }
 
-    ArrowSchema2* get_child(int idx)
-    {
-        return this->pdata()->children[idx];
-    }
+    ArrowSchema2* get_child(int idx) { return this->pdata()->children[idx]; }
 
     Private* pdata() { return (Private*)this->private_data; }
 };
@@ -84,13 +80,9 @@ struct ArrowArray2 : public ArrowArray {
 
         ~Private()
         {
-            for (auto* child : this->children) {
-                delete child;
-            }
+            for (auto* child : this->children) { delete child; }
 
-            for (auto* buffer : this->buffers) {
-                delete [] buffer;
-            }
+            for (auto* buffer : this->buffers) { delete[] buffer; }
         }
 
         size_t len;
@@ -131,7 +123,7 @@ struct ArrowArray2 : public ArrowArray {
     void add_child(ArrowArray2* array)
     {
         this->pdata()->children.push_back(array);
-        this->children = (ArrowArray**) this->pdata()->children.data();
+        this->children = (ArrowArray**)this->pdata()->children.data();
         this->n_children = this->pdata()->children.size();
     }
 

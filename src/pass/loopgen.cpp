@@ -84,15 +84,15 @@ Expr LoopGen::visit(Op& op)
 
     // Write the output to the out_vec
     vector<Stmt> body_stmts;
-    for (size_t i=0; i<op.type.dtypes.size(); i++) {
+    for (size_t i = 0; i < op.type.dtypes.size(); i++) {
         auto out_val = _get(tmp_loop->output, i);
         auto vec_ptr = _fetch(out_vec_sym, _load(out_vec_idx_addr), i);
         body_stmts.push_back(_store(vec_ptr, out_val));
-        body_stmts.push_back(_setval(out_vec_sym, _load(out_vec_idx_addr), _true(), i));
+        body_stmts.push_back(
+            _setval(out_vec_sym, _load(out_vec_idx_addr), _true(), i));
     }
     body_stmts.push_back(
-        _store(out_vec_idx_addr, _add(_load(out_vec_idx_addr), _idx(1)))
-    );
+        _store(out_vec_idx_addr, _add(_load(out_vec_idx_addr), _idx(1))));
 
     // Build loop
     auto loop = _loop(out_vec_sym);

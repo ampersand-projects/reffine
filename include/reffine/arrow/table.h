@@ -42,7 +42,8 @@ struct ArrowTable {
                 this->schema.add_child(new DoubleSchema(col));
                 this->array.add_child(new DoubleArray(len));
             } else {
-                throw std::runtime_error("data type not supported " + dtype.str());
+                throw std::runtime_error("data type not supported " +
+                                         dtype.str());
             }
         }
     }

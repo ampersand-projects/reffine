@@ -43,7 +43,6 @@ int64_t vector_locate(ArrowArray*, int64_t);
 REFFINE_VINSTR_ATTR
 int64_t* get_elem_ptr(int64_t*, int64_t);
 
-
 /**
  * External
  */
