@@ -192,8 +192,8 @@ private:
 template <typename ValTy>
 class ValGenCtx : public IRPassBaseCtx<ValTy> {
 public:
-    ValGenCtx(SymTable tmp1 = {}, map<Sym, ValTy> tmp2 = {})
-        : IRPassBaseCtx<ValTy>(tmp1, tmp2)
+    ValGenCtx(const SymTable& tbl, map<Sym, ValTy> tmp2 = {})
+        : IRPassBaseCtx<ValTy>(tbl, tmp2)
     {
     }
 };
