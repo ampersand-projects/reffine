@@ -58,7 +58,6 @@ static ISpace apply_union(ISpace ispace, ISpace bspace)
         auto ub1 = ispace->upper_bound();
         auto ub2 = ubspace->upper_bound();
         return ispace <= (ub1 ? _min(ub2, ub1) : ub2);
-        ;
     }
     return ispace;
 }
@@ -69,8 +68,7 @@ static ISpace intersect_ispaces(ISpace left, ISpace right)
         return left & right;
     }
     if (left->contains_vecspace()) { return apply_intersection(left, right); }
-    if (right->contains_vecspace()) { return apply_intersection(right, left); }
-    return apply_intersection(left, right);
+    return apply_intersection(right, left);
 }
 
 static ISpace union_ispaces(ISpace left, ISpace right)
@@ -79,8 +77,7 @@ static ISpace union_ispaces(ISpace left, ISpace right)
         return left | right;
     }
     if (left->contains_vecspace()) { return apply_union(left, right); }
-    if (right->contains_vecspace()) { return apply_union(right, left); }
-    return apply_union(left, right);
+    return apply_union(right, left);
 }
 
 ISpace Reffine::visit(NaryExpr& e)
