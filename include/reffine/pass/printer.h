@@ -63,6 +63,7 @@ public:
     void Visit(GridDim&) final;
     void Visit(Loop&) final;
     void Visit(Lookup&) final;
+    void Visit(MakeVector&) final;
     void Visit(FetchDataPtr&) final;
     void Visit(NoOp&) final;
 
