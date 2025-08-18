@@ -1,15 +1,10 @@
 #include "reffine/arrow/base.h"
 #include "reffine/pass/vinstr/vinstr.h"
+#include "reffine/engine/memory.h"
 
 using namespace reffine;
 
-ArrowArray* make_vector()
+ArrowArray* make_vector(size_t mem_id)
 {
-    size_t len = 10000;
-
-    auto* arr = new VectorArray(len);
-    arr->add_child(new Int64Array(len));
-    arr->add_child(new Int64Array(len));
-
-    return arr;
+    return vector_builders[mem_id]();
 }

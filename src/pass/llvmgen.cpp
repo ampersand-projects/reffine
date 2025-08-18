@@ -489,7 +489,8 @@ Value* LLVMGen::visit(GridDim& gdim)
 
 Value* LLVMGen::visit(MakeVector& make)
 {
-    return llcall("make_vector", lltype(make), vector<Expr>{});
+    auto mem_id_val = ConstantInt::get(lltype(types::UINT32), make.mem_id);
+    return llcall("make_vector", lltype(make), vector<Value*>{mem_id_val});
 }
 
 Value* LLVMGen::visit(Loop& loop)

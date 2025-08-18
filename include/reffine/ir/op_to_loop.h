@@ -78,7 +78,12 @@ struct SetValid : public Call {
 };
 
 struct MakeVector : public ExprNode {
-    MakeVector(DataType type) : ExprNode(type) { ASSERT(type.is_vector()); }
+    size_t mem_id;
+
+    MakeVector(DataType type, size_t mem_id) : ExprNode(type), mem_id(mem_id)
+    {
+        ASSERT(type.is_vector());
+    }
 
     void Accept(Visitor&) final;
 };

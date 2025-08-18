@@ -1,8 +1,8 @@
 #include "reffine/pass/loopgen.h"
-
 #include "reffine/builder/reffiner.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/z3solver.h"
+#include "reffine/engine/memory.h"
 
 using namespace std;
 using namespace reffine;
@@ -73,7 +73,14 @@ Expr LoopGen::visit(Op& op)
     auto tmp_loop = this->build_loop(op);
 
     // Initialize output vector
-    auto out_vec = _make(op.type);
+    vector_builders.push_back([]() {
+        size_t len = 10000;
+        auto* arr = new VectorArray(len);
+        arr->add_child(new Int64Array(len));
+        arr->add_child(new Int64Array(len));
+        return arr;
+    });
+    auto out_vec = _make(op.type, vector_builders.size() - 1);
     auto out_vec_sym = _sym("out_vec", out_vec);
     this->assign(out_vec_sym, out_vec);
 

@@ -47,7 +47,7 @@ int64_t* get_elem_ptr(int64_t*, int64_t);
  * External
  */
 REFFINE_VINSTR_ATTR
-ArrowArray* make_vector();
+ArrowArray* make_vector(size_t);
 
 }  // extern "C"
 
