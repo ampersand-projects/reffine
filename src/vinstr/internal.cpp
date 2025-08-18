@@ -1,6 +1,4 @@
-#include <cstdio>
-
-#include "reffine/pass/vinstr/vinstr.h"
+#include "reffine/vinstr/vinstr.h"
 
 int64_t get_vector_len(ArrowArray* arr) { return arr->length; }
 

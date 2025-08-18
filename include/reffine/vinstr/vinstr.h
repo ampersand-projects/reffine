@@ -1,5 +1,5 @@
-#ifndef INCLUDE_REFFINE_PASS_VINSTR_H_
-#define INCLUDE_REFFINE_PASS_VINSTR_H_
+#ifndef INCLUDE_REFFINE_VINSTR_H_
+#define INCLUDE_REFFINE_VINSTR_H_
 
 #include <arrow/c/abi.h>
 
@@ -47,8 +47,8 @@ int64_t* get_elem_ptr(int64_t*, int64_t);
  * External
  */
 REFFINE_VINSTR_ATTR
-ArrowArray* make_vector(size_t);
+ArrowArray* make_vector(uint32_t);
 
 }  // extern "C"
 
-#endif  // INCLUDE_REFFINE_PASS_VINSTR_H_
+#endif  // INCLUDE_REFFINE_VINSTR_H_

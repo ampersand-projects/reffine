@@ -1,4 +1,5 @@
 #include "reffine/engine/engine.h"
+#include "reffine/vinstr/vinstr.h"
 
 #include "llvm/ExecutionEngine/Orc/ExecutorProcessControl.h"
 #include "llvm/IR/Verifier.h"
@@ -16,7 +17,6 @@
 #include "llvm/Transforms/Utils/LoopSimplify.h"
 #include "llvm/Transforms/Vectorize/LoopVectorize.h"
 #include "llvm/Transforms/Vectorize/SLPVectorizer.h"
-#include "reffine/pass/vinstr/vinstr.h"
 
 using namespace reffine;
 using namespace std::placeholders;
