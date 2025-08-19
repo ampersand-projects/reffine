@@ -22,11 +22,12 @@ struct Lookup : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-struct Locate : public ExprNode {
+struct Locate : public Call {
     Expr vec;
     Expr iter;
 
-    Locate(Expr vec, Expr iter) : ExprNode(types::IDX), vec(vec), iter(iter)
+    Locate(Expr vec, Expr iter)
+        : Call("vector_locate", types::IDX, vector<Expr>{vec, iter})
     {
         auto& vtype = vec->type;
 
@@ -34,54 +35,54 @@ struct Locate : public ExprNode {
         ASSERT(vtype.dim == 1);
         ASSERT(vtype.iterty() == iter->type);
     }
-
-    void Accept(Visitor&) final;
 };
 
-struct Length : public ExprNode {
-    Expr vec;
-
-    Length(Expr vec) : ExprNode(types::IDX), vec(vec)
+struct Length : public Call {
+    Length(Expr vec) : Call("get_vector_len", types::IDX, vector<Expr>{vec})
     {
         ASSERT(vec->type.is_vector());
     }
-
-    void Accept(Visitor&) final;
 };
 
-struct IsValid : public ExprNode {
-    Expr vec;
-    Expr idx;
-    size_t col;
+struct SetLength : public Call {
+    SetLength(Expr vec, Expr idx)
+        : Call("set_vector_len", types::IDX, vector<Expr>{vec, idx})
+    {
+        ASSERT(vec->type.is_vector());
+        ASSERT(idx->type.is_idx());
+    }
+};
 
+struct IsValid : public Call {
     IsValid(Expr vec, Expr idx, size_t col)
-        : ExprNode(types::BOOL), vec(vec), idx(idx), col(col)
+        : Call("get_vector_null_bit", types::BOOL,
+               vector<Expr>{vec, idx, make_shared<Const>(types::UINT32, col)})
     {
         ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
         ASSERT(col < vec->type.dtypes.size());
     }
-
-    void Accept(Visitor&) final;
 };
 
-struct SetValid : public ExprNode {
-    Expr vec;
-    Expr idx;
-    Expr validity;
-    size_t col;
-
+struct SetValid : public Call {
     SetValid(Expr vec, Expr idx, Expr validity, size_t col)
-        : ExprNode(types::BOOL),
-          vec(vec),
-          idx(idx),
-          validity(validity),
-          col(col)
+        : Call("set_vector_null_bit", types::BOOL,
+               vector<Expr>{vec, idx, validity,
+                            make_shared<Const>(types::UINT32, col)})
     {
         ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
         ASSERT(validity->type == types::BOOL);
         ASSERT(col < vec->type.dtypes.size());
+    }
+};
+
+struct MakeVector : public ExprNode {
+    size_t mem_id;
+
+    MakeVector(DataType type, size_t mem_id) : ExprNode(type), mem_id(mem_id)
+    {
+        ASSERT(type.is_vector());
     }
 
     void Accept(Visitor&) final;

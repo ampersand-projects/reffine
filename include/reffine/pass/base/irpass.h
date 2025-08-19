@@ -162,32 +162,13 @@ public:
         expr.output->Accept(*this);
     }
 
-    void Visit(IsValid& expr) override
-    {
-        expr.vec->Accept(*this);
-        expr.idx->Accept(*this);
-    }
-
-    void Visit(SetValid& expr) override
-    {
-        expr.vec->Accept(*this);
-        expr.idx->Accept(*this);
-        expr.validity->Accept(*this);
-    }
-
     void Visit(Lookup& expr) override
     {
         expr.vec->Accept(*this);
         expr.idx->Accept(*this);
     }
 
-    void Visit(Locate& expr) override
-    {
-        expr.vec->Accept(*this);
-        expr.iter->Accept(*this);
-    }
-
-    void Visit(Length& expr) override { expr.vec->Accept(*this); }
+    void Visit(MakeVector& expr) override {}
 
     void Visit(FetchDataPtr& expr) override
     {

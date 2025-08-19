@@ -16,6 +16,7 @@
 #include "llvm/Transforms/Utils/LoopSimplify.h"
 #include "llvm/Transforms/Vectorize/LoopVectorize.h"
 #include "llvm/Transforms/Vectorize/SLPVectorizer.h"
+#include "reffine/vinstr/vinstr.h"
 
 using namespace reffine;
 using namespace std::placeholders;
@@ -77,10 +78,9 @@ unique_ptr<ExecutionSession> ExecEngine::createExecutionSession()
 
 void ExecEngine::register_symbols()
 {
-    cantFail(jd.define(absoluteSymbols(SymbolMap({
-        //{ mangler("get_vector_len"), { ExecutorAddr::fromPtr(&get_vector_len),
-        // JITSymbolFlags::Callable } }
-    }))));
+    cantFail(jd.define(absoluteSymbols(SymbolMap(
+        {{mangler("make_vector"),
+          {ExecutorAddr::fromPtr(&make_vector), JITSymbolFlags::Callable}}}))));
 }
 
 void ExecEngine::add_opt_passes()

@@ -36,8 +36,7 @@ protected:
     Expr visit(Op&) override;
     Expr visit(Element&) override;
     Expr visit(Lookup&) override;
-    Expr visit(Locate&) override;
-    Expr visit(Length&) override;
+    Expr visit(MakeVector&) override;
     Expr visit(NotNull&) override;
     Expr visit(Reduce&) override;
     Expr visit(Call&) override;
@@ -52,8 +51,6 @@ protected:
     Expr visit(BlockDim&) override;
     Expr visit(GridDim&) override;
     Expr visit(Loop&) override;
-    Expr visit(IsValid&) override;
-    Expr visit(SetValid&) override;
     Expr visit(FetchDataPtr&) override;
     Expr visit(NoOp&) override;
     void visit(Func&) override;

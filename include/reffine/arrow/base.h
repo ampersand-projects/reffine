@@ -3,29 +3,13 @@
 
 #include <arrow/c/abi.h>
 
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-
-#include "reffine/base/log.h"
-#include "reffine/base/type.h"
+#include <string>
+#include <vector>
 
 extern "C" {
 
 void arrow_print_schema(ArrowSchema*);
-void arrow_release_schema(ArrowSchema*);
-void arrow_make_schema(ArrowSchema*);
-void arrow_add_child_schema(ArrowSchema*, ArrowSchema*);
-ArrowSchema* arrow_get_child_schema(ArrowSchema*, int);
-
 void arrow_print_array(ArrowArray*);
-void arrow_release_array(ArrowArray*);
-void arrow_make_array(ArrowArray*);
-void* arrow_add_buffer(ArrowArray*, size_t);
-void arrow_add_child_array(ArrowArray*, ArrowArray*);
-ArrowArray* arrow_get_child_array(ArrowArray*, int);
-void* arrow_get_buffer(ArrowArray*, int);
 
 }  // extern "C"
 
@@ -36,14 +20,18 @@ using namespace std;
 struct ArrowSchema2 : public ArrowSchema {
     struct Private {
         Private(std::string format, std::string name)
-            : format(format), name(name), children(0), schemas(0)
+            : format(format), name(name), children(0)
         {
+        }
+
+        ~Private()
+        {
+            for (auto* child : this->children) { delete child; }
         }
 
         string format;
         string name;
-        vector<ArrowSchema*> children;
-        vector<shared_ptr<ArrowSchema2>> schemas;
+        vector<ArrowSchema2*> children;
     };
 
     ArrowSchema2() {}
@@ -56,8 +44,8 @@ struct ArrowSchema2 : public ArrowSchema {
         this->name = pdata->name.c_str();
         this->metadata = nullptr;
         this->flags = ARROW_FLAG_NULLABLE;
-        this->n_children = pdata->children.size();
-        this->children = pdata->children.data();
+        this->n_children = 0;
+        this->children = nullptr;
         this->dictionary = nullptr;
         this->release = (void (*)(ArrowSchema*)) & arrow_release_schema2;
         this->private_data = pdata;
@@ -74,31 +62,32 @@ struct ArrowSchema2 : public ArrowSchema {
         if (this->release) this->release(this);
     }
 
-    void add_child(shared_ptr<ArrowSchema2> schema)
+    void add_child(ArrowSchema2* schema)
     {
-        this->pdata()->schemas.push_back(schema);
-        this->pdata()->children.push_back(schema.get());
+        this->pdata()->children.push_back(schema);
         this->children = (ArrowSchema**)this->pdata()->children.data();
         this->n_children = this->pdata()->children.size();
     }
 
-    shared_ptr<ArrowSchema2> get_child(int idx)
-    {
-        return this->pdata()->schemas[idx];
-    }
+    ArrowSchema2* get_child(int idx) { return this->pdata()->children[idx]; }
 
     Private* pdata() { return (Private*)this->private_data; }
 };
 
 struct ArrowArray2 : public ArrowArray {
     struct Private {
-        Private(size_t len) : children(0), arrays(0), buffers(0), buf_vecs(0) {}
+        Private(size_t len) : children(0), buffers(0) {}
+
+        ~Private()
+        {
+            for (auto* child : this->children) { delete child; }
+
+            for (auto* buffer : this->buffers) { delete[] buffer; }
+        }
 
         size_t len;
-        vector<ArrowArray*> children;
-        vector<shared_ptr<ArrowArray2>> arrays;
-        vector<const void*> buffers;
-        vector<vector<char>> buf_vecs;
+        vector<ArrowArray2*> children;
+        vector<const char*> buffers;
     };
 
     ArrowArray2() {}
@@ -131,27 +120,26 @@ struct ArrowArray2 : public ArrowArray {
         if (this->release) { this->release(this); }
     }
 
-    void add_child(shared_ptr<ArrowArray2> array)
+    void add_child(ArrowArray2* array)
     {
-        this->pdata()->arrays.push_back(array);
-        this->pdata()->children.push_back(array.get());
-        this->children = this->pdata()->children.data();
+        this->pdata()->children.push_back(array);
+        this->children = (ArrowArray**)this->pdata()->children.data();
         this->n_children = this->pdata()->children.size();
     }
 
     template <typename T>
     T* add_buffer(size_t len)
     {
-        auto& buf = this->pdata()->buf_vecs.emplace_back(len * sizeof(T));
+        auto* buf = new char[len * sizeof(T)];
 
-        this->pdata()->buffers.push_back(buf.data());
+        this->pdata()->buffers.push_back(buf);
         this->buffers = (const void**)this->pdata()->buffers.data();
         this->n_buffers = this->pdata()->buffers.size();
 
-        return (T*)buf.data();
+        return (T*)buf;
     }
 
-    ArrowArray2* get_child(int idx) { return this->pdata()->arrays[idx].get(); }
+    ArrowArray2* get_child(int idx) { return this->pdata()->children[idx]; }
 
     template <typename T>
     T* get_buffer(int idx)
@@ -161,6 +149,59 @@ struct ArrowArray2 : public ArrowArray {
 
     Private* pdata() { return (Private*)this->private_data; }
 };
+
+/*
+ * Schema definitions
+ */
+template <char fmt>
+struct GenArrowSchema : public ArrowSchema2 {
+    GenArrowSchema(std::string name) : ArrowSchema2(name, std::string{fmt}) {}
+};
+
+struct StructSchema : public ArrowSchema2 {
+    StructSchema(std::string name) : ArrowSchema2(name, "+s") {}
+};
+
+using Int8Schema = GenArrowSchema<'c'>;
+using Int16Schema = GenArrowSchema<'s'>;
+using Int32Schema = GenArrowSchema<'i'>;
+using Int64Schema = GenArrowSchema<'l'>;
+using FloatSchema = GenArrowSchema<'f'>;
+using DoubleSchema = GenArrowSchema<'g'>;
+using BooleanSchema = GenArrowSchema<'c'>;
+using VectorSchema = StructSchema;
+
+/*
+ * Array definitions
+ */
+struct NullableArray : public ArrowArray2 {
+    NullableArray(size_t len) : ArrowArray2(len)
+    {
+        this->add_buffer<char>(len / 8 + 1);
+    }
+
+    char* get_bit_buf() { return this->get_buffer<char>(0); }
+};
+
+template <typename T>
+struct PrimArray : public NullableArray {
+    PrimArray(size_t len) : NullableArray(len) { this->add_buffer<T>(len); }
+
+    T* get_val_buf() { return this->get_buffer<T>(1); }
+};
+
+struct StructArray : public NullableArray {
+    StructArray(size_t len) : NullableArray(len) {}
+};
+
+using Int8Array = PrimArray<int8_t>;
+using Int16Array = PrimArray<int16_t>;
+using Int32Array = PrimArray<int32_t>;
+using Int64Array = PrimArray<int64_t>;
+using FloatArray = PrimArray<float>;
+using DoubleArray = PrimArray<double>;
+using BooleanArray = PrimArray<int8_t>;
+using VectorArray = StructArray;
 
 }  // namespace reffine
 

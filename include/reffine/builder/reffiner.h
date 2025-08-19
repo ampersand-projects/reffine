@@ -109,8 +109,6 @@ REGISTER_EXPR(_exists, Exists)
 REGISTER_EXPR(_const, Const)
 
 // Loop expressions
-REGISTER_EXPR(_isval, IsValid)
-REGISTER_EXPR(_setval, SetValid)
 REGISTER_EXPR(_fetch, FetchDataPtr)
 REGISTER_EXPR(_alloc, Alloc)
 REGISTER_EXPR(_load, Load)
@@ -126,6 +124,10 @@ REGISTER_EXPR(_notnull, NotNull)
 REGISTER_EXPR(_lookup, Lookup)
 REGISTER_EXPR(_locate, Locate)
 REGISTER_EXPR(_len, Length)
+REGISTER_EXPR(_setlen, SetLength)
+REGISTER_EXPR(_isval, IsValid)
+REGISTER_EXPR(_setval, SetValid)
+REGISTER_EXPR(_make, MakeVector)
 
 // CUDA
 REGISTER_EXPR(_tidx, ThreadIdx)

@@ -74,25 +74,13 @@ public:
     /**
      * Loop IR
      */
-    virtual void Visit(IsValid&)
-    {
-        throw runtime_error("IsValid operation not supported");
-    }
-    virtual void Visit(SetValid&)
-    {
-        throw runtime_error("SetValid operation not supported");
-    }
     virtual void Visit(Lookup&)
     {
         throw runtime_error("Lookup operation not supported");
     }
-    virtual void Visit(Locate&)
+    virtual void Visit(MakeVector&)
     {
-        throw runtime_error("Locate operation not supported");
-    }
-    virtual void Visit(Length&)
-    {
-        throw runtime_error("Length operation not supported");
+        throw runtime_error("MakeVector operation not supported");
     }
     virtual void Visit(FetchDataPtr&)
     {

@@ -20,7 +20,8 @@
 
 using namespace std;
 
-extern const char* vinstr_str;
+extern unsigned char vinstr_str[];
+extern unsigned int vinstr_str_len;
 
 namespace reffine {
 
@@ -67,10 +68,7 @@ private:
     llvm::Value* visit(BlockDim&) final;
     llvm::Value* visit(GridDim&) final;
     llvm::Value* visit(Loop&) final;
-    llvm::Value* visit(IsValid&) final;
-    llvm::Value* visit(SetValid&) final;
-    llvm::Value* visit(Length&) final;
-    llvm::Value* visit(Locate&) final;
+    llvm::Value* visit(MakeVector&) final;
     llvm::Value* visit(FetchDataPtr&) final;
     void visit(Func&) final;
 

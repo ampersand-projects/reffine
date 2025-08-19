@@ -46,12 +46,7 @@ Expr IRClone::visit(Lookup& lookup)
     return _lookup(eval(lookup.vec), eval(lookup.idx));
 }
 
-Expr IRClone::visit(Locate& locate)
-{
-    return _locate(eval(locate.vec), eval(locate.iter));
-}
-
-Expr IRClone::visit(Length& len) { return _len(eval(len.vec)); }
+Expr IRClone::visit(MakeVector& make) { return _make(make.type, make.mem_id); }
 
 Expr IRClone::visit(NotNull& not_null) { return _notnull(eval(not_null.elem)); }
 
@@ -146,11 +141,6 @@ Expr IRClone::visit(Stmts& stmts)
     return _stmtexpr(_stmts(stmt_list));
 }
 
-Expr IRClone::visit(IsValid& is_valid)
-{
-    return _isval(eval(is_valid.vec), eval(is_valid.idx), is_valid.col);
-}
-
 Expr IRClone::visit(Alloc& alloc)
 {
     return _alloc(alloc.type.deref(), eval(alloc.size));
@@ -160,12 +150,6 @@ Expr IRClone::visit(IfElse& ifelse)
 {
     return _stmtexpr(_ifelse(eval(ifelse.cond), eval(ifelse.true_body),
                              eval(ifelse.false_body)));
-}
-
-Expr IRClone::visit(SetValid& set_valid)
-{
-    return _setval(eval(set_valid.vec), eval(set_valid.idx),
-                   eval(set_valid.validity), set_valid.col);
 }
 
 Expr IRClone::visit(Loop& loop)

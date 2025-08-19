@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include "reffine/arrow/defs.h"
+#include "reffine/arrow/table.h"
 #include "reffine/builder/reffiner.h"
 
 void aggregate_loop_test();

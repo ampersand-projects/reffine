@@ -1,6 +1,7 @@
 #include "reffine/pass/loopgen.h"
 
 #include "reffine/builder/reffiner.h"
+#include "reffine/engine/memory.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/z3solver.h"
 
@@ -54,6 +55,7 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
 
     // Loop output
     vector<Expr> outputs;
+    outputs.push_back(loop_iter);
     for (auto output : op.outputs) { outputs.push_back(eval(output)); }
 
     // Loop definition
@@ -65,6 +67,60 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
     loop->body_cond = cond ? eval(cond) : nullptr;
 
     return loop;
+}
+
+Expr LoopGen::visit(Op& op)
+{
+    auto tmp_loop = this->build_loop(op);
+
+    // Initialize output vector
+    vector_builders.push_back([]() {
+        size_t len = 10000;
+        auto* arr = new VectorArray(len);
+        arr->add_child(new Int64Array(len));
+        arr->add_child(new Int64Array(len));
+        return arr;
+    });
+    auto out_vec = _make(op.type, vector_builders.size() - 1);
+    auto out_vec_sym = _sym("out_vec", out_vec);
+    this->assign(out_vec_sym, out_vec);
+
+    // Output vector index
+    auto out_vec_idx_alloc = _alloc(_idx_t);
+    auto out_vec_idx_addr = _sym("out_vec_idx_addr", out_vec_idx_alloc);
+    this->assign(out_vec_idx_addr, out_vec_idx_alloc);
+
+    // Write the output to the out_vec
+    vector<Stmt> body_stmts;
+    for (size_t i = 0; i < op.type.dtypes.size(); i++) {
+        auto out_val = _get(tmp_loop->output, i);
+        auto vec_ptr = _fetch(out_vec_sym, _load(out_vec_idx_addr), i);
+        body_stmts.push_back(_store(vec_ptr, out_val));
+        body_stmts.push_back(
+            _setval(out_vec_sym, _load(out_vec_idx_addr), _true(), i));
+    }
+    body_stmts.push_back(
+        _store(out_vec_idx_addr, _add(_load(out_vec_idx_addr), _idx(1))));
+
+    // Build loop
+    auto loop = _loop(out_vec_sym);
+    loop->init = _stmts(vector<Stmt>{
+        tmp_loop->init,
+        _store(out_vec_idx_addr, _idx(0)),
+        out_vec_sym,
+    });
+    loop->incr = tmp_loop->incr;
+    loop->exit_cond = tmp_loop->exit_cond;
+    loop->body_cond = tmp_loop->body_cond;
+    loop->body = _stmts(body_stmts);
+    loop->post = _stmts(vector<Stmt>{
+        _setlen(out_vec_sym, _load(out_vec_idx_addr)),
+    });
+
+    auto loop_sym = _sym("loop", loop);
+    this->assign(loop_sym, loop);
+
+    return loop_sym;
 }
 
 Expr LoopGen::visit(Reduce& red)
@@ -87,7 +143,6 @@ Expr LoopGen::visit(Reduce& red)
     red_loop->body_cond = tmp_loop->body_cond;
     red_loop->body =
         _store(state_addr, red.acc(_load(state_addr), tmp_loop->output));
-    red_loop->output = state_addr;
 
     auto red_loop_sym = _sym("red_loop", red_loop);
     this->assign(red_loop_sym, red_loop);

@@ -324,37 +324,6 @@ Value* LLVMGen::visit(IfElse& ifelse)
 
 Value* LLVMGen::visit(NoOp&) { return nullptr; }
 
-Value* LLVMGen::visit(IsValid& is_valid)
-{
-    auto vec_val = eval(is_valid.vec);
-    auto idx_val = eval(is_valid.idx);
-    auto col_val = ConstantInt::get(lltype(types::UINT32), is_valid.col);
-
-    return llcall("get_vector_null_bit", lltype(is_valid),
-                  {vec_val, idx_val, col_val});
-}
-
-Value* LLVMGen::visit(SetValid& set_valid)
-{
-    auto vec_val = eval(set_valid.vec);
-    auto idx_val = eval(set_valid.idx);
-    auto validity_val = eval(set_valid.validity);
-    auto col_val = ConstantInt::get(lltype(types::UINT32), set_valid.col);
-
-    return llcall("set_vector_null_bit", lltype(set_valid),
-                  {vec_val, idx_val, validity_val, col_val});
-}
-
-Value* LLVMGen::visit(Length& len)
-{
-    return llcall("get_vector_len", lltype(len), {len.vec});
-}
-
-Value* LLVMGen::visit(Locate& locate)
-{
-    return llcall("vector_locate", lltype(locate), {locate.vec, locate.iter});
-}
-
 Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
 {
     auto vec_val = eval(fetch_data_ptr.vec);
@@ -518,6 +487,12 @@ Value* LLVMGen::visit(GridDim& gdim)
 #endif
 }
 
+Value* LLVMGen::visit(MakeVector& make)
+{
+    auto mem_id_val = ConstantInt::get(lltype(types::UINT32), make.mem_id);
+    return llcall("make_vector", lltype(make), vector<Value*>{mem_id_val});
+}
+
 Value* LLVMGen::visit(Loop& loop)
 {
     // Loop body condition and incr needs to be merged into loop body before
@@ -616,8 +591,9 @@ void LLVMGen::visit(Func& func)
 
 void LLVMGen::register_vinstrs()
 {
+    std::string vinstr(reinterpret_cast<char*>(vinstr_str), vinstr_str_len);
     const auto buffer =
-        llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(vinstr_str));
+        llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(vinstr.c_str()));
 
     llvm::SMDiagnostic error;
     std::unique_ptr<llvm::Module> vinstr_mod =

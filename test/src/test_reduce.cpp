@@ -90,10 +90,10 @@ shared_ptr<Func> vector_op()
             });
         },
         [](Expr s, Expr v) {
-            auto v0 = _get(_get(v, 1), 0);
-            auto v1 = _get(_get(v, 1), 1);
-            auto v2 = _get(_get(v, 1), 2);
-            auto v3 = _get(_get(v, 1), 3);
+            auto v0 = _get(_get(v, 2), 0);
+            auto v1 = _get(_get(v, 2), 1);
+            auto v2 = _get(_get(v, 2), 2);
+            auto v3 = _get(_get(v, 2), 3);
             auto s0 = _get(_get(s, 0), 0);
             auto s1 = _get(_get(s, 0), 1);
             auto s2 = _get(_get(s, 1), 0);

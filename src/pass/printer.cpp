@@ -156,9 +156,9 @@ void IRPrinter::Visit(Op& op)
     ostr << FORALL << " ";
     for (const auto& iter : op.iters) { ostr << iter->name << ", "; }
     if (op.iters.size() > 0) { ostr << "\b\b"; }
-    ostr << ": ";
-
-    ostr << "{";
+    ostr << ": [";
+    op.pred->Accept(*this);
+    ostr << "] {";
     for (const auto& output : op.outputs) {
         output->Accept(*this);
         ostr << ", ";
@@ -188,7 +188,7 @@ void IRPrinter::Visit(NotNull& not_null)
 void IRPrinter::Visit(Reduce& red)
 {
     auto init_val = red.init();
-    auto val = _sym("val", red.op.type.valty());
+    auto val = _sym("val", red.op.type.rowty());
     auto state = _sym("state", init_val->type);
     auto state2 = red.acc(state, val);
 
@@ -403,29 +403,12 @@ void IRPrinter::Visit(Loop& loop)
     ostr << "}";
 }
 
-void IRPrinter::Visit(IsValid& is_valid)
-{
-    emitfunc("is_valid<" + std::to_string(is_valid.col) + ">",
-             {is_valid.vec, is_valid.idx});
-}
-
-void IRPrinter::Visit(SetValid& set_valid)
-{
-    emitfunc("set_valid<" + std::to_string(set_valid.col) + ">",
-             {set_valid.vec, set_valid.idx, set_valid.validity});
-}
-
 void IRPrinter::Visit(Lookup& lookup)
 {
     emitfunc("lookup", {lookup.vec, lookup.idx});
 }
 
-void IRPrinter::Visit(Locate& locate)
-{
-    return emitfunc("locate", {locate.vec, locate.iter});
-}
-
-void IRPrinter::Visit(Length& len) { emitfunc("length", {len.vec}); }
+void IRPrinter::Visit(MakeVector& make) { emitfunc("make_vector", {}); }
 
 void IRPrinter::Visit(FetchDataPtr& fetch_data_ptr)
 {

@@ -57,13 +57,9 @@ protected:
     {
         throw runtime_error("Lookup visit not supported");
     }
-    virtual ValTy visit(Locate&)
+    virtual ValTy visit(MakeVector&)
     {
-        throw runtime_error("Locate visit not supported");
-    }
-    virtual ValTy visit(Length&)
-    {
-        throw runtime_error("Length visit not supported");
+        throw runtime_error("MakeVector visit not supported");
     }
     virtual ValTy visit(NotNull&)
     {
@@ -125,14 +121,6 @@ protected:
     {
         throw runtime_error("Loop visit not supported");
     }
-    virtual ValTy visit(IsValid&)
-    {
-        throw runtime_error("IsValid visit not supported");
-    }
-    virtual ValTy visit(SetValid&)
-    {
-        throw runtime_error("SetValid visit not supported");
-    }
     virtual ValTy visit(FetchDataPtr&)
     {
         throw runtime_error("FetchDataPtr visit not supported");
@@ -153,8 +141,7 @@ protected:
     void Visit(Op& expr) final { val() = visit(expr); }
     void Visit(Element& expr) final { val() = visit(expr); }
     void Visit(Lookup& expr) final { val() = visit(expr); }
-    void Visit(Locate& expr) final { val() = visit(expr); }
-    void Visit(Length& expr) final { val() = visit(expr); }
+    void Visit(MakeVector& expr) final { val() = visit(expr); }
     void Visit(NotNull& expr) final { val() = visit(expr); }
     void Visit(Reduce& expr) final { val() = visit(expr); }
     void Visit(Call& expr) final { val() = visit(expr); }
@@ -169,8 +156,6 @@ protected:
     void Visit(BlockDim& expr) final { val() = visit(expr); }
     void Visit(GridDim& expr) final { val() = visit(expr); }
     void Visit(Loop& expr) final { val() = visit(expr); }
-    void Visit(IsValid& expr) final { val() = visit(expr); }
-    void Visit(SetValid& expr) final { val() = visit(expr); }
     void Visit(FetchDataPtr& expr) final { val() = visit(expr); }
     void Visit(NoOp& stmt) final { val() = visit(stmt); }
     void Visit(Func& stmt) final { visit(stmt); }
@@ -207,8 +192,8 @@ private:
 template <typename ValTy>
 class ValGenCtx : public IRPassBaseCtx<ValTy> {
 public:
-    ValGenCtx(SymTable tmp1 = {}, map<Sym, ValTy> tmp2 = {})
-        : IRPassBaseCtx<ValTy>(tmp1, tmp2)
+    ValGenCtx(const SymTable& tbl, map<Sym, ValTy> tmp2 = {})
+        : IRPassBaseCtx<ValTy>(tbl, tmp2)
     {
     }
 };
