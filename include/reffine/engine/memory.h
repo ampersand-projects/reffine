@@ -1,8 +1,8 @@
 #ifndef INCLUDE_REFFINE_ENGINE_MEMORY_H_
 #define INCLUDE_REFFINE_ENGINE_MEMORY_H_
 
-#include <vector>
 #include <functional>
+#include <vector>
 
 #include "reffine/arrow/table.h"
 
