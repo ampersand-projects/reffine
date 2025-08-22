@@ -17,15 +17,6 @@ REFFINE_VINSTR_ATTR
 int64_t set_vector_len(ArrowArray*, int64_t);
 
 REFFINE_VINSTR_ATTR
-bool is_valid(ArrowArray*, int64_t);
-
-REFFINE_VINSTR_ATTR
-void set_valid(ArrowArray*, int64_t);
-
-REFFINE_VINSTR_ATTR
-void set_invalid(ArrowArray*, int64_t);
-
-REFFINE_VINSTR_ATTR
 bool get_vector_null_bit(ArrowArray*, int64_t, uint32_t);
 
 REFFINE_VINSTR_ATTR

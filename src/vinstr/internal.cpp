@@ -11,19 +11,19 @@ int64_t set_vector_len(ArrowArray* arr, int64_t len)
     return arr->length;
 }
 
-bool is_valid(ArrowArray* arr, int64_t idx)
+static bool is_valid(ArrowArray* arr, int64_t idx)
 {
     auto bitmap = (char*)arr->buffers[0];
     return (arr->null_count == 0) || (bitmap[idx / 8] & (1 << (idx % 8)));
 }
 
-void set_valid(ArrowArray* arr, int64_t idx)
+static void set_valid(ArrowArray* arr, int64_t idx)
 {
     auto bitmap = (char*)arr->buffers[0];
     bitmap[idx / 8] |= (1 << (idx % 8));
 }
 
-void set_invalid(ArrowArray* arr, int64_t idx)
+static void set_invalid(ArrowArray* arr, int64_t idx)
 {
     auto bitmap = (char*)arr->buffers[0];
     bitmap[idx / 8] &= ~(1 << (idx % 8));
