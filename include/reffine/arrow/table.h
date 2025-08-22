@@ -53,6 +53,8 @@ struct ArrowTable : public ArrowTableBase {
         init();
     }
 
+    ~ArrowTable() override {}
+
     DataType get_data_type(size_t dim)
     {
         vector<DataType> dtypes;

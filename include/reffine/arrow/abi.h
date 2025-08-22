@@ -18,6 +18,8 @@ struct ArrowTableBase {
 
     ArrowTableBase() {}
     ArrowTableBase(ArrowSchema* schema, ArrowArray* array) : schema(schema), array(array) {}
+
+    virtual ~ArrowTableBase() {}
 };
 
 } // namespace reffine
