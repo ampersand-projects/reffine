@@ -103,7 +103,7 @@ void transform_test()
 
     auto tbl = get_input_vector().ValueOrDie();
     auto* in_array = tbl->array;
-    auto out_table = std::make_shared<ArrowTable>(
+    auto out_table = std::make_shared<ArrowTable2>(
         "output", in_array->length,
         std::vector<std::string>{"id", "minutes_studied", "slept_enough"},
         std::vector<reffine::DataType>{types::INT64, types::INT64,

@@ -6,16 +6,16 @@
 
 namespace reffine {
 
-struct ArrowTable : public ArrowTableBase {
-    ArrowTable() :
-        ArrowTableBase(),
+struct ArrowTable2 : public ArrowTable {
+    ArrowTable2() :
+        ArrowTable(),
         schema2(make_shared<ArrowSchema2>()),
         array2(make_shared<ArrowArray2>())
     {
         init();
     }
 
-    ArrowTable(std::string name, size_t len, std::vector<std::string> cols,
+    ArrowTable2(std::string name, size_t len, std::vector<std::string> cols,
                std::vector<DataType> dtypes)
     {
         this->schema2 = make_shared<VectorSchema>(name);
@@ -53,7 +53,7 @@ struct ArrowTable : public ArrowTableBase {
         init();
     }
 
-    ~ArrowTable() override {}
+    ~ArrowTable2() override {}
 
     DataType get_data_type(size_t dim)
     {

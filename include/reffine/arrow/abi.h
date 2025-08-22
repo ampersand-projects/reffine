@@ -12,14 +12,14 @@ void arrow_print_array(ArrowArray*);
 
 namespace reffine {
 
-struct ArrowTableBase {
+struct ArrowTable {
     ArrowSchema* schema;
     ArrowArray* array;
 
-    ArrowTableBase() {}
-    ArrowTableBase(ArrowSchema* schema, ArrowArray* array) : schema(schema), array(array) {}
+    ArrowTable() {}
+    ArrowTable(ArrowSchema* schema, ArrowArray* array) : schema(schema), array(array) {}
 
-    virtual ~ArrowTableBase() {}
+    virtual ~ArrowTable() {}
 };
 
 } // namespace reffine
