@@ -8,10 +8,6 @@ extern "C" {
 void arrow_print_schema(ArrowSchema*);
 void arrow_print_array(ArrowArray*);
 
-}  // extern "C"
-
-namespace reffine {
-
 struct ArrowTable {
     ArrowSchema* schema;
     ArrowArray* array;
@@ -22,6 +18,6 @@ struct ArrowTable {
     virtual ~ArrowTable() {}
 };
 
-} // namespace reffine
+}  // extern "C"
 
 #endif  // INCLUDE_REFFINE_ARROW_ABI_H_

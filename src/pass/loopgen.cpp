@@ -1,5 +1,4 @@
 #include "reffine/pass/loopgen.h"
-
 #include "reffine/builder/reffiner.h"
 #include "reffine/engine/memory.h"
 #include "reffine/pass/reffinepass.h"
@@ -74,12 +73,15 @@ Expr LoopGen::visit(Op& op)
     auto tmp_loop = this->build_loop(op);
 
     // Initialize output vector
-    vector_builders.push_back([]() {
+    auto out_dtypes = op.type.dtypes;
+    vector_builders.push_back([out_dtypes]() {
         size_t len = 10000;
-        auto* arr = new VectorArray(len);
-        arr->add_child(new Int64Array(len));
-        arr->add_child(new Int64Array(len));
-        return arr;
+        auto* tbl = new ArrowTable2(
+            "out", len,
+            vector<string>{"a", "b"},
+            out_dtypes
+        );
+        return tbl;
     });
     auto out_vec = _make(op.type, vector_builders.size() - 1);
     auto out_vec_sym = _sym("out_vec", out_vec);

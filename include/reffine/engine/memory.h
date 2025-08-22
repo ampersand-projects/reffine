@@ -8,7 +8,7 @@
 
 namespace reffine {
 
-using VectorBuilderFnTy = std::function<ArrowArray*()>;
+using VectorBuilderFnTy = std::function<ArrowTable*()>;
 inline std::vector<VectorBuilderFnTy> vector_builders{};
 
 }  // namespace reffine

@@ -11,25 +11,25 @@ extern "C" {
  * Internal
  */
 REFFINE_VINSTR_ATTR
-int64_t get_vector_len(ArrowArray*);
+int64_t get_vector_len(ArrowTable*);
 
 REFFINE_VINSTR_ATTR
-int64_t set_vector_len(ArrowArray*, int64_t);
+int64_t set_vector_len(ArrowTable*, int64_t);
 
 REFFINE_VINSTR_ATTR
-bool get_vector_null_bit(ArrowArray*, int64_t, uint32_t);
+bool get_vector_null_bit(ArrowTable*, int64_t, uint32_t);
 
 REFFINE_VINSTR_ATTR
-bool set_vector_null_bit(ArrowArray*, int64_t, bool, uint32_t);
+bool set_vector_null_bit(ArrowTable*, int64_t, bool, uint32_t);
 
 REFFINE_VINSTR_ATTR
-void* get_vector_data_buf(ArrowArray*, uint32_t);
+void* get_vector_data_buf(ArrowTable*, uint32_t);
 
 REFFINE_VINSTR_ATTR
-int64_t vector_lookup(ArrowArray*, int64_t);
+int64_t vector_lookup(ArrowTable*, int64_t);
 
 REFFINE_VINSTR_ATTR
-int64_t vector_locate(ArrowArray*, int64_t);
+int64_t vector_locate(ArrowTable*, int64_t);
 
 REFFINE_VINSTR_ATTR
 int64_t* get_elem_ptr(int64_t*, int64_t);
@@ -38,7 +38,7 @@ int64_t* get_elem_ptr(int64_t*, int64_t);
  * External
  */
 REFFINE_VINSTR_ATTR
-ArrowArray* make_vector(uint32_t);
+ArrowTable* make_vector(uint32_t);
 
 }  // extern "C"
 

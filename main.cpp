@@ -94,22 +94,13 @@ arrow::Status query_arrow_file(ArrowTable& in_table, void (*query_fn)(long*, voi
 
 arrow::Status query_arrow_file2(shared_ptr<ArrowTable> in_table, void (*query_fn)(void*, void*))
 {
-    auto* in_array = in_table->array;
+    ArrowTable* out_table;
 
-    auto out_table = make_shared<ArrowTable2>(
-        "output",
-        in_array->length,
-        vector<string>{"t", "out"},
-        vector<DataType>{types::INT64, types::INT64}
-    );
-    auto* out_schema = out_table->schema;
-    ArrowArray* out_array;
+    query_fn(&out_table, in_table.get());
 
-    query_fn(&out_array, in_array);
-
-    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(out_array, out_schema));
+    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(out_table->array, out_table->schema));
     cout << "Output: " << endl << res->ToString() << endl;
-    delete out_array;
+    delete out_table;
 
     return arrow::Status::OK();
 }
