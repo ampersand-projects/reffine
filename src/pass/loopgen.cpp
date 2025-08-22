@@ -74,13 +74,13 @@ Expr LoopGen::visit(Op& op)
 
     // Initialize output vector
     auto out_dtypes = op.type.dtypes;
-    vector_builders.push_back([out_dtypes]() {
+    vector<string> out_cols;
+    for (size_t i=0; i<out_dtypes.size(); i++) {
+        out_cols.push_back(to_string(i));
+    }
+    vector_builders.push_back([out_cols, out_dtypes]() {
         size_t len = 10000;
-        auto* tbl = new ArrowTable2(
-            "out", len,
-            vector<string>{"a", "b"},
-            out_dtypes
-        );
+        auto* tbl = new ArrowTable2("out", len, out_cols, out_dtypes);
         return tbl;
     });
     auto out_vec = _make(op.type, vector_builders.size() - 1);
