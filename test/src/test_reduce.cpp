@@ -56,7 +56,7 @@ void aggregate_loop_test()
     auto query_fn = compile_loop<void (*)(long*, void*)>(loop);
 
     auto tbl = get_input_vector().ValueOrDie();
-    query_fn(&output, &tbl->array);
+    query_fn(&output, tbl->array);
 
     ASSERT_EQ(output, 131977);
 }
@@ -121,7 +121,7 @@ void aggregate_op_test()
     auto query_fn = compile_op<void (*)(long*, void*)>(op);
 
     auto tbl = get_input_vector().ValueOrDie();
-    query_fn(&output, &tbl->array);
+    query_fn(&output, tbl->array);
 
     ASSERT_EQ(output, 696);
 }

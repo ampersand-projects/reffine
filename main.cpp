@@ -75,7 +75,7 @@ arrow::Result<shared_ptr<ArrowTable>> load_arrow_file(string filename)
     cout << "Input: " << endl << rbatch->ToString() << endl;
 
     auto tbl = make_shared<ArrowTable>();
-    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &tbl->array, &tbl->schema));
+    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, tbl->array, tbl->schema));
 
     return tbl;
 }
@@ -94,20 +94,20 @@ arrow::Status query_arrow_file(ArrowTable& in_table, void (*query_fn)(long*, voi
 
 arrow::Status query_arrow_file2(shared_ptr<ArrowTable> in_table, void (*query_fn)(void*, void*))
 {
-    auto& in_array = in_table->array;
+    auto* in_array = in_table->array;
 
     auto out_table = make_shared<ArrowTable>(
         "output",
-        in_array.length,
+        in_array->length,
         vector<string>{"t", "out"},
         vector<DataType>{types::INT64, types::INT64}
     );
-    auto& out_schema = out_table->schema;
+    auto* out_schema = out_table->schema;
     ArrowArray* out_array;
 
-    query_fn(&out_array, &in_array);
+    query_fn(&out_array, in_array);
 
-    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(out_array, &out_schema));
+    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(out_array, out_schema));
     cout << "Output: " << endl << res->ToString() << endl;
     delete out_array;
 

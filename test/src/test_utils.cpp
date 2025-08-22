@@ -11,16 +11,16 @@ arrow::Result<std::shared_ptr<reffine::ArrowTable>> get_input_vector()
 
     auto table = std::make_shared<ArrowTable>();
     ARROW_RETURN_NOT_OK(
-        arrow::ExportRecordBatch(*rbatch, &table->array, &table->schema));
+        arrow::ExportRecordBatch(*rbatch, table->array, table->schema));
 
     return table;
 }
 
 std::string print_arrow_table(reffine::ArrowTable& tbl)
 {
-    auto& schema = tbl.schema;
-    auto& array = tbl.array;
-    auto res = *arrow::ImportRecordBatch(&array, &schema);
+    auto* schema = tbl.schema;
+    auto* array = tbl.array;
+    auto res = *arrow::ImportRecordBatch(array, schema);
 
     return res->ToString();
 }

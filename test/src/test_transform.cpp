@@ -102,18 +102,18 @@ void transform_test()
     auto query_fn = compile_loop<void (*)(void*, void*, void*)>(loop);
 
     auto tbl = get_input_vector().ValueOrDie();
-    auto& in_array = tbl->array;
+    auto* in_array = tbl->array;
     auto out_table = std::make_shared<ArrowTable>(
-        "output", in_array.length,
+        "output", in_array->length,
         std::vector<std::string>{"id", "minutes_studied", "slept_enough"},
         std::vector<reffine::DataType>{types::INT64, types::INT64,
                                        types::BOOL});
-    auto& out_schema = out_table->schema;
-    auto& out_array = out_table->array;
+    auto* out_schema = out_table->schema;
+    auto* out_array = out_table->array;
 
-    query_fn(&out_array, &in_array, &out_array);
+    query_fn(&out_array, in_array, out_array);
 
-    auto status = print_out_array(&out_schema, &out_array);
+    auto status = print_out_array(out_schema, out_array);
     if (!status.ok()) {
         ASSERT_EQ(1, 2);
     } else {

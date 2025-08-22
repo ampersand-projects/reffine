@@ -6,17 +6,20 @@
 
 namespace reffine {
 
-struct ArrowTable {
-    ArrowSchema2 schema;
-    ArrowArray2 array;
-
-    ArrowTable() {}
+struct ArrowTable : public ArrowTableBase {
+    ArrowTable() :
+        ArrowTableBase(),
+        schema2(make_shared<ArrowSchema2>()),
+        array2(make_shared<ArrowArray2>())
+    {
+        init();
+    }
 
     ArrowTable(std::string name, size_t len, std::vector<std::string> cols,
                std::vector<DataType> dtypes)
-        : schema(name, "+s"), array(len)
     {
-        this->array.add_buffer<char>(len / 8 + 1);
+        this->schema2 = make_shared<VectorSchema>(name);
+        this->array2 = make_shared<VectorArray>(len);
 
         ASSERT(cols.size() == dtypes.size());
         for (size_t i = 0; i < cols.size(); i++) {
@@ -24,36 +27,38 @@ struct ArrowTable {
             auto& dtype = dtypes[i];
 
             if (dtype == types::BOOL || dtype == types::INT8) {
-                this->schema.add_child(new Int8Schema(col));
-                this->array.add_child(new Int8Array(len));
+                this->schema2->add_child(new Int8Schema(col));
+                this->array2->add_child(new Int8Array(len));
             } else if (dtype == types::INT16) {
-                this->schema.add_child(new Int16Schema(col));
-                this->array.add_child(new Int16Array(len));
+                this->schema2->add_child(new Int16Schema(col));
+                this->array2->add_child(new Int16Array(len));
             } else if (dtype == types::INT32) {
-                this->schema.add_child(new Int32Schema(col));
-                this->array.add_child(new Int32Array(len));
+                this->schema2->add_child(new Int32Schema(col));
+                this->array2->add_child(new Int32Array(len));
             } else if (dtype == types::INT64) {
-                this->schema.add_child(new Int64Schema(col));
-                this->array.add_child(new Int64Array(len));
+                this->schema2->add_child(new Int64Schema(col));
+                this->array2->add_child(new Int64Array(len));
             } else if (dtype == types::FLOAT32) {
-                this->schema.add_child(new FloatSchema(col));
-                this->array.add_child(new FloatArray(len));
+                this->schema2->add_child(new FloatSchema(col));
+                this->array2->add_child(new FloatArray(len));
             } else if (dtype == types::FLOAT64) {
-                this->schema.add_child(new DoubleSchema(col));
-                this->array.add_child(new DoubleArray(len));
+                this->schema2->add_child(new DoubleSchema(col));
+                this->array2->add_child(new DoubleArray(len));
             } else {
                 throw std::runtime_error("data type not supported " +
                                          dtype.str());
             }
         }
+
+        init();
     }
 
     DataType get_data_type(size_t dim)
     {
         vector<DataType> dtypes;
 
-        for (long i = 0; i < this->schema.n_children; i++) {
-            auto child = this->schema.children[i];
+        for (long i = 0; i < this->schema2->n_children; i++) {
+            auto child = this->schema2->children[i];
             auto fmt = std::string(child->format);
 
             if (fmt == "c") {
@@ -77,6 +82,16 @@ struct ArrowTable {
 
         return DataType(BaseType::VECTOR, dtypes, dim);
     }
+
+private:
+    void init()
+    {
+        this->schema = this->schema2.get();
+        this->array = this->array2.get();
+    }
+
+    shared_ptr<ArrowSchema2> schema2;
+    shared_ptr<ArrowArray2> array2;
 };
 
 }  // namespace reffine

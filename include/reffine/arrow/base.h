@@ -1,17 +1,10 @@
 #ifndef INCLUDE_REFFINE_ARROW_BASE_H_
 #define INCLUDE_REFFINE_ARROW_BASE_H_
 
-#include <arrow/c/abi.h>
-
 #include <string>
 #include <vector>
 
-extern "C" {
-
-void arrow_print_schema(ArrowSchema*);
-void arrow_print_array(ArrowArray*);
-
-}  // extern "C"
+#include "reffine/arrow/abi.h"
 
 namespace reffine {
 
