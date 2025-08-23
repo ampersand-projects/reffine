@@ -16,7 +16,7 @@ arrow::Result<std::shared_ptr<reffine::ArrowTable2>> get_input_vector()
     return table;
 }
 
-std::string print_arrow_table(reffine::ArrowTable2* tbl)
+std::string print_arrow_table(ArrowTable* tbl)
 {
     auto res = arrow::ImportRecordBatch(tbl->array, tbl->schema).ValueOrDie();
     return res->ToString();

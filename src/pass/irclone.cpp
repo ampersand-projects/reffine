@@ -46,8 +46,6 @@ Expr IRClone::visit(Lookup& lookup)
     return _lookup(eval(lookup.vec), eval(lookup.idx));
 }
 
-Expr IRClone::visit(MakeVector& make) { return _make(make.type, make.mem_id); }
-
 Expr IRClone::visit(NotNull& not_null) { return _notnull(eval(not_null.elem)); }
 
 Expr IRClone::visit(NaryExpr& nexpr)

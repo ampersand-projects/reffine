@@ -68,7 +68,6 @@ private:
     llvm::Value* visit(BlockDim&) final;
     llvm::Value* visit(GridDim&) final;
     llvm::Value* visit(Loop&) final;
-    llvm::Value* visit(MakeVector&) final;
     llvm::Value* visit(FetchDataPtr&) final;
     void visit(Func&) final;
 
