@@ -1,5 +1,5 @@
-#include "reffine/vinstr/vinstr.h"
 #include "reffine/builder/reffiner.h"
+#include "reffine/vinstr/vinstr.h"
 #include "test_base.h"
 #include "test_utils.h"
 
@@ -108,7 +108,6 @@ void transform_loop_test()
     std::cout << print_arrow_table(out_table.get());
 }
 
-
 shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl, long lb, long n)
 {
     auto t_sym = _sym("t", _i64_t);
@@ -117,9 +116,8 @@ shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl, long lb, long n)
     auto elem_sym = _sym("elem", elem);
     auto out = _add(elem_sym[0], _i64(n));
     auto out_sym = _sym("out", out);
-    auto op = _op(vector<Sym>{t_sym},
-        ~(elem_sym) & _gt(t_sym, _i64(lb)),
-        vector<Expr>{out_sym});
+    auto op = _op(vector<Sym>{t_sym}, ~(elem_sym)&_gt(t_sym, _i64(lb)),
+                  vector<Expr>{out_sym});
     auto op_sym = _sym("op", op);
 
     auto foo_fn = _func("foo", op_sym, vector<Sym>{vec_in_sym});
@@ -144,12 +142,12 @@ void transform_op_test()
 
     ASSERT_EQ(get_vector_len(in_tbl.get()) - lb, get_vector_len(out_tbl));
 
-    auto* in_col0 = (int64_t*) get_vector_data_buf(in_tbl.get(), 0);
-    auto* in_col1 = (int64_t*) get_vector_data_buf(in_tbl.get(), 1);
-    auto* out_col0 = (int64_t*) get_vector_data_buf(out_tbl, 0);
-    auto* out_col1 = (int64_t*) get_vector_data_buf(out_tbl, 1);
-    for (size_t i=5; i<get_vector_len(in_tbl.get()); i++) {
-        ASSERT_EQ(in_col0[i], out_col0[i-lb]);
-        ASSERT_EQ((in_col1[i] + n), out_col1[i-lb]);
+    auto* in_col0 = (int64_t*)get_vector_data_buf(in_tbl.get(), 0);
+    auto* in_col1 = (int64_t*)get_vector_data_buf(in_tbl.get(), 1);
+    auto* out_col0 = (int64_t*)get_vector_data_buf(out_tbl, 0);
+    auto* out_col1 = (int64_t*)get_vector_data_buf(out_tbl, 1);
+    for (size_t i = 5; i < get_vector_len(in_tbl.get()); i++) {
+        ASSERT_EQ(in_col0[i], out_col0[i - lb]);
+        ASSERT_EQ((in_col1[i] + n), out_col1[i - lb]);
     }
 }
