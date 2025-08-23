@@ -71,7 +71,7 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
             return PointerType::get(lltype(type.dtypes[0]), 0);
         case BaseType::VECTOR:
             return PointerType::get(
-                llvm::StructType::getTypeByName(llctx(), "struct.ArrowArray"),
+                llvm::StructType::getTypeByName(llctx(), "struct.ArrowTable"),
                 0);
         case BaseType::UNKNOWN:
         default:

@@ -100,7 +100,6 @@ arrow::Status query_arrow_file2(shared_ptr<ArrowTable> in_table, void (*query_fn
 
     ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(out_table->array, out_table->schema));
     cout << "Output: " << endl << res->ToString() << endl;
-    delete out_table;
 
     return arrow::Status::OK();
 }

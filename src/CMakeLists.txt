@@ -36,6 +36,7 @@ set(SRC_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp
     engine/engine.cpp
     engine/cuda_engine.cpp
+    engine/memory.cpp
     builder/reffiner.cpp
 )
 
