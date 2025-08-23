@@ -32,6 +32,7 @@ void Loop::Accept(Visitor& v) { v.Visit(*this); }
 void Lookup::Accept(Visitor& v) { v.Visit(*this); }
 void MakeVector::Accept(Visitor& v) { v.Visit(*this); }
 void FetchDataPtr::Accept(Visitor& v) { v.Visit(*this); }
+void FetchBuffer::Accept(Visitor& v) { v.Visit(*this); }
 void NoOp::Accept(Visitor& v) { v.Visit(*this); }
 
 string StmtNode::str()

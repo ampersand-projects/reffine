@@ -110,6 +110,7 @@ REGISTER_EXPR(_const, Const)
 
 // Loop expressions
 REGISTER_EXPR(_fetch, FetchDataPtr)
+REGISTER_EXPR(_fetch_buf, FetchBuffer)
 REGISTER_EXPR(_alloc, Alloc)
 REGISTER_EXPR(_load, Load)
 REGISTER_EXPR(_loop, reffine::Loop)

@@ -50,7 +50,8 @@ Expr VecSpace::_condition(Expr idx) { return _isval(this->vec, idx, 0); }
 
 Expr VecSpace::_idx_to_iter(Expr idx)
 {
-    return _sel(_lt(idx, _len(this->vec)), _load(_fetch(this->vec, idx, 0)),
+    auto col_ptr = _fetch_buf(this->vec, 0);
+    return _sel(_lt(idx, _len(this->vec)), _load(_fetch(col_ptr, idx)),
                 _const(this->type, INF));
 }
 
