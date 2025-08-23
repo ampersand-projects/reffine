@@ -7,16 +7,16 @@
 namespace reffine {
 
 struct ArrowTable2 : public ArrowTable {
-    ArrowTable2() :
-        ArrowTable(),
-        schema2(make_shared<ArrowSchema2>()),
-        array2(make_shared<ArrowArray2>())
+    ArrowTable2()
+        : ArrowTable(),
+          schema2(make_shared<ArrowSchema2>()),
+          array2(make_shared<ArrowArray2>())
     {
         init();
     }
 
     ArrowTable2(std::string name, size_t len, std::vector<std::string> cols,
-               std::vector<DataType> dtypes)
+                std::vector<DataType> dtypes)
     {
         this->schema2 = make_shared<VectorSchema>(name);
         this->array2 = make_shared<VectorArray>(len);

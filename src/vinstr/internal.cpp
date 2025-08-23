@@ -1,9 +1,6 @@
 #include "reffine/vinstr/vinstr.h"
 
-int64_t get_vector_len(ArrowTable* tbl)
-{
-    return tbl->array->length;
-}
+int64_t get_vector_len(ArrowTable* tbl) { return tbl->array->length; }
 
 int64_t set_vector_len(ArrowTable* tbl, int64_t len)
 {

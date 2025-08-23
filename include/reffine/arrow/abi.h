@@ -13,7 +13,10 @@ struct ArrowTable {
     ArrowArray* array;
 
     ArrowTable() {}
-    ArrowTable(ArrowSchema* schema, ArrowArray* array) : schema(schema), array(array) {}
+    ArrowTable(ArrowSchema* schema, ArrowArray* array)
+        : schema(schema), array(array)
+    {
+    }
 
     virtual ~ArrowTable() {}
 };
