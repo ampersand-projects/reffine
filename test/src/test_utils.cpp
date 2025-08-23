@@ -1,6 +1,6 @@
 #include "test_utils.h"
 
-arrow::Result<std::shared_ptr<reffine::ArrowTable>> get_input_vector()
+arrow::Result<std::shared_ptr<reffine::ArrowTable2>> get_input_vector()
 {
     ARROW_ASSIGN_OR_RAISE(
         auto infile, arrow::io::ReadableFile::Open(
@@ -9,18 +9,15 @@ arrow::Result<std::shared_ptr<reffine::ArrowTable>> get_input_vector()
                           arrow::ipc::RecordBatchFileReader::Open(infile));
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
 
-    auto table = std::make_shared<ArrowTable>();
+    auto table = std::make_shared<ArrowTable2>();
     ARROW_RETURN_NOT_OK(
-        arrow::ExportRecordBatch(*rbatch, &table->array, &table->schema));
+        arrow::ExportRecordBatch(*rbatch, table->array, table->schema));
 
     return table;
 }
 
-std::string print_arrow_table(reffine::ArrowTable& tbl)
+std::string print_arrow_table(reffine::ArrowTable2* tbl)
 {
-    auto& schema = tbl.schema;
-    auto& array = tbl.array;
-    auto res = *arrow::ImportRecordBatch(&array, &schema);
-
+    auto res = arrow::ImportRecordBatch(tbl->array, tbl->schema).ValueOrDie();
     return res->ToString();
 }

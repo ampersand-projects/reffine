@@ -27,7 +27,7 @@ Expr LoopGen::visit(Element& elem)
     return _new(vals);
 }
 
-shared_ptr<Loop> LoopGen::build_loop(Op& op)
+pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 {
     // Only support 1d operators now
     ASSERT(op.iters.size() == 1);
@@ -66,20 +66,23 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op)
     auto cond = ispace->condition(_load(idx_addr));
     loop->body_cond = cond ? eval(cond) : nullptr;
 
-    return loop;
+    return {loop, outputs};
 }
 
 Expr LoopGen::visit(Op& op)
 {
-    auto tmp_loop = this->build_loop(op);
+    auto [tmp_loop, outputs] = this->build_loop(op);
 
-    // Initialize output vector
-    vector_builders.push_back([]() {
+    // Output vector builder
+    vector_builders.push_back([outputs]() {
         size_t len = 10000;
-        auto* arr = new VectorArray(len);
-        arr->add_child(new Int64Array(len));
-        arr->add_child(new Int64Array(len));
-        return arr;
+        vector<DataType> out_dtypes;
+        vector<string> out_cols;
+        for (auto o : outputs) {
+            out_dtypes.push_back(o->type);
+            out_cols.push_back(o->str());
+        }
+        return new ArrowTable2("out", len, out_cols, out_dtypes);
     });
     auto out_vec = _make(op.type, vector_builders.size() - 1);
     auto out_vec_sym = _sym("out_vec", out_vec);
@@ -125,7 +128,7 @@ Expr LoopGen::visit(Op& op)
 
 Expr LoopGen::visit(Reduce& red)
 {
-    auto tmp_loop = this->build_loop(red.op);
+    auto [tmp_loop, _] = this->build_loop(red.op);
 
     // State allocation and initialization
     auto state_alloc = _alloc(red.type);

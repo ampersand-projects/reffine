@@ -64,7 +64,7 @@ arrow::Status csv_to_arrow()
     return arrow::Status::OK();
 }
 
-arrow::Result<shared_ptr<ArrowTable>> load_arrow_file(string filename)
+arrow::Result<shared_ptr<ArrowTable2>> load_arrow_file(string filename)
 {
     ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(
                 filename, arrow::default_memory_pool()));
@@ -74,8 +74,8 @@ arrow::Result<shared_ptr<ArrowTable>> load_arrow_file(string filename)
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
     cout << "Input: " << endl << rbatch->ToString() << endl;
 
-    auto tbl = make_shared<ArrowTable>();
-    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &tbl->array, &tbl->schema));
+    auto tbl = make_shared<ArrowTable2>();
+    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, tbl->array, tbl->schema));
 
     return tbl;
 }
@@ -94,22 +94,13 @@ arrow::Status query_arrow_file(ArrowTable& in_table, void (*query_fn)(long*, voi
 
 arrow::Status query_arrow_file2(shared_ptr<ArrowTable> in_table, void (*query_fn)(void*, void*))
 {
-    auto& in_array = in_table->array;
+    ArrowTable* out_table;
 
-    auto out_table = make_shared<ArrowTable>(
-        "output",
-        in_array.length,
-        vector<string>{"t", "out"},
-        vector<DataType>{types::INT64, types::INT64}
-    );
-    auto& out_schema = out_table->schema;
-    ArrowArray* out_array;
+    query_fn(&out_table, in_table.get());
 
-    query_fn(&out_array, &in_array);
-
-    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(out_array, &out_schema));
+    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(out_table->array, out_table->schema));
     cout << "Output: " << endl << res->ToString() << endl;
-    delete out_array;
+    delete out_table;
 
     return arrow::Status::OK();
 }
@@ -385,7 +376,7 @@ shared_ptr<Func> reduce_op_fn()
     return foo_fn;
 }
 
-shared_ptr<Func> tpcds_query9(ArrowTable& table)
+shared_ptr<Func> tpcds_query9(ArrowTable2& table)
 {
     auto idx_sym = _sym("i", _idx_t);
     auto vec_in_sym = _sym("vec_in", table.get_data_type(0));
@@ -536,17 +527,20 @@ void test_kernel() {
 }
 #endif
 
-shared_ptr<Func> transform_op(shared_ptr<ArrowTable> tbl)
+shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl)
 {
     auto t_sym = _sym("t", _i64_t);
     auto vec_in_sym = _sym("vec_in", tbl->get_data_type(1));
     auto elem_expr = vec_in_sym[{t_sym}];
     auto elem = _sym("elem", elem_expr);
-    auto op = _op(vector<Sym>{t_sym}, ~(elem) & _gt(t_sym, _i64(5)) , vector<Expr>{ _add(elem[0], _i64(10)) });
+    auto out_expr = _add(elem[0], _i64(10));
+    auto out = _sym("out", out_expr);
+    auto op = _op(vector<Sym>{t_sym}, ~(elem) & _gt(t_sym, _i64(5)) , vector<Expr>{ out });
     auto op_sym = _sym("op", op);
 
     auto foo_fn = _func("foo", op_sym, vector<Sym>{vec_in_sym});
     foo_fn->tbl[elem] = elem_expr;
+    foo_fn->tbl[out] = out_expr;
     foo_fn->tbl[op_sym] = op;
 
     return foo_fn;

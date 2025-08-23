@@ -22,7 +22,7 @@
 #include "reffine/pass/scalarpass.h"
 #include "reffine/utils/utils.h"
 
-arrow::Result<std::shared_ptr<reffine::ArrowTable>> get_input_vector();
-std::string print_arrow_table(reffine::ArrowTable&);
+arrow::Result<std::shared_ptr<reffine::ArrowTable2>> get_input_vector();
+std::string print_arrow_table(reffine::ArrowTable2*);
 
 #endif  // TEST_INCLUDE_TEST_UTILS_H_

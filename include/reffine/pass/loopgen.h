@@ -25,7 +25,7 @@ public:
     static shared_ptr<Func> Build(shared_ptr<Func>);
 
 private:
-    shared_ptr<Loop> build_loop(Op&);
+    pair<shared_ptr<Loop>, vector<Expr>> build_loop(Op&);
     Expr visit(Op&) final;
     Expr visit(Reduce&) final;
     Expr visit(Element&) final;
