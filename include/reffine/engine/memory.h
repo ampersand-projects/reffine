@@ -8,8 +8,19 @@
 
 namespace reffine {
 
-using VectorBuilderFnTy = std::function<ArrowTable*()>;
-inline std::vector<VectorBuilderFnTy> vector_builders{};
+using VectorBuilderFnTy = std::function<shared_ptr<ArrowTable2>()>;
+
+class MemoryManager {
+public:
+    uint32_t add_builder(VectorBuilderFnTy);
+    ArrowTable* get_table(uint32_t);
+
+private:
+    std::vector<VectorBuilderFnTy> _builders;
+    std::vector<shared_ptr<ArrowTable2>> _tables;
+};
+
+inline MemoryManager memman;
 
 }  // namespace reffine
 

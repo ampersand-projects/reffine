@@ -3,4 +3,4 @@
 
 using namespace reffine;
 
-ArrowTable* make_vector(uint32_t mem_id) { return vector_builders[mem_id](); }
+ArrowTable* make_vector(uint32_t mem_id) { return memman.get_table(mem_id); }

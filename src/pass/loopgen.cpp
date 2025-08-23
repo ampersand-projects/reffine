@@ -74,7 +74,7 @@ Expr LoopGen::visit(Op& op)
     auto [tmp_loop, outputs] = this->build_loop(op);
 
     // Output vector builder
-    vector_builders.push_back([outputs]() {
+    auto mem_id = memman.add_builder([outputs]() {
         size_t len = 10000;
         vector<DataType> out_dtypes;
         vector<string> out_cols;
@@ -82,9 +82,9 @@ Expr LoopGen::visit(Op& op)
             out_dtypes.push_back(o->type);
             out_cols.push_back(o->str());
         }
-        return new ArrowTable2("out", len, out_cols, out_dtypes);
+        return make_shared<ArrowTable2>("out", len, out_cols, out_dtypes);
     });
-    auto out_vec = _make(op.type, vector_builders.size() - 1);
+    auto out_vec = _make(op.type, mem_id);
     auto out_vec_sym = _sym("out_vec", out_vec);
     this->assign(out_vec_sym, out_vec);
 
