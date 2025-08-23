@@ -77,15 +77,13 @@ struct SetValid : public Call {
     }
 };
 
-struct MakeVector : public ExprNode {
-    size_t mem_id;
-
-    MakeVector(DataType type, size_t mem_id) : ExprNode(type), mem_id(mem_id)
+struct MakeVector : public Call {
+    MakeVector(DataType type, size_t mem_id)
+        : Call("make_vector", type,
+               vector<Expr>{make_shared<Const>(types::UINT32, mem_id)})
     {
         ASSERT(type.is_vector());
     }
-
-    void Accept(Visitor&) final;
 };
 
 }  // namespace reffine
