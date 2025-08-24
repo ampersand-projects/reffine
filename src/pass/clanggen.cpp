@@ -1,43 +1,38 @@
-#include "clang/CodeGen/CodeGenAction.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/CompilerInvocation.h"
-#include "llvm/Support/MemoryBuffer.h"
-
 #include "reffine/pass/clanggen.h"
 
 using namespace std;
 using namespace llvm;
 using namespace reffine;
 
-unique_ptr<Module> ClangGen::Build(shared_ptr<Func> func)
+CodeSeg ClangGen::visit(Sym old_sym)
 {
-    string code = R"(
-        extern "C" int add(int a, int b) {
-            return a + b;
-        }
-    )";
 
-    auto buffer = llvm::MemoryBuffer::getMemBuffer(code, "in_memory.c");
+}
 
-    // 2. Set up a Clang CompilerInstance
-    clang::CompilerInstance CI;
-    CI.createDiagnostics();
+CodeSeg ClangGen::visit(Call&) {}
+CodeSeg ClangGen::visit(IfElse&) {}
+CodeSeg ClangGen::visit(NoOp&) {}
+CodeSeg ClangGen::visit(Select&) {}
+CodeSeg ClangGen::visit(Const&) {}
+CodeSeg ClangGen::visit(Get&) {}
+CodeSeg ClangGen::visit(Cast&) {}
+CodeSeg ClangGen::visit(NaryExpr&) {}
+CodeSeg ClangGen::visit(Stmts&) {}
+CodeSeg ClangGen::visit(Alloc&) {}
+CodeSeg ClangGen::visit(Load&) {}
+CodeSeg ClangGen::visit(Store&) {}
+CodeSeg ClangGen::visit(AtomicOp&) {}
+CodeSeg ClangGen::visit(StructGEP&) {}
+CodeSeg ClangGen::visit(ThreadIdx&) {}
+CodeSeg ClangGen::visit(BlockIdx&) {}
+CodeSeg ClangGen::visit(BlockDim&) {}
+CodeSeg ClangGen::visit(GridDim&) {}
+CodeSeg ClangGen::visit(Loop&) {}
+CodeSeg ClangGen::visit(FetchDataPtr&) {}
+void ClangGen::visit(Func&) {}
 
-    auto invocation = std::make_shared<clang::CompilerInvocation>();
-    clang::CompilerInvocation::CreateFromArgs(
-        *invocation,
-        {"-xc", "-O2", "-emit-llvm", "-"},
-        CI.getDiagnostics());
 
-    CI.setInvocation(invocation);
+void ClangGen::Build(shared_ptr<Func> func, Module& llmod)
+{
 
-    // 3. Emit LLVM IR from the input buffer
-    clang::EmitLLVMOnlyAction act;
-    if (!CI.ExecuteAction(act)) {
-        llvm::errs() << "Failed to compile\n";
-        return nullptr;
-    }
-    auto llmod = act.takeModule();
-
-    return llmod;
 }
