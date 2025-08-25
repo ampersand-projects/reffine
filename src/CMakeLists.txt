@@ -25,6 +25,7 @@ set(SRC_FILES
     ir/ir.cpp
     iter/iter_space.cpp
     pass/printer.cpp
+    pass/printer2.cpp
     pass/loopgen.cpp
     pass/reffinepass.cpp
     pass/canonpass.cpp
