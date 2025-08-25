@@ -30,17 +30,43 @@ struct StrSeg : public CodeSegBase {
 struct NewLineSeg : public CodeSegBase {
     string to_string(size_t indent) final
     {
-        return '\n' + string(indent, '\t');
+        return '\n' + string(4*indent, ' ');
     }
 };
 
-struct BlockSeg : public CodeSegBase {
+struct MultiSeg : public CodeSegBase {
     vector<CodeSeg> segs;
 
+    void emit() {}
+
+    template<typename... R>
+    void emit(string str, R... r) {
+        this->emit(make_shared<StrSeg>(str), r...);
+    }
+
+    template<typename... R>
+    void emit(CodeSeg seg, R... r) {
+        this->segs.push_back(seg);
+        this->emit(r...);
+    }
+};
+
+struct LineSeg : public MultiSeg {
     string to_string(size_t indent) final
     {
         stringstream sstr;
-        for (auto seg : segs) {
+        for (auto seg : this->segs) {
+            sstr << seg->to_string(indent);
+        }
+        return sstr.str();
+    }
+};
+
+struct BlockSeg : public MultiSeg {
+    string to_string(size_t indent) final
+    {
+        stringstream sstr;
+        for (auto seg : this->segs) {
             sstr << seg->to_string(indent + 1);
         }
         return sstr.str();
@@ -93,24 +119,6 @@ public:
     void visit(Func&) final;
 
 private:
-    void emit() {}
-
-    template<typename... R>
-    void emit(string str, R... r) {
-        this->emit(make_shared<StrSeg>(str), r...);
-    }
-
-    template<typename... R>
-    void emit(CodeSeg seg, R... r) {
-        this->_block->segs.push_back(seg);
-        this->emit(r...);
-    }
-
-    CodeSeg _str(string str)
-    {
-        return make_shared<StrSeg>(str);
-    }
-
     CodeSeg _nl()
     {
         return make_shared<NewLineSeg>();
@@ -118,17 +126,50 @@ private:
 
     shared_ptr<BlockSeg> _blk() { return make_shared<BlockSeg>(); }
 
-    shared_ptr<BlockSeg> enter_block(shared_ptr<BlockSeg> child)
+    template<typename... T>
+    void emit(T... t) {
+        this->_block->emit(t...);
+    }
+
+    template<typename... T>
+    shared_ptr<LineSeg> _line(T... t)
+    {
+        auto line = make_shared<LineSeg>();
+        line->emit(t...);
+        return line;
+    }
+
+    shared_ptr<BlockSeg> enter_block()
     {
         auto parent = this->_block;
+        auto child = _blk();
         this->_block = child;
-        this->emit(this->_nl());
         return parent;
     }
 
-    void exit_block(shared_ptr<BlockSeg> parent)
+    shared_ptr<BlockSeg> exit_block(shared_ptr<BlockSeg> parent)
     {
+        auto child = this->_block;
         this->_block = parent;
+        return child;
+    }
+
+    shared_ptr<LineSeg> code_binary(Expr a, string op, Expr b)
+    {
+        return _line("(", eval(a), " ", op, " ", eval(b), ")");
+    }
+
+    shared_ptr<LineSeg> code_func(string fn, vector<Expr> args)
+    {
+        auto line = _line(fn);
+
+        line->emit("(");
+        for (size_t i = 0; i < args.size(); i++) {
+            line->emit(eval(args[i]), ", ");
+        }
+        line->emit(")");
+
+        return line;
     }
 
     shared_ptr<BlockSeg> _block;
