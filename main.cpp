@@ -25,7 +25,7 @@
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/base/type.h"
-#include "reffine/pass/printer.h"
+#include "reffine/pass/printer2.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/scalarpass.h"
 #include "reffine/pass/symanalysis.h"
@@ -569,6 +569,9 @@ int main()
 
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
     auto op = transform_op(tbl);
+    cout << "PRINT\n";
+    std::cout << IRPrinter2::Build(op) << std::endl;
+    return 0;
     auto query_fn = compile_op<void (*)(void*, void*)>(op);
 
     auto status = query_arrow_file2(tbl, query_fn);
