@@ -96,7 +96,6 @@ public:
     CodeSeg visit(MakeVector&) final;
     CodeSeg visit(NotNull&) final;
     CodeSeg visit(Call&) final;
-    CodeSeg visit(Lookup&) final;
     CodeSeg visit(IfElse&) final;
     CodeSeg visit(NoOp&) final;
     CodeSeg visit(Select&) final;

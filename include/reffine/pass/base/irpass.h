@@ -162,12 +162,6 @@ public:
         expr.output->Accept(*this);
     }
 
-    void Visit(Lookup& expr) override
-    {
-        expr.vec->Accept(*this);
-        expr.idx->Accept(*this);
-    }
-
     void Visit(MakeVector& expr) override {}
 
     void Visit(FetchDataPtr& expr) override

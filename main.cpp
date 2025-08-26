@@ -347,121 +347,6 @@ void demorgan_test()
     cout << "p = " << res << endl;
 }
 
-shared_ptr<Func> reduce_op_fn()
-{
-    auto idx_sym = _sym("i", _idx_t);
-    auto vec_in_sym = _sym("vec_in", _vec_t<0, int64_t, int64_t, int64_t, int64_t, int64_t, int8_t, int64_t>());
-
-    Op op(
-        { idx_sym },
-        _gte(idx_sym, _idx(0)) & _lt(idx_sym, _idx(2880404)),
-        { _get(make_shared<Lookup>(vec_in_sym, idx_sym), 1) }
-    );
-    auto sum = _red(
-        op,
-        [] () { return _new(vector<Expr>{_i64(0), _i64(0)}); },
-        [] (Expr s, Expr v) {
-            auto e = _get(v, 0);
-            auto s0 = _get(s, 0);
-            auto s1 = _get(s, 1);
-            return _new(vector<Expr>{_add(s0, e), s1});
-        }
-    );
-    auto sum_sym = _sym("sum", sum);
-
-    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
-    foo_fn->tbl[sum_sym] = sum;
-
-    return foo_fn;
-}
-
-shared_ptr<Func> tpcds_query9(ArrowTable2& table)
-{
-    auto idx_sym = _sym("i", _idx_t);
-    auto vec_in_sym = _sym("vec_in", table.get_data_type(0));
-
-    auto ss_quant = _get(make_shared<Lookup>(vec_in_sym, idx_sym), 10);
-    auto ss_quant_sym = _sym("ss_quant", ss_quant);
-    auto ss_ext_tax = _get(make_shared<Lookup>(vec_in_sym, idx_sym), 18);
-    auto ss_ext_tax_sym = _sym("ss_ext_tax", ss_ext_tax);
-    auto ss_inc_tax = _get(make_shared<Lookup>(vec_in_sym, idx_sym), 21);
-    auto ss_inc_tax_sym = _sym("ss_inc_tax", ss_inc_tax);
-
-    Op op(
-        { idx_sym },
-        _gte(idx_sym, _idx(0)) & _lt(idx_sym, _idx(2880404)),
-        { ss_quant_sym, ss_ext_tax_sym, ss_inc_tax_sym }
-    );
-    auto sum = _red(
-            op,
-            [] () {
-            return _new(
-                    vector<Expr>{
-                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
-                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
-                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
-                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
-                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
-                    }
-                    );
-            },
-            [] (Expr s, Expr v) {
-            auto _0 = _i32(0);
-            auto _20 = _i32(20);
-            auto _40 = _i32(40);
-            auto _60 = _i32(60);
-            auto _80 = _i32(80);
-            auto _100 = _i32(100);
-
-
-            auto ss_quant = _get(v, 0);
-            auto ext_tax = _get(v, 1);
-            auto inc_tax = _get(v, 2);
-            auto s1 = _get(s, 0);
-            auto s2 = _get(s, 1);
-            auto s3 = _get(s, 2);
-            auto s4 = _get(s, 3);
-            auto s5 = _get(s, 4);
-            auto update_state = [](Expr s, Expr ext, Expr inc) {
-                auto count = _get(s, 0) + _i32(1);
-                auto ext_sum = _add(_get(s, 1), ext);
-                auto inc_sum = _add(_get(s, 2), inc);
-                return _new(vector<Expr>{count, ext_sum, inc_sum});
-            };
-            return _sel(
-                    _gt(ss_quant, _0) & _lte(ss_quant, _20),
-                    _new(vector<Expr>{update_state(s1, ext_tax, inc_tax), s2, s3, s4, s5}),
-                    _sel(
-                        _gt(ss_quant, _20) & _lte(ss_quant, _40),
-                        _new(vector<Expr>{s1, update_state(s2, ext_tax, inc_tax), s3, s4, s5}),
-                        _sel(
-                            _gt(ss_quant, _40) & _lte(ss_quant, _60),
-                            _new(vector<Expr>{s1, s2, update_state(s3, ext_tax, inc_tax), s4, s5}),
-                            _sel(
-                                _gt(ss_quant, _60) & _lte(ss_quant, _80),
-                                _new(vector<Expr>{s1, s2, s3, update_state(s4, ext_tax, inc_tax), s5}),
-                                _sel(
-                                    _gt(ss_quant, _80) & _lte(ss_quant, _100),
-                                    _new(vector<Expr>{s1, s2, s3, s4, update_state(s5, ext_tax, inc_tax)}),
-                                    s
-                                    )
-                                )
-                            )
-                        )
-                    );
-            }
-    );
-    auto sum_sym = _sym("sum", sum);
-
-    auto foo_fn = _func("foo", _get(_get(sum_sym, 0), 0), vector<Sym>{vec_in_sym});
-    foo_fn->tbl[ss_quant_sym] = ss_quant;
-    foo_fn->tbl[ss_ext_tax_sym] = ss_ext_tax;
-    foo_fn->tbl[ss_inc_tax_sym] = ss_inc_tax;
-    foo_fn->tbl[sum_sym] = sum;
-
-    return foo_fn;
-}
-
 #ifdef ENABLE_CUDA
 void execute_kernel(string kernel_name, CUfunction kernel, void *arg, int len)
 {
@@ -568,8 +453,7 @@ int main()
     }
 
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
-    auto op = transform_op(tbl);
-    cout << "PRINT\n";
+    auto op = transform_fn();
     std::cout << IRPrinter2::Build(op) << std::endl;
     return 0;
     auto query_fn = compile_op<void (*)(void*, void*)>(op);

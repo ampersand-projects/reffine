@@ -121,7 +121,6 @@ REGISTER_EXPR(_red, Reduce)
 REGISTER_EXPR(_notnull, NotNull)
 
 // Op to Loop
-REGISTER_EXPR(_lookup, Lookup)
 REGISTER_EXPR(_locate, Locate)
 REGISTER_EXPR(_len, Length)
 REGISTER_EXPR(_setlen, SetLength)

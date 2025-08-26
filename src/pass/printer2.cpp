@@ -267,11 +267,6 @@ CodeSeg IRPrinter2::visit(Loop& e)
     return line;
 }
 
-CodeSeg IRPrinter2::visit(Lookup&)
-{
-    return code("lookup");
-}
-
 CodeSeg IRPrinter2::visit(MakeVector&)
 {
     return code("make");
