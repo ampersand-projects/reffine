@@ -119,12 +119,10 @@ public:
     void visit(Func&) final;
 
 private:
-    CodeSeg _nl()
+    CodeSeg nl()
     {
         return make_shared<NewLineSeg>();
     }
-
-    shared_ptr<BlockSeg> _blk() { return make_shared<BlockSeg>(); }
 
     template<typename... T>
     void emit(T... t) {
@@ -132,7 +130,7 @@ private:
     }
 
     template<typename... T>
-    shared_ptr<LineSeg> _line(T... t)
+    shared_ptr<LineSeg> code(T... t)
     {
         auto line = make_shared<LineSeg>();
         line->emit(t...);
@@ -142,7 +140,7 @@ private:
     shared_ptr<BlockSeg> enter_block()
     {
         auto parent = this->_block;
-        auto child = _blk();
+        auto child = make_shared<BlockSeg>();
         this->_block = child;
         return parent;
     }
@@ -156,20 +154,24 @@ private:
 
     shared_ptr<LineSeg> code_binary(Expr a, string op, Expr b)
     {
-        return _line("(", eval(a), " ", op, " ", eval(b), ")");
+        return code("(", eval(a), " ", op, " ", eval(b), ")");
+    }
+
+    template<typename T>
+    shared_ptr<LineSeg> code_args(string open, vector<T> args, string close)
+    {
+        auto line = code(open);
+        line->emit(eval(args[0]));
+        for(size_t i = 1; i < args.size(); i++) {
+            line->emit(", ", eval(args[i]));
+        }
+        line->emit(close);
+        return line;
     }
 
     shared_ptr<LineSeg> code_func(string fn, vector<Expr> args)
     {
-        auto line = _line(fn);
-
-        line->emit("(");
-        for (size_t i = 0; i < args.size(); i++) {
-            line->emit(eval(args[i]), ", ");
-        }
-        line->emit(")");
-
-        return line;
+        return code_args(fn + "(", args, ")");
     }
 
     shared_ptr<BlockSeg> _block;

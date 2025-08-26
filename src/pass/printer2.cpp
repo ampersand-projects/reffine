@@ -4,15 +4,15 @@ using namespace reffine;
 
 static const auto FORALL = "\u2200";
 //static const auto REDCLE = "\u2295";
-//static const auto PHI = "\u0278";
+static const auto PHI = "\u0278";
 
 CodeSeg IRPrinter2::visit(Sym sym)
 {
-    auto lhs = _line(sym->name);
+    auto lhs = code(sym->name);
 
     if (this->ctx().in_sym_tbl.find(sym) != this->ctx().in_sym_tbl.end()) {
         auto rhs = eval(this->ctx().in_sym_tbl.at(sym));
-        emit(_nl(), lhs, " = ", rhs);
+        emit(nl(), lhs, " = ", rhs);
     }
 
     return lhs;
@@ -26,64 +26,87 @@ CodeSeg IRPrinter2::visit(StmtExprNode& e)
 CodeSeg IRPrinter2::visit(Stmts& s)
 {
     for (auto& stmt : s.stmts) {
-        eval(stmt);
+        emit(nl(), eval(stmt));
     }
-    return _nl();
+    return code("");
 }
 
-CodeSeg IRPrinter2::visit(Call& call)
+CodeSeg IRPrinter2::visit(Call& e)
 {
-    return _line("nary");
+    return code_func(e.name, e.args);
 }
 
-CodeSeg IRPrinter2::visit(IfElse&)
+CodeSeg IRPrinter2::visit(IfElse& s)
 {
-    return _line("nary");
+    emit(nl(), "if (", eval(s.cond), ") {");
+
+    auto parent1 = enter_block();
+    emit(eval(s.true_body));
+    auto child1 = exit_block(parent1);
+    emit(child1);
+
+    emit(nl(), "} else {");
+
+    auto parent2 = enter_block();
+    emit(eval(s.false_body));
+    auto child2 = exit_block(parent2);
+    emit(child2);
+
+    emit(nl(), "}");
+
+    return code("");
 }
 
-CodeSeg IRPrinter2::visit(Select&)
+CodeSeg IRPrinter2::visit(Select& e)
 {
-    return _line("sel");
+    return code("(", eval(e.cond), " ? ", eval(e.true_body), " : ", eval(e.false_body), ")");
 }
 
 CodeSeg IRPrinter2::visit(Const& cnst)
 {
     switch (cnst.type.btype) {
         case BaseType::BOOL:
-            return _line(cnst.val ? "true" : "false");
+            return code(cnst.val ? "true" : "false");
         case BaseType::INT8:
         case BaseType::INT16:
         case BaseType::INT32:
         case BaseType::INT64:
-            return _line(to_string((int64_t)cnst.val) + "i");
+            return code(to_string((int64_t)cnst.val) + "i");
         case BaseType::UINT8:
         case BaseType::UINT16:
         case BaseType::UINT32:
         case BaseType::UINT64:
-            return _line(to_string((int64_t)cnst.val) + "i");
+            return code(to_string((int64_t)cnst.val) + "i");
         case BaseType::FLOAT32:
         case BaseType::FLOAT64:
-            return _line(to_string((int64_t)cnst.val) + "i");
+            return code(to_string((int64_t)cnst.val) + "i");
         case BaseType::IDX:
-            return _line(to_string((int64_t)cnst.val) + "i");
+            return code(to_string((int64_t)cnst.val) + "i");
         default:
             throw std::runtime_error("Invalid constant type");
     }
 }
 
-CodeSeg IRPrinter2::visit(Cast&)
+CodeSeg IRPrinter2::visit(Cast& e)
 {
-    return _line("cast");
+    return code("(", e.type.str(), ") ", eval(e.arg));
 }
 
 CodeSeg IRPrinter2::visit(Get& e)
 {
-    return _line("(", eval(e.val), ")._", to_string(e.col));
+    return code("(", eval(e.val), ")._", to_string(e.col));
 }
 
-CodeSeg IRPrinter2::visit(New&)
+CodeSeg IRPrinter2::visit(New& e)
 {
-    return _line("new");
+    auto line = code("{");
+
+    for (const auto& val : e.vals) {
+        line->emit(eval(val), ", ");
+    }
+    line->emit("}");
+
+    return line;
 }
 
 CodeSeg IRPrinter2::visit(NaryExpr& e)
@@ -104,9 +127,9 @@ CodeSeg IRPrinter2::visit(NaryExpr& e)
         case MathOp::MOD:
             return code_binary(e.arg(0), "%", e.arg(1));
         case MathOp::ABS:
-            return _line("|", eval(e.arg(0)), "|");
+            return code("|", eval(e.arg(0)), "|");
         case MathOp::NEG:
-            return _line("-", eval(e.arg(0)));
+            return code("-", eval(e.arg(0)));
         case MathOp::SQRT:
             return code_func("min", {e.arg(0)});
         case MathOp::POW:
@@ -118,11 +141,11 @@ CodeSeg IRPrinter2::visit(NaryExpr& e)
         case MathOp::EQ:
             return code_binary(e.arg(0), "==", e.arg(1));
         case MathOp::NOT:
-            return _line("!", eval(e.arg(0)));
+            return code("!", eval(e.arg(0)));
         case MathOp::AND:
-            return code_binary(e.arg(0), "&", e.arg(1));
+            return code_binary(e.arg(0), "&&", e.arg(1));
         case MathOp::OR:
-            return code_binary(e.arg(0), "|", e.arg(1));
+            return code_binary(e.arg(0), "||", e.arg(1));
         case MathOp::LT:
             return code_binary(e.arg(0), "<", e.arg(1));
         case MathOp::LTE:
@@ -138,136 +161,142 @@ CodeSeg IRPrinter2::visit(NaryExpr& e)
 
 CodeSeg IRPrinter2::visit(Op& op)
 {
-    auto pred_code = eval(op.pred);
+    auto line = code(FORALL, " ");
+    line->emit(code_args("", op.iters, ""));
 
-    auto parent = enter_block();
-    emit(FORALL, " ");
-    for (const auto& iter : op.iters) { emit(iter->name, ", "); }
+    line->emit(": [");
+    auto parent1 = enter_block();
+    emit(nl(), "return ", eval(op.pred));
+    auto child1 = exit_block(parent1);
+    line->emit(child1, nl(), "] {");
 
-    emit(": [", pred_code, "] {");
-
-    auto child = enter_block();
-    vector<CodeSeg> outs_code;
-    for (const auto& output : op.outputs) {
-        auto out_code = eval(output);
-        outs_code.push_back(out_code);
-    }
-    emit(_nl(), "return {");
-    for (const auto& out_code : outs_code) {
-        emit(out_code);
-    }
-    emit("}");
-    auto op_body = exit_block(child);
-    emit(op_body);
-
-    emit(_nl(), "}");
-    exit_block(parent);
-
-    return child;
-}
-
-CodeSeg IRPrinter2::visit(Element& elem)
-{
-    auto line = _line(eval(elem.vec), "[");
-    for (const auto& iter : elem.iters) {
-        line->emit(eval(iter), ", ");
-    }
-    line->emit("]");
+    auto parent2 = enter_block();
+    emit(nl(), "return ", code_args("{", op.outputs, "}"));
+    auto child2 = exit_block(parent2);
+    line->emit(child2);
+    line->emit(nl(), "}");
 
     return line;
 }
 
+CodeSeg IRPrinter2::visit(Element& elem)
+{
+    return code(eval(elem.vec), code_args("[", elem.iters, "]"));
+}
+
 CodeSeg IRPrinter2::visit(NotNull& e)
 {
-    return _line("~(", eval(e.elem), ")");
+    return code(eval(e.elem), "!=", PHI);
 }
 
 CodeSeg IRPrinter2::visit(Reduce&)
 {
-    return _line("red");
+    return code("red");
 }
 
-CodeSeg IRPrinter2::visit(Alloc&)
+CodeSeg IRPrinter2::visit(Alloc& e)
 {
-    return _line("alloc");
+    return code("alloc ", e.type.deref().str());
 }
 
-CodeSeg IRPrinter2::visit(Load&)
+CodeSeg IRPrinter2::visit(Load& e)
 {
-    return _line("load");
+    return code_func("*", {e.addr});
 }
 
-CodeSeg IRPrinter2::visit(Store&)
+CodeSeg IRPrinter2::visit(Store& s)
 {
-    return _line("stroe");
+    return code("*(", eval(s.addr), ") = ", eval(s.val));
 }
 
 CodeSeg IRPrinter2::visit(AtomicOp&)
 {
-    return _line("atom");
+    return code("atom");
 }
 
 CodeSeg IRPrinter2::visit(StructGEP&)
 {
-    return _line("gep");
+    return code("gep");
 }
 
 CodeSeg IRPrinter2::visit(ThreadIdx&)
 {
-    return _line("tidx");
+    return code("tidx");
 }
 
 CodeSeg IRPrinter2::visit(BlockIdx&)
 {
-    return _line("bid");
+    return code("bid");
 }
 
 CodeSeg IRPrinter2::visit(BlockDim&)
 {
-    return _line("bdim");
+    return code("bdim");
 }
 
 CodeSeg IRPrinter2::visit(GridDim&)
 {
-    return _line("gdim");
+    return code("gdim");
 }
 
-CodeSeg IRPrinter2::visit(Loop&)
+CodeSeg IRPrinter2::visit(Loop& e)
 {
-    return _line("loop");
+    auto line = code("{");
+
+    auto parent1 = enter_block();
+
+    if (e.init) { emit(nl(), eval(e.init)); }
+
+    emit("while(1) {");
+    auto parent2 = enter_block();
+
+    emit(nl(), "if (", eval(e.exit_cond), ") break", nl());
+    if (e.body_cond) { emit(nl(), "if (!", eval(e.body_cond), ") continue", nl()); }
+    emit(nl(), eval(e.body));
+    if (e.incr) { emit(eval(e.incr)); }
+
+    auto child2 = exit_block(parent2);
+    emit(child2, nl(), "}");
+
+    if (e.post) { emit(nl(), eval(e.post)); }
+    emit(nl(), "return ", eval(e.output));
+
+    auto child1 = exit_block(parent1);
+    line->emit(child1, nl(), "}");
+
+    return line;
 }
 
 CodeSeg IRPrinter2::visit(Lookup&)
 {
-    return _line("lookup");
+    return code("lookup");
 }
 
 CodeSeg IRPrinter2::visit(MakeVector&)
 {
-    return _line("make");
+    return code("make");
 }
 
-CodeSeg IRPrinter2::visit(FetchDataPtr&)
+CodeSeg IRPrinter2::visit(FetchDataPtr& e)
 {
-    return _line("fetch");
+    return code(eval(e.vec), "[", eval(e.idx), "]._" + to_string(e.col));
 }
 
 CodeSeg IRPrinter2::visit(NoOp&)
 {
-    return _line("noop");
+    return code("noop");
 }
 
 void IRPrinter2::visit(Func& fn)
 {
-    emit("def ", fn.name, "(");
-    for (auto& input : fn.inputs) { emit(input->name, ", "); }
-    emit(") {");
+    emit("def ", fn.name, code_args("(", fn.inputs, ")"), " {");
 
     auto parent = enter_block();
-    emit(_nl(), "return ", eval(fn.output));
+    emit(nl(), "return ", eval(fn.output));
     auto child = exit_block(parent);
+
     emit(child);
-    emit(_nl(), "}");
+    emit(nl(), "}");
 }
 
 string IRPrinter2::Build(shared_ptr<Func> func)
