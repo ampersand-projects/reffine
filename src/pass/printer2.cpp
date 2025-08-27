@@ -1,9 +1,11 @@
 #include "reffine/pass/printer2.h"
+#include "reffine/builder/reffiner.h"
 
 using namespace reffine;
+using namespace reffine::reffiner;
 
 static const auto FORALL = "\u2200";
-//static const auto REDCLE = "\u2295";
+static const auto REDCLE = "\u2295";
 static const auto PHI = "\u0278";
 
 CodeSeg IRPrinter2::visit(Sym sym)
@@ -189,9 +191,24 @@ CodeSeg IRPrinter2::visit(NotNull& e)
     return code(eval(e.elem), "!=", PHI);
 }
 
-CodeSeg IRPrinter2::visit(Reduce&)
+CodeSeg IRPrinter2::visit(Reduce& red)
 {
-    return code("red");
+    auto state_val = red.init();
+    auto val = _sym("val", red.op.type.rowty());
+    auto state = _sym("state", state_val->type);
+    auto state2 = red.acc(state, val);
+
+    auto line = code(REDCLE, " {");
+
+    auto parent = enter_block();
+    emit(nl(), eval(this->tmp_expr(red.op)), ", ", nl());
+    emit("state <- ", eval(state_val), ", ", nl());
+    emit("state <- ", eval(state2));
+
+    auto child = exit_block(parent);
+    line->emit(child, ", ", nl(), "}");
+
+    return line;
 }
 
 CodeSeg IRPrinter2::visit(Alloc& e)
@@ -209,14 +226,29 @@ CodeSeg IRPrinter2::visit(Store& s)
     return code("*(", eval(s.addr), ") = ", eval(s.val));
 }
 
-CodeSeg IRPrinter2::visit(AtomicOp&)
+CodeSeg IRPrinter2::visit(AtomicOp& e)
 {
-    return code("atom");
+    switch (e.op) {
+        case MathOp::ADD:
+            return code_func("atomic_add", {e.addr, e.val});
+        case MathOp::SUB:
+            return code_func("atomic_sub", {e.addr, e.val});
+        case MathOp::MAX:
+            return code_func("atomic_max", {e.addr, e.val});
+        case MathOp::MIN:
+            return code_func("atomic_min", {e.addr, e.val});
+        case MathOp::AND:
+            return code_func("atomic_and", {e.addr, e.val});
+        case MathOp::OR:
+            return code_func("atomic_or", {e.addr, e.val});
+        default:
+            throw std::runtime_error("Invalid atomic operation");
+    }
 }
 
-CodeSeg IRPrinter2::visit(StructGEP&)
+CodeSeg IRPrinter2::visit(StructGEP& e)
 {
-    return code("gep");
+    return code_func("structgep", {e.addr, _idx(e.col)});
 }
 
 CodeSeg IRPrinter2::visit(ThreadIdx&)
