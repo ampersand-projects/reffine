@@ -94,9 +94,9 @@ Expr NewGetElimination::visit(Get& get)
     } else {  // might be a symbol to New expression
         auto maybe_sym = static_pointer_cast<SymNode>(val);
 
-        if (this->ctx().out_sym_tbl.find(maybe_sym) !=
-            this->ctx().out_sym_tbl.end()) {
-            auto expr = this->ctx().out_sym_tbl.at(maybe_sym);
+        if (this->ctx().out_sym_tbl->find(maybe_sym) !=
+            this->ctx().out_sym_tbl->end()) {
+            auto expr = this->ctx().out_sym_tbl->at(maybe_sym);
             return _new_get_map[expr][get.col];
         } else {
             throw runtime_error("Unable to eliminate Get expression");

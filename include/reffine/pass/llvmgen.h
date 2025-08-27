@@ -28,7 +28,7 @@ namespace reffine {
 class LLVMGenCtx : public IRPassBaseCtx<llvm::Value*> {
 public:
     LLVMGenCtx(shared_ptr<Func> func, map<Sym, llvm::Value*> m = {})
-        : IRPassBaseCtx<llvm::Value*>(func->tbl, m)
+        : IRPassBaseCtx<llvm::Value*>(func->tbl, &m)
     {
     }
 };
