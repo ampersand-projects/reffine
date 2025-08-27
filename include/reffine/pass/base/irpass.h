@@ -162,8 +162,6 @@ public:
         expr.output->Accept(*this);
     }
 
-    void Visit(MakeVector& expr) override {}
-
     void Visit(FetchDataPtr& expr) override
     {
         expr.vec->Accept(*this);

@@ -258,7 +258,7 @@ CodeSeg IRPrinter2::visit(ThreadIdx&)
 
 CodeSeg IRPrinter2::visit(BlockIdx&)
 {
-    return code("bid");
+    return code("bidx");
 }
 
 CodeSeg IRPrinter2::visit(BlockDim&)
@@ -297,11 +297,6 @@ CodeSeg IRPrinter2::visit(Loop& e)
     line->emit(child1, nl(), "}");
 
     return line;
-}
-
-CodeSeg IRPrinter2::visit(MakeVector&)
-{
-    return code("make");
 }
 
 CodeSeg IRPrinter2::visit(FetchDataPtr& e)
