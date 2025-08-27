@@ -86,7 +86,7 @@ Expr IRClone::visit(FetchDataPtr& fetch)
 
 Expr IRClone::visit(Load& load) { return _load(eval(load.addr)); }
 
-void IRClone::visit(Func& func)
+Expr IRClone::visit(Func& func)
 {
     // Populate loop function inputs
     for (auto& old_input : func.inputs) {
@@ -96,6 +96,8 @@ void IRClone::visit(Func& func)
     }
 
     _irclonectx.new_func->output = eval(func.output);
+
+    return _stmtexpr(_irclonectx.new_func);
 }
 
 Expr IRClone::visit(Sym old_sym) { return _sym(old_sym->name, old_sym); }

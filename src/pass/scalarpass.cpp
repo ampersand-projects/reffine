@@ -104,12 +104,12 @@ Expr NewGetElimination::visit(Get& get)
     }
 }
 
-void NewGetElimination::visit(Func& func)
+Expr NewGetElimination::visit(Func& func)
 {
     // Struct type inputs are not supported yet
     for (const auto& input : func.inputs) { ASSERT(!input->type.is_struct()); }
 
-    IRClone::visit(func);
+    return IRClone::visit(func);
 }
 
 shared_ptr<Func> NewGetElimination::Build(shared_ptr<Func> func)

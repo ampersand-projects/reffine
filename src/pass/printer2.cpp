@@ -309,7 +309,7 @@ CodeSeg IRPrinter2::visit(NoOp&)
     return code("");
 }
 
-void IRPrinter2::visit(Func& fn)
+CodeSeg IRPrinter2::visit(Func& fn)
 {
     emit("def ", fn.name, code_args("(", fn.inputs, ")"), " {");
 
@@ -319,6 +319,8 @@ void IRPrinter2::visit(Func& fn)
 
     emit(child);
     emit(nl(), "}");
+
+    return this->_code;
 }
 
 string IRPrinter2::Build(shared_ptr<Func> func)

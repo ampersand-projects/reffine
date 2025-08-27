@@ -533,7 +533,7 @@ Value* LLVMGen::visit(Loop& loop)
     return eval(loop.output);
 }
 
-void LLVMGen::visit(Func& func)
+Value* LLVMGen::visit(Func& func)
 {
     ASSERT(func.output->type.is_void());
 
@@ -581,6 +581,8 @@ void LLVMGen::visit(Func& func)
     }
 
     builder()->CreateRetVoid();
+
+    return fn;
 }
 
 void LLVMGen::register_vinstrs()

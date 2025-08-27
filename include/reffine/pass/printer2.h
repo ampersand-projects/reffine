@@ -112,7 +112,7 @@ public:
     CodeSeg visit(GridDim&) final;
     CodeSeg visit(Loop&) final;
     CodeSeg visit(FetchDataPtr&) final;
-    void visit(Func&) final;
+    CodeSeg visit(Func&) final;
 
 private:
     CodeSeg nl()

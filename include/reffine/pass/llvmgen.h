@@ -69,7 +69,7 @@ private:
     llvm::Value* visit(GridDim&) final;
     llvm::Value* visit(Loop&) final;
     llvm::Value* visit(FetchDataPtr&) final;
-    void visit(Func&) final;
+    llvm::Value* visit(Func&) final;
 
     llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);

@@ -69,7 +69,7 @@ protected:
     {
         throw runtime_error("Stmts visit not supported");
     }
-    virtual void visit(Func&)
+    virtual ValTy visit(Func&)
     {
         throw runtime_error("Func visit not supported");
     }
@@ -148,7 +148,7 @@ protected:
     void Visit(Loop& expr) final { val() = visit(expr); }
     void Visit(FetchDataPtr& expr) final { val() = visit(expr); }
     void Visit(NoOp& stmt) final { val() = visit(stmt); }
-    void Visit(Func& stmt) final { visit(stmt); }
+    void Visit(Func& stmt) final { val() = visit(stmt); }
     void Visit(SymNode& symbol) override
     {
         auto sym = this->tmp_sym(symbol);
