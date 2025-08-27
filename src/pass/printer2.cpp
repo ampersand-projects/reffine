@@ -306,7 +306,7 @@ CodeSeg IRPrinter2::visit(FetchDataPtr& e)
 
 CodeSeg IRPrinter2::visit(NoOp&)
 {
-    return code("noop");
+    return code("");
 }
 
 void IRPrinter2::visit(Func& fn)
