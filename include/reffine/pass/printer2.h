@@ -36,6 +36,9 @@ struct NewLineSeg : public CodeSegBase {
 
 struct MultiSeg : public CodeSegBase {
     vector<CodeSeg> segs;
+    size_t shift;
+
+    MultiSeg(size_t shift) : CodeSegBase(), shift(shift) {}
 
     void emit() {}
 
@@ -49,28 +52,23 @@ struct MultiSeg : public CodeSegBase {
         this->segs.push_back(seg);
         this->emit(r...);
     }
+
+    string to_string(size_t indent) final
+    {
+        stringstream sstr;
+        for (auto seg : this->segs) {
+            sstr << seg->to_string(indent + this->shift);
+        }
+        return sstr.str();
+    }
 };
 
 struct LineSeg : public MultiSeg {
-    string to_string(size_t indent) final
-    {
-        stringstream sstr;
-        for (auto seg : this->segs) {
-            sstr << seg->to_string(indent);
-        }
-        return sstr.str();
-    }
+    LineSeg() : MultiSeg(0) {}
 };
 
 struct BlockSeg : public MultiSeg {
-    string to_string(size_t indent) final
-    {
-        stringstream sstr;
-        for (auto seg : this->segs) {
-            sstr << seg->to_string(indent + 1);
-        }
-        return sstr.str();
-    }
+    BlockSeg() : MultiSeg(1) {}
 };
 
 class IRPrinter2Ctx : public IRPassBaseCtx<CodeSeg> {
@@ -83,7 +81,7 @@ public:
 
 class IRPrinter2 : public IRGenBase<CodeSeg> {
 public:
-    IRPrinter2(IRPrinter2Ctx& ctx) : IRGenBase<CodeSeg>(ctx), _block(make_shared<BlockSeg>()) {}
+    IRPrinter2(IRPrinter2Ctx& ctx) : IRGenBase<CodeSeg>(ctx), _code(make_shared<BlockSeg>()) {}
 
     static string Build(shared_ptr<Func>);
 
@@ -124,7 +122,7 @@ private:
 
     template<typename... T>
     void emit(T... t) {
-        this->_block->emit(t...);
+        this->_code->emit(t...);
     }
 
     template<typename... T>
@@ -135,18 +133,18 @@ private:
         return line;
     }
 
-    shared_ptr<BlockSeg> enter_block()
+    shared_ptr<MultiSeg> enter_block()
     {
-        auto parent = this->_block;
+        auto parent = this->_code;
         auto child = make_shared<BlockSeg>();
-        this->_block = child;
+        this->_code = child;
         return parent;
     }
 
-    shared_ptr<BlockSeg> exit_block(shared_ptr<BlockSeg> parent)
+    shared_ptr<MultiSeg> exit_block(shared_ptr<MultiSeg> parent)
     {
-        auto child = this->_block;
-        this->_block = parent;
+        auto child = this->_code;
+        this->_code = parent;
         return child;
     }
 
@@ -172,7 +170,7 @@ private:
         return code_args(fn + "(", args, ")");
     }
 
-    shared_ptr<BlockSeg> _block;
+    shared_ptr<MultiSeg> _code;
 };
 
 }  // namespace reffine

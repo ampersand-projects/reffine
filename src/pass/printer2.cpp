@@ -326,5 +326,5 @@ string IRPrinter2::Build(shared_ptr<Func> func)
     IRPrinter2Ctx ctx(func);
     IRPrinter2 printer2(ctx);
     func->Accept(printer2);
-    return printer2._block->to_string(-1);
+    return printer2._code->to_string(-1);
 }
