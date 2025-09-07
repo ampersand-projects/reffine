@@ -37,6 +37,26 @@ Expr IterSpace::_iter_to_idx(Expr iter) { return iter; }
 
 Expr IterSpace::_advance(Expr idx) { return _add(idx, _const(this->type, 1)); }
 
+bool IterSpace::_contains_vecspace()
+{
+    if (dynamic_cast<VecSpace*>(this)) { return true; }
+
+    if (auto jspace = dynamic_cast<JointSpace*>(this)) {
+        auto left = jspace->left;
+        auto right = jspace->right;
+        if (left->_contains_vecspace() || right->_contains_vecspace()) {
+            return true;
+        }
+    }
+
+    if (auto bspace = dynamic_cast<BoundSpace*>(this)) {
+        auto child = bspace->ispace;
+        if (child->_contains_vecspace()) { return true; }
+    }
+
+    return false;
+}
+
 VecIdxs IterSpace::_vec_idxs(Expr idx) { return VecIdxs{}; }
 
 Expr VecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
