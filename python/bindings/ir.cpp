@@ -16,13 +16,11 @@ using namespace reffine::reffiner;
 
 namespace py = pybind11;
 
-string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
-
 #define REGISTER_CLASS(CLASS, PARENT, MODULE, NAME, ...)       \
     py::class_<CLASS, shared_ptr<CLASS>, PARENT>(MODULE, NAME) \
         .def(py::init<__VA_ARGS__>());
 
-PYBIND11_MODULE(ir, m)
+void init_ir(py::module_& m)
 {
     /* Structures related to Reffine typing */
     py::enum_<BaseType>(m, "BaseType")

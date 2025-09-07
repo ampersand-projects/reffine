@@ -39,7 +39,7 @@ std::vector<void*> run(void* query, std::vector<void*> inputs)
     return inputs;
 }
 
-PYBIND11_MODULE(exec, m)
+void init_exec(py::module_& m)
 {
     m.def("to_string", [](std::shared_ptr<Func> fn) { return to_string(fn); });
 
