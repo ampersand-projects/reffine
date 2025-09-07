@@ -1,5 +1,5 @@
-import ir
-import exec
+import pyreffine.ir as ir
+import pyreffine.exec as exec
 import numpy as np
 import pyarrow as pa
 
