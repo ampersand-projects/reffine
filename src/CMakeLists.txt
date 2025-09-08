@@ -14,7 +14,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp
     COMMAND ${CMAKE_CXX_COMPILER} -emit-llvm -S ${CMAKE_CURRENT_SOURCE_DIR}/vinstr/internal.cpp -I ${CMAKE_CURRENT_SOURCE_DIR}/../include/ -o ${CMAKE_CURRENT_BINARY_DIR}/vinstr.ll
-    COMMAND xxd -n vinstr_str -i ${CMAKE_CURRENT_BINARY_DIR}/vinstr.ll > ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp
+    COMMAND cd ${CMAKE_CURRENT_BINARY_DIR}
+    COMMAND xxd -i vinstr.ll vinstr_str.cpp
     DEPENDS vinstr/internal.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../include/reffine/vinstr/vinstr.h
     COMMENT "Compile vinstr/internal.cpp to LLVM IR and embed into a char array in vinstr_str.cpp"
 )

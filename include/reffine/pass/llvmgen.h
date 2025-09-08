@@ -20,8 +20,8 @@
 
 using namespace std;
 
-extern unsigned char vinstr_str[];
-extern unsigned int vinstr_str_len;
+extern unsigned char vinstr_ll[];
+extern unsigned int vinstr_ll_len;
 
 namespace reffine {
 
