@@ -8,7 +8,7 @@ namespace reffine {
 class IRCloneCtx : public IRGenCtx {
 public:
     IRCloneCtx(shared_ptr<Func> old_func, shared_ptr<Func> new_func)
-        : IRGenCtx(old_func->tbl, &new_func->tbl), new_func(new_func)
+        : IRGenCtx(old_func->tbl, new_func->tbl), new_func(new_func)
     {
     }
 
