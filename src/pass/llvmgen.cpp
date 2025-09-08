@@ -585,7 +585,7 @@ void LLVMGen::visit(Func& func)
 
 void LLVMGen::register_vinstrs()
 {
-    std::string vinstr(reinterpret_cast<char*>(vinstr_str), vinstr_str_len);
+    std::string vinstr(reinterpret_cast<char*>(vinstr_ll), vinstr_ll_len);
     const auto buffer =
         llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(vinstr.c_str()));
 
