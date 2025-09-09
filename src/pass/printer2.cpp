@@ -311,6 +311,9 @@ CodeSeg IRPrinter2::visit(NoOp&)
 
 CodeSeg IRPrinter2::visit(Func& fn)
 {
+    auto new_ctx = make_unique<IRPrinter2Ctx>(fn.tbl);
+    this->switch_ctx(new_ctx);
+
     emit("def ", fn.name, code_args("(", fn.inputs, ")"), " {");
 
     auto parent = enter_block();
@@ -323,9 +326,9 @@ CodeSeg IRPrinter2::visit(Func& fn)
     return this->_code;
 }
 
-string IRPrinter2::Build(shared_ptr<Func> func)
+string IRPrinter2::Build(Stmt stmt)
 {
-    IRPrinter2 printer2(make_unique<IRPrinter2Ctx>(func));
-    func->Accept(printer2);
-    return printer2._code->to_string(-1);
+    SymTable tbl;
+    IRPrinter2 printer2(make_unique<IRPrinter2Ctx>(tbl));
+    return printer2.eval(stmt)->to_string(-1);
 }

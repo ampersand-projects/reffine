@@ -71,19 +71,13 @@ struct BlockSeg : public MultiSeg {
     BlockSeg() : MultiSeg(1) {}
 };
 
-class IRPrinter2Ctx : public IRPassBaseCtx<CodeSeg> {
-public:
-    IRPrinter2Ctx(shared_ptr<Func> func, map<Sym, CodeSeg> m = {})
-        : IRPassBaseCtx<CodeSeg>(func->tbl, &m)
-    {
-    }
-};
+using IRPrinter2Ctx = IRPassBaseCtx<CodeSeg>;
 
 class IRPrinter2 : public IRGenBase<IRPrinter2Ctx, CodeSeg> {
 public:
     IRPrinter2(unique_ptr<IRPrinter2Ctx> ctx) : IRGenBase<IRPrinter2Ctx, CodeSeg>(std::move(ctx)), _code(make_shared<BlockSeg>()) {}
 
-    static string Build(shared_ptr<Func>);
+    static string Build(Stmt);
 
     CodeSeg visit(Sym) final;
     CodeSeg visit(StmtExprNode&) final;
