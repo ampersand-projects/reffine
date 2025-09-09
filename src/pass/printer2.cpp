@@ -317,7 +317,11 @@ CodeSeg IRPrinter2::visit(Func& fn)
     emit("def ", fn.name, code_args("(", fn.inputs, ")"), " {");
 
     auto parent = enter_block();
-    emit(nl(), "return ", eval(fn.output));
+    if (fn.output->type.is_void()) {
+        emit(nl(), eval(fn.output));
+    } else {
+        emit(nl(), "return ", eval(fn.output));
+    }
     auto child = exit_block(parent);
 
     emit(child);
