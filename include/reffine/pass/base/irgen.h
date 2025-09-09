@@ -179,14 +179,9 @@ private:
     ValTy _val;
 };
 
-template <typename ValTy>
-class ValGenCtx : public IRPassBaseCtx<ValTy> {
-public:
-    ValGenCtx(const SymTable& tbl, map<Sym, ValTy> tmp2 = {})
-        : IRPassBaseCtx<ValTy>(tbl, &tmp2)
-    {
-    }
-};
+
+template<typename ValTy>
+using ValGenCtx = IRPassBaseCtx<ValTy>;
 
 template <typename ValTy>
 class ValGen : public IRGenBase<ValGenCtx<ValTy>, ValTy> {
@@ -203,12 +198,14 @@ protected:
 
 class IRGenCtx : public IRPassBaseCtx<Expr> {
 public:
-    IRGenCtx(const SymTable& in_sym_tbl, map<Sym, Expr>* out_sym_tbl)
-        : IRPassBaseCtx<Expr>(in_sym_tbl, out_sym_tbl)
+    IRGenCtx(const Func& in_func) : IRPassBaseCtx<Expr>(in_func.tbl, nullptr)
     {
+        this->out_func = make_shared<Func>(in_func.name, nullptr, vector<Sym>{});
+        this->out_sym_tbl = &this->out_func->tbl;
     }
 
     map<Sym, Sym> sym_sym_map;  // mapping from old sym to new sym
+    shared_ptr<Func> out_func;
 };
 
 class IRGen : public IRGenBase<IRGenCtx, Expr> {

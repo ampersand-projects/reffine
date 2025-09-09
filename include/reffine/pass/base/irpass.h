@@ -15,12 +15,12 @@ template <typename ValTy>
 class IRPassBaseCtx {
 public:
     IRPassBaseCtx(const SymTable& in_sym_tbl, map<Sym, ValTy>* out_sym_tbl)
-        : in_sym_tbl(in_sym_tbl), out_sym_tbl(out_sym_tbl)
+        : IRPassBaseCtx(in_sym_tbl, out_sym_tbl, nullptr)
     {
     }
 
     IRPassBaseCtx(const SymTable& in_sym_tbl)
-        : IRPassBaseCtx(in_sym_tbl, nullptr), out_sym_tbl_ptr(make_unique<map<Sym, ValTy>>())
+        : IRPassBaseCtx(in_sym_tbl, nullptr, make_unique<map<Sym, ValTy>>())
     {
         this->out_sym_tbl = out_sym_tbl_ptr.get();
     }
@@ -29,6 +29,11 @@ public:
     map<Sym, ValTy>* out_sym_tbl;
 
 private:
+    IRPassBaseCtx(const SymTable& in_sym_tbl, map<Sym, ValTy>* out_sym_tbl, unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr)
+        : in_sym_tbl(in_sym_tbl), out_sym_tbl(out_sym_tbl), out_sym_tbl_ptr(std::move(out_sym_tbl_ptr))
+    {
+    }
+
     unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr;
 };
 
@@ -63,13 +68,7 @@ protected:
     unique_ptr<CtxTy> _ctx;
 };
 
-class IRPassCtx : public IRPassBaseCtx<Sym> {
-public:
-    IRPassCtx(const SymTable& in_sym_tbl, map<Sym, Sym> m = {})
-        : IRPassBaseCtx<Sym>(in_sym_tbl, &m)
-    {
-    }
-};
+using IRPassCtx = IRPassBaseCtx<Sym>;
 
 class IRPass : public IRPassBase<IRPassCtx, Sym> {
 public:

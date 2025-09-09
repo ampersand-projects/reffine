@@ -88,9 +88,9 @@ Expr IRClone::visit(Load& load) { return _load(eval(load.addr)); }
 
 Expr IRClone::visit(Func& func)
 {
-    auto new_func = _func(func.name, nullptr, vector<Sym>{});
-    auto new_ctx = make_unique<IRGenCtx>(func.tbl, &new_func->tbl);
+    auto new_ctx = make_unique<IRGenCtx>(func);
     this->switch_ctx(new_ctx);
+    auto new_func = this->ctx().out_func;
 
     // Populate loop function inputs
     for (auto& old_input : func.inputs) {

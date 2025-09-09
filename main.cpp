@@ -507,16 +507,6 @@ int main()
 
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
     auto op = vector_op();
-    map<Sym, Sym> m;
-    IRPass pass(make_unique<IRPassCtx>(op->tbl, m));
-    cout << "SIZE: " << pass.ctx().in_sym_tbl.size() << std::endl;
-    cout << "SIZE: " << pass.ctx().out_sym_tbl->size() << std::endl;
-    op->Accept(pass);
-    std::cout << "OLD: " << std::endl;
-    std::cout << IRPrinter::Build(op) << std::endl;
-    std::cout << "NEW: " << std::endl;
-    std::cout << IRPrinter2::Build(op) << std::endl;
-    return 0;
     auto query_fn = compile_op<void (*)(void*, void*)>(op);
 
     auto status = query_arrow_file2(tbl, query_fn);

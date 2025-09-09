@@ -25,13 +25,7 @@ extern unsigned int vinstr_ll_len;
 
 namespace reffine {
 
-class LLVMGenCtx : public IRPassBaseCtx<llvm::Value*> {
-public:
-    LLVMGenCtx(const SymTable& in_sym_tbl, map<Sym, llvm::Value*> m = {})
-        : IRPassBaseCtx<llvm::Value*>(in_sym_tbl, &m)
-    {
-    }
-};
+using LLVMGenCtx = IRPassBaseCtx<llvm::Value*>;
 
 class LLVMGen : public IRGenBase<LLVMGenCtx, llvm::Value*> {
 public:

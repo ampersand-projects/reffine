@@ -16,7 +16,7 @@
 using namespace reffine;
 
 template <typename T>
-T compile_loop(std::shared_ptr<Func> loop)
+T compile_loop(shared_ptr<Func> loop)
 {
     LOG(INFO) << "Loop IR (raw):" << std::endl << loop->str() << std::endl;
     CanonPass::Build(loop);
@@ -43,8 +43,9 @@ template <typename T>
 T compile_op(std::shared_ptr<Func> op)
 {
     LOG(INFO) << "Reffine IR:" << std::endl << op->str() << std::endl;
-    std::shared_ptr<Func> loop = reinterpret_pointer_cast<Func>(LoopGen().eval(op));
-    return compile_loop<T>(loop);
+    auto loopgen = LoopGen();
+    loopgen.eval(op);
+    return compile_loop<T>(loopgen.ctx().out_func);
 }
 
 #endif  // INCLUDE_REFFINE_UTILS_H_
