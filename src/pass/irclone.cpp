@@ -41,11 +41,6 @@ Expr IRClone::visit(Element& elem)
     return _elem(eval(elem.vec), new_iters);
 }
 
-Expr IRClone::visit(Lookup& lookup)
-{
-    return _lookup(eval(lookup.vec), eval(lookup.idx));
-}
-
 Expr IRClone::visit(NotNull& not_null) { return _notnull(eval(not_null.elem)); }
 
 Expr IRClone::visit(NaryExpr& nexpr)
@@ -91,16 +86,22 @@ Expr IRClone::visit(FetchDataPtr& fetch)
 
 Expr IRClone::visit(Load& load) { return _load(eval(load.addr)); }
 
-void IRClone::visit(Func& func)
+Expr IRClone::visit(Func& func)
 {
+    auto new_func = _func(func.name, nullptr, vector<Sym>{});
+    auto new_ctx = make_unique<IRGenCtx>(func, new_func);
+    this->switch_ctx(new_ctx);
+
     // Populate loop function inputs
     for (auto& old_input : func.inputs) {
         auto new_input = _sym(old_input->name, old_input);
-        _irclonectx.new_func->inputs.push_back(new_input);
+        new_func->inputs.push_back(new_input);
         this->map_sym(old_input, new_input);
     }
 
-    _irclonectx.new_func->output = eval(func.output);
+    new_func->output = eval(func.output);
+
+    return _stmtexpr(new_func);
 }
 
 Expr IRClone::visit(Sym old_sym) { return _sym(old_sym->name, old_sym); }
@@ -162,15 +163,4 @@ Expr IRClone::visit(Loop& loop)
     new_loop->post = loop.post ? eval(loop.post) : nullptr;
 
     return new_loop;
-}
-
-shared_ptr<Func> IRClone::Build(shared_ptr<Func> func)
-{
-    auto new_func = _func(func->name, nullptr, vector<Sym>{});
-
-    IRCloneCtx ctx(func, new_func);
-    IRClone irclone(ctx);
-    func->Accept(irclone);
-
-    return new_func;
 }

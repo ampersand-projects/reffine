@@ -18,8 +18,7 @@ void SymAnalysis::Visit(SymNode& symbol)
 
 map<Sym, SymInfo> SymAnalysis::Build(shared_ptr<Func> func)
 {
-    IRPassCtx ctx(func->tbl);
-    SymAnalysis pass(ctx);
+    SymAnalysis pass(make_unique<IRPassCtx>(func->tbl));
     func->Accept(pass);
 
     return pass._syminfo_map;

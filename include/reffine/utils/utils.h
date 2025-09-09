@@ -16,20 +16,20 @@
 using namespace reffine;
 
 template <typename T>
-T compile_loop(std::shared_ptr<Func> loop)
+T compile_loop(shared_ptr<Func> loop)
 {
     LOG(INFO) << "Loop IR (raw):" << std::endl << loop->str() << std::endl;
     CanonPass::Build(loop);
     LOG(INFO) << "Loop IR (canon):" << std::endl << loop->str() << std::endl;
-    loop = LoadStoreExpand::Build(loop);
-    LOG(INFO) << "Loop IR (expand):" << std::endl << loop->str() << std::endl;
-    loop = NewGetElimination::Build(loop);
+    auto loop2 = LoadStoreExpand().eval(loop);
+    LOG(INFO) << "Loop IR (expand):" << std::endl << loop2->str() << std::endl;
+    auto loop3 = NewGetElimination().eval(loop2);
     LOG(INFO) << "Loop IR (eliminate):" << std::endl
-              << loop->str() << std::endl;
+              << loop3->str() << std::endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen::Build(loop, *llmod);
+    LLVMGen(*llmod).eval(loop3);
     LOG(INFO) << "LLVM IR (raw):" << std::endl
               << IRPrinter::Build(*llmod) << std::endl;
     jit->Optimize(*llmod);
@@ -43,8 +43,9 @@ template <typename T>
 T compile_op(std::shared_ptr<Func> op)
 {
     LOG(INFO) << "Reffine IR:" << std::endl << op->str() << std::endl;
-    auto loop = LoopGen::Build(op);
-    return compile_loop<T>(loop);
+    auto loopgen = LoopGen();
+    loopgen.eval(op);
+    return compile_loop<T>(loopgen.ctx().out_func);
 }
 
 #endif  // INCLUDE_REFFINE_UTILS_H_

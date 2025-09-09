@@ -19,19 +19,42 @@ public:
     {
     }
 
+    IRPassBaseCtx(const SymTable& in_sym_tbl,
+                  unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr =
+                      make_unique<map<Sym, ValTy>>())
+        : in_sym_tbl(in_sym_tbl),
+          out_sym_tbl(*out_sym_tbl_ptr),
+          out_sym_tbl_ptr(std::move(out_sym_tbl_ptr))
+    {
+    }
+
+    IRPassBaseCtx(unique_ptr<SymTable> in_sym_tbl_ptr = make_unique<SymTable>(),
+                  unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr =
+                      make_unique<map<Sym, ValTy>>())
+        : in_sym_tbl(*in_sym_tbl_ptr),
+          out_sym_tbl(*out_sym_tbl_ptr),
+          in_sym_tbl_ptr(std::move(in_sym_tbl_ptr)),
+          out_sym_tbl_ptr(std::move(out_sym_tbl_ptr))
+    {
+    }
+
     const SymTable& in_sym_tbl;
     map<Sym, ValTy>& out_sym_tbl;
+
+private:
+    unique_ptr<SymTable> in_sym_tbl_ptr;
+    unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr;
 };
 
-template <typename ValTy>
+template <typename CtxTy, typename ValTy>
 class IRPassBase : public Visitor {
 public:
-    explicit IRPassBase(IRPassBaseCtx<ValTy>& ctx) : _ctx(ctx) {}
+    explicit IRPassBase(unique_ptr<CtxTy> ctx) : _ctx(std::move(ctx)) {}
+
+    CtxTy& ctx() { return *this->_ctx; }
 
 protected:
-    IRPassBaseCtx<ValTy>& ctx() { return _ctx; }
-
-    void assign(Sym sym, ValTy val) { ctx().out_sym_tbl[sym] = val; }
+    void assign(Sym sym, ValTy val) { this->ctx().out_sym_tbl[sym] = val; }
 
     Sym tmp_sym(SymNode& symbol)
     {
@@ -46,21 +69,19 @@ protected:
         return tmp_expr;
     }
 
-private:
-    IRPassBaseCtx<ValTy>& _ctx;
+    void switch_ctx(unique_ptr<CtxTy>& octx) { std::swap(octx, this->_ctx); }
+
+    unique_ptr<CtxTy> _ctx;
 };
 
-class IRPassCtx : public IRPassBaseCtx<Sym> {
+using IRPassCtx = IRPassBaseCtx<Sym>;
+
+class IRPass : public IRPassBase<IRPassCtx, Sym> {
 public:
-    IRPassCtx(const SymTable& in_sym_tbl, map<Sym, Sym> m = {})
-        : IRPassBaseCtx<Sym>(in_sym_tbl, m)
+    explicit IRPass(unique_ptr<IRPassCtx> ctx)
+        : IRPassBase<IRPassCtx, Sym>(std::move(ctx))
     {
     }
-};
-
-class IRPass : public IRPassBase<Sym> {
-public:
-    explicit IRPass(IRPassCtx& ctx) : IRPassBase(ctx) {}
 
     void Visit(StmtExprNode& expr) override { expr.stmt->Accept(*this); }
 
@@ -162,14 +183,6 @@ public:
         expr.output->Accept(*this);
     }
 
-    void Visit(Lookup& expr) override
-    {
-        expr.vec->Accept(*this);
-        expr.idx->Accept(*this);
-    }
-
-    void Visit(MakeVector& expr) override {}
-
     void Visit(FetchDataPtr& expr) override
     {
         expr.vec->Accept(*this);
@@ -189,7 +202,7 @@ protected:
         }
     }
 
-    void assign(Sym sym) { IRPassBase<Sym>::assign(sym, sym); }
+    void assign(Sym sym) { IRPassBase<IRPassCtx, Sym>::assign(sym, sym); }
 };
 
 }  // namespace reffine

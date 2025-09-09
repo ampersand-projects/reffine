@@ -74,14 +74,6 @@ public:
     /**
      * Loop IR
      */
-    virtual void Visit(Lookup&)
-    {
-        throw runtime_error("Lookup operation not supported");
-    }
-    virtual void Visit(MakeVector&)
-    {
-        throw runtime_error("MakeVector operation not supported");
-    }
     virtual void Visit(FetchDataPtr&)
     {
         throw runtime_error("FetchDataPtr operation not supported");

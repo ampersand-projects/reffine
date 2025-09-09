@@ -36,7 +36,6 @@ void CanonPass::Visit(Func& func)
 
 void CanonPass::Build(shared_ptr<Func> func)
 {
-    IRPassCtx ctx(func->tbl);
-    CanonPass pass(ctx);
+    CanonPass pass(make_unique<IRPassCtx>(func->tbl));
     func->Accept(pass);
 }

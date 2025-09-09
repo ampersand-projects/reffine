@@ -8,20 +8,6 @@ using namespace std;
 
 namespace reffine {
 
-struct Lookup : public ExprNode {
-    Expr vec;
-    Expr idx;
-
-    Lookup(Expr vec, Expr idx)
-        : ExprNode(vec->type.iterty()), vec(vec), idx(idx)
-    {
-        ASSERT(vec->type.is_vector());
-        ASSERT(idx->type.is_idx());
-    }
-
-    void Accept(Visitor&) final;
-};
-
 struct Locate : public Call {
     Expr vec;
     Expr iter;

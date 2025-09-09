@@ -25,25 +25,17 @@ extern unsigned int vinstr_ll_len;
 
 namespace reffine {
 
-class LLVMGenCtx : public IRPassBaseCtx<llvm::Value*> {
-public:
-    LLVMGenCtx(shared_ptr<Func> func, map<Sym, llvm::Value*> m = {})
-        : IRPassBaseCtx<llvm::Value*>(func->tbl, m)
-    {
-    }
-};
+using LLVMGenCtx = IRPassBaseCtx<llvm::Value*>;
 
-class LLVMGen : public IRGenBase<llvm::Value*> {
+class LLVMGen : public IRGenBase<LLVMGenCtx, llvm::Value*> {
 public:
-    explicit LLVMGen(LLVMGenCtx& ctx, llvm::Module& llmod)
-        : IRGenBase(ctx),
+    explicit LLVMGen(llvm::Module& llmod, unique_ptr<LLVMGenCtx> ctx = nullptr)
+        : IRGenBase(std::move(ctx)),
           _llmod(llmod),
           _builder(make_unique<llvm::IRBuilder<>>(llmod.getContext()))
     {
         register_vinstrs();
     }
-
-    static void Build(shared_ptr<Func>, llvm::Module&);
 
 private:
     void register_vinstrs();
@@ -69,7 +61,7 @@ private:
     llvm::Value* visit(GridDim&) final;
     llvm::Value* visit(Loop&) final;
     llvm::Value* visit(FetchDataPtr&) final;
-    void visit(Func&) final;
+    llvm::Value* visit(Func&) final;
 
     llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);

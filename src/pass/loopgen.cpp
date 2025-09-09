@@ -14,8 +14,7 @@ Expr LoopGen::visit(Element& elem)
     eval(elem.iters[0]);
     auto vec = eval(elem.vec);
 
-    auto idx =
-        this->_loopgenctx.vec_iter_idx_map.at(elem.vec).at(elem.iters[0]);
+    auto idx = this->_vec_iter_idx_map.at(elem.vec).at(elem.iters[0]);
 
     vector<Expr> vals;
     for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
@@ -44,7 +43,7 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 
     // Popular iter_elem_map
     for (auto& [vec, idx] : ispace->vec_idxs(_load(idx_addr))) {
-        this->_loopgenctx.vec_iter_idx_map[vec][iter] = idx;
+        this->_vec_iter_idx_map[vec][iter] = idx;
     }
 
     // Derive op iterator from loop idx
@@ -151,15 +150,4 @@ Expr LoopGen::visit(Reduce& red)
     this->assign(red_loop_sym, red_loop);
 
     return _load(red_loop_sym);
-}
-
-shared_ptr<Func> LoopGen::Build(shared_ptr<Func> op_func)
-{
-    auto loop_func = _func(op_func->name, nullptr, vector<Sym>{});
-
-    LoopGenCtx ctx(op_func, loop_func);
-    LoopGen loopgen(ctx);
-    op_func->Accept(loopgen);
-
-    return loop_func;
 }

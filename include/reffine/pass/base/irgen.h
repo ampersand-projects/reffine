@@ -12,10 +12,23 @@ using namespace std;
 
 namespace reffine {
 
-template <typename ValTy>
-class IRGenBase : public IRPassBase<ValTy> {
+template <typename CtxTy, typename ValTy>
+class IRGenBase : public IRPassBase<CtxTy, ValTy> {
 public:
-    IRGenBase(IRPassBaseCtx<ValTy>& ctx) : IRPassBase<ValTy>(ctx) {}
+    IRGenBase(unique_ptr<CtxTy> ctx) : IRPassBase<CtxTy, ValTy>(std::move(ctx))
+    {
+    }
+
+    ValTy eval(Stmt stmt)
+    {
+        ValTy new_val;
+
+        swap(new_val, val());
+        stmt->Accept(*this);
+        swap(val(), new_val);
+
+        return new_val;
+    }
 
 protected:
     virtual ValTy visit(Sym) { throw runtime_error("Sym visit not supported"); }
@@ -53,14 +66,6 @@ protected:
     {
         throw runtime_error("Element visit not supported");
     }
-    virtual ValTy visit(Lookup&)
-    {
-        throw runtime_error("Lookup visit not supported");
-    }
-    virtual ValTy visit(MakeVector&)
-    {
-        throw runtime_error("MakeVector visit not supported");
-    }
     virtual ValTy visit(NotNull&)
     {
         throw runtime_error("NotNull visit not supported");
@@ -77,7 +82,7 @@ protected:
     {
         throw runtime_error("Stmts visit not supported");
     }
-    virtual void visit(Func&)
+    virtual ValTy visit(Func&)
     {
         throw runtime_error("Func visit not supported");
     }
@@ -140,8 +145,6 @@ protected:
     void Visit(NaryExpr& expr) final { val() = visit(expr); }
     void Visit(Op& expr) final { val() = visit(expr); }
     void Visit(Element& expr) final { val() = visit(expr); }
-    void Visit(Lookup& expr) final { val() = visit(expr); }
-    void Visit(MakeVector& expr) final { val() = visit(expr); }
     void Visit(NotNull& expr) final { val() = visit(expr); }
     void Visit(Reduce& expr) final { val() = visit(expr); }
     void Visit(Call& expr) final { val() = visit(expr); }
@@ -158,7 +161,7 @@ protected:
     void Visit(Loop& expr) final { val() = visit(expr); }
     void Visit(FetchDataPtr& expr) final { val() = visit(expr); }
     void Visit(NoOp& stmt) final { val() = visit(stmt); }
-    void Visit(Func& stmt) final { visit(stmt); }
+    void Visit(Func& stmt) final { val() = visit(stmt); }
     void Visit(SymNode& symbol) override
     {
         auto sym = this->tmp_sym(symbol);
@@ -171,17 +174,6 @@ protected:
         val() = this->ctx().out_sym_tbl.at(sym);
     }
 
-    ValTy eval(Stmt stmt)
-    {
-        ValTy new_val;
-
-        swap(new_val, val());
-        stmt->Accept(*this);
-        swap(val(), new_val);
-
-        return new_val;
-    }
-
 protected:
     ValTy& val() { return _val; }
 
@@ -190,18 +182,15 @@ private:
 };
 
 template <typename ValTy>
-class ValGenCtx : public IRPassBaseCtx<ValTy> {
-public:
-    ValGenCtx(const SymTable& tbl, map<Sym, ValTy> tmp2 = {})
-        : IRPassBaseCtx<ValTy>(tbl, tmp2)
-    {
-    }
-};
+using ValGenCtx = IRPassBaseCtx<ValTy>;
 
 template <typename ValTy>
-class ValGen : public IRGenBase<ValTy> {
+class ValGen : public IRGenBase<ValGenCtx<ValTy>, ValTy> {
 public:
-    ValGen(ValGenCtx<ValTy>& ctx) : IRGenBase<ValTy>(ctx) {}
+    ValGen(unique_ptr<ValGenCtx<ValTy>> ctx)
+        : IRGenBase<ValGenCtx<ValTy>, ValTy>(std::move(ctx))
+    {
+    }
 
 protected:
     void Visit(SymNode& symbol) final
@@ -213,42 +202,42 @@ protected:
 
 class IRGenCtx : public IRPassBaseCtx<Expr> {
 public:
-    IRGenCtx(const SymTable& in_sym_tbl, map<Sym, Expr>& out_sym_tbl)
-        : IRPassBaseCtx<Expr>(in_sym_tbl, out_sym_tbl)
+    IRGenCtx(const Func& in_func, shared_ptr<Func> out_func)
+        : IRPassBaseCtx<Expr>(in_func.tbl, out_func->tbl), out_func(out_func)
     {
     }
 
     map<Sym, Sym> sym_sym_map;  // mapping from old sym to new sym
+    shared_ptr<Func> out_func;
 };
 
-class IRGen : public IRGenBase<Expr> {
+class IRGen : public IRGenBase<IRGenCtx, Expr> {
 public:
-    IRGen(IRGenCtx& ctx) : IRGenBase<Expr>(ctx), _irgenctx(ctx) {}
+    IRGen(unique_ptr<IRGenCtx> ctx) : IRGenBase<IRGenCtx, Expr>(std::move(ctx))
+    {
+    }
 
 protected:
     void Visit(SymNode& symbol) final
     {
         auto old_sym = this->tmp_sym(symbol);
 
-        if (_irgenctx.sym_sym_map.find(old_sym) ==
-            _irgenctx.sym_sym_map.end()) {
-            auto new_val = eval(_irgenctx.in_sym_tbl.at(old_sym));
+        if (this->ctx().sym_sym_map.find(old_sym) ==
+            this->ctx().sym_sym_map.end()) {
+            auto new_val = eval(this->ctx().in_sym_tbl.at(old_sym));
             auto new_sym = static_pointer_cast<SymNode>(visit(old_sym));
             this->assign(new_sym, new_val);
             this->map_sym(old_sym, new_sym);
         }
 
-        val() = _irgenctx.sym_sym_map.at(old_sym);
+        val() = this->ctx().sym_sym_map.at(old_sym);
     }
 
     virtual void map_sym(Sym old_sym, Sym new_sym)
     {
-        _irgenctx.sym_sym_map[old_sym] = new_sym;
-        _irgenctx.sym_sym_map[new_sym] = new_sym;
+        this->ctx().sym_sym_map[old_sym] = new_sym;
+        this->ctx().sym_sym_map[new_sym] = new_sym;
     }
-
-private:
-    IRGenCtx _irgenctx;
 };
 
 }  // namespace reffine

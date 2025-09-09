@@ -5,24 +5,11 @@
 
 namespace reffine {
 
-class IRCloneCtx : public IRGenCtx {
-public:
-    IRCloneCtx(shared_ptr<Func> old_func, shared_ptr<Func> new_func)
-        : IRGenCtx(old_func->tbl, new_func->tbl), new_func(new_func)
-    {
-    }
-
-private:
-    shared_ptr<Func> new_func;
-
-    friend class IRClone;
-};
-
 class IRClone : public IRGen {
 public:
-    explicit IRClone(IRCloneCtx& ctx) : IRGen(ctx), _irclonectx(ctx) {}
-
-    static shared_ptr<Func> Build(shared_ptr<Func> func);
+    explicit IRClone(unique_ptr<IRGenCtx> ctx = nullptr) : IRGen(std::move(ctx))
+    {
+    }
 
 protected:
     Expr visit(Sym) override;
@@ -35,7 +22,6 @@ protected:
     Expr visit(NaryExpr&) override;
     Expr visit(Op&) override;
     Expr visit(Element&) override;
-    Expr visit(Lookup&) override;
     Expr visit(NotNull&) override;
     Expr visit(Reduce&) override;
     Expr visit(Call&) override;
@@ -52,12 +38,10 @@ protected:
     Expr visit(Loop&) override;
     Expr visit(FetchDataPtr&) override;
     Expr visit(NoOp&) override;
-    void visit(Func&) override;
+    Expr visit(Func&) override;
 
 private:
     shared_ptr<Op> visit_op(Op&);
-
-    IRCloneCtx& _irclonectx;
 };
 
 }  // namespace reffine

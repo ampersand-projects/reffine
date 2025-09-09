@@ -40,17 +40,6 @@ Expr LoadStoreExpand::visit(Store& store)
     }
 }
 
-shared_ptr<Func> LoadStoreExpand::Build(shared_ptr<Func> func)
-{
-    auto new_func = _func(func->name, nullptr, vector<Sym>{});
-
-    ScalarPassCtx ctx(func, new_func);
-    LoadStoreExpand pass(ctx);
-    func->Accept(pass);
-
-    return new_func;
-}
-
 Expr NewGetElimination::visit(Select& sel)
 {
     auto new_cond = eval(sel.cond);
@@ -104,21 +93,10 @@ Expr NewGetElimination::visit(Get& get)
     }
 }
 
-void NewGetElimination::visit(Func& func)
+Expr NewGetElimination::visit(Func& func)
 {
     // Struct type inputs are not supported yet
     for (const auto& input : func.inputs) { ASSERT(!input->type.is_struct()); }
 
-    IRClone::visit(func);
-}
-
-shared_ptr<Func> NewGetElimination::Build(shared_ptr<Func> func)
-{
-    auto new_func = _func(func->name, nullptr, vector<Sym>{});
-
-    ScalarPassCtx ctx(func, new_func);
-    NewGetElimination pass(ctx);
-    func->Accept(pass);
-
-    return new_func;
+    return IRClone::visit(func);
 }
