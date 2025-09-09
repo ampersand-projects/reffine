@@ -75,7 +75,7 @@ CodeSeg IRPrinter2::visit(Const& cnst)
             return code(to_string((int64_t)cnst.val) + "i");
         case BaseType::FLOAT32:
         case BaseType::FLOAT64:
-            return code(to_string((int64_t)cnst.val) + "i");
+            return code(to_string(cnst.val) + "f");
         case BaseType::IDX:
             return code(to_string((int64_t)cnst.val) + "i");
         default:
@@ -125,7 +125,7 @@ CodeSeg IRPrinter2::visit(NaryExpr& e)
         case MathOp::NEG:
             return code("-", eval(e.arg(0)));
         case MathOp::SQRT:
-            return code_func("min", {e.arg(0)});
+            return code_func("sqrt", {e.arg(0)});
         case MathOp::POW:
             return code_binary(e.arg(0), "^", e.arg(1));
         case MathOp::CEIL:
