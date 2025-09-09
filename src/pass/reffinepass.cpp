@@ -96,8 +96,7 @@ ISpace Reffine::Build(Op& op, const SymTable& tbl)
     // Only support single iterator for now
     ASSERT(op.iters.size() == 1);
 
-    ReffineCtx ctx(tbl);
-    Reffine rpass(ctx, op);
+    Reffine rpass(make_unique<ReffineCtx>(tbl), op);
 
     return rpass.eval(op.pred);
 }

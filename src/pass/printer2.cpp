@@ -325,8 +325,7 @@ CodeSeg IRPrinter2::visit(Func& fn)
 
 string IRPrinter2::Build(shared_ptr<Func> func)
 {
-    IRPrinter2Ctx ctx(func);
-    IRPrinter2 printer2(ctx);
+    IRPrinter2 printer2(make_unique<IRPrinter2Ctx>(func));
     func->Accept(printer2);
     return printer2._code->to_string(-1);
 }

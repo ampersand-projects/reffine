@@ -537,6 +537,9 @@ Value* LLVMGen::visit(Func& func)
 {
     ASSERT(func.output->type.is_void());
 
+    auto new_ctx = make_unique<LLVMGenCtx>(func.tbl);
+    this->switch_ctx(new_ctx);
+
     // Define function signature
     vector<llvm::Type*> args_type;
     for (auto& input : func.inputs) {
@@ -631,13 +634,6 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
     var->setName(old_sym->name);
 
     return var;
-}
-
-void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
-{
-    LLVMGenCtx ctx(func);
-    LLVMGen llgen(ctx, llmod);
-    func->Accept(llgen);
 }
 
 // Helpers

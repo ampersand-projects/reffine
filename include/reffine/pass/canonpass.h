@@ -8,7 +8,7 @@ namespace reffine {
 
 class CanonPass : public IRPass {
 public:
-    explicit CanonPass(IRPassCtx& ctx) : IRPass(ctx) {}
+    explicit CanonPass(unique_ptr<IRPassCtx> ctx) : IRPass(std::move(ctx)) {}
 
     static void Build(shared_ptr<Func>);
 

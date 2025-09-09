@@ -14,23 +14,32 @@ namespace reffine {
 template <typename ValTy>
 class IRPassBaseCtx {
 public:
-    IRPassBaseCtx(const SymTable& in_sym_tbl, map<Sym, ValTy>* out_sym_tbl = nullptr)
+    IRPassBaseCtx(const SymTable& in_sym_tbl, map<Sym, ValTy>* out_sym_tbl)
         : in_sym_tbl(in_sym_tbl), out_sym_tbl(out_sym_tbl)
     {
     }
 
+    IRPassBaseCtx(const SymTable& in_sym_tbl)
+        : IRPassBaseCtx(in_sym_tbl, nullptr), out_sym_tbl_ptr(make_unique<map<Sym, ValTy>>())
+    {
+        this->out_sym_tbl = out_sym_tbl_ptr.get();
+    }
+
     const SymTable& in_sym_tbl;
     map<Sym, ValTy>* out_sym_tbl;
+
+private:
+    unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr;
 };
 
-template <typename ValTy>
+template <typename CtxTy, typename ValTy>
 class IRPassBase : public Visitor {
 public:
-    explicit IRPassBase(IRPassBaseCtx<ValTy>& ctx) : _ctx(ctx) {}
+    explicit IRPassBase(unique_ptr<CtxTy> ctx) : _ctx(std::move(ctx)) {}
+
+    CtxTy& ctx() { return *this->_ctx; }
 
 protected:
-    IRPassBaseCtx<ValTy>& ctx() { return _ctx; }
-
     void assign(Sym sym, ValTy val) { (*ctx().out_sym_tbl)[sym] = val; }
 
     Sym tmp_sym(SymNode& symbol)
@@ -46,8 +55,12 @@ protected:
         return tmp_expr;
     }
 
-private:
-    IRPassBaseCtx<ValTy>& _ctx;
+    void switch_ctx(unique_ptr<CtxTy>& octx)
+    {
+        std::swap(octx, this->_ctx);
+    }
+
+    unique_ptr<CtxTy> _ctx;
 };
 
 class IRPassCtx : public IRPassBaseCtx<Sym> {
@@ -58,9 +71,9 @@ public:
     }
 };
 
-class IRPass : public IRPassBase<Sym> {
+class IRPass : public IRPassBase<IRPassCtx, Sym> {
 public:
-    explicit IRPass(IRPassCtx& ctx) : IRPassBase(ctx) {}
+    explicit IRPass(unique_ptr<IRPassCtx> ctx) : IRPassBase<IRPassCtx, Sym>(std::move(ctx)) {}
 
     void Visit(StmtExprNode& expr) override { expr.stmt->Accept(*this); }
 
@@ -181,7 +194,7 @@ protected:
         }
     }
 
-    void assign(Sym sym) { IRPassBase<Sym>::assign(sym, sym); }
+    void assign(Sym sym) { IRPassBase<IRPassCtx, Sym>::assign(sym, sym); }
 };
 
 }  // namespace reffine

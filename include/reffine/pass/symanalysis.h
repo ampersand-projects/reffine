@@ -13,7 +13,7 @@ struct SymInfo {
 
 class SymAnalysis : public IRPass {
 public:
-    explicit SymAnalysis(IRPassCtx& ctx) : IRPass(ctx) {}
+    explicit SymAnalysis(unique_ptr<IRPassCtx> ctx) : IRPass(std::move(ctx)) {}
 
     static map<Sym, SymInfo> Build(shared_ptr<Func>);
 

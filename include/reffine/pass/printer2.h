@@ -79,9 +79,9 @@ public:
     }
 };
 
-class IRPrinter2 : public IRGenBase<CodeSeg> {
+class IRPrinter2 : public IRGenBase<IRPrinter2Ctx, CodeSeg> {
 public:
-    IRPrinter2(IRPrinter2Ctx& ctx) : IRGenBase<CodeSeg>(ctx), _code(make_shared<BlockSeg>()) {}
+    IRPrinter2(unique_ptr<IRPrinter2Ctx> ctx) : IRGenBase<IRPrinter2Ctx, CodeSeg>(std::move(ctx)), _code(make_shared<BlockSeg>()) {}
 
     static string Build(shared_ptr<Func>);
 

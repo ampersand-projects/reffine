@@ -11,7 +11,7 @@ using ReffineCtx = ValGenCtx<ISpace>;
 
 class Reffine : public ValGen<ISpace> {
 public:
-    Reffine(ReffineCtx& ctx, Op& op) : ValGen<ISpace>(ctx), _op(op) {}
+    Reffine(unique_ptr<ReffineCtx> ctx, Op& op) : ValGen<ISpace>(std::move(ctx)), _op(op) {}
 
     static ISpace Build(Op&, const SymTable&);
 
