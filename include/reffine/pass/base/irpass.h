@@ -14,13 +14,13 @@ namespace reffine {
 template <typename ValTy>
 class IRPassBaseCtx {
 public:
-    IRPassBaseCtx(const SymTable& in_sym_tbl, map<Sym, ValTy>& out_sym_tbl)
+    IRPassBaseCtx(const SymTable& in_sym_tbl, map<Sym, ValTy>* out_sym_tbl = nullptr)
         : in_sym_tbl(in_sym_tbl), out_sym_tbl(out_sym_tbl)
     {
     }
 
     const SymTable& in_sym_tbl;
-    map<Sym, ValTy>& out_sym_tbl;
+    map<Sym, ValTy>* out_sym_tbl;
 };
 
 template <typename ValTy>
@@ -31,7 +31,7 @@ public:
 protected:
     IRPassBaseCtx<ValTy>& ctx() { return _ctx; }
 
-    void assign(Sym sym, ValTy val) { ctx().out_sym_tbl[sym] = val; }
+    void assign(Sym sym, ValTy val) { (*ctx().out_sym_tbl)[sym] = val; }
 
     Sym tmp_sym(SymNode& symbol)
     {
@@ -53,7 +53,7 @@ private:
 class IRPassCtx : public IRPassBaseCtx<Sym> {
 public:
     IRPassCtx(const SymTable& in_sym_tbl, map<Sym, Sym> m = {})
-        : IRPassBaseCtx<Sym>(in_sym_tbl, m)
+        : IRPassBaseCtx<Sym>(in_sym_tbl, &m)
     {
     }
 };
@@ -175,7 +175,7 @@ protected:
     {
         auto tmp = tmp_sym(symbol);
 
-        if (ctx().out_sym_tbl.find(tmp) == ctx().out_sym_tbl.end()) {
+        if (ctx().out_sym_tbl->find(tmp) == ctx().out_sym_tbl->end()) {
             ctx().in_sym_tbl.at(tmp)->Accept(*this);
             this->assign(tmp);
         }

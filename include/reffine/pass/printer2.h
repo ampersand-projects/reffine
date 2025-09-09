@@ -74,7 +74,7 @@ struct BlockSeg : public MultiSeg {
 class IRPrinter2Ctx : public IRPassBaseCtx<CodeSeg> {
 public:
     IRPrinter2Ctx(shared_ptr<Func> func, map<Sym, CodeSeg> m = {})
-        : IRPassBaseCtx<CodeSeg>(func->tbl, m)
+        : IRPassBaseCtx<CodeSeg>(func->tbl, &m)
     {
     }
 };

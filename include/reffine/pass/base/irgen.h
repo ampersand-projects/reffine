@@ -153,12 +153,12 @@ protected:
     {
         auto sym = this->tmp_sym(symbol);
 
-        if (this->ctx().out_sym_tbl.find(sym) ==
-            this->ctx().out_sym_tbl.end()) {
+        if (this->ctx().out_sym_tbl->find(sym) ==
+            this->ctx().out_sym_tbl->end()) {
             this->assign(sym, visit(sym));
         }
 
-        val() = this->ctx().out_sym_tbl.at(sym);
+        val() = this->ctx().out_sym_tbl->at(sym);
     }
 
     ValTy eval(Stmt stmt)
@@ -183,7 +183,7 @@ template <typename ValTy>
 class ValGenCtx : public IRPassBaseCtx<ValTy> {
 public:
     ValGenCtx(const SymTable& tbl, map<Sym, ValTy> tmp2 = {})
-        : IRPassBaseCtx<ValTy>(tbl, tmp2)
+        : IRPassBaseCtx<ValTy>(tbl, &tmp2)
     {
     }
 };
@@ -203,7 +203,7 @@ protected:
 
 class IRGenCtx : public IRPassBaseCtx<Expr> {
 public:
-    IRGenCtx(const SymTable& in_sym_tbl, map<Sym, Expr>& out_sym_tbl)
+    IRGenCtx(const SymTable& in_sym_tbl, map<Sym, Expr>* out_sym_tbl)
         : IRPassBaseCtx<Expr>(in_sym_tbl, out_sym_tbl)
     {
     }
