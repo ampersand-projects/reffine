@@ -328,7 +328,6 @@ CodeSeg IRPrinter2::visit(Func& fn)
 
 string IRPrinter2::Build(Stmt stmt)
 {
-    SymTable tbl;
-    IRPrinter2 printer2(make_unique<IRPrinter2Ctx>(tbl));
+    IRPrinter2 printer2(make_unique<IRPrinter2Ctx>());
     return printer2.eval(stmt)->to_string(-1);
 }

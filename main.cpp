@@ -507,7 +507,7 @@ int main()
 
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
     auto op = vector_op();
-    cout << "PRINTER2: " << std::endl << IRPrinter2::Build(op) << std::endl;
+    cout << "PRINTER2: " << std::endl << IRPrinter2::Build(op->output) << std::endl;
     return 0;
     auto query_fn = compile_op<void (*)(void*, void*)>(op);
 

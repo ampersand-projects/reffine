@@ -164,12 +164,12 @@ protected:
     {
         auto sym = this->tmp_sym(symbol);
 
-        if (this->ctx().out_sym_tbl->find(sym) ==
-            this->ctx().out_sym_tbl->end()) {
+        if (this->ctx().out_sym_tbl.find(sym) ==
+            this->ctx().out_sym_tbl.end()) {
             this->assign(sym, visit(sym));
         }
 
-        val() = this->ctx().out_sym_tbl->at(sym);
+        val() = this->ctx().out_sym_tbl.at(sym);
     }
 
 protected:
@@ -198,11 +198,8 @@ protected:
 
 class IRGenCtx : public IRPassBaseCtx<Expr> {
 public:
-    IRGenCtx(const Func& in_func) : IRPassBaseCtx<Expr>(in_func.tbl, nullptr)
-    {
-        this->out_func = make_shared<Func>(in_func.name, nullptr, vector<Sym>{});
-        this->out_sym_tbl = &this->out_func->tbl;
-    }
+    IRGenCtx(const Func& in_func, shared_ptr<Func> out_func) : IRPassBaseCtx<Expr>(in_func.tbl, out_func->tbl), out_func(out_func)
+    {}
 
     map<Sym, Sym> sym_sym_map;  // mapping from old sym to new sym
     shared_ptr<Func> out_func;

@@ -14,23 +14,23 @@ namespace reffine {
 template <typename ValTy>
 class IRPassBaseCtx {
 public:
-    IRPassBaseCtx(const SymTable& in_sym_tbl, map<Sym, ValTy>* out_sym_tbl)
+    IRPassBaseCtx(const SymTable& in_sym_tbl, map<Sym, ValTy>& out_sym_tbl)
         : in_sym_tbl(in_sym_tbl), out_sym_tbl(out_sym_tbl)
     {
     }
 
     IRPassBaseCtx(const SymTable& in_sym_tbl, unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr = make_unique<map<Sym, ValTy>>())
-        : in_sym_tbl(in_sym_tbl), out_sym_tbl(out_sym_tbl_ptr.get()), out_sym_tbl_ptr(std::move(out_sym_tbl_ptr))
+        : in_sym_tbl(in_sym_tbl), out_sym_tbl(*out_sym_tbl_ptr), out_sym_tbl_ptr(std::move(out_sym_tbl_ptr))
     {
     }
 
     IRPassBaseCtx(unique_ptr<SymTable> in_sym_tbl_ptr = make_unique<SymTable>(),
                   unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr = make_unique<map<Sym, ValTy>>())
-        : in_sym_tbl(*in_sym_tbl_ptr), out_sym_tbl(out_sym_tbl_ptr.get()), in_sym_tbl_ptr(std::move(in_sym_tbl_ptr)), out_sym_tbl_ptr(std::move(out_sym_tbl_ptr)) {}
+        : in_sym_tbl(*in_sym_tbl_ptr), out_sym_tbl(*out_sym_tbl_ptr), in_sym_tbl_ptr(std::move(in_sym_tbl_ptr)), out_sym_tbl_ptr(std::move(out_sym_tbl_ptr)) {}
 
 
     const SymTable& in_sym_tbl;
-    map<Sym, ValTy>* out_sym_tbl;
+    map<Sym, ValTy>& out_sym_tbl;
 
 private:
     unique_ptr<SymTable> in_sym_tbl_ptr;
@@ -45,7 +45,7 @@ public:
     CtxTy& ctx() { return *this->_ctx; }
 
 protected:
-    void assign(Sym sym, ValTy val) { (*ctx().out_sym_tbl)[sym] = val; }
+    void assign(Sym sym, ValTy val) { this->ctx().out_sym_tbl[sym] = val; }
 
     Sym tmp_sym(SymNode& symbol)
     {
@@ -187,7 +187,7 @@ protected:
     {
         auto tmp = tmp_sym(symbol);
 
-        if (ctx().out_sym_tbl->find(tmp) == ctx().out_sym_tbl->end()) {
+        if (ctx().out_sym_tbl.find(tmp) == ctx().out_sym_tbl.end()) {
             ctx().in_sym_tbl.at(tmp)->Accept(*this);
             this->assign(tmp);
         }
