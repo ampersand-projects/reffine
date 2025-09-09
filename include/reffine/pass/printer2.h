@@ -1,11 +1,11 @@
 #ifndef INCLUDE_REFFINE_PASS_PRINTER2_H_
 #define INCLUDE_REFFINE_PASS_PRINTER2_H_
 
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
-#include <memory>
 
 #include "reffine/pass/base/irgen.h"
 
@@ -30,7 +30,7 @@ struct StrSeg : public CodeSegBase {
 struct NewLineSeg : public CodeSegBase {
     string to_string(size_t indent) final
     {
-        return '\n' + string(4*indent, ' ');
+        return '\n' + string(4 * indent, ' ');
     }
 };
 
@@ -42,13 +42,15 @@ struct MultiSeg : public CodeSegBase {
 
     void emit() {}
 
-    template<typename... R>
-    void emit(string str, R... r) {
+    template <typename... R>
+    void emit(string str, R... r)
+    {
         this->emit(make_shared<StrSeg>(str), r...);
     }
 
-    template<typename... R>
-    void emit(CodeSeg seg, R... r) {
+    template <typename... R>
+    void emit(CodeSeg seg, R... r)
+    {
         this->segs.push_back(seg);
         this->emit(r...);
     }
@@ -75,7 +77,11 @@ using IRPrinter2Ctx = IRPassBaseCtx<CodeSeg>;
 
 class IRPrinter2 : public IRGenBase<IRPrinter2Ctx, CodeSeg> {
 public:
-    IRPrinter2(unique_ptr<IRPrinter2Ctx> ctx) : IRGenBase<IRPrinter2Ctx, CodeSeg>(std::move(ctx)), _code(make_shared<BlockSeg>()) {}
+    IRPrinter2(unique_ptr<IRPrinter2Ctx> ctx)
+        : IRGenBase<IRPrinter2Ctx, CodeSeg>(std::move(ctx)),
+          _code(make_shared<BlockSeg>())
+    {
+    }
 
     static string Build(Stmt);
 
@@ -109,17 +115,15 @@ public:
     CodeSeg visit(Func&) final;
 
 private:
-    CodeSeg nl()
-    {
-        return make_shared<NewLineSeg>();
-    }
+    CodeSeg nl() { return make_shared<NewLineSeg>(); }
 
-    template<typename... T>
-    void emit(T... t) {
+    template <typename... T>
+    void emit(T... t)
+    {
         this->_code->emit(t...);
     }
 
-    template<typename... T>
+    template <typename... T>
     shared_ptr<LineSeg> code(T... t)
     {
         auto line = make_shared<LineSeg>();
@@ -147,12 +151,12 @@ private:
         return code("(", eval(a), " ", op, " ", eval(b), ")");
     }
 
-    template<typename T>
+    template <typename T>
     shared_ptr<LineSeg> code_args(string open, vector<T> args, string close)
     {
         auto line = code(open);
         line->emit(eval(args[0]));
-        for(size_t i = 1; i < args.size(); i++) {
+        for (size_t i = 1; i < args.size(); i++) {
             line->emit(", ", eval(args[i]));
         }
         line->emit(close);

@@ -34,6 +34,6 @@ void NoOp::Accept(Visitor& v) { v.Visit(*this); }
 
 string StmtNode::str()
 {
-    Stmt stmt(const_cast<StmtNode*>(this), [](StmtNode*){});
+    Stmt stmt(const_cast<StmtNode*>(this), [](StmtNode*) {});
     return IRPrinter2::Build(stmt);
 }

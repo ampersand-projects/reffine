@@ -19,15 +19,24 @@ public:
     {
     }
 
-    IRPassBaseCtx(const SymTable& in_sym_tbl, unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr = make_unique<map<Sym, ValTy>>())
-        : in_sym_tbl(in_sym_tbl), out_sym_tbl(*out_sym_tbl_ptr), out_sym_tbl_ptr(std::move(out_sym_tbl_ptr))
+    IRPassBaseCtx(const SymTable& in_sym_tbl,
+                  unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr =
+                      make_unique<map<Sym, ValTy>>())
+        : in_sym_tbl(in_sym_tbl),
+          out_sym_tbl(*out_sym_tbl_ptr),
+          out_sym_tbl_ptr(std::move(out_sym_tbl_ptr))
     {
     }
 
     IRPassBaseCtx(unique_ptr<SymTable> in_sym_tbl_ptr = make_unique<SymTable>(),
-                  unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr = make_unique<map<Sym, ValTy>>())
-        : in_sym_tbl(*in_sym_tbl_ptr), out_sym_tbl(*out_sym_tbl_ptr), in_sym_tbl_ptr(std::move(in_sym_tbl_ptr)), out_sym_tbl_ptr(std::move(out_sym_tbl_ptr)) {}
-
+                  unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr =
+                      make_unique<map<Sym, ValTy>>())
+        : in_sym_tbl(*in_sym_tbl_ptr),
+          out_sym_tbl(*out_sym_tbl_ptr),
+          in_sym_tbl_ptr(std::move(in_sym_tbl_ptr)),
+          out_sym_tbl_ptr(std::move(out_sym_tbl_ptr))
+    {
+    }
 
     const SymTable& in_sym_tbl;
     map<Sym, ValTy>& out_sym_tbl;
@@ -60,10 +69,7 @@ protected:
         return tmp_expr;
     }
 
-    void switch_ctx(unique_ptr<CtxTy>& octx)
-    {
-        std::swap(octx, this->_ctx);
-    }
+    void switch_ctx(unique_ptr<CtxTy>& octx) { std::swap(octx, this->_ctx); }
 
     unique_ptr<CtxTy> _ctx;
 };
@@ -72,7 +78,10 @@ using IRPassCtx = IRPassBaseCtx<Sym>;
 
 class IRPass : public IRPassBase<IRPassCtx, Sym> {
 public:
-    explicit IRPass(unique_ptr<IRPassCtx> ctx) : IRPassBase<IRPassCtx, Sym>(std::move(ctx)) {}
+    explicit IRPass(unique_ptr<IRPassCtx> ctx)
+        : IRPassBase<IRPassCtx, Sym>(std::move(ctx))
+    {
+    }
 
     void Visit(StmtExprNode& expr) override { expr.stmt->Accept(*this); }
 

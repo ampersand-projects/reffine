@@ -7,7 +7,9 @@ namespace reffine {
 
 class IRClone : public IRGen {
 public:
-    explicit IRClone(unique_ptr<IRGenCtx> ctx = nullptr) : IRGen(std::move(ctx)) {}
+    explicit IRClone(unique_ptr<IRGenCtx> ctx = nullptr) : IRGen(std::move(ctx))
+    {
+    }
 
 protected:
     Expr visit(Sym) override;

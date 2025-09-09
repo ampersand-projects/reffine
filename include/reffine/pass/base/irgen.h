@@ -15,7 +15,9 @@ namespace reffine {
 template <typename CtxTy, typename ValTy>
 class IRGenBase : public IRPassBase<CtxTy, ValTy> {
 public:
-    IRGenBase(unique_ptr<CtxTy> ctx) : IRPassBase<CtxTy, ValTy>(std::move(ctx)) {}
+    IRGenBase(unique_ptr<CtxTy> ctx) : IRPassBase<CtxTy, ValTy>(std::move(ctx))
+    {
+    }
 
     ValTy eval(Stmt stmt)
     {
@@ -179,14 +181,16 @@ private:
     ValTy _val;
 };
 
-
-template<typename ValTy>
+template <typename ValTy>
 using ValGenCtx = IRPassBaseCtx<ValTy>;
 
 template <typename ValTy>
 class ValGen : public IRGenBase<ValGenCtx<ValTy>, ValTy> {
 public:
-    ValGen(unique_ptr<ValGenCtx<ValTy>> ctx) : IRGenBase<ValGenCtx<ValTy>, ValTy>(std::move(ctx)) {}
+    ValGen(unique_ptr<ValGenCtx<ValTy>> ctx)
+        : IRGenBase<ValGenCtx<ValTy>, ValTy>(std::move(ctx))
+    {
+    }
 
 protected:
     void Visit(SymNode& symbol) final
@@ -198,8 +202,10 @@ protected:
 
 class IRGenCtx : public IRPassBaseCtx<Expr> {
 public:
-    IRGenCtx(const Func& in_func, shared_ptr<Func> out_func) : IRPassBaseCtx<Expr>(in_func.tbl, out_func->tbl), out_func(out_func)
-    {}
+    IRGenCtx(const Func& in_func, shared_ptr<Func> out_func)
+        : IRPassBaseCtx<Expr>(in_func.tbl, out_func->tbl), out_func(out_func)
+    {
+    }
 
     map<Sym, Sym> sym_sym_map;  // mapping from old sym to new sym
     shared_ptr<Func> out_func;
@@ -207,7 +213,9 @@ public:
 
 class IRGen : public IRGenBase<IRGenCtx, Expr> {
 public:
-    IRGen(unique_ptr<IRGenCtx> ctx) : IRGenBase<IRGenCtx, Expr>(std::move(ctx)) {}
+    IRGen(unique_ptr<IRGenCtx> ctx) : IRGenBase<IRGenCtx, Expr>(std::move(ctx))
+    {
+    }
 
 protected:
     void Visit(SymNode& symbol) final
