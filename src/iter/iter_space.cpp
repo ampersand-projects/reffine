@@ -29,11 +29,13 @@ Expr IterSpace::_lower_bound() { return nullptr; }
 
 Expr IterSpace::_upper_bound() { return nullptr; }
 
-Expr IterSpace::_condition(Expr idx) { return nullptr; }
+Expr IterSpace::_condition(Expr idx) { return _true(); }
 
 Expr IterSpace::_idx_to_iter(Expr idx) { return idx; }
 
 Expr IterSpace::_iter_to_idx(Expr iter) { return iter; }
+
+Expr IterSpace::_has_next(Expr idx) { return _true(); }
 
 Expr IterSpace::_next(Expr idx) { return _add(idx, _const(this->type, 1)); }
 
@@ -41,23 +43,27 @@ VecIdxs IterSpace::_vec_idxs(Expr idx) { return VecIdxs{}; }
 
 Expr VecSpace::_lower_bound()
 {
-    return _load(_fetch(this->vec, _idx(0), 0));
+    return this->idx_to_iter(_idx(0));
 }
 
 Expr VecSpace::_upper_bound()
 {
-    return _load(_fetch(this->vec, (_len(this->vec) - _idx(1)), 0));
+    return this->idx_to_iter(_len(this->vec) - _idx(1));
 }
 
-Expr VecSpace::_condition(Expr idx) { return _isval(this->vec, idx, 0); }
+Expr VecSpace::_condition(Expr idx)
+{
+    return _and(_lt(idx, _len(this->vec)), _isval(this->vec, idx, 0));
+}
 
 Expr VecSpace::_idx_to_iter(Expr idx)
 {
-    return _sel(_lt(idx, _len(this->vec)), _load(_fetch(this->vec, idx, 0)),
-                _const(this->type, INF));
+    return _load(_fetch(this->vec, idx, 0));
 }
 
 Expr VecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
+
+Expr VecSpace::_has_next(Expr idx) { return _lt(idx, _len(this->vec) - _idx(1)); }
 
 Expr VecSpace::_next(Expr idx) { return _add(idx, _idx(1)); }
 
@@ -82,6 +88,8 @@ Expr SuperSpace::_iter_to_idx(Expr iter)
     return this->ispace->iter_to_idx(iter);
 }
 
+Expr SuperSpace::_has_next(Expr idx) { return this->ispace->has_next(idx); }
+
 Expr SuperSpace::_next(Expr idx) { return this->ispace->next(idx); }
 
 VecIdxs SuperSpace::_vec_idxs(Expr idx) { return this->ispace->vec_idxs(idx); }
@@ -92,10 +100,34 @@ Expr LBoundSpace::_lower_bound()
     return lb ? _max(this->bound, lb) : this->bound;
 }
 
+Expr LBoundSpace::_condition(Expr idx)
+{
+    return _and(
+        _gte(this->idx_to_iter(idx), this->lower_bound()),
+        this->ispace->condition(idx)
+    );
+}
+
 Expr UBoundSpace::_upper_bound()
 {
     auto ub = this->ispace->upper_bound();
     return ub ? _min(this->bound, ub) : this->bound;
+}
+
+Expr UBoundSpace::_condition(Expr idx)
+{
+    return _and(
+        _lte(this->idx_to_iter(idx), this->upper_bound()),
+        this->ispace->condition(idx)
+    );
+}
+
+Expr UBoundSpace::_has_next(Expr idx)
+{
+    return _and(
+        _lt(this->idx_to_iter(idx), this->upper_bound()),
+        this->ispace->has_next(idx)
+    );
 }
 
 Expr JointSpace::_idx_to_iter(Expr idx)
@@ -156,7 +188,14 @@ Expr UnionSpace::_condition(Expr idx)
 {
     auto lcond = this->left->condition(_get(idx, 0));
     auto rcond = this->right->condition(_get(idx, 1));
-    return (lcond && rcond) ? _or(lcond, rcond) : (lcond ? lcond : rcond);
+    return _or(lcond, rcond);
+}
+
+Expr UnionSpace::_has_next(Expr idx)
+{
+    auto l_has_next = this->left->has_next(_get(idx, 0));
+    auto r_has_next = this->right->has_next(_get(idx, 1));
+    return _or(l_has_next, r_has_next);
 }
 
 Expr InterSpace::_lower_bound()
@@ -184,11 +223,13 @@ Expr InterSpace::_condition(Expr idx)
 
     auto lcond = this->left->condition(lidx);
     auto rcond = this->right->condition(ridx);
-    auto cond = (lcond && rcond) ? _and(lcond, rcond) : (lcond ? lcond : rcond);
 
-    if (cond) {
-        return _and(iter_cond, cond);
-    } else {
-        return iter_cond;
-    }
+    return _and(_and(lcond, rcond), iter_cond);
+}
+
+Expr InterSpace::_has_next(Expr idx)
+{
+    auto l_has_next = this->left->has_next(_get(idx, 0));
+    auto r_has_next = this->right->has_next(_get(idx, 1));
+    return _and(l_has_next, r_has_next);
 }

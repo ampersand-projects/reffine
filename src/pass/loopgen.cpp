@@ -61,9 +61,8 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
     auto loop = _loop(_new(outputs));
     loop->init = _store(idx_addr, idx_init);
     loop->incr = _store(idx_addr, eval(ispace->next(_load(idx_addr))));
-    loop->exit_cond = _gt(loop_iter, eval(ispace->upper_bound()));
-    auto cond = ispace->condition(_load(idx_addr));
-    loop->body_cond = cond ? eval(cond) : nullptr;
+    loop->exit_cond = _not(eval(ispace->has_next(_load(idx_addr))));
+    loop->body_cond = eval(ispace->condition(_load(idx_addr));
 
     return {loop, outputs};
 }

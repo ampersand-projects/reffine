@@ -47,6 +47,13 @@ struct IterSpace {
 
     Expr iter_to_idx(Expr iter) { return this->_iter_to_idx(iter); }
 
+    Expr has_next(Expr idx)
+    {
+        auto has_next = this->_has_next(idx);
+        ASSERT(!has_next || has_next->type == types::BOOL);
+        return has_next;
+    }
+
     Expr next(Expr idx)
     {
         auto new_idx = this->_next(idx);
@@ -62,6 +69,7 @@ protected:
     virtual Expr _condition(Expr);
     virtual Expr _idx_to_iter(Expr);
     virtual Expr _iter_to_idx(Expr);
+    virtual Expr _has_next(Expr);
     virtual Expr _next(Expr);
     virtual VecIdxs _vec_idxs(Expr);
 };
@@ -82,6 +90,7 @@ private:
     Expr _condition(Expr) final;
     Expr _idx_to_iter(Expr) final;
     Expr _iter_to_idx(Expr) final;
+    Expr _has_next(Expr) final;
     Expr _next(Expr) final;
     VecIdxs _vec_idxs(Expr) final;
 };
@@ -97,6 +106,7 @@ protected:
     Expr _condition(Expr) override;
     Expr _idx_to_iter(Expr) override;
     Expr _iter_to_idx(Expr) override;
+    Expr _has_next(Expr) override;
     Expr _next(Expr) override;
     VecIdxs _vec_idxs(Expr) final;
 };
@@ -115,6 +125,7 @@ struct LBoundSpace : public BoundSpace {
 
 private:
     Expr _lower_bound() final;
+    Expr _condition(Expr) final;
 };
 
 struct UBoundSpace : public BoundSpace {
@@ -122,6 +133,8 @@ struct UBoundSpace : public BoundSpace {
 
 private:
     Expr _upper_bound() final;
+    Expr _condition(Expr) final;
+    Expr _has_next(Expr) final;
 };
 
 struct JointSpace : public IterSpace {
@@ -148,6 +161,7 @@ private:
     Expr _lower_bound() final;
     Expr _upper_bound() final;
     Expr _condition(Expr) final;
+    Expr _has_next(Expr) final;
 };
 
 struct InterSpace : public JointSpace {
@@ -157,6 +171,7 @@ private:
     Expr _lower_bound() final;
     Expr _upper_bound() final;
     Expr _condition(Expr) final;
+    Expr _has_next(Expr) final;
 };
 
 ISpace operator&(ISpace, ISpace);
