@@ -247,14 +247,10 @@ CodeSeg IRPrinter2::visit(GridDim&) { return code("gdim"); }
 
 CodeSeg IRPrinter2::visit(Loop& e)
 {
-    auto line = code("{");
-
-    auto parent1 = enter_block();
-
     if (e.init) { emit(nl(), eval(e.init)); }
 
-    emit("while(1) {");
-    auto parent2 = enter_block();
+    emit(nl(), "while(1) {");
+    auto parent = enter_block();
 
     emit(nl(), "if (", eval(e.exit_cond), ") break", nl());
     if (e.body_cond) {
@@ -263,16 +259,13 @@ CodeSeg IRPrinter2::visit(Loop& e)
     emit(nl(), eval(e.body));
     if (e.incr) { emit(eval(e.incr)); }
 
-    auto child2 = exit_block(parent2);
-    emit(child2, nl(), "}");
+    auto child = exit_block(parent);
+    emit(child, nl(), "}");
 
     if (e.post) { emit(nl(), eval(e.post)); }
-    emit(nl(), "return ", eval(e.output));
+    emit(nl());
 
-    auto child1 = exit_block(parent1);
-    line->emit(child1, nl(), "}");
-
-    return line;
+    return eval(e.output);
 }
 
 CodeSeg IRPrinter2::visit(FetchDataPtr& e)
