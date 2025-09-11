@@ -91,17 +91,18 @@ Expr LoopGen::visit(Op& op)
     auto out_vec_idx_addr = _sym("out_vec_idx_addr", out_vec_idx_alloc);
     this->assign(out_vec_idx_addr, out_vec_idx_alloc);
 
+    // Body condition
+    auto body_cond_sym = _sym("body_cond", tmp_loop->body_cond);
+    this->assign(body_cond_sym, tmp_loop->body_cond);
+
     // Write the output to the out_vec
     vector<Stmt> body_stmts;
     for (size_t i = 0; i < op.type.dtypes.size(); i++) {
-        auto out_val = _get(tmp_loop->output, i);
         auto vec_ptr = _fetch(out_vec_sym, _load(out_vec_idx_addr), i);
-        body_stmts.push_back(_store(vec_ptr, out_val));
+        body_stmts.push_back(_store(vec_ptr, outputs[i]));
         body_stmts.push_back(
-            _setval(out_vec_sym, _load(out_vec_idx_addr), _true(), i));
+            _setval(out_vec_sym, _load(out_vec_idx_addr), body_cond_sym, i));
     }
-    body_stmts.push_back(
-        _store(out_vec_idx_addr, _add(_load(out_vec_idx_addr), _idx(1))));
 
     // Build loop
     auto loop = _loop(out_vec_sym);
@@ -110,9 +111,11 @@ Expr LoopGen::visit(Op& op)
         _store(out_vec_idx_addr, _idx(0)),
         out_vec_sym,
     });
-    loop->incr = tmp_loop->incr;
+    loop->incr = _stmts(vector<Stmt>{
+        tmp_loop->incr,
+        _store(out_vec_idx_addr, _add(_load(out_vec_idx_addr), _idx(1)))
+    });
     loop->exit_cond = tmp_loop->exit_cond;
-    loop->body_cond = tmp_loop->body_cond;
     loop->body = _stmts(body_stmts);
     loop->post = _stmts(vector<Stmt>{
         _setlen(out_vec_sym, _load(out_vec_idx_addr)),
