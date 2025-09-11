@@ -60,7 +60,7 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
     // Loop definition
     auto loop = _loop(_new(outputs));
     loop->init = _store(idx_addr, idx_init);
-    loop->incr = _store(idx_addr, eval(ispace->advance(_load(idx_addr))));
+    loop->incr = _store(idx_addr, eval(ispace->next(_load(idx_addr))));
     loop->exit_cond = _gt(loop_iter, eval(ispace->upper_bound()));
     auto cond = ispace->condition(_load(idx_addr));
     loop->body_cond = cond ? eval(cond) : nullptr;

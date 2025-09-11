@@ -35,15 +35,18 @@ Expr IterSpace::_idx_to_iter(Expr idx) { return idx; }
 
 Expr IterSpace::_iter_to_idx(Expr iter) { return iter; }
 
-Expr IterSpace::_advance(Expr idx) { return _add(idx, _const(this->type, 1)); }
+Expr IterSpace::_next(Expr idx) { return _add(idx, _const(this->type, 1)); }
 
 VecIdxs IterSpace::_vec_idxs(Expr idx) { return VecIdxs{}; }
 
-Expr VecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
+Expr VecSpace::_lower_bound()
+{
+    return _load(_fetch(this->vec, _idx(0), 0));
+}
 
 Expr VecSpace::_upper_bound()
 {
-    return this->idx_to_iter(_len(this->vec) - _idx(1));
+    return _load(_fetch(this->vec, (_len(this->vec) - _idx(1)), 0));
 }
 
 Expr VecSpace::_condition(Expr idx) { return _isval(this->vec, idx, 0); }
@@ -56,7 +59,7 @@ Expr VecSpace::_idx_to_iter(Expr idx)
 
 Expr VecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
 
-Expr VecSpace::_advance(Expr idx) { return _add(idx, _idx(1)); }
+Expr VecSpace::_next(Expr idx) { return _add(idx, _idx(1)); }
 
 VecIdxs VecSpace::_vec_idxs(Expr idx)
 {
@@ -79,7 +82,7 @@ Expr SuperSpace::_iter_to_idx(Expr iter)
     return this->ispace->iter_to_idx(iter);
 }
 
-Expr SuperSpace::_advance(Expr idx) { return this->ispace->advance(idx); }
+Expr SuperSpace::_next(Expr idx) { return this->ispace->next(idx); }
 
 VecIdxs SuperSpace::_vec_idxs(Expr idx) { return this->ispace->vec_idxs(idx); }
 
@@ -109,14 +112,14 @@ Expr JointSpace::_iter_to_idx(Expr iter)
     return _new(vector<Expr>{lidx, ridx});
 }
 
-Expr JointSpace::_advance(Expr idx)
+Expr JointSpace::_next(Expr idx)
 {
     auto lidx = _get(idx, 0);
     auto ridx = _get(idx, 1);
     auto liter = this->left->idx_to_iter(lidx);
     auto riter = this->right->idx_to_iter(ridx);
-    auto new_lidx = this->left->advance(lidx);
-    auto new_ridx = this->right->advance(ridx);
+    auto new_lidx = this->left->next(lidx);
+    auto new_ridx = this->right->next(ridx);
 
     return _sel(_lt(liter, riter), _new(vector<Expr>{new_lidx, ridx}),
                 _sel(_lt(riter, liter), _new(vector<Expr>{lidx, new_ridx}),

@@ -47,9 +47,9 @@ struct IterSpace {
 
     Expr iter_to_idx(Expr iter) { return this->_iter_to_idx(iter); }
 
-    Expr advance(Expr idx)
+    Expr next(Expr idx)
     {
-        auto new_idx = this->_advance(idx);
+        auto new_idx = this->_next(idx);
         ASSERT(new_idx->type == idx->type);
         return new_idx;
     }
@@ -62,7 +62,7 @@ protected:
     virtual Expr _condition(Expr);
     virtual Expr _idx_to_iter(Expr);
     virtual Expr _iter_to_idx(Expr);
-    virtual Expr _advance(Expr);
+    virtual Expr _next(Expr);
     virtual VecIdxs _vec_idxs(Expr);
 };
 using ISpace = shared_ptr<IterSpace>;
@@ -82,7 +82,7 @@ private:
     Expr _condition(Expr) final;
     Expr _idx_to_iter(Expr) final;
     Expr _iter_to_idx(Expr) final;
-    Expr _advance(Expr) final;
+    Expr _next(Expr) final;
     VecIdxs _vec_idxs(Expr) final;
 };
 
@@ -97,7 +97,7 @@ protected:
     Expr _condition(Expr) override;
     Expr _idx_to_iter(Expr) override;
     Expr _iter_to_idx(Expr) override;
-    Expr _advance(Expr) override;
+    Expr _next(Expr) override;
     VecIdxs _vec_idxs(Expr) final;
 };
 
@@ -137,7 +137,7 @@ struct JointSpace : public IterSpace {
 protected:
     Expr _idx_to_iter(Expr) final;
     Expr _iter_to_idx(Expr) final;
-    Expr _advance(Expr) final;
+    Expr _next(Expr) final;
     VecIdxs _vec_idxs(Expr) final;
 };
 
