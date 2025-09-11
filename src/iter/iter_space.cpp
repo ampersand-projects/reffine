@@ -63,7 +63,7 @@ Expr VecSpace::_idx_to_iter(Expr idx)
 
 Expr VecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
 
-Expr VecSpace::_has_next(Expr idx) { return _lt(idx, _len(this->vec) - _idx(1)); }
+Expr VecSpace::_has_next(Expr idx) { return _lt(idx, _len(this->vec)); }
 
 Expr VecSpace::_next(Expr idx) { return _add(idx, _idx(1)); }
 
@@ -125,7 +125,7 @@ Expr UBoundSpace::_condition(Expr idx)
 Expr UBoundSpace::_has_next(Expr idx)
 {
     return _and(
-        _lt(this->idx_to_iter(idx), this->upper_bound()),
+        _lte(this->idx_to_iter(idx), this->upper_bound()),
         this->ispace->has_next(idx)
     );
 }
