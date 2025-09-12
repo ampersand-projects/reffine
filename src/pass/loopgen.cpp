@@ -97,7 +97,7 @@ Expr LoopGen::visit(Op& op)
 
     // Write the output to the out_vec
     vector<Stmt> body_stmts;
-    for (size_t i = 0; i < op.type.dtypes.size(); i++) {
+    for (size_t i = 0; i < outputs.size(); i++) {
         auto vec_ptr = _fetch(out_vec_sym, _load(out_vec_idx_addr), i);
         body_stmts.push_back(_store(vec_ptr, outputs[i]));
         body_stmts.push_back(
