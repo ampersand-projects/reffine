@@ -4,14 +4,6 @@
 #include <iomanip>
 #include <sys/resource.h>
 
-#include <arrow/api.h>
-#include <arrow/csv/api.h>
-#include <arrow/io/api.h>
-#include <arrow/ipc/api.h>
-#include <arrow/result.h>
-#include <arrow/status.h>
-#include <arrow/c/bridge.h>
-
 #include <z3++.h>
 
 #ifdef ENABLE_CUDA
@@ -38,6 +30,14 @@
 #include "reffine/arrow/table.h"
 #include "reffine/builder/reffiner.h"
 #include "reffine/utils/utils.h"
+
+#include <arrow/api.h>
+#include <arrow/csv/api.h>
+#include <arrow/io/api.h>
+#include <arrow/ipc/api.h>
+#include <arrow/result.h>
+#include <arrow/status.h>
+#include <arrow/c/bridge.h>
 
 using namespace reffine;
 using namespace std;

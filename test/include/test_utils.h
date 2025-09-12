@@ -1,14 +1,6 @@
 #ifndef TEST_INCLUDE_TEST_UTILS_H_
 #define TEST_INCLUDE_TEST_UTILS_H_
 
-#include <arrow/api.h>
-#include <arrow/c/bridge.h>
-#include <arrow/csv/api.h>
-#include <arrow/io/api.h>
-#include <arrow/ipc/api.h>
-#include <arrow/result.h>
-#include <arrow/status.h>
-
 #include <memory>
 #include <string>
 
@@ -21,6 +13,14 @@
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/scalarpass.h"
 #include "reffine/utils/utils.h"
+
+#include <arrow/api.h>
+#include <arrow/c/bridge.h>
+#include <arrow/csv/api.h>
+#include <arrow/io/api.h>
+#include <arrow/ipc/api.h>
+#include <arrow/result.h>
+#include <arrow/status.h>
 
 arrow::Result<std::shared_ptr<reffine::ArrowTable2>> get_input_vector();
 std::string print_arrow_table(ArrowTable*);
