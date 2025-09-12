@@ -29,13 +29,13 @@ Expr IterSpace::_lower_bound() { return nullptr; }
 
 Expr IterSpace::_upper_bound() { return nullptr; }
 
-Expr IterSpace::_condition(Expr idx) { return _true(); }
+Expr IterSpace::_iter_cond(Expr idx) { return _true(); }
 
 Expr IterSpace::_idx_to_iter(Expr idx) { return idx; }
 
 Expr IterSpace::_iter_to_idx(Expr iter) { return iter; }
 
-Expr IterSpace::_has_next(Expr idx) { return _true(); }
+Expr IterSpace::_is_alive(Expr idx) { return _true(); }
 
 Expr IterSpace::_next(Expr idx) { return _add(idx, _const(this->type, 1)); }
 
@@ -48,7 +48,7 @@ Expr VecSpace::_upper_bound()
     return this->idx_to_iter(_len(this->vec) - _idx(1));
 }
 
-Expr VecSpace::_condition(Expr idx)
+Expr VecSpace::_iter_cond(Expr idx)
 {
     return _and(_lt(idx, _len(this->vec)), _isval(this->vec, idx, 0));
 }
@@ -60,7 +60,7 @@ Expr VecSpace::_idx_to_iter(Expr idx)
 
 Expr VecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
 
-Expr VecSpace::_has_next(Expr idx) { return _lt(idx, _len(this->vec)); }
+Expr VecSpace::_is_alive(Expr idx) { return _lt(idx, _len(this->vec)); }
 
 Expr VecSpace::_next(Expr idx) { return _add(idx, _idx(1)); }
 
@@ -73,7 +73,7 @@ Expr SuperSpace::_lower_bound() { return this->ispace->lower_bound(); }
 
 Expr SuperSpace::_upper_bound() { return this->ispace->upper_bound(); }
 
-Expr SuperSpace::_condition(Expr idx) { return this->ispace->condition(idx); }
+Expr SuperSpace::_iter_cond(Expr idx) { return this->ispace->iter_cond(idx); }
 
 Expr SuperSpace::_idx_to_iter(Expr idx)
 {
@@ -85,7 +85,7 @@ Expr SuperSpace::_iter_to_idx(Expr iter)
     return this->ispace->iter_to_idx(iter);
 }
 
-Expr SuperSpace::_has_next(Expr idx) { return this->ispace->has_next(idx); }
+Expr SuperSpace::_is_alive(Expr idx) { return this->ispace->is_alive(idx); }
 
 Expr SuperSpace::_next(Expr idx) { return this->ispace->next(idx); }
 
@@ -97,10 +97,10 @@ Expr LBoundSpace::_lower_bound()
     return lb ? _max(this->bound, lb) : this->bound;
 }
 
-Expr LBoundSpace::_condition(Expr idx)
+Expr LBoundSpace::_iter_cond(Expr idx)
 {
     return _and(_gte(this->idx_to_iter(idx), this->lower_bound()),
-                this->ispace->condition(idx));
+                this->ispace->iter_cond(idx));
 }
 
 Expr UBoundSpace::_upper_bound()
@@ -109,16 +109,16 @@ Expr UBoundSpace::_upper_bound()
     return ub ? _min(this->bound, ub) : this->bound;
 }
 
-Expr UBoundSpace::_condition(Expr idx)
+Expr UBoundSpace::_iter_cond(Expr idx)
 {
     return _and(_lte(this->idx_to_iter(idx), this->upper_bound()),
-                this->ispace->condition(idx));
+                this->ispace->iter_cond(idx));
 }
 
-Expr UBoundSpace::_has_next(Expr idx)
+Expr UBoundSpace::_is_alive(Expr idx)
 {
     return _and(_lte(this->idx_to_iter(idx), this->upper_bound()),
-                this->ispace->has_next(idx));
+                this->ispace->is_alive(idx));
 }
 
 Expr JointSpace::_idx_to_iter(Expr idx)
@@ -175,18 +175,18 @@ Expr UnionSpace::_upper_bound()
     return (lub && rub) ? _max(lub, rub) : (lub ? lub : rub);
 }
 
-Expr UnionSpace::_condition(Expr idx)
+Expr UnionSpace::_iter_cond(Expr idx)
 {
-    auto lcond = this->left->condition(_get(idx, 0));
-    auto rcond = this->right->condition(_get(idx, 1));
+    auto lcond = this->left->iter_cond(_get(idx, 0));
+    auto rcond = this->right->iter_cond(_get(idx, 1));
     return _or(lcond, rcond);
 }
 
-Expr UnionSpace::_has_next(Expr idx)
+Expr UnionSpace::_is_alive(Expr idx)
 {
-    auto l_has_next = this->left->has_next(_get(idx, 0));
-    auto r_has_next = this->right->has_next(_get(idx, 1));
-    return _or(l_has_next, r_has_next);
+    auto l_is_alive = this->left->is_alive(_get(idx, 0));
+    auto r_is_alive = this->right->is_alive(_get(idx, 1));
+    return _or(l_is_alive, r_is_alive);
 }
 
 Expr InterSpace::_lower_bound()
@@ -203,7 +203,7 @@ Expr InterSpace::_upper_bound()
     return (lub && rub) ? _min(lub, rub) : (lub ? lub : rub);
 }
 
-Expr InterSpace::_condition(Expr idx)
+Expr InterSpace::_iter_cond(Expr idx)
 {
     auto lidx = _get(idx, 0);
     auto ridx = _get(idx, 1);
@@ -212,15 +212,15 @@ Expr InterSpace::_condition(Expr idx)
     auto riter = this->right->idx_to_iter(ridx);
     auto iter_cond = _eq(liter, riter);
 
-    auto lcond = this->left->condition(lidx);
-    auto rcond = this->right->condition(ridx);
+    auto lcond = this->left->iter_cond(lidx);
+    auto rcond = this->right->iter_cond(ridx);
 
     return _and(_and(lcond, rcond), iter_cond);
 }
 
-Expr InterSpace::_has_next(Expr idx)
+Expr InterSpace::_is_alive(Expr idx)
 {
-    auto l_has_next = this->left->has_next(_get(idx, 0));
-    auto r_has_next = this->right->has_next(_get(idx, 1));
-    return _and(l_has_next, r_has_next);
+    auto l_is_alive = this->left->is_alive(_get(idx, 0));
+    auto r_is_alive = this->right->is_alive(_get(idx, 1));
+    return _and(l_is_alive, r_is_alive);
 }
