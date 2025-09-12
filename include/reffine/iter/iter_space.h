@@ -34,7 +34,7 @@ struct IterSpace {
     Expr condition(Expr idx)
     {
         auto cond = this->_condition(idx);
-        ASSERT(!cond || cond->type == types::BOOL);
+        ASSERT(cond->type == types::BOOL);
         return cond;
     }
 
@@ -50,7 +50,7 @@ struct IterSpace {
     Expr has_next(Expr idx)
     {
         auto has_next = this->_has_next(idx);
-        ASSERT(!has_next || has_next->type == types::BOOL);
+        ASSERT(has_next->type == types::BOOL);
         return has_next;
     }
 
