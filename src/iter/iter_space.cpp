@@ -41,10 +41,7 @@ Expr IterSpace::_next(Expr idx) { return _add(idx, _const(this->type, 1)); }
 
 VecIdxs IterSpace::_vec_idxs(Expr idx) { return VecIdxs{}; }
 
-Expr VecSpace::_lower_bound()
-{
-    return this->idx_to_iter(_idx(0));
-}
+Expr VecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
 
 Expr VecSpace::_upper_bound()
 {
@@ -102,10 +99,8 @@ Expr LBoundSpace::_lower_bound()
 
 Expr LBoundSpace::_condition(Expr idx)
 {
-    return _and(
-        _gte(this->idx_to_iter(idx), this->lower_bound()),
-        this->ispace->condition(idx)
-    );
+    return _and(_gte(this->idx_to_iter(idx), this->lower_bound()),
+                this->ispace->condition(idx));
 }
 
 Expr UBoundSpace::_upper_bound()
@@ -116,18 +111,14 @@ Expr UBoundSpace::_upper_bound()
 
 Expr UBoundSpace::_condition(Expr idx)
 {
-    return _and(
-        _lte(this->idx_to_iter(idx), this->upper_bound()),
-        this->ispace->condition(idx)
-    );
+    return _and(_lte(this->idx_to_iter(idx), this->upper_bound()),
+                this->ispace->condition(idx));
 }
 
 Expr UBoundSpace::_has_next(Expr idx)
 {
-    return _and(
-        _lte(this->idx_to_iter(idx), this->upper_bound()),
-        this->ispace->has_next(idx)
-    );
+    return _and(_lte(this->idx_to_iter(idx), this->upper_bound()),
+                this->ispace->has_next(idx));
 }
 
 Expr JointSpace::_idx_to_iter(Expr idx)

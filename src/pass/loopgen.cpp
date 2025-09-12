@@ -113,8 +113,7 @@ Expr LoopGen::visit(Op& op)
     });
     loop->incr = _stmts(vector<Stmt>{
         tmp_loop->incr,
-        _store(out_vec_idx_addr, _add(_load(out_vec_idx_addr), _idx(1)))
-    });
+        _store(out_vec_idx_addr, _add(_load(out_vec_idx_addr), _idx(1)))});
     loop->exit_cond = tmp_loop->exit_cond;
     loop->body = _stmts(body_stmts);
     loop->post = _stmts(vector<Stmt>{
