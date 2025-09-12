@@ -1,3 +1,7 @@
+#include <unistd.h>
+#include <iostream>
+#include <cstdio>
+
 #include "reffine/pass/llvmgen.h"
 
 #include "llvm/IR/DataLayout.h"
@@ -588,40 +592,6 @@ Value* LLVMGen::visit(Func& func)
     return fn;
 }
 
-void LLVMGen::register_vinstrs()
-{
-    std::string vinstr(reinterpret_cast<char*>(vinstr_ll), vinstr_ll_len);
-    const auto buffer =
-        llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(vinstr.c_str()));
-
-    llvm::SMDiagnostic error;
-    std::unique_ptr<llvm::Module> vinstr_mod =
-        llvm::parseIR(*buffer, error, llctx());
-    if (!vinstr_mod) {
-        throw std::runtime_error("Failed to parse vinstr bitcode");
-    }
-    if (llvm::verifyModule(*vinstr_mod)) {
-        throw std::runtime_error("Failed to verify vinstr module");
-    }
-
-    // For some reason if we try to set internal linkage before we link
-    // modules, then the JIT will be unable to find the symbols.
-    // Instead we collect the function names first, then add internal
-    // linkage to them after linking the modules
-    std::vector<string> vinstr_names;
-    for (const auto& function : vinstr_mod->functions()) {
-        if (function.isDeclaration()) { continue; }
-        vinstr_names.push_back(function.getName().str());
-    }
-
-    llvm::Linker::linkModules(*llmod(), std::move(vinstr_mod));
-    for (const auto& name : vinstr_names) {
-        llmod()
-            ->getFunction(name.c_str())
-            ->setLinkage(llvm::Function::InternalLinkage);
-    }
-}
-
 llvm::Value* LLVMGen::visit(Sym old_sym)
 {
     auto old_val = this->ctx().in_sym_tbl.at(old_sym);
@@ -666,4 +636,69 @@ llvm::AllocaInst* LLVMGen::CreateAlloca(llvm::Type* type, llvm::Value* size)
     // 5 for local address space
     // see https://llvm.org/docs/NVPTXUsage.html#address-spaces
     return builder()->CreateAlloca(type, 5U, size);
+}
+
+void LLVMGen::register_code(string llir)
+{
+    const auto buffer = llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(llir.c_str()));
+
+    llvm::SMDiagnostic error;
+    std::unique_ptr<llvm::Module> mod = llvm::parseIR(*buffer, error, llctx());
+    if (!mod) {
+        throw std::runtime_error("Failed to parse bitcode");
+    }
+    if (llvm::verifyModule(*mod)) {
+        throw std::runtime_error("Failed to verify module");
+    }
+
+    // For some reason if we try to set internal linkage before we link
+    // modules, then the JIT will be unable to find the symbols.
+    // Instead we collect the function names first, then add internal
+    // linkage to them after linking the modules
+    std::vector<string> fn_names;
+    for (const auto& function : mod->functions()) {
+        if (function.isDeclaration()) { continue; }
+        fn_names.push_back(function.getName().str());
+    }
+
+    llvm::Linker::linkModules(*llmod(), std::move(mod));
+    for (const auto& name : fn_names) {
+        llmod()->getFunction(name.c_str())->setLinkage(llvm::Function::InternalLinkage);
+    }
+}
+
+void LLVMGen::parse(string code)
+{
+    char in_file[] = "/tmp/reffine-llvmgen-XXXXXX.c";
+    int fd = mkstemps(in_file, /*suffixlen=*/2);
+    if (fd == -1) {
+        throw runtime_error("Error creating temporary file: " + string(in_file));
+    }
+    auto out_file_str = string(in_file) + ".ll";
+    auto* out_file = out_file_str.c_str();
+
+    // Write code to a temporary file
+    write(fd, code.c_str(), code.size());
+    close(fd);
+
+    // Generate LLVM IR
+    std::string command = "clang -S -O0 -emit-llvm -I/home/anandj/anandj/reffine/include -o " + string(out_file) + " " + string(in_file);
+    if (std::system(command.c_str())) {
+        throw runtime_error("Error running the command: " + command);
+    }
+
+    // Read LLVM IR to a string
+    std::ifstream llfile(out_file);
+    if (!llfile.is_open()) {
+        throw runtime_error("Error opening file " + string(out_file));
+    }
+    std::string llir((std::istreambuf_iterator<char>(llfile)), std::istreambuf_iterator<char>());
+    llfile.close();
+
+    // Register generated LLVM IR to the module
+    register_code(llir);
+
+    // Remove temporary files
+    std::remove(in_file);
+    std::remove(out_file);
 }
