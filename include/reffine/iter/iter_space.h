@@ -31,10 +31,10 @@ struct IterSpace {
         return ub;
     }
 
-    Expr condition(Expr idx)
+    Expr iter_cond(Expr idx)
     {
-        auto cond = this->_condition(idx);
-        ASSERT(!cond || cond->type == types::BOOL);
+        auto cond = this->_iter_cond(idx);
+        ASSERT(cond->type == types::BOOL);
         return cond;
     }
 
@@ -47,9 +47,16 @@ struct IterSpace {
 
     Expr iter_to_idx(Expr iter) { return this->_iter_to_idx(iter); }
 
-    Expr advance(Expr idx)
+    Expr is_alive(Expr idx)
     {
-        auto new_idx = this->_advance(idx);
+        auto is_alive = this->_is_alive(idx);
+        ASSERT(is_alive->type == types::BOOL);
+        return is_alive;
+    }
+
+    Expr next(Expr idx)
+    {
+        auto new_idx = this->_next(idx);
         ASSERT(new_idx->type == idx->type);
         return new_idx;
     }
@@ -59,10 +66,11 @@ struct IterSpace {
 protected:
     virtual Expr _lower_bound();
     virtual Expr _upper_bound();
-    virtual Expr _condition(Expr);
+    virtual Expr _iter_cond(Expr);
     virtual Expr _idx_to_iter(Expr);
     virtual Expr _iter_to_idx(Expr);
-    virtual Expr _advance(Expr);
+    virtual Expr _is_alive(Expr);
+    virtual Expr _next(Expr);
     virtual VecIdxs _vec_idxs(Expr);
 };
 using ISpace = shared_ptr<IterSpace>;
@@ -79,10 +87,11 @@ struct VecSpace : public IterSpace {
 private:
     Expr _lower_bound() final;
     Expr _upper_bound() final;
-    Expr _condition(Expr) final;
+    Expr _iter_cond(Expr) final;
     Expr _idx_to_iter(Expr) final;
     Expr _iter_to_idx(Expr) final;
-    Expr _advance(Expr) final;
+    Expr _is_alive(Expr) final;
+    Expr _next(Expr) final;
     VecIdxs _vec_idxs(Expr) final;
 };
 
@@ -94,10 +103,11 @@ struct SuperSpace : public IterSpace {
 protected:
     Expr _lower_bound() override;
     Expr _upper_bound() override;
-    Expr _condition(Expr) override;
+    Expr _iter_cond(Expr) override;
     Expr _idx_to_iter(Expr) override;
     Expr _iter_to_idx(Expr) override;
-    Expr _advance(Expr) override;
+    Expr _is_alive(Expr) override;
+    Expr _next(Expr) override;
     VecIdxs _vec_idxs(Expr) final;
 };
 
@@ -115,6 +125,7 @@ struct LBoundSpace : public BoundSpace {
 
 private:
     Expr _lower_bound() final;
+    Expr _iter_cond(Expr) final;
 };
 
 struct UBoundSpace : public BoundSpace {
@@ -122,6 +133,8 @@ struct UBoundSpace : public BoundSpace {
 
 private:
     Expr _upper_bound() final;
+    Expr _iter_cond(Expr) final;
+    Expr _is_alive(Expr) final;
 };
 
 struct JointSpace : public IterSpace {
@@ -137,7 +150,7 @@ struct JointSpace : public IterSpace {
 protected:
     Expr _idx_to_iter(Expr) final;
     Expr _iter_to_idx(Expr) final;
-    Expr _advance(Expr) final;
+    Expr _next(Expr) final;
     VecIdxs _vec_idxs(Expr) final;
 };
 
@@ -147,7 +160,8 @@ struct UnionSpace : public JointSpace {
 private:
     Expr _lower_bound() final;
     Expr _upper_bound() final;
-    Expr _condition(Expr) final;
+    Expr _iter_cond(Expr) final;
+    Expr _is_alive(Expr) final;
 };
 
 struct InterSpace : public JointSpace {
@@ -156,7 +170,8 @@ struct InterSpace : public JointSpace {
 private:
     Expr _lower_bound() final;
     Expr _upper_bound() final;
-    Expr _condition(Expr) final;
+    Expr _iter_cond(Expr) final;
+    Expr _is_alive(Expr) final;
 };
 
 ISpace operator&(ISpace, ISpace);
