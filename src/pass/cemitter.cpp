@@ -193,6 +193,8 @@ CodeSeg CEmitter::visit(Func& fn)
     auto new_ctx = make_unique<IREmitterCtx>(fn.tbl);
     this->switch_ctx(new_ctx);
 
+    emit("extern \"C\" {", nl(), nl());
+
     emit(fn.output->type.cppstr(), " ", fn.name, "(");
     for (size_t i = 0; i < fn.inputs.size(); i++) {
         auto input = fn.inputs[i];
@@ -211,6 +213,8 @@ CodeSeg CEmitter::visit(Func& fn)
 
     emit(child);
     emit(nl(), "}");
+
+    emit(nl(), nl(), "}");
 
     return this->_code;
 }

@@ -9,7 +9,10 @@ namespace reffine {
 
 class CEmitter : public IREmitter {
 public:
-    CEmitter(unique_ptr<IREmitterCtx> ctx) : IREmitter(std::move(ctx)) {}
+    CEmitter(unique_ptr<IREmitterCtx> ctx) : IREmitter(std::move(ctx))
+    {
+        this->emit("#include \"vinstr/internal.cpp\"", nl(), nl());
+    }
 
     static string Build(Stmt);
 
