@@ -17,7 +17,7 @@
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/base/type.h"
-#include "reffine/pass/iremitter.h"
+#include "reffine/pass/printer2.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/scalarpass.h"
 #include "reffine/pass/symanalysis.h"
