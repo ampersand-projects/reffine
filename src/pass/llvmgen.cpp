@@ -673,7 +673,6 @@ void LLVMGen::parse(string code)
 
     // Generate LLVM IR
     std::string command = "clang++ -S -O0 -emit-llvm "
-        " -I " + string(REFFINE_SRC_DIR) +
         " -I " + string(REFFINE_HEADER_DIR) +
         " -o " + string(out_file) + " " + string(in_file);
     if (std::system(command.c_str())) {

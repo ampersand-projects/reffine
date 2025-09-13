@@ -509,7 +509,7 @@ int main()
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
     LLVMGen(*llmod).parse(R"(
-        #include "vinstr/internal.cpp"
+        #include "reffine/vinstr/vinstr.h"
 
         extern "C" {
 
