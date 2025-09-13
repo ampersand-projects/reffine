@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "reffine/pass/cemitter.h"
 #include "reffine/builder/reffiner.h"
 
@@ -10,7 +12,7 @@ CodeSeg CEmitter::visit(Sym sym)
 
     if (this->ctx().in_sym_tbl.find(sym) != this->ctx().in_sym_tbl.end()) {
         auto rhs = eval(this->ctx().in_sym_tbl.at(sym));
-        emit(nl(), lhs, " = ", rhs);
+        emit(nl(), sym->type.cppstr(), " ", lhs, " = ", rhs, ";");
     }
 
     return lhs;
@@ -51,11 +53,6 @@ CodeSeg CEmitter::visit(Select& e)
                 eval(e.false_body), ")");
 }
 
-CodeSeg CEmitter::visit(Get&)
-{
-    return code("get()");
-}
-
 CodeSeg CEmitter::visit(Const& cnst)
 {
     switch (cnst.type.btype) {
@@ -84,7 +81,7 @@ CodeSeg CEmitter::visit(Const& cnst)
 
 CodeSeg CEmitter::visit(Cast& e)
 {
-    return code("(", e.type.str(), ") ", eval(e.arg));
+    return code("(", e.type.cppstr(), ") ", eval(e.arg));
 }
 
 CodeSeg CEmitter::visit(NaryExpr& e)
@@ -139,7 +136,12 @@ CodeSeg CEmitter::visit(NaryExpr& e)
 
 CodeSeg CEmitter::visit(Alloc& e)
 {
-    return code("(", e.type.deref().str(), ")", " 1");
+    // Using stringified address as the variable name for allocations
+    auto* addr = static_cast<const void*>(&e);
+    std::stringstream ss;
+    ss << "_" << addr;
+    emit(nl(), e.type.deref().cppstr(), " ", ss.str(), ";");
+    return code("&", ss.str());
 }
 
 CodeSeg CEmitter::visit(Load& e) { return code_func("*", {e.addr}); }
@@ -156,9 +158,9 @@ CodeSeg CEmitter::visit(Loop& e)
     emit(nl(), "while(1) {");
     auto parent = enter_block();
 
-    emit(nl(), "if (", eval(e.exit_cond), ") break", nl());
+    emit(nl(), "if (", eval(e.exit_cond), ") break;", nl());
     if (e.body_cond) {
-        emit(nl(), "if (!", eval(e.body_cond), ") continue", nl());
+        emit(nl(), "if (!", eval(e.body_cond), ") continue;", nl());
     }
     emit(nl(), eval(e.body));
     if (e.incr) { emit(eval(e.incr)); }
@@ -179,25 +181,31 @@ CodeSeg CEmitter::visit(StructGEP&)
 
 CodeSeg CEmitter::visit(FetchDataPtr& e)
 {
-    return code(eval(e.vec), "[", eval(e.idx), "]._" + to_string(e.col));
+    auto get_data_buf_call = _call("get_vector_data_buf", types::VOID.ptr(), vector<Expr>{e.vec, _idx(e.col)});
+    auto cast_data_buf = _cast(e.type, get_data_buf_call);
+    return code(eval(cast_data_buf), " + ", eval(e.idx));
 }
 
 CodeSeg CEmitter::visit(NoOp&) { return code(""); }
 
 CodeSeg CEmitter::visit(Func& fn)
 {
-    ASSERT(fn.output->type.is_void());
-
     auto new_ctx = make_unique<IREmitterCtx>(fn.tbl);
     this->switch_ctx(new_ctx);
 
-    emit("void ", fn.name, code_args("(", fn.inputs, ")"), " {");
+    emit(fn.output->type.cppstr(), " ", fn.name, "(");
+    for (size_t i = 0; i < fn.inputs.size(); i++) {
+        auto input = fn.inputs[i];
+        emit(input->type.cppstr(), " ", input->name);
+        if (i < fn.inputs.size() - 1) { emit(", "); }
+    }
+    emit(") {");
 
     auto parent = enter_block();
     if (fn.output->type.is_void()) {
-        emit(nl(), eval(fn.output));
+        emit(nl(), eval(fn.output), ";");
     } else {
-        emit(nl(), "return ", eval(fn.output));
+        emit(nl(), "return ", eval(fn.output), ";");
     }
     auto child = exit_block(parent);
 

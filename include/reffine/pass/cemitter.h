@@ -19,7 +19,6 @@ public:
     CodeSeg visit(NoOp&) final;
     CodeSeg visit(Select&) final;
     CodeSeg visit(Const&) final;
-    CodeSeg visit(Get&) final;
     CodeSeg visit(Cast&) final;
     CodeSeg visit(NaryExpr&) final;
     CodeSeg visit(Stmts&) final;
