@@ -9,8 +9,7 @@ namespace reffine {
 
 class IRPrinter2 : public IREmitter {
 public:
-    IRPrinter2(unique_ptr<IREmitterCtx> ctx) : IREmitter(std::move(ctx))
-    {}
+    IRPrinter2(unique_ptr<IREmitterCtx> ctx) : IREmitter(std::move(ctx)) {}
 
     static string Build(Stmt);
 
