@@ -1,17 +1,16 @@
 #ifndef TEST_INCLUDE_TEST_UTILS_H_
 #define TEST_INCLUDE_TEST_UTILS_H_
 
-#include <arrow/api.h>
-#include <arrow/c/bridge.h>
-#include <arrow/csv/api.h>
-#include <arrow/io/api.h>
-#include <arrow/ipc/api.h>
-#include <arrow/result.h>
-#include <arrow/status.h>
-
 #include <memory>
 #include <string>
 
+#include "arrow/api.h"
+#include "arrow/c/bridge.h"
+#include "arrow/csv/api.h"
+#include "arrow/io/api.h"
+#include "arrow/ipc/api.h"
+#include "arrow/result.h"
+#include "arrow/status.h"
 #include "reffine/arrow/table.h"
 #include "reffine/engine/engine.h"
 #include "reffine/pass/canonpass.h"
