@@ -1,4 +1,4 @@
-#include "reffine/pass/printer2.h"
+#include "reffine/pass/iremitter.h"
 
 #include "reffine/builder/reffiner.h"
 
@@ -9,7 +9,7 @@ static const auto FORALL = "\u2200";
 static const auto REDCLE = "\u2295";
 static const auto PHI = "\u0278";
 
-CodeSeg IRPrinter2::visit(Sym sym)
+CodeSeg IREmitter::visit(Sym sym)
 {
     auto lhs = code(sym->name);
 
@@ -21,17 +21,17 @@ CodeSeg IRPrinter2::visit(Sym sym)
     return lhs;
 }
 
-CodeSeg IRPrinter2::visit(StmtExprNode& e) { return eval(e.stmt); }
+CodeSeg IREmitter::visit(StmtExprNode& e) { return eval(e.stmt); }
 
-CodeSeg IRPrinter2::visit(Stmts& s)
+CodeSeg IREmitter::visit(Stmts& s)
 {
     for (auto& stmt : s.stmts) { emit(nl(), eval(stmt)); }
     return code("");
 }
 
-CodeSeg IRPrinter2::visit(Call& e) { return code_func(e.name, e.args); }
+CodeSeg IREmitter::visit(Call& e) { return code_func(e.name, e.args); }
 
-CodeSeg IRPrinter2::visit(IfElse& s)
+CodeSeg IREmitter::visit(IfElse& s)
 {
     emit(nl(), "if (", eval(s.cond), ") {");
 
@@ -52,13 +52,13 @@ CodeSeg IRPrinter2::visit(IfElse& s)
     return code("");
 }
 
-CodeSeg IRPrinter2::visit(Select& e)
+CodeSeg IREmitter::visit(Select& e)
 {
     return code("(", eval(e.cond), " ? ", eval(e.true_body), " : ",
                 eval(e.false_body), ")");
 }
 
-CodeSeg IRPrinter2::visit(Const& cnst)
+CodeSeg IREmitter::visit(Const& cnst)
 {
     switch (cnst.type.btype) {
         case BaseType::BOOL:
@@ -83,17 +83,17 @@ CodeSeg IRPrinter2::visit(Const& cnst)
     }
 }
 
-CodeSeg IRPrinter2::visit(Cast& e)
+CodeSeg IREmitter::visit(Cast& e)
 {
     return code("(", e.type.str(), ") ", eval(e.arg));
 }
 
-CodeSeg IRPrinter2::visit(Get& e)
+CodeSeg IREmitter::visit(Get& e)
 {
     return code("(", eval(e.val), ")._", to_string(e.col));
 }
 
-CodeSeg IRPrinter2::visit(New& e)
+CodeSeg IREmitter::visit(New& e)
 {
     auto line = code("{");
 
@@ -103,7 +103,7 @@ CodeSeg IRPrinter2::visit(New& e)
     return line;
 }
 
-CodeSeg IRPrinter2::visit(NaryExpr& e)
+CodeSeg IREmitter::visit(NaryExpr& e)
 {
     switch (e.op) {
         case MathOp::ADD:
@@ -153,7 +153,7 @@ CodeSeg IRPrinter2::visit(NaryExpr& e)
     }
 }
 
-CodeSeg IRPrinter2::visit(Op& op)
+CodeSeg IREmitter::visit(Op& op)
 {
     auto line = code(FORALL, " ");
     line->emit(code_args("", op.iters, ""));
@@ -173,14 +173,14 @@ CodeSeg IRPrinter2::visit(Op& op)
     return line;
 }
 
-CodeSeg IRPrinter2::visit(Element& elem)
+CodeSeg IREmitter::visit(Element& elem)
 {
     return code(eval(elem.vec), code_args("[", elem.iters, "]"));
 }
 
-CodeSeg IRPrinter2::visit(NotNull& e) { return code(eval(e.elem), "!=", PHI); }
+CodeSeg IREmitter::visit(NotNull& e) { return code(eval(e.elem), "!=", PHI); }
 
-CodeSeg IRPrinter2::visit(Reduce& red)
+CodeSeg IREmitter::visit(Reduce& red)
 {
     auto state_val = red.init();
     auto val = _sym("val", red.op.type.rowty());
@@ -200,19 +200,19 @@ CodeSeg IRPrinter2::visit(Reduce& red)
     return line;
 }
 
-CodeSeg IRPrinter2::visit(Alloc& e)
+CodeSeg IREmitter::visit(Alloc& e)
 {
     return code("alloc ", e.type.deref().str());
 }
 
-CodeSeg IRPrinter2::visit(Load& e) { return code_func("*", {e.addr}); }
+CodeSeg IREmitter::visit(Load& e) { return code_func("*", {e.addr}); }
 
-CodeSeg IRPrinter2::visit(Store& s)
+CodeSeg IREmitter::visit(Store& s)
 {
     return code("*(", eval(s.addr), ") = ", eval(s.val));
 }
 
-CodeSeg IRPrinter2::visit(AtomicOp& e)
+CodeSeg IREmitter::visit(AtomicOp& e)
 {
     switch (e.op) {
         case MathOp::ADD:
@@ -232,20 +232,20 @@ CodeSeg IRPrinter2::visit(AtomicOp& e)
     }
 }
 
-CodeSeg IRPrinter2::visit(StructGEP& e)
+CodeSeg IREmitter::visit(StructGEP& e)
 {
     return code_func("structgep", {e.addr, _idx(e.col)});
 }
 
-CodeSeg IRPrinter2::visit(ThreadIdx&) { return code("tidx"); }
+CodeSeg IREmitter::visit(ThreadIdx&) { return code("tidx"); }
 
-CodeSeg IRPrinter2::visit(BlockIdx&) { return code("bidx"); }
+CodeSeg IREmitter::visit(BlockIdx&) { return code("bidx"); }
 
-CodeSeg IRPrinter2::visit(BlockDim&) { return code("bdim"); }
+CodeSeg IREmitter::visit(BlockDim&) { return code("bdim"); }
 
-CodeSeg IRPrinter2::visit(GridDim&) { return code("gdim"); }
+CodeSeg IREmitter::visit(GridDim&) { return code("gdim"); }
 
-CodeSeg IRPrinter2::visit(Loop& e)
+CodeSeg IREmitter::visit(Loop& e)
 {
     if (e.init) { emit(nl(), eval(e.init)); }
 
@@ -268,16 +268,16 @@ CodeSeg IRPrinter2::visit(Loop& e)
     return eval(e.output);
 }
 
-CodeSeg IRPrinter2::visit(FetchDataPtr& e)
+CodeSeg IREmitter::visit(FetchDataPtr& e)
 {
     return code(eval(e.vec), "[", eval(e.idx), "]._" + to_string(e.col));
 }
 
-CodeSeg IRPrinter2::visit(NoOp&) { return code(""); }
+CodeSeg IREmitter::visit(NoOp&) { return code(""); }
 
-CodeSeg IRPrinter2::visit(Func& fn)
+CodeSeg IREmitter::visit(Func& fn)
 {
-    auto new_ctx = make_unique<IRPrinter2Ctx>(fn.tbl);
+    auto new_ctx = make_unique<IREmitterCtx>(fn.tbl);
     this->switch_ctx(new_ctx);
 
     emit("def ", fn.name, code_args("(", fn.inputs, ")"), " {");
@@ -296,8 +296,8 @@ CodeSeg IRPrinter2::visit(Func& fn)
     return this->_code;
 }
 
-string IRPrinter2::Build(Stmt stmt)
+string IREmitter::Build(Stmt stmt)
 {
-    IRPrinter2 printer2(make_unique<IRPrinter2Ctx>());
-    return printer2.eval(stmt)->to_string(-1);
+    IREmitter emitter(make_unique<IREmitterCtx>());
+    return emitter.eval(stmt)->to_string(-1);
 }

@@ -1,5 +1,5 @@
-#ifndef INCLUDE_REFFINE_PASS_PRINTER2_H_
-#define INCLUDE_REFFINE_PASS_PRINTER2_H_
+#ifndef INCLUDE_REFFINE_PASS_IREMITTER_H_
+#define INCLUDE_REFFINE_PASS_IREMITTER_H_
 
 #include <memory>
 #include <sstream>
@@ -73,12 +73,12 @@ struct BlockSeg : public MultiSeg {
     BlockSeg() : MultiSeg(1) {}
 };
 
-using IRPrinter2Ctx = IRPassBaseCtx<CodeSeg>;
+using IREmitterCtx = IRPassBaseCtx<CodeSeg>;
 
-class IRPrinter2 : public IRGenBase<IRPrinter2Ctx, CodeSeg> {
+class IREmitter : public IRGenBase<IREmitterCtx, CodeSeg> {
 public:
-    IRPrinter2(unique_ptr<IRPrinter2Ctx> ctx)
-        : IRGenBase<IRPrinter2Ctx, CodeSeg>(std::move(ctx)),
+    IREmitter(unique_ptr<IREmitterCtx> ctx)
+        : IRGenBase<IREmitterCtx, CodeSeg>(std::move(ctx)),
           _code(make_shared<BlockSeg>())
     {
     }
@@ -173,4 +173,4 @@ private:
 
 }  // namespace reffine
 
-#endif  // INCLUDE_REFFINE_PASS_PRINTER2_H_
+#endif  // INCLUDE_REFFINE_PASS_IREMITTER_H_

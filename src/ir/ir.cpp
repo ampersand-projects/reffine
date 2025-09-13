@@ -1,5 +1,5 @@
 #include "reffine/pass/base/visitor.h"
-#include "reffine/pass/printer2.h"
+#include "reffine/pass/iremitter.h"
 
 using namespace reffine;
 
@@ -35,5 +35,5 @@ void NoOp::Accept(Visitor& v) { v.Visit(*this); }
 string StmtNode::str()
 {
     Stmt stmt(const_cast<StmtNode*>(this), [](StmtNode*) {});
-    return IRPrinter2::Build(stmt);
+    return IREmitter::Build(stmt);
 }
