@@ -504,6 +504,7 @@ int main()
             }
         }
     }
+    auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
@@ -519,13 +520,16 @@ int main()
 
         }
     )");
+
     cout << IRPrinter::Build(*llmod) << std::endl;
+    jit->Optimize(*llmod);
+    jit->AddModule(std::move(llmod));
+    auto fn = jit->Lookup<int(*)(ArrowTable*)>("foo");
+    cout << "RESULT: " << fn(tbl.get()) << endl;
     return 0;
 
-    auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
     auto op = transform_op(tbl);
     auto query_fn = compile_op<void (*)(void*, void*)>(op);
-
     auto status = query_arrow_file2(tbl, query_fn);
 
     if (!status.ok()) {
