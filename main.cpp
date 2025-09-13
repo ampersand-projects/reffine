@@ -505,6 +505,23 @@ int main()
         }
     }
 
+    auto jit = ExecEngine::Get();
+    auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
+    LLVMGen(*llmod).parse(R"(
+        #include "vinstr/internal.cpp"
+
+        extern "C" {
+
+        int foo(ArrowTable* tbl)
+        {
+            return get_vector_len(tbl);
+        }
+
+        }
+    )");
+    cout << IRPrinter::Build(*llmod) << std::endl;
+    return 0;
+
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
     auto op = transform_op(tbl);
     auto query_fn = compile_op<void (*)(void*, void*)>(op);

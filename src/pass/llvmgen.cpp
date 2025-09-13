@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <cstdio>
+#include <filesystem>
 
 #include "reffine/pass/llvmgen.h"
 
@@ -669,8 +670,8 @@ void LLVMGen::register_code(string llir)
 
 void LLVMGen::parse(string code)
 {
-    char in_file[] = "/tmp/reffine-llvmgen-XXXXXX.c";
-    int fd = mkstemps(in_file, /*suffixlen=*/2);
+    char in_file[] = "/tmp/reffine-llvmgen-XXXXXX.cpp";
+    int fd = mkstemps(in_file, /*suffixlen=*/4);
     if (fd == -1) {
         throw runtime_error("Error creating temporary file: " + string(in_file));
     }
@@ -681,8 +682,13 @@ void LLVMGen::parse(string code)
     write(fd, code.c_str(), code.size());
     close(fd);
 
+    std::filesystem::path currentDir = std::filesystem::current_path();
+
     // Generate LLVM IR
-    std::string command = "clang -S -O0 -emit-llvm -I/home/anandj/anandj/reffine/include -o " + string(out_file) + " " + string(in_file);
+    std::string command = "clang++ -S -O0 -emit-llvm "
+        " -I " + string(REFFINE_SRC_DIR) +
+        " -I " + string(REFFINE_HEADER_DIR) +
+        " -o " + string(out_file) + " " + string(in_file);
     if (std::system(command.c_str())) {
         throw runtime_error("Error running the command: " + command);
     }
