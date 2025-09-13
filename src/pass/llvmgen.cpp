@@ -1,9 +1,10 @@
+#include "reffine/pass/llvmgen.h"
+
 #include <unistd.h>
-#include <iostream>
+
 #include <cstdio>
 #include <filesystem>
-
-#include "reffine/pass/llvmgen.h"
+#include <iostream>
 
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
@@ -641,18 +642,18 @@ llvm::AllocaInst* LLVMGen::CreateAlloca(llvm::Type* type, llvm::Value* size)
 
 void LLVMGen::register_code(string llir)
 {
-    const auto buffer = llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(llir.c_str()));
+    const auto buffer =
+        llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(llir.c_str()));
 
     llvm::SMDiagnostic error;
     std::unique_ptr<llvm::Module> mod = llvm::parseIR(*buffer, error, llctx());
-    if (!mod) {
-        throw std::runtime_error("Failed to parse bitcode");
-    }
+    if (!mod) { throw std::runtime_error("Failed to parse bitcode"); }
     if (llvm::verifyModule(*mod)) {
         throw std::runtime_error("Failed to verify module");
     }
 
-    llvm::Linker::linkModules(*llmod(), std::move(mod), llvm::Linker::Flags::OverrideFromSrc);
+    llvm::Linker::linkModules(*llmod(), std::move(mod),
+                              llvm::Linker::Flags::OverrideFromSrc);
 }
 
 void LLVMGen::parse(string code)
@@ -660,7 +661,8 @@ void LLVMGen::parse(string code)
     char in_file[] = "/tmp/reffine-llvmgen-XXXXXX.cpp";
     int fd = mkstemps(in_file, /*suffixlen=*/4);
     if (fd == -1) {
-        throw runtime_error("Error creating temporary file: " + string(in_file));
+        throw runtime_error("Error creating temporary file: " +
+                            string(in_file));
     }
     auto out_file_str = string(in_file) + ".ll";
     auto* out_file = out_file_str.c_str();
@@ -672,9 +674,11 @@ void LLVMGen::parse(string code)
     std::filesystem::path currentDir = std::filesystem::current_path();
 
     // Generate LLVM IR
-    std::string command = "clang++ -S -O0 -emit-llvm "
-        " -I " + string(REFFINE_HEADER_DIR) +
-        " -o " + string(out_file) + " " + string(in_file);
+    std::string command =
+        "clang++ -S -O0 -emit-llvm "
+        " -I " +
+        string(REFFINE_HEADER_DIR) + " -o " + string(out_file) + " " +
+        string(in_file);
     if (std::system(command.c_str())) {
         throw runtime_error("Error running the command: " + command);
     }
@@ -684,7 +688,8 @@ void LLVMGen::parse(string code)
     if (!llfile.is_open()) {
         throw runtime_error("Error opening file " + string(out_file));
     }
-    std::string llir((std::istreambuf_iterator<char>(llfile)), std::istreambuf_iterator<char>());
+    std::string llir((std::istreambuf_iterator<char>(llfile)),
+                     std::istreambuf_iterator<char>());
     llfile.close();
 
     // Register generated LLVM IR to the module
