@@ -18,6 +18,7 @@
 #include "reffine/ir/op.h"
 #include "reffine/base/type.h"
 #include "reffine/pass/printer2.h"
+#include "reffine/pass/cemitter.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/scalarpass.h"
 #include "reffine/pass/symanalysis.h"
@@ -419,7 +420,7 @@ shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl)
     auto elem = _sym("elem", elem_expr);
     auto out_expr = _add(elem[0], _i64(10));
     auto out = _sym("out", out_expr);
-    auto op = _op(vector<Sym>{t_sym}, ~(elem) & _gt(t_sym, _i64(5)) , vector<Expr>{ out });
+    auto op = _op(vector<Sym>{t_sym}, ~(elem) , vector<Expr>{ out });
     auto op_sym = _sym("op", op);
 
     auto foo_fn = _func("foo", op_sym, vector<Sym>{vec_in_sym});
@@ -505,6 +506,16 @@ int main()
         }
     }
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
+    auto op = transform_op(tbl);
+    auto loopgen = LoopGen();
+    loopgen.eval(op);
+    auto loop = loopgen.ctx().out_func;
+    CanonPass::Build(loop);
+    auto loop2 = LoadStoreExpand().eval(loop);
+    auto loop3 = NewGetElimination().eval(loop2);
+    cout << "BEOFRE C: " << loop3->str() << std::endl;
+    cout << "CEMITTER: " << std::endl << CEmitter::Build(loop3) << std::endl;
+    return 0;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
@@ -546,14 +557,6 @@ int main()
         }
     )");
 
-    cout << "RAW LLVM: " << std::endl << IRPrinter::Build(*llmod) << std::endl;
-    jit->AddModule(std::move(llmod));
-    auto fn = jit->Lookup<ArrowTable**(*)(ArrowTable*)>("foo");
-    return 0;
-    cout << "RESULT: " << fn(tbl.get()) << endl;
-    return 0;
-
-    auto op = transform_op(tbl);
     auto query_fn = compile_op<void (*)(void*, void*)>(op);
     auto status = query_arrow_file2(tbl, query_fn);
 
