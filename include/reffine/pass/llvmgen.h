@@ -38,10 +38,10 @@ public:
         register_code(vinstr);
     }
 
-    void parse(string);
+    void parse(const string&);
 
 private:
-    void register_code(string);
+    void register_code(const string&);
 
     llvm::Value* visit(Sym) final;
     llvm::Value* visit(Call&) final;

@@ -640,7 +640,7 @@ llvm::AllocaInst* LLVMGen::CreateAlloca(llvm::Type* type, llvm::Value* size)
     return builder()->CreateAlloca(type, 5U, size);
 }
 
-void LLVMGen::register_code(string llir)
+void LLVMGen::register_code(const string& llir)
 {
     const auto buffer =
         llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(llir.c_str()));
@@ -656,7 +656,7 @@ void LLVMGen::register_code(string llir)
                               llvm::Linker::Flags::OverrideFromSrc);
 }
 
-void LLVMGen::parse(string code)
+void LLVMGen::parse(const string& code)
 {
     char in_file[] = "/tmp/reffine-llvmgen-XXXXXX.cpp";
     int fd = mkstemps(in_file, /*suffixlen=*/4);
