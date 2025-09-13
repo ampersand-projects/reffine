@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_compile_definitions(REFFINE_HEADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../include/")
+add_compile_definitions(REFFINE_SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}/")
 
 # Generate vinstr IR for JIT
 #

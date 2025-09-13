@@ -675,10 +675,11 @@ void LLVMGen::parse(string code)
 
     // Generate LLVM IR
     std::string command =
-        "clang++ -S -O0 -emit-llvm "
+        "clang++ -S -O3 -emit-llvm "
+        "-Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize"
         " -I " +
-        string(REFFINE_HEADER_DIR) + " -o " + string(out_file) + " " +
-        string(in_file);
+        string(REFFINE_HEADER_DIR) + " -I " + string(REFFINE_SRC_DIR) + " -o " +
+        string(out_file) + " " + string(in_file);
     if (std::system(command.c_str())) {
         throw runtime_error("Error running the command: " + command);
     }
