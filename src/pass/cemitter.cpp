@@ -1,6 +1,7 @@
+#include "reffine/pass/cemitter.h"
+
 #include <sstream>
 
-#include "reffine/pass/cemitter.h"
 #include "reffine/builder/reffiner.h"
 
 using namespace reffine;
@@ -174,14 +175,12 @@ CodeSeg CEmitter::visit(Loop& e)
     return eval(e.output);
 }
 
-CodeSeg CEmitter::visit(StructGEP&)
-{
-    return code("gep");
-}
+CodeSeg CEmitter::visit(StructGEP&) { return code("gep"); }
 
 CodeSeg CEmitter::visit(FetchDataPtr& e)
 {
-    auto get_data_buf_call = _call("get_vector_data_buf", types::VOID.ptr(), vector<Expr>{e.vec, _idx(e.col)});
+    auto get_data_buf_call = _call("get_vector_data_buf", types::VOID.ptr(),
+                                   vector<Expr>{e.vec, _idx(e.col)});
     auto cast_data_buf = _cast(e.type, get_data_buf_call);
     return code(eval(cast_data_buf), " + ", eval(e.idx));
 }
