@@ -504,11 +504,57 @@ int main()
             }
         }
     }
-
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
+
+    auto jit = ExecEngine::Get();
+    auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
+    LLVMGen(*llmod).parse(R"(
+        #include "vinstr/internal.cpp"
+
+        extern "C" {
+
+		void foo(ArrowTable** output_addr, ArrowTable* vec_in) {
+		    int64_t t_idx_addr_var;
+		    auto* t_idx_addr = &t_idx_addr_var;
+		    *(t_idx_addr) = vector_locate(vec_in, (((int64_t*)get_vector_data_buf(vec_in, 0))[0]));
+		    int64_t out_vec_idx_addr_var;
+		    auto* out_vec_idx_addr = &out_vec_idx_addr_var;
+		    *(out_vec_idx_addr) = 0;
+		    auto out_vec = make_vector(0);
+            auto ub = get_vector_len(vec_in);
+		    out_vec;
+
+		    while(1) {
+		        if (!(*(t_idx_addr) < ub)) break;
+
+		        auto t = (((int64_t*)get_vector_data_buf(vec_in, 0))[*(t_idx_addr)]);
+		        (((int64_t*)get_vector_data_buf(out_vec, 0))[*(out_vec_idx_addr)]) = t;
+		        auto body_cond = ((*(t_idx_addr) < get_vector_len(vec_in)) && get_vector_null_bit(vec_in, *(t_idx_addr), 0));
+		        auto out = ((((int64_t*)get_vector_data_buf(vec_in, 1))[*(t_idx_addr)]) + 10);
+		        (((int64_t*)get_vector_data_buf(out_vec, 1))[*(out_vec_idx_addr)]) = out;
+		        //set_vector_null_bit(out_vec, *(out_vec_idx_addr), body_cond, 1);
+		        //set_vector_null_bit(out_vec, *(out_vec_idx_addr), body_cond, 0);
+		        *(t_idx_addr) = (*(t_idx_addr) + 1);
+		        *(out_vec_idx_addr) = (*(out_vec_idx_addr) + 1);
+		    }
+		    set_vector_len(out_vec, *(out_vec_idx_addr));
+		    auto loop = out_vec;
+		    auto op = loop;
+		    *(output_addr) = op;
+		}
+
+        }
+    )");
+
+    cout << "RAW LLVM: " << std::endl << IRPrinter::Build(*llmod) << std::endl;
+    jit->AddModule(std::move(llmod));
+    auto fn = jit->Lookup<ArrowTable**(*)(ArrowTable*)>("foo");
+    return 0;
+    cout << "RESULT: " << fn(tbl.get()) << endl;
+    return 0;
+
     auto op = transform_op(tbl);
     auto query_fn = compile_op<void (*)(void*, void*)>(op);
-
     auto status = query_arrow_file2(tbl, query_fn);
 
     if (!status.ok()) {

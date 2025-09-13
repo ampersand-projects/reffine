@@ -34,11 +34,14 @@ public:
           _llmod(llmod),
           _builder(make_unique<llvm::IRBuilder<>>(llmod.getContext()))
     {
-        register_vinstrs();
+        std::string vinstr(reinterpret_cast<char*>(vinstr_ll), vinstr_ll_len);
+        register_code(vinstr);
     }
 
+    void parse(const string&);
+
 private:
-    void register_vinstrs();
+    void register_code(const string&);
 
     llvm::Value* visit(Sym) final;
     llvm::Value* visit(Call&) final;
