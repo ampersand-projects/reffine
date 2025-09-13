@@ -277,7 +277,7 @@ CodeSeg IRPrinter2::visit(NoOp&) { return code(""); }
 
 CodeSeg IRPrinter2::visit(Func& fn)
 {
-    auto new_ctx = make_unique<IRPrinter2Ctx>(fn.tbl);
+    auto new_ctx = make_unique<IREmitterCtx>(fn.tbl);
     this->switch_ctx(new_ctx);
 
     emit("def ", fn.name, code_args("(", fn.inputs, ")"), " {");
@@ -298,6 +298,6 @@ CodeSeg IRPrinter2::visit(Func& fn)
 
 string IRPrinter2::Build(Stmt stmt)
 {
-    IRPrinter2 printer2(make_unique<IRPrinter2Ctx>());
+    IRPrinter2 printer2(make_unique<IREmitterCtx>());
     return printer2.eval(stmt)->to_string(-1);
 }
