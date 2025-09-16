@@ -393,7 +393,7 @@ void test_kernel() {
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
-    LLVMGen::Build(fn, *llmod);
+    LLVMGen(*llmod).eval(fn);
     jit->Optimize(*llmod);
 
     auto cuda_engine = CudaEngine::Get();
