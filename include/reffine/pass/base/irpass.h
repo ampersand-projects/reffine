@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <set>
+#include <sstream>
 #include <utility>
 
 #include "reffine/pass/base/visitor.h"
@@ -67,6 +68,14 @@ protected:
     {
         Expr tmp_expr(const_cast<ExprNode*>(&expr), [](ExprNode*) {});
         return tmp_expr;
+    }
+
+    Sym symify(ExprNode& expr)
+    {
+        auto* addr = static_cast<const void*>(&expr);
+        std::stringstream ss;
+        ss << "_" << addr;
+        return make_shared<SymNode>(ss.str(), expr.type);
     }
 
     void switch_ctx(unique_ptr<CtxTy>& octx) { std::swap(octx, this->_ctx); }

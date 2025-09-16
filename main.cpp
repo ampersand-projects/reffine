@@ -393,7 +393,7 @@ void test_kernel() {
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
-    LLVMGen::Build(fn, *llmod);
+    LLVMGen(*llmod).eval(fn);
     jit->Optimize(*llmod);
 
     auto cuda_engine = CudaEngine::Get();
@@ -420,7 +420,7 @@ shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl)
     auto elem = _sym("elem", elem_expr);
     auto out_expr = _add(elem[0], _i64(10));
     auto out = _sym("out", out_expr);
-    auto op = _op(vector<Sym>{t_sym}, ~(elem) , vector<Expr>{ out });
+    auto op = _op(vector<Sym>{t_sym}, (~(elem) /*& _gt(t_sym, _i64(10))*/), vector<Expr>{ out });
     auto op_sym = _sym("op", op);
 
     auto foo_fn = _func("foo", op_sym, vector<Sym>{vec_in_sym});

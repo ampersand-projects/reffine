@@ -14,8 +14,8 @@ namespace reffine {
 
 #define INF 1 << 22
 
-enum class BaseType {
-    UNKNOWN,  // never use this type
+enum BaseType {
+    UNKNOWN = -1,  // never use this type
     VOID,
     BOOL,
     INT8,
@@ -236,6 +236,14 @@ struct DataType {
                 return dtypes[0].cppstr() + "*";
             case BaseType::STR:
                 return "char*";
+            case BaseType::STRUCT: {
+                string res = "struct {";
+                for (size_t i = 0; i < dtypes.size(); i++) {
+                    res += dtypes[i].cppstr() + " _" + to_string(i);
+                    if (i < (dtypes.size() - 1)) { res += ", "; }
+                }
+                return res + "}";
+            }
             case BaseType::VECTOR:
                 return "ArrowTable*";
             default:
@@ -386,5 +394,12 @@ DataType VEC()
 }
 
 }  // namespace reffine::types
+
+namespace std {
+template <>
+struct hash<reffine::DataType> {
+    size_t operator()(const reffine::DataType&) const noexcept;
+};
+}  // namespace std
 
 #endif  // INCLUDE_REFFINE_BASE_TYPE_H_
