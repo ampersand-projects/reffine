@@ -1,7 +1,4 @@
 #include "reffine/pass/cemitter.h"
-
-#include <sstream>
-
 #include "reffine/builder/reffiner.h"
 
 using namespace reffine;
@@ -158,12 +155,9 @@ CodeSeg CEmitter::visit(NaryExpr& e)
 
 CodeSeg CEmitter::visit(Alloc& e)
 {
-    // Using stringified address as the variable name for allocations
-    auto* addr = static_cast<const void*>(&e);
-    std::stringstream ss;
-    ss << "_" << addr;
-    emit(nl(), get_type_str(e.type.deref()), " ", ss.str(), ";");
-    return code("&", ss.str());
+    auto var = this->symify(e);
+    emit(nl(), get_type_str(e.type.deref()), " ", var->name, ";");
+    return code("&", var->name);
 }
 
 CodeSeg CEmitter::visit(Load& e) { return code_func("*", {e.addr}); }
