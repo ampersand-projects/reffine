@@ -203,6 +203,45 @@ struct DataType {
                 throw std::runtime_error("Invalid type");
         }
     }
+
+    string cppstr() const
+    {
+        switch (btype) {
+            case BaseType::VOID:
+                return "void";
+            case BaseType::BOOL:
+                return "bool";
+            case BaseType::INT8:
+                return "int8_t";
+            case BaseType::UINT8:
+                return "uint8_t";
+            case BaseType::INT16:
+                return "int16_t";
+            case BaseType::UINT16:
+                return "uint16_t";
+            case BaseType::INT32:
+                return "int32_t";
+            case BaseType::UINT32:
+                return "uint32_t";
+            case BaseType::INT64:
+            case BaseType::IDX:
+                return "int64_t";
+            case BaseType::UINT64:
+                return "uint64_t";
+            case BaseType::FLOAT32:
+                return "float";
+            case BaseType::FLOAT64:
+                return "double";
+            case BaseType::PTR:
+                return dtypes[0].cppstr() + "*";
+            case BaseType::STR:
+                return "char*";
+            case BaseType::VECTOR:
+                return "ArrowTable*";
+            default:
+                throw std::runtime_error("Invalid type " + this->str());
+        }
+    }
 };
 
 enum class MathOp {
