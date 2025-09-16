@@ -7,13 +7,34 @@
 using namespace reffine;
 using namespace reffine::reffiner;
 
+string CEmitter::get_type_str(DataType dt)
+{
+    string typestr = "";
+
+    if (dt.is_struct()) {
+        if (this->_type_name_map.find(dt) == this->_type_name_map.end()) {
+            auto type_name = "_" + to_string(this->_type_name_map.size()) + "_t";
+            this->_header->emit("typedef ", dt.cppstr(), " ", type_name, ";", nl(), nl());
+            this->_type_name_map[dt] = type_name;
+        }
+        typestr = this->_type_name_map.at(dt);
+    } else if (dt.is_ptr()) {
+        typestr = "auto*";
+    } else {
+        typestr = dt.cppstr();
+    }
+
+    return typestr;
+}
+
 CodeSeg CEmitter::visit(Sym sym)
 {
     auto lhs = code(sym->name);
 
     if (this->ctx().in_sym_tbl.find(sym) != this->ctx().in_sym_tbl.end()) {
         auto rhs = eval(this->ctx().in_sym_tbl.at(sym));
-        emit(nl(), sym->type.cppstr(), " ", lhs, " = ", rhs, ";");
+        auto typestr = get_type_str(sym->type);
+        emit(nl(), typestr, " ", lhs, " = ", rhs, ";");
     }
 
     return lhs;
@@ -141,7 +162,7 @@ CodeSeg CEmitter::visit(Alloc& e)
     auto* addr = static_cast<const void*>(&e);
     std::stringstream ss;
     ss << "_" << addr;
-    emit(nl(), e.type.deref().cppstr(), " ", ss.str(), ";");
+    emit(nl(), get_type_str(e.type.deref()), " ", ss.str(), ";");
     return code("&", ss.str());
 }
 
@@ -175,7 +196,10 @@ CodeSeg CEmitter::visit(Loop& e)
     return eval(e.output);
 }
 
-CodeSeg CEmitter::visit(StructGEP&) { return code("gep"); }
+CodeSeg CEmitter::visit(StructGEP& e)
+{
+    return code("&", eval(e.addr), "->_", to_string(e.col));
+}
 
 CodeSeg CEmitter::visit(FetchDataPtr& e)
 {
@@ -217,5 +241,7 @@ CodeSeg CEmitter::visit(Func& fn)
 string CEmitter::Build(Stmt stmt)
 {
     CEmitter cemitter(make_unique<IREmitterCtx>());
-    return cemitter.eval(stmt)->to_string(-1);
+    auto code = make_shared<LineSeg>();
+    code->emit(cemitter._header, cemitter.eval(stmt));
+    return code->to_string(-1);
 }

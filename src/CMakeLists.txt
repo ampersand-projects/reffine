@@ -24,6 +24,7 @@ add_custom_command(
 )
 
 set(SRC_FILES
+    base/type.cpp
     arrow/base.cpp
     ir/ir.cpp
     iter/iter_space.cpp
