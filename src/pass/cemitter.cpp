@@ -1,4 +1,5 @@
 #include "reffine/pass/cemitter.h"
+
 #include "reffine/builder/reffiner.h"
 
 using namespace reffine;
@@ -10,8 +11,10 @@ string CEmitter::get_type_str(DataType dt)
 
     if (dt.is_struct()) {
         if (this->_type_name_map.find(dt) == this->_type_name_map.end()) {
-            auto type_name = "_" + to_string(this->_type_name_map.size()) + "_t";
-            this->_header->emit("typedef ", dt.cppstr(), " ", type_name, ";", nl(), nl());
+            auto type_name =
+                "_" + to_string(this->_type_name_map.size()) + "_t";
+            this->_header->emit("typedef ", dt.cppstr(), " ", type_name, ";",
+                                nl(), nl());
             this->_type_name_map[dt] = type_name;
         }
         typestr = this->_type_name_map.at(dt);

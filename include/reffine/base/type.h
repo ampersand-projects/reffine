@@ -395,12 +395,11 @@ DataType VEC()
 
 }  // namespace reffine::types
 
-
 namespace std {
-template<>
+template <>
 struct hash<reffine::DataType> {
     size_t operator()(const reffine::DataType&) const noexcept;
 };
-}
+}  // namespace std
 
 #endif  // INCLUDE_REFFINE_BASE_TYPE_H_

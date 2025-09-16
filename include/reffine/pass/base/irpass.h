@@ -3,8 +3,8 @@
 
 #include <memory>
 #include <set>
-#include <utility>
 #include <sstream>
+#include <utility>
 
 #include "reffine/pass/base/visitor.h"
 
