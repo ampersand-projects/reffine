@@ -8,7 +8,7 @@ using namespace std;
 
 namespace reffine {
 
-using VecIdxs = vector<pair<Expr, Expr>>;
+using SymExprs = vector<pair<Sym, Expr>>;
 
 struct IterSpace {
     const DataType type;
@@ -61,7 +61,9 @@ struct IterSpace {
         return new_idx;
     }
 
-    VecIdxs vec_idxs(Expr idx) { return this->_vec_idxs(idx); }
+    SymExprs vec_idxs(Expr idx) { return this->_vec_idxs(idx); }
+
+    SymExprs extra_syms() { return this->_extra_syms(); }
 
 protected:
     virtual Expr _lower_bound();
@@ -71,14 +73,18 @@ protected:
     virtual Expr _iter_to_idx(Expr);
     virtual Expr _is_alive(Expr);
     virtual Expr _next(Expr);
-    virtual VecIdxs _vec_idxs(Expr);
+    virtual SymExprs _vec_idxs(Expr);
+    virtual SymExprs _extra_syms();
 };
 using ISpace = shared_ptr<IterSpace>;
 
 struct VecSpace : public IterSpace {
     Sym vec;
 
-    VecSpace(Sym vec) : IterSpace(vec->type.iterty()), vec(vec)
+    VecSpace(Sym vec)
+        : IterSpace(vec->type.iterty()),
+          vec(vec),
+          _vec_len_sym(make_shared<SymNode>(vec->name + "_len", types::IDX))
     {
         ASSERT(vec->type.is_vector());
         ASSERT(vec->type.dim == 1);  // currently only support 1d vectors
@@ -92,7 +98,10 @@ private:
     Expr _iter_to_idx(Expr) final;
     Expr _is_alive(Expr) final;
     Expr _next(Expr) final;
-    VecIdxs _vec_idxs(Expr) final;
+    SymExprs _vec_idxs(Expr) final;
+    SymExprs _extra_syms() final;
+
+    Sym _vec_len_sym;
 };
 
 struct SuperSpace : public IterSpace {
@@ -108,7 +117,8 @@ protected:
     Expr _iter_to_idx(Expr) override;
     Expr _is_alive(Expr) override;
     Expr _next(Expr) override;
-    VecIdxs _vec_idxs(Expr) final;
+    SymExprs _vec_idxs(Expr) final;
+    SymExprs _extra_syms() final;
 };
 
 struct BoundSpace : public SuperSpace {
@@ -151,7 +161,8 @@ protected:
     Expr _idx_to_iter(Expr) final;
     Expr _iter_to_idx(Expr) final;
     Expr _next(Expr) final;
-    VecIdxs _vec_idxs(Expr) final;
+    SymExprs _vec_idxs(Expr) final;
+    SymExprs _extra_syms() final;
 };
 
 struct UnionSpace : public JointSpace {

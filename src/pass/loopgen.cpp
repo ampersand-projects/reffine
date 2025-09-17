@@ -34,16 +34,27 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 
     auto ispace = Reffine::Build(op, this->ctx().in_sym_tbl);
 
+    vector<Stmt> loop_inits;
+
     // Loop index initialization
     auto idx_init = eval(ispace->iter_to_idx(ispace->lower_bound()));
     auto idx_alloc = _alloc(idx_init->type);
     auto idx_addr = _sym(iter->name + "_idx_addr", idx_alloc);
     this->assign(idx_addr, idx_alloc);
     this->map_sym(idx_addr, idx_addr);
+    loop_inits.push_back(_store(idx_addr, idx_init));
 
-    // Popular iter_elem_map
+    // Populate iter_elem_map
+    // Used for lowering Element expressions
     for (auto& [vec, idx] : ispace->vec_idxs(_load(idx_addr))) {
         this->_vec_iter_idx_map[vec][iter] = idx;
+    }
+
+    // Populate additional symbols
+    for (auto& [extra_sym, expr] : ispace->extra_syms()) {
+        this->assign(extra_sym, eval(expr));
+        this->map_sym(extra_sym, extra_sym);
+        loop_inits.push_back(extra_sym);
     }
 
     // Derive op iterator from loop idx
@@ -59,7 +70,7 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 
     // Loop definition
     auto loop = _loop(_new(outputs));
-    loop->init = _store(idx_addr, idx_init);
+    loop->init = _stmts(loop_inits);
     loop->incr = _store(idx_addr, eval(ispace->next(_load(idx_addr))));
     loop->exit_cond = _not(eval(ispace->is_alive(_load(idx_addr))));
     loop->body_cond = eval(ispace->iter_cond(_load(idx_addr)));
@@ -135,6 +146,11 @@ Expr LoopGen::visit(Reduce& red)
     auto state_addr = _sym("state_addr", state_alloc);
     this->assign(state_addr, state_alloc);
 
+    // Output
+    auto output =
+        _sel(tmp_loop->body_cond, red.acc(_load(state_addr), tmp_loop->output),
+             _load(state_addr));
+
     // Build reduce loop
     auto red_loop = _loop(state_addr);
     red_loop->init = _stmts(vector<Stmt>{
@@ -143,9 +159,8 @@ Expr LoopGen::visit(Reduce& red)
     });
     red_loop->incr = tmp_loop->incr;
     red_loop->exit_cond = tmp_loop->exit_cond;
-    red_loop->body_cond = tmp_loop->body_cond;
-    red_loop->body =
-        _store(state_addr, red.acc(_load(state_addr), tmp_loop->output));
+    red_loop->body_cond = nullptr;
+    red_loop->body = _store(state_addr, output);
 
     auto red_loop_sym = _sym("red_loop", red_loop);
     this->assign(red_loop_sym, red_loop);

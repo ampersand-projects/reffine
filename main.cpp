@@ -429,55 +429,24 @@ shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl)
     return foo_fn;
 }
 
-shared_ptr<Func> vector_op()
+shared_ptr<Func> vector_op(shared_ptr<ArrowTable2> tbl)
 {
     auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym =
-        _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
-                              int8_t, int64_t>());
-    Op op(
-        {t_sym},
-        ~(vec_in_sym[{t_sym}]) & _lte(t_sym, _i64(48)) & _gte(t_sym, _i64(10)),
-        {
-            vec_in_sym[{t_sym}][2],
-            _new(vector<Expr>{
-                vec_in_sym[{t_sym}][1],
-                vec_in_sym[{t_sym}][2],
-                vec_in_sym[{t_sym}][0],
-                vec_in_sym[{t_sym}][3],
-            }),
-            vec_in_sym[{t_sym}][3],
-        });
+    auto vec_in_sym = _sym("vec_in", tbl->get_data_type(1));
 
-    auto sum = _red(
-        op,
+    Op op({t_sym}, ~(vec_in_sym[{t_sym}]), {vec_in_sym[{t_sym}][2]});
+    auto sum = _red(op,
         []() {
-            return _new(vector<Expr>{
-                _new(vector<Expr>{_i64(0), _i64(0)}),
-                _new(vector<Expr>{_i64(0), _i64(0)}),
-            });
+            return _i64(0);
         },
         [](Expr s, Expr v) {
-            auto v0 = _get(_get(v, 2), 0);
-            auto v1 = _get(_get(v, 2), 1);
-            auto v2 = _get(_get(v, 2), 2);
-            auto v3 = _get(_get(v, 2), 3);
-            auto s0 = _get(_get(s, 0), 0);
-            auto s1 = _get(_get(s, 0), 1);
-            auto s2 = _get(_get(s, 1), 0);
-            auto s3 = _get(_get(s, 1), 1);
-            return _new(vector<Expr>{
-                _new(vector<Expr>{_add(s0, v0), _add(s1, v1)}),
-                _new(vector<Expr>{_add(s2, v2), _add(s3, v3)}),
-            });
-        });
+            return _add(s, _get(v, 1));
+        }
+    );
     auto sum_sym = _sym("sum", sum);
-    auto res = _get(_get(sum_sym, 1), 0);
-    auto res_sym = _sym("res", res);
 
-    auto foo_fn = _func("foo", res_sym, vector<Sym>{vec_in_sym});
+    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
     foo_fn->tbl[sum_sym] = sum;
-    foo_fn->tbl[res_sym] = res;
 
     return foo_fn;
 }
@@ -504,24 +473,8 @@ int main()
         }
     }
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
-    auto op = vector_op();
-    auto loopgen = LoopGen();
-    loopgen.eval(op);
-    auto loop = loopgen.ctx().out_func;
-    CanonPass::Build(loop);
-    auto loop2 = LoadStoreExpand().eval(loop);
-    auto loop3 = NewGetElimination().eval(loop2);
-    auto ccode = CEmitter::Build(loop3);
-    cout << "CEMITTER: " << std::endl << ccode << std::endl;
-
-    auto jit = ExecEngine::Get();
-    auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen(*llmod).parse(ccode);
-    cout << "LLMOD: " << IRPrinter::Build(*llmod) << std::endl;
-    jit->Optimize(*llmod);
-    jit->AddModule(std::move(llmod));
-
-    auto query_fn = jit->Lookup<void (*)(long*, void*)>(op->name);
+    auto op = vector_op(tbl);
+    auto query_fn = compile_op<void (*)(long*, void*)>(op);
     auto status = query_arrow_file(tbl, query_fn);
 
     if (!status.ok()) {
