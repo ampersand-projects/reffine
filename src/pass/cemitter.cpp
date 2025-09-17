@@ -177,7 +177,7 @@ CodeSeg CEmitter::visit(Loop& e)
 {
     if (e.init) { emit(nl(), eval(e.init), nl(), ";"); }
 
-    //emit(nl(), "#pragma clang loop vectorize_width(4) interleave_count(4)");
+    // emit(nl(), "#pragma clang loop vectorize_width(4) interleave_count(4)");
     emit(nl(), "#pragma clang loop vectorize(enable) interleave(enable)");
     emit(nl(), "while(1) {");
     auto parent = enter_block();

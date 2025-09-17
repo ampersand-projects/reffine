@@ -81,7 +81,10 @@ using ISpace = shared_ptr<IterSpace>;
 struct VecSpace : public IterSpace {
     Sym vec;
 
-    VecSpace(Sym vec) : IterSpace(vec->type.iterty()), vec(vec), _vec_len_sym(make_shared<SymNode>(vec->name + "_len", types::IDX))
+    VecSpace(Sym vec)
+        : IterSpace(vec->type.iterty()),
+          vec(vec),
+          _vec_len_sym(make_shared<SymNode>(vec->name + "_len", types::IDX))
     {
         ASSERT(vec->type.is_vector());
         ASSERT(vec->type.dim == 1);  // currently only support 1d vectors

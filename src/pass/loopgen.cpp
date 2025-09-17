@@ -147,11 +147,9 @@ Expr LoopGen::visit(Reduce& red)
     this->assign(state_addr, state_alloc);
 
     // Output
-    auto output = _sel(
-        tmp_loop->body_cond,
-        red.acc(_load(state_addr), tmp_loop->output),
-        _load(state_addr)
-    );
+    auto output =
+        _sel(tmp_loop->body_cond, red.acc(_load(state_addr), tmp_loop->output),
+             _load(state_addr));
 
     // Build reduce loop
     auto red_loop = _loop(state_addr);

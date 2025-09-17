@@ -181,8 +181,10 @@ SymExprs JointSpace::_extra_syms()
 
     auto l_extra_syms = this->left->extra_syms();
     auto r_extra_syms = this->right->extra_syms();
-    extra_syms.insert(extra_syms.end(), l_extra_syms.begin(), l_extra_syms.end());
-    extra_syms.insert(extra_syms.end(), r_extra_syms.begin(), r_extra_syms.end());
+    extra_syms.insert(extra_syms.end(), l_extra_syms.begin(),
+                      l_extra_syms.end());
+    extra_syms.insert(extra_syms.end(), r_extra_syms.begin(),
+                      r_extra_syms.end());
 
     return extra_syms;
 }
