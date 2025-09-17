@@ -64,11 +64,12 @@ struct SetValid : public Call {
 };
 
 struct MakeVector : public Call {
-    MakeVector(DataType type, size_t mem_id)
+    MakeVector(DataType type, Expr len, size_t mem_id)
         : Call("make_vector", type,
-               vector<Expr>{make_shared<Const>(types::UINT32, mem_id)})
+               vector<Expr>{len, make_shared<Const>(types::UINT32, mem_id)})
     {
         ASSERT(type.is_vector());
+        ASSERT(len->type == types::IDX);
     }
 };
 
