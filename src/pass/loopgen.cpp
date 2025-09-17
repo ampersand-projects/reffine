@@ -34,12 +34,15 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 
     auto ispace = Reffine::Build(op, this->ctx().in_sym_tbl);
 
+    vector<Stmt> loop_inits;
+
     // Loop index initialization
     auto idx_init = eval(ispace->iter_to_idx(ispace->lower_bound()));
     auto idx_alloc = _alloc(idx_init->type);
     auto idx_addr = _sym(iter->name + "_idx_addr", idx_alloc);
     this->assign(idx_addr, idx_alloc);
     this->map_sym(idx_addr, idx_addr);
+    loop_inits.push_back(_store(idx_addr, idx_init));
 
     // Populate iter_elem_map
     // Used for lowering Element expressions
@@ -48,9 +51,11 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
     }
 
     // Populate additional symbols
-    // Used for helping with vectorization
-    // Loop boundary condition needs to be assigned to a variable
-    // in order for clang to vectorize it
+    for (auto& [extra_sym, expr] : ispace->extra_syms()) {
+        this->assign(extra_sym, eval(expr));
+        this->map_sym(extra_sym, extra_sym);
+        loop_inits.push_back(extra_sym);
+    }
 
     // Derive op iterator from loop idx
     auto loop_iter = _sym(iter->name, iter);
@@ -65,7 +70,7 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 
     // Loop definition
     auto loop = _loop(_new(outputs));
-    loop->init = _store(idx_addr, idx_init);
+    loop->init = _stmts(loop_inits);
     loop->incr = _store(idx_addr, eval(ispace->next(_load(idx_addr))));
     loop->exit_cond = _not(eval(ispace->is_alive(_load(idx_addr))));
     loop->body_cond = eval(ispace->iter_cond(_load(idx_addr)));

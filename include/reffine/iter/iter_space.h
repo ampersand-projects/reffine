@@ -63,6 +63,8 @@ struct IterSpace {
 
     SymExprs vec_idxs(Expr idx) { return this->_vec_idxs(idx); }
 
+    SymExprs extra_syms() { return this->_extra_syms(); }
+
 protected:
     virtual Expr _lower_bound();
     virtual Expr _upper_bound();
@@ -72,13 +74,14 @@ protected:
     virtual Expr _is_alive(Expr);
     virtual Expr _next(Expr);
     virtual SymExprs _vec_idxs(Expr);
+    virtual SymExprs _extra_syms();
 };
 using ISpace = shared_ptr<IterSpace>;
 
 struct VecSpace : public IterSpace {
     Sym vec;
 
-    VecSpace(Sym vec) : IterSpace(vec->type.iterty()), vec(vec)
+    VecSpace(Sym vec) : IterSpace(vec->type.iterty()), vec(vec), _vec_len_sym(make_shared<SymNode>(vec->name + "_len", types::IDX))
     {
         ASSERT(vec->type.is_vector());
         ASSERT(vec->type.dim == 1);  // currently only support 1d vectors
@@ -93,6 +96,9 @@ private:
     Expr _is_alive(Expr) final;
     Expr _next(Expr) final;
     SymExprs _vec_idxs(Expr) final;
+    SymExprs _extra_syms() final;
+
+    Sym _vec_len_sym;
 };
 
 struct SuperSpace : public IterSpace {
@@ -109,6 +115,7 @@ protected:
     Expr _is_alive(Expr) override;
     Expr _next(Expr) override;
     SymExprs _vec_idxs(Expr) final;
+    SymExprs _extra_syms() final;
 };
 
 struct BoundSpace : public SuperSpace {
@@ -152,6 +159,7 @@ protected:
     Expr _iter_to_idx(Expr) final;
     Expr _next(Expr) final;
     SymExprs _vec_idxs(Expr) final;
+    SymExprs _extra_syms() final;
 };
 
 struct UnionSpace : public JointSpace {

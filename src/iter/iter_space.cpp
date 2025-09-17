@@ -41,6 +41,8 @@ Expr IterSpace::_next(Expr idx) { return _add(idx, _const(this->type, 1)); }
 
 SymExprs IterSpace::_vec_idxs(Expr idx) { return SymExprs{}; }
 
+SymExprs IterSpace::_extra_syms() { return SymExprs{}; }
+
 Expr VecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
 
 Expr VecSpace::_upper_bound()
@@ -60,13 +62,23 @@ Expr VecSpace::_idx_to_iter(Expr idx)
 
 Expr VecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
 
-Expr VecSpace::_is_alive(Expr idx) { return _lt(idx, _len(this->vec)); }
+Expr VecSpace::_is_alive(Expr idx)
+{
+    // Loop boundary needs to be explicitly assigned to a variable
+    // to help with vectorization
+    return _lt(idx, this->_vec_len_sym);
+}
 
 Expr VecSpace::_next(Expr idx) { return _add(idx, _idx(1)); }
 
 SymExprs VecSpace::_vec_idxs(Expr idx)
 {
     return SymExprs{make_pair(this->vec, idx)};
+}
+
+SymExprs VecSpace::_extra_syms()
+{
+    return SymExprs{make_pair(this->_vec_len_sym, _len(this->vec))};
 }
 
 Expr SuperSpace::_lower_bound() { return this->ispace->lower_bound(); }
@@ -90,6 +102,8 @@ Expr SuperSpace::_is_alive(Expr idx) { return this->ispace->is_alive(idx); }
 Expr SuperSpace::_next(Expr idx) { return this->ispace->next(idx); }
 
 SymExprs SuperSpace::_vec_idxs(Expr idx) { return this->ispace->vec_idxs(idx); }
+
+SymExprs SuperSpace::_extra_syms() { return this->ispace->extra_syms(); }
 
 Expr LBoundSpace::_lower_bound()
 {
@@ -159,6 +173,18 @@ SymExprs JointSpace::_vec_idxs(Expr idx)
     vec_idxs.insert(vec_idxs.end(), r_vec_idxs.begin(), r_vec_idxs.end());
 
     return vec_idxs;
+}
+
+SymExprs JointSpace::_extra_syms()
+{
+    SymExprs extra_syms;
+
+    auto l_extra_syms = this->left->extra_syms();
+    auto r_extra_syms = this->right->extra_syms();
+    extra_syms.insert(extra_syms.end(), l_extra_syms.begin(), l_extra_syms.end());
+    extra_syms.insert(extra_syms.end(), r_extra_syms.begin(), r_extra_syms.end());
+
+    return extra_syms;
 }
 
 Expr UnionSpace::_lower_bound()
