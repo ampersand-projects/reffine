@@ -8,6 +8,7 @@
 #include "reffine/engine/engine.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/llvmgen.h"
+#include "reffine/pass/cemitter.h"
 #include "reffine/pass/loopgen.h"
 #include "reffine/pass/printer.h"
 #include "reffine/pass/reffinepass.h"
@@ -16,7 +17,7 @@
 using namespace reffine;
 
 template <typename T>
-T compile_loop(shared_ptr<Func> loop)
+T compile_loop(shared_ptr<Func> loop, bool use_cemitter = true)
 {
     LOG(INFO) << "Loop IR (raw):" << std::endl << loop->str() << std::endl;
     CanonPass::Build(loop);
@@ -29,7 +30,13 @@ T compile_loop(shared_ptr<Func> loop)
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
-    LLVMGen(*llmod).eval(loop3);
+    if (use_cemitter) {
+        auto ccode = CEmitter::Build(loop3);
+        LOG(INFO) << "C Code:" << std::endl << ccode << std::endl;
+        LLVMGen(*llmod).parse(ccode);
+    } else {
+        LLVMGen(*llmod).eval(loop3);
+    }
     LOG(INFO) << "LLVM IR (raw):" << std::endl
               << IRPrinter::Build(*llmod) << std::endl;
     jit->Optimize(*llmod);

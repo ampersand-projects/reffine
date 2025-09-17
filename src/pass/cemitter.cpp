@@ -7,24 +7,25 @@ using namespace reffine::reffiner;
 
 string CEmitter::get_type_str(DataType dt)
 {
-    string typestr = "";
-
     if (dt.is_struct()) {
         if (this->_type_name_map.find(dt) == this->_type_name_map.end()) {
+            string struct_str = "struct {";
+            for (size_t i = 0; i < dt.dtypes.size(); i++) {
+                struct_str += get_type_str(dt.dtypes[i]) + " _" + to_string(i) + "; ";
+            }
+            struct_str += "}";
+
             auto type_name =
                 "_" + to_string(this->_type_name_map.size()) + "_t";
-            this->_header->emit("typedef ", dt.cppstr(), " ", type_name, ";",
-                                nl(), nl());
+            this->_header->emit("typedef ", struct_str, " ", type_name, ";", nl(), nl());
             this->_type_name_map[dt] = type_name;
         }
-        typestr = this->_type_name_map.at(dt);
+        return this->_type_name_map.at(dt);
     } else if (dt.is_ptr()) {
-        typestr = "auto*";
+        return (get_type_str(dt.deref()) + "*");
     } else {
-        typestr = dt.cppstr();
+        return dt.cppstr();
     }
-
-    return typestr;
 }
 
 CodeSeg CEmitter::visit(Sym sym)
@@ -84,18 +85,16 @@ CodeSeg CEmitter::visit(Const& cnst)
         case BaseType::INT16:
         case BaseType::INT32:
         case BaseType::INT64:
-            return code(to_string((int64_t)cnst.val));
+        case BaseType::IDX:
+            return code(cnst.type.cppstr(), "(", to_string((int64_t)cnst.val), ")");
         case BaseType::UINT8:
         case BaseType::UINT16:
         case BaseType::UINT32:
         case BaseType::UINT64:
-            return code(to_string((uint64_t)cnst.val));
+            return code(cnst.type.cppstr(), "(", to_string((uint64_t)cnst.val), ")");
         case BaseType::FLOAT32:
-            return code(to_string(cnst.val) + "f");
         case BaseType::FLOAT64:
-            return code(to_string(cnst.val));
-        case BaseType::IDX:
-            return code(to_string((int64_t)cnst.val));
+            return code(cnst.type.cppstr(), "(", to_string(cnst.val), ")");
         default:
             throw std::runtime_error("Invalid constant type");
     }
@@ -118,9 +117,9 @@ CodeSeg CEmitter::visit(NaryExpr& e)
         case MathOp::DIV:
             return code_binary(e.arg(0), "/", e.arg(1));
         case MathOp::MAX:
-            return code_func("max", {e.arg(0), e.arg(1)});
+            return code_func("std::max", {e.arg(0), e.arg(1)});
         case MathOp::MIN:
-            return code_func("min", {e.arg(0), e.arg(1)});
+            return code_func("std::min", {e.arg(0), e.arg(1)});
         case MathOp::MOD:
             return code_binary(e.arg(0), "%", e.arg(1));
         case MathOp::ABS:
@@ -172,7 +171,7 @@ CodeSeg CEmitter::visit(Store& s)
 
 CodeSeg CEmitter::visit(Loop& e)
 {
-    if (e.init) { emit(nl(), eval(e.init)); }
+    if (e.init) { emit(nl(), eval(e.init), nl(), ";"); }
 
     emit(nl(), "while(1) {");
     auto parent = enter_block();
@@ -187,7 +186,7 @@ CodeSeg CEmitter::visit(Loop& e)
     auto child = exit_block(parent);
     emit(child, nl(), "}");
 
-    if (e.post) { emit(nl(), eval(e.post)); }
+    if (e.post) { emit(nl(), eval(e.post), nl(), ";"); }
     emit(nl());
 
     return eval(e.output);
@@ -195,7 +194,7 @@ CodeSeg CEmitter::visit(Loop& e)
 
 CodeSeg CEmitter::visit(StructGEP& e)
 {
-    return code("&", eval(e.addr), "->_", to_string(e.col));
+    return code("(" "&", eval(e.addr), "->_", to_string(e.col), ")");
 }
 
 CodeSeg CEmitter::visit(FetchDataPtr& e)
