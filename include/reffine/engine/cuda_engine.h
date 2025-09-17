@@ -14,6 +14,7 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/IR/Module.h"
 
 using namespace std;
 using namespace llvm;
