@@ -41,10 +41,16 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
     this->assign(idx_addr, idx_alloc);
     this->map_sym(idx_addr, idx_addr);
 
-    // Popular iter_elem_map
+    // Populate iter_elem_map
+    // Used for lowering Element expressions
     for (auto& [vec, idx] : ispace->vec_idxs(_load(idx_addr))) {
         this->_vec_iter_idx_map[vec][iter] = idx;
     }
+
+    // Populate additional symbols
+    // Used for helping with vectorization
+    // Loop boundary condition needs to be assigned to a variable
+    // in order for clang to vectorize it
 
     // Derive op iterator from loop idx
     auto loop_iter = _sym(iter->name, iter);

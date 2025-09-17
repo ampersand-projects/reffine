@@ -39,7 +39,7 @@ Expr IterSpace::_is_alive(Expr idx) { return _true(); }
 
 Expr IterSpace::_next(Expr idx) { return _add(idx, _const(this->type, 1)); }
 
-VecIdxs IterSpace::_vec_idxs(Expr idx) { return VecIdxs{}; }
+SymExprs IterSpace::_vec_idxs(Expr idx) { return SymExprs{}; }
 
 Expr VecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
 
@@ -64,9 +64,9 @@ Expr VecSpace::_is_alive(Expr idx) { return _lt(idx, _len(this->vec)); }
 
 Expr VecSpace::_next(Expr idx) { return _add(idx, _idx(1)); }
 
-VecIdxs VecSpace::_vec_idxs(Expr idx)
+SymExprs VecSpace::_vec_idxs(Expr idx)
 {
-    return VecIdxs{make_pair(this->vec, idx)};
+    return SymExprs{make_pair(this->vec, idx)};
 }
 
 Expr SuperSpace::_lower_bound() { return this->ispace->lower_bound(); }
@@ -89,7 +89,7 @@ Expr SuperSpace::_is_alive(Expr idx) { return this->ispace->is_alive(idx); }
 
 Expr SuperSpace::_next(Expr idx) { return this->ispace->next(idx); }
 
-VecIdxs SuperSpace::_vec_idxs(Expr idx) { return this->ispace->vec_idxs(idx); }
+SymExprs SuperSpace::_vec_idxs(Expr idx) { return this->ispace->vec_idxs(idx); }
 
 Expr LBoundSpace::_lower_bound()
 {
@@ -149,9 +149,9 @@ Expr JointSpace::_next(Expr idx)
                      _new(vector<Expr>{new_lidx, new_ridx})));
 }
 
-VecIdxs JointSpace::_vec_idxs(Expr idx)
+SymExprs JointSpace::_vec_idxs(Expr idx)
 {
-    VecIdxs vec_idxs;
+    SymExprs vec_idxs;
 
     auto l_vec_idxs = this->left->vec_idxs(_get(idx, 0));
     auto r_vec_idxs = this->right->vec_idxs(_get(idx, 1));

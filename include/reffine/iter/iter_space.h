@@ -8,7 +8,7 @@ using namespace std;
 
 namespace reffine {
 
-using VecIdxs = vector<pair<Expr, Expr>>;
+using SymExprs = vector<pair<Sym, Expr>>;
 
 struct IterSpace {
     const DataType type;
@@ -61,7 +61,7 @@ struct IterSpace {
         return new_idx;
     }
 
-    VecIdxs vec_idxs(Expr idx) { return this->_vec_idxs(idx); }
+    SymExprs vec_idxs(Expr idx) { return this->_vec_idxs(idx); }
 
 protected:
     virtual Expr _lower_bound();
@@ -71,7 +71,7 @@ protected:
     virtual Expr _iter_to_idx(Expr);
     virtual Expr _is_alive(Expr);
     virtual Expr _next(Expr);
-    virtual VecIdxs _vec_idxs(Expr);
+    virtual SymExprs _vec_idxs(Expr);
 };
 using ISpace = shared_ptr<IterSpace>;
 
@@ -92,7 +92,7 @@ private:
     Expr _iter_to_idx(Expr) final;
     Expr _is_alive(Expr) final;
     Expr _next(Expr) final;
-    VecIdxs _vec_idxs(Expr) final;
+    SymExprs _vec_idxs(Expr) final;
 };
 
 struct SuperSpace : public IterSpace {
@@ -108,7 +108,7 @@ protected:
     Expr _iter_to_idx(Expr) override;
     Expr _is_alive(Expr) override;
     Expr _next(Expr) override;
-    VecIdxs _vec_idxs(Expr) final;
+    SymExprs _vec_idxs(Expr) final;
 };
 
 struct BoundSpace : public SuperSpace {
@@ -151,7 +151,7 @@ protected:
     Expr _idx_to_iter(Expr) final;
     Expr _iter_to_idx(Expr) final;
     Expr _next(Expr) final;
-    VecIdxs _vec_idxs(Expr) final;
+    SymExprs _vec_idxs(Expr) final;
 };
 
 struct UnionSpace : public JointSpace {
