@@ -58,8 +58,9 @@ CUmodule CudaEngine::Build(Module& llmod)
         llvm::TargetRegistry::lookupTarget("nvptx64-nvidia-cuda", Error);
 
     llvm::TargetOptions opt;
+    llvm::Triple TT("nvptx64-nvidia-cuda");
     llvm::TargetMachine* TM =
-        Target->createTargetMachine("nvptx64-nvidia-cuda", "sm_75",
+        Target->createTargetMachine(TT, "sm_75",
                                     "+ptx81",  // PTX version
                                     opt, llvm::Reloc::Static);
 

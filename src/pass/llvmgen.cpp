@@ -74,11 +74,9 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
             return StructType::get(llctx(), lltypes);
         }
         case BaseType::PTR:
-            return PointerType::get(lltype(type.dtypes[0]), 0);
+            return PointerType::get(llctx(), 0);
         case BaseType::VECTOR:
-            return PointerType::get(
-                llvm::StructType::getTypeByName(llctx(), "struct.ArrowTable"),
-                0);
+            return PointerType::get(llctx(), 0);
         case BaseType::UNKNOWN:
         default:
             throw std::runtime_error("Invalid type");
