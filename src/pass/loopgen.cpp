@@ -146,6 +146,13 @@ Expr LoopGen::visit(Reduce& red)
     auto state_addr = _sym("state_addr", state_alloc);
     this->assign(state_addr, state_alloc);
 
+    // Output
+    auto output = _sel(
+        tmp_loop->body_cond,
+        red.acc(_load(state_addr), tmp_loop->output),
+        _load(state_addr)
+    );
+
     // Build reduce loop
     auto red_loop = _loop(state_addr);
     red_loop->init = _stmts(vector<Stmt>{
@@ -154,9 +161,8 @@ Expr LoopGen::visit(Reduce& red)
     });
     red_loop->incr = tmp_loop->incr;
     red_loop->exit_cond = tmp_loop->exit_cond;
-    red_loop->body_cond = tmp_loop->body_cond;
-    red_loop->body =
-        _store(state_addr, red.acc(_load(state_addr), tmp_loop->output));
+    red_loop->body_cond = nullptr;
+    red_loop->body = _store(state_addr, output);
 
     auto red_loop_sym = _sym("red_loop", red_loop);
     this->assign(red_loop_sym, red_loop);
