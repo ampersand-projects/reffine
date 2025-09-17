@@ -14,7 +14,9 @@ public:
     CEmitter(unique_ptr<IREmitterCtx> ctx)
         : IREmitter(std::move(ctx)), _header(make_shared<BlockSeg>())
     {
-        this->_header->emit("#include \"vinstr/internal.cpp\"", nl(), nl());
+        this->_header->emit("#include <algorithm>", nl());
+        this->_header->emit("#include \"vinstr/internal.cpp\"", nl());
+        this->_header->emit(nl());
     }
 
     static string Build(Stmt);

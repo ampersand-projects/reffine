@@ -82,12 +82,10 @@ arrow::Result<shared_ptr<ArrowTable2>> load_arrow_file(string filename)
 }
 
 
-arrow::Status query_arrow_file(ArrowTable& in_table, void (*query_fn)(long*, void*))
+arrow::Status query_arrow_file(shared_ptr<ArrowTable> in_table, void (*query_fn)(long*, void*))
 {
-    auto& in_array = in_table.array;
-
     long sum;
-    query_fn(&sum, &in_array);
+    query_fn(&sum, in_table.get());
     cout << "SUM: " << sum << endl;
 
     return arrow::Status::OK();
@@ -506,7 +504,7 @@ int main()
         }
     }
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
-    auto op = transform_op(tbl);
+    auto op = vector_op();
     auto loopgen = LoopGen();
     loopgen.eval(op);
     auto loop = loopgen.ctx().out_func;
@@ -523,8 +521,8 @@ int main()
     jit->Optimize(*llmod);
     jit->AddModule(std::move(llmod));
 
-    auto query_fn = jit->Lookup<void (*)(void*, void*)>(op->name);
-    auto status = query_arrow_file2(tbl, query_fn);
+    auto query_fn = jit->Lookup<void (*)(long*, void*)>(op->name);
+    auto status = query_arrow_file(tbl, query_fn);
 
     if (!status.ok()) {
         cerr << status.ToString() << endl;
