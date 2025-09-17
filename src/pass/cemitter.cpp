@@ -11,13 +11,15 @@ string CEmitter::get_type_str(DataType dt)
         if (this->_type_name_map.find(dt) == this->_type_name_map.end()) {
             string struct_str = "struct {";
             for (size_t i = 0; i < dt.dtypes.size(); i++) {
-                struct_str += get_type_str(dt.dtypes[i]) + " _" + to_string(i) + "; ";
+                struct_str +=
+                    get_type_str(dt.dtypes[i]) + " _" + to_string(i) + "; ";
             }
             struct_str += "}";
 
             auto type_name =
                 "_" + to_string(this->_type_name_map.size()) + "_t";
-            this->_header->emit("typedef ", struct_str, " ", type_name, ";", nl(), nl());
+            this->_header->emit("typedef ", struct_str, " ", type_name, ";",
+                                nl(), nl());
             this->_type_name_map[dt] = type_name;
         }
         return this->_type_name_map.at(dt);
@@ -78,6 +80,8 @@ CodeSeg CEmitter::visit(Select& e)
 
 CodeSeg CEmitter::visit(Const& cnst)
 {
+    auto type_str = cnst.type.cppstr();
+
     switch (cnst.type.btype) {
         case BaseType::BOOL:
             return code(cnst.val ? "true" : "false");
@@ -86,15 +90,15 @@ CodeSeg CEmitter::visit(Const& cnst)
         case BaseType::INT32:
         case BaseType::INT64:
         case BaseType::IDX:
-            return code(cnst.type.cppstr(), "(", to_string((int64_t)cnst.val), ")");
+            return code(type_str, "(", to_string((int64_t)cnst.val), ")");
         case BaseType::UINT8:
         case BaseType::UINT16:
         case BaseType::UINT32:
         case BaseType::UINT64:
-            return code(cnst.type.cppstr(), "(", to_string((uint64_t)cnst.val), ")");
+            return code(type_str, "(", to_string((uint64_t)cnst.val), ")");
         case BaseType::FLOAT32:
         case BaseType::FLOAT64:
-            return code(cnst.type.cppstr(), "(", to_string(cnst.val), ")");
+            return code(type_str, "(", to_string(cnst.val), ")");
         default:
             throw std::runtime_error("Invalid constant type");
     }
@@ -194,7 +198,7 @@ CodeSeg CEmitter::visit(Loop& e)
 
 CodeSeg CEmitter::visit(StructGEP& e)
 {
-    return code("(" "&", eval(e.addr), "->_", to_string(e.col), ")");
+    return code("(", "&", eval(e.addr), "->_", to_string(e.col), ")");
 }
 
 CodeSeg CEmitter::visit(FetchDataPtr& e)
