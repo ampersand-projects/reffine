@@ -82,7 +82,7 @@ arrow::Result<shared_ptr<ArrowTable2>> load_arrow_file(string filename)
 }
 
 
-arrow::Status query_arrow_file(shared_ptr<ArrowTable> in_table, void (*query_fn)(long*, void*))
+arrow::Status query_arrow_file(shared_ptr<ArrowTable> in_table, void (*query_fn)(void*, void*))
 {
     long sum;
     query_fn(&sum, in_table.get());
@@ -473,9 +473,9 @@ int main()
         }
     }
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
-    auto op = vector_op(tbl);
-    auto query_fn = compile_op<void (*)(long*, void*)>(op);
-    auto status = query_arrow_file(tbl, query_fn);
+    auto op = transform_op(tbl);
+    auto query_fn = compile_op<void (*)(void*, void*)>(op);
+    auto status = query_arrow_file2(tbl, query_fn);
 
     if (!status.ok()) {
         cerr << status.ToString() << endl;

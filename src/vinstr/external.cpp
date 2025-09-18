@@ -3,4 +3,7 @@
 
 using namespace reffine;
 
-ArrowTable* make_vector(uint32_t mem_id) { return memman.get_table(mem_id); }
+ArrowTable* make_vector(int64_t len, uint32_t mem_id)
+{
+    return memman.get_table(mem_id, len);
+}
