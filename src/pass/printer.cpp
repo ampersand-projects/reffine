@@ -290,7 +290,8 @@ void IRPrinter::Visit(Stmts& stmts)
 
 void IRPrinter::Visit(Alloc& alloc)
 {
-    ostr << "alloc " << alloc.type.deref().str();
+    ostr << "alloc " << alloc.type.deref().str() << " ";
+    alloc.size->Accept(*this);
 }
 
 void IRPrinter::Visit(Load& load) { emitfunc("load", vector<Expr>{load.addr, load.offset}); }
