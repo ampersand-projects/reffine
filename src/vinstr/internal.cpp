@@ -12,51 +12,43 @@ int64_t set_vector_len(ArrowTable* tbl, int64_t len)
     return arr->length;
 }
 
-static bool is_valid(ArrowArray* arr, int64_t idx)
+uint16_t* get_vector_bit_buf(ArrowTable* tbl, uint32_t col)
 {
-    auto bitmap = (char*)arr->buffers[0];
-    return (arr->null_count == 0) || (bitmap[idx / 8] & (1 << (idx % 8)));
-}
-
-static void set_valid(ArrowArray* arr, int64_t idx)
-{
-    auto bitmap = (char*)arr->buffers[0];
-    bitmap[idx / 8] |= (1 << (idx % 8));
-}
-
-static void set_invalid(ArrowArray* arr, int64_t idx)
-{
-    auto bitmap = (char*)arr->buffers[0];
-    bitmap[idx / 8] &= ~(1 << (idx % 8));
-    arr->null_count++;
-}
-
-bool get_vector_null_bit(ArrowTable* tbl, int64_t idx, uint32_t col)
-{
-    auto* arr = tbl->array;
-    return is_valid(arr, idx) && is_valid(arr->children[col], idx);
-}
-
-bool set_vector_null_bit(ArrowTable* tbl, int64_t idx, bool validity,
-                         uint32_t col)
-{
-    auto* arr = tbl->array;
-
-    // only setting the bitmap of children as arrow::ImportRecordBatch
-    // disallows struct-level positive null count
-    if (validity) {
-        set_valid(arr->children[col], idx);
-    } else {
-        set_invalid(arr->children[col], idx);
-    }
-
-    return validity;
+    return (uint16_t*) tbl->array->children[col]->buffers[0];
 }
 
 void* get_vector_data_buf(ArrowTable* tbl, uint32_t col)
 {
-    auto* arr = tbl->array;
-    return (void*)arr->children[col]->buffers[1];
+    return (void*) tbl->array->children[col]->buffers[1];
+}
+
+bool get_null_bit(uint16_t* bitmap, int64_t idx)
+{
+    return !bitmap || (bitmap[idx >> 4] & (1u << (idx & 15)));
+}
+
+void set_null_bit(uint16_t* bitmap, int64_t idx, bool validity)
+{
+    if (bitmap) {
+        uint16_t mask = 1u << (idx & 15);
+        uint16_t* byte = &bitmap[idx >> 4];
+        *byte = (*byte & ~mask) | (-validity & mask);
+    }
+}
+
+bool get_vector_null_bit(ArrowTable* tbl, int64_t idx, uint32_t col)
+{
+    auto* bitmap = get_vector_bit_buf(tbl, col);
+    return get_null_bit(bitmap, idx);
+}
+
+void set_vector_null_bit(ArrowTable* tbl, int64_t idx, bool validity,
+                         uint32_t col)
+{
+    // only setting the bitmap of children as arrow::ImportRecordBatch
+    // disallows struct-level positive null count
+    auto* bitmap = get_vector_bit_buf(tbl, col);
+    set_null_bit(bitmap, idx, validity);
 }
 
 int64_t vector_lookup(ArrowTable* tbl, int64_t idx)
