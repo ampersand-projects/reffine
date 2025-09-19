@@ -355,14 +355,15 @@ Value* LLVMGen::visit(Alloc& alloc)
 
 Value* LLVMGen::visit(Load& load)
 {
-    auto addr = eval(load.addr);
-    auto addr_type = lltype(load.addr->type.deref());
-    return CreateLoad(addr_type, addr);
+    auto type = lltype(load.addr->type.deref());
+    auto addr = builder()->CreateGEP(type, eval(load.addr), eval(load.offset));
+    return CreateLoad(type, addr);
 }
 
 Value* LLVMGen::visit(Store& store)
 {
-    auto addr = eval(store.addr);
+    auto type = lltype(store.addr->type.deref());
+    auto addr = builder()->CreateGEP(type, eval(store.addr), eval(store.offset));
     auto val = eval(store.val);
     return CreateStore(val, addr);
 }
