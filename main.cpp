@@ -2,6 +2,7 @@
 #include <memory>
 #include <fstream>
 #include <iomanip>
+#include <chrono>
 #include <sys/resource.h>
 
 #include <z3++.h>
@@ -43,6 +44,10 @@
 using namespace reffine;
 using namespace std;
 using namespace reffine::reffiner;
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::duration;
+using std::chrono::microseconds;
 
 arrow::Status csv_to_arrow()
 {
@@ -85,8 +90,13 @@ arrow::Result<shared_ptr<ArrowTable2>> load_arrow_file(string filename)
 arrow::Status query_arrow_file(shared_ptr<ArrowTable> in_table, void (*query_fn)(void*, void*))
 {
     long sum;
+    auto t1 = high_resolution_clock::now();
     query_fn(&sum, in_table.get());
+    auto t2 = high_resolution_clock::now();
     cout << "SUM: " << sum << endl;
+
+    auto us_int = duration_cast<microseconds>(t2 - t1);
+    std::cout << "Time: " << us_int.count() << "us\n";
 
     return arrow::Status::OK();
 }
@@ -95,10 +105,15 @@ arrow::Status query_arrow_file2(shared_ptr<ArrowTable> in_table, void (*query_fn
 {
     ArrowTable* out_table;
 
+    auto t1 = high_resolution_clock::now();
     query_fn(&out_table, in_table.get());
+    auto t2 = high_resolution_clock::now();
 
     ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(out_table->array, out_table->schema));
     cout << "Output: " << endl << res->ToString() << endl;
+
+    auto us_int = duration_cast<microseconds>(t2 - t1);
+    std::cout << "Time: " << us_int.count() << "us\n";
 
     return arrow::Status::OK();
 }
@@ -352,6 +367,7 @@ int main()
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
     auto op = transform_op(tbl);
     auto query_fn = compile_op<void (*)(void*, void*)>(op);
+
     auto status = query_arrow_file2(tbl, query_fn);
 
     if (!status.ok()) {
