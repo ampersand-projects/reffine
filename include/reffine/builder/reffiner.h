@@ -127,6 +127,7 @@ REGISTER_EXPR(_setlen, SetLength)
 REGISTER_EXPR(_isval, IsValid)
 REGISTER_EXPR(_setval, SetValid)
 REGISTER_EXPR(_make, MakeVector)
+REGISTER_EXPR(_finalize, FinalizeVector)
 
 // CUDA
 REGISTER_EXPR(_tidx, ThreadIdx)

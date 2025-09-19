@@ -43,10 +43,12 @@ int64_t vector_locate(ArrowTable*, int64_t);
 REFFINE_VINSTR_ATTR
 int64_t* get_elem_ptr(int64_t*, int64_t);
 
+REFFINE_VINSTR_ATTR
+void finalize_vector(ArrowTable*, bool*, int64_t);
+
 /**
  * External
  */
-REFFINE_VINSTR_ATTR
 ArrowTable* make_vector(int64_t, uint32_t);
 
 }  // extern "C"

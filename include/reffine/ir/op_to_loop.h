@@ -52,7 +52,7 @@ struct IsValid : public Call {
 
 struct SetValid : public Call {
     SetValid(Expr vec, Expr idx, Expr validity, size_t col)
-        : Call("set_vector_null_bit", types::BOOL,
+        : Call("set_vector_null_bit", types::VOID,
                vector<Expr>{vec, idx, validity,
                             make_shared<Const>(types::UINT32, col)})
     {
@@ -70,6 +70,16 @@ struct MakeVector : public Call {
     {
         ASSERT(type.is_vector());
         ASSERT(len->type == types::IDX);
+    }
+};
+
+struct FinalizeVector : public Call {
+    FinalizeVector(Expr vec, Expr bytemap, Expr len)
+        : Call("finalize_vector", types::VOID, vector<Expr>{vec, bytemap, len})
+    {
+        ASSERT(vec->type.is_vector());
+        ASSERT(bytemap->type.deref() == types::BOOL);
+        ASSERT(len->type.is_idx());
     }
 };
 

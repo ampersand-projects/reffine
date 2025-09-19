@@ -66,3 +66,27 @@ int64_t vector_locate(ArrowTable* tbl, int64_t t)
 }
 
 int64_t* get_elem_ptr(int64_t* arr, int64_t idx) { return arr + idx; }
+
+void finalize_vector(ArrowTable* tbl, bool* bytemap, int64_t len)
+{
+    auto* arr = tbl->array;
+
+    for (int64_t col = 0; col < arr->n_children; col++) {
+        int64_t i = 0;
+        int64_t null_count = 0;
+        while(i < len) {
+            for (int64_t j=0; j<16; j++) {
+                set_vector_null_bit(tbl, i, bytemap[i], col);
+                if (!bytemap[i]) {
+                    null_count++;
+                }
+                i++;
+            }
+        }
+
+        arr->children[col]->null_count = null_count;
+        arr->children[col]->length = len;
+    }
+
+    arr->length = len;
+}
