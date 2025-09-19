@@ -242,10 +242,10 @@ CodeSeg CEmitter::visit(Func& fn)
     return this->_code;
 }
 
-string CEmitter::Build(Stmt stmt)
+string CEmitter::Build(Expr expr)
 {
     CEmitter cemitter(make_unique<IREmitterCtx>());
     auto code = make_shared<LineSeg>();
-    code->emit(cemitter._header, cemitter.eval(stmt));
+    code->emit(cemitter._header, cemitter.eval(expr));
     return code->to_string(-1);
 }

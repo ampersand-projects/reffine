@@ -37,7 +37,6 @@ public:
     static string Build(llvm::Module&);
 
     void Visit(SymNode&) final;
-    void Visit(StmtExprNode&) final;
     void Visit(Stmts&) final;
     void Visit(Func&) final;
     void Visit(Call&) final;

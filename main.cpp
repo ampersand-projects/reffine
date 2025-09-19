@@ -174,11 +174,11 @@ shared_ptr<Func> basic_transform_kernel()
 
     auto loop = _loop(_load(vec_out_sym));
 
-    loop->init = _stmts(vector<Stmt>{
+    loop->init = _stmts(vector<Expr>{
         idx_alloc,
         _store(idx_addr, idx_start),
     });
-    loop->body = _stmts(vector<Stmt>{
+    loop->body = _stmts(vector<Expr>{
         _store(out_ptr, _add(_i64(1), val)),
         _store(idx_addr, idx + _idx(1)),
     });

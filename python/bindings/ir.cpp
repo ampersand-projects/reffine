@@ -61,10 +61,8 @@ PYBIND11_MODULE(ir, m)
 
     /* StmtNode and Derived Structures Declarations
      */
-    py::class_<StmtNode, Stmt>(m, "_stmt");
-    py::class_<ExprNode, Expr, StmtNode>(m, "_expr");
-    py::class_<StmtExprNode, StmtExpr, ExprNode>(m, "_stmtexpr")
-        .def(py::init<Stmt>());
+    py::class_<ExprNode, Expr>(m, "_expr");
+    py::class_<StmtNode, Stmt, ExprNode>(m, "_stmt");
 
     /* Symbol Definition */
     py::class_<SymNode, Sym, ExprNode>(m, "_sym")
@@ -93,8 +91,8 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(NotNull, ExprNode, m, "_notnull", Expr)
 
     /* Statements */
-    REGISTER_CLASS(Stmts, StmtNode, m, "_stmts", vector<Stmt>)
-    REGISTER_CLASS(IfElse, StmtNode, m, "_ifelse", Expr, Stmt, Stmt)
+    REGISTER_CLASS(Stmts, StmtNode, m, "_stmts", vector<Expr>)
+    REGISTER_CLASS(IfElse, StmtNode, m, "_ifelse", Expr, Expr, Expr)
     REGISTER_CLASS(NoOp, StmtNode, m, "_noop")
     REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr, Expr)
     py::class_<Func, shared_ptr<Func>, StmtNode>(m, "_func")

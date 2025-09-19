@@ -21,8 +21,6 @@ CodeSeg IRPrinter2::visit(Sym sym)
     return lhs;
 }
 
-CodeSeg IRPrinter2::visit(StmtExprNode& e) { return eval(e.stmt); }
-
 CodeSeg IRPrinter2::visit(Stmts& s)
 {
     for (auto& stmt : s.stmts) { emit(nl(), eval(stmt)); }
@@ -296,8 +294,8 @@ CodeSeg IRPrinter2::visit(Func& fn)
     return this->_code;
 }
 
-string IRPrinter2::Build(Stmt stmt)
+string IRPrinter2::Build(Expr expr)
 {
     IRPrinter2 printer2(make_unique<IREmitterCtx>());
-    return printer2.eval(stmt)->to_string(-1);
+    return printer2.eval(expr)->to_string(-1);
 }

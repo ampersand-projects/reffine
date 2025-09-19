@@ -28,13 +28,13 @@ Expr LoadStoreExpand::visit(Store& store)
         auto addr = eval(store.addr);
         auto val = eval(store.val);
 
-        vector<Stmt> stmt_list;
+        vector<Expr> stmt_list;
         for (size_t i = 0; i < store.val->type.dtypes.size(); i++) {
             stmt_list.push_back(
                 eval(_store(_structgep(addr, i), _get(val, i))));
         }
 
-        return _stmtexpr(_stmts(stmt_list));
+        return _stmts(stmt_list);
     } else {
         return IRClone::visit(store);
     }

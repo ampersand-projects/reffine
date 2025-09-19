@@ -10,7 +10,7 @@ void CanonPass::Visit(Loop& loop)
     IRPass::Visit(loop);
 
     if (loop.incr) {
-        loop.body = _stmts(vector<Stmt>{loop.body, loop.incr});
+        loop.body = _stmts(vector<Expr>{loop.body, loop.incr});
 
         loop.incr = nullptr;
     }
@@ -30,7 +30,7 @@ void CanonPass::Visit(Func& func)
         auto output_addr = _sym("output_addr", func.output->type.ptr());
         func.inputs.insert(func.inputs.begin(), output_addr);
 
-        func.output = _stmtexpr(_store(output_addr, func.output));
+        func.output = _store(output_addr, func.output);
     }
 }
 

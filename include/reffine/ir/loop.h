@@ -131,10 +131,10 @@ private:
 
 struct Loop : public ExprNode {
     // Loop initialization
-    Stmt init = nullptr;
+    Expr init = nullptr;
 
     // Loop increment
-    Stmt incr = nullptr;
+    Expr incr = nullptr;
 
     // Exit condition
     Expr exit_cond = nullptr;
@@ -143,10 +143,10 @@ struct Loop : public ExprNode {
     Expr body_cond = nullptr;
 
     // Lopp body
-    Stmt body = nullptr;
+    Expr body = nullptr;
 
     // Loop post
-    Stmt post = nullptr;
+    Expr post = nullptr;
 
     // Loop output
     Expr output;

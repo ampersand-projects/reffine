@@ -92,8 +92,6 @@ public:
     {
     }
 
-    void Visit(StmtExprNode& expr) override { expr.stmt->Accept(*this); }
-
     void Visit(Select& expr) override
     {
         expr.cond->Accept(*this);

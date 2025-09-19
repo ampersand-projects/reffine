@@ -33,7 +33,7 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 
     auto ispace = Reffine::Build(op, this->ctx().in_sym_tbl);
 
-    vector<Stmt> loop_inits;
+    vector<Expr> loop_inits;
 
     // Loop index initialization
     auto idx_init = eval(ispace->iter_to_idx(ispace->lower_bound()));
@@ -113,7 +113,7 @@ Expr LoopGen::visit(Op& op)
     this->assign(bytemap_sym, bytemap);
 
     // Write the output to the out_vec
-    vector<Stmt> body_stmts;
+    vector<Expr> body_stmts;
     for (size_t i = 0; i < outputs.size(); i++) {
         auto vec_ptr = _fetch(out_vec_sym, i);
         body_stmts.push_back(_store(vec_ptr, outputs[i], _load(out_vec_idx_addr)));
@@ -122,18 +122,18 @@ Expr LoopGen::visit(Op& op)
 
     // Build loop
     auto loop = _loop(out_vec_sym);
-    loop->init = _stmts(vector<Stmt>{
+    loop->init = _stmts(vector<Expr>{
         tmp_loop->init,
         _store(out_vec_idx_addr, _idx(0)),
         out_vec_sym,
         bytemap_sym,
     });
-    loop->incr = _stmts(vector<Stmt>{
+    loop->incr = _stmts(vector<Expr>{
         tmp_loop->incr,
         _store(out_vec_idx_addr, _add(_load(out_vec_idx_addr), _idx(1)))});
     loop->exit_cond = tmp_loop->exit_cond;
     loop->body = _stmts(body_stmts);
-    loop->post = _stmts(vector<Stmt>{
+    loop->post = _stmts(vector<Expr>{
         _finalize(out_vec_sym, bytemap_sym, _load(out_vec_idx_addr)),
     });
 
@@ -159,7 +159,7 @@ Expr LoopGen::visit(Reduce& red)
 
     // Build reduce loop
     auto red_loop = _loop(state_addr);
-    red_loop->init = _stmts(vector<Stmt>{
+    red_loop->init = _stmts(vector<Expr>{
         tmp_loop->init,
         _store(state_addr, red.init()),
     });
