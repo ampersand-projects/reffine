@@ -330,18 +330,10 @@ Value* LLVMGen::visit(IfElse& ifelse)
 
 Value* LLVMGen::visit(NoOp&) { return nullptr; }
 
-Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
+Value* LLVMGen::visit(FetchDataPtr& e)
 {
-    auto vec_val = eval(fetch_data_ptr.vec);
-    auto idx_val = eval(fetch_data_ptr.idx);
-    auto col_val = ConstantInt::get(lltype(types::UINT32), fetch_data_ptr.col);
-
-    auto buf_addr = llcall("get_vector_data_buf", lltype(fetch_data_ptr),
-                           {vec_val, col_val});
-    auto data_addr = builder()->CreateGEP(lltype(fetch_data_ptr.type.deref()),
-                                          buf_addr, idx_val);
-
-    return data_addr;
+    auto col_val = make_shared<Const>(types::UINT32, e.col);
+    return eval(make_shared<Call>("get_vector_data_buf", e.type, vector<Expr>{e.vec, col_val}));
 }
 
 Value* LLVMGen::visit(Call& call)

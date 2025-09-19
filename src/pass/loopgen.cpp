@@ -18,8 +18,7 @@ Expr LoopGen::visit(Element& elem)
 
     vector<Expr> vals;
     for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
-        auto data_ptr = _fetch(vec, idx, i);
-        auto data = _load(data_ptr);
+        auto data = _load(_fetch(vec, i), idx);
         vals.push_back(data);
     }
 
@@ -108,8 +107,8 @@ Expr LoopGen::visit(Op& op)
     // Write the output to the out_vec
     vector<Stmt> body_stmts;
     for (size_t i = 0; i < outputs.size(); i++) {
-        auto vec_ptr = _fetch(out_vec_sym, _load(out_vec_idx_addr), i);
-        body_stmts.push_back(_store(vec_ptr, outputs[i]));
+        auto vec_ptr = _fetch(out_vec_sym, i);
+        body_stmts.push_back(_store(vec_ptr, outputs[i], _load(out_vec_idx_addr)));
         body_stmts.push_back(
             _setval(out_vec_sym, _load(out_vec_idx_addr), body_cond_sym, i));
     }

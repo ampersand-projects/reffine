@@ -293,11 +293,11 @@ void IRPrinter::Visit(Alloc& alloc)
     ostr << "alloc " << alloc.type.deref().str();
 }
 
-void IRPrinter::Visit(Load& load) { emitfunc("load", vector<Expr>{load.addr}); }
+void IRPrinter::Visit(Load& load) { emitfunc("load", vector<Expr>{load.addr, load.offset}); }
 
 void IRPrinter::Visit(Store& store)
 {
-    emitfunc("store", vector<Expr>{store.addr, store.val});
+    emitfunc("store", vector<Expr>{store.addr, store.val, store.offset});
 }
 
 void IRPrinter::Visit(AtomicOp& e)
@@ -406,7 +406,7 @@ void IRPrinter::Visit(Loop& loop)
 void IRPrinter::Visit(FetchDataPtr& fetch_data_ptr)
 {
     emitfunc("fetch_data_ptr<" + std::to_string(fetch_data_ptr.col) + ">",
-             {fetch_data_ptr.vec, fetch_data_ptr.idx});
+             {fetch_data_ptr.vec});
 }
 
 string IRPrinter::Build(Stmt stmt)

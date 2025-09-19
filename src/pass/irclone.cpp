@@ -81,10 +81,10 @@ Expr IRClone::visit(Call& call)
 
 Expr IRClone::visit(FetchDataPtr& fetch)
 {
-    return _fetch(eval(fetch.vec), eval(fetch.idx), fetch.col);
+    return _fetch(eval(fetch.vec), fetch.col);
 }
 
-Expr IRClone::visit(Load& load) { return _load(eval(load.addr)); }
+Expr IRClone::visit(Load& load) { return _load(eval(load.addr), eval(load.offset)); }
 
 Expr IRClone::visit(Func& func)
 {
@@ -118,7 +118,7 @@ Expr IRClone::visit(NoOp&) { return _stmtexpr(_noop()); }
 
 Expr IRClone::visit(Store& store)
 {
-    return _stmtexpr(_store(eval(store.addr), eval(store.val)));
+    return _stmtexpr(_store(eval(store.addr), eval(store.val), eval(store.offset)));
 }
 
 Expr IRClone::visit(AtomicOp& op)

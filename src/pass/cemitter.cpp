@@ -166,11 +166,14 @@ CodeSeg CEmitter::visit(Alloc& e)
     return code(var->name);
 }
 
-CodeSeg CEmitter::visit(Load& e) { return code_func("*", {e.addr}); }
+CodeSeg CEmitter::visit(Load& e)
+{
+    return code("(", eval(e.addr), ")[", eval(e.offset), "]");
+}
 
 CodeSeg CEmitter::visit(Store& s)
 {
-    return code("*(", eval(s.addr), ") = ", eval(s.val));
+    return code("(", eval(s.addr), ")[", eval(s.offset), "] = ", eval(s.val));
 }
 
 CodeSeg CEmitter::visit(Loop& e)
@@ -207,8 +210,7 @@ CodeSeg CEmitter::visit(FetchDataPtr& e)
 {
     auto get_data_buf_call = _call("get_vector_data_buf", types::VOID.ptr(),
                                    vector<Expr>{e.vec, _idx(e.col)});
-    auto cast_data_buf = _cast(e.type, get_data_buf_call);
-    return code(eval(cast_data_buf), " + ", eval(e.idx));
+    return eval(_cast(e.type, get_data_buf_call));
 }
 
 CodeSeg CEmitter::visit(NoOp&) { return code(""); }

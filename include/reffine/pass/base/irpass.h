@@ -158,14 +158,22 @@ public:
         stmt.output->Accept(*this);
     }
 
-    void Visit(Alloc& expr) override { expr.size->Accept(*this); }
+    void Visit(Alloc& expr) override
+    {
+        expr.size->Accept(*this);
+    }
 
-    void Visit(Load& expr) override { expr.addr->Accept(*this); }
+    void Visit(Load& expr) override
+    {
+        expr.addr->Accept(*this);
+        expr.offset->Accept(*this);
+    }
 
     void Visit(Store& expr) override
     {
         expr.addr->Accept(*this);
         expr.val->Accept(*this);
+        expr.offset->Accept(*this);
     }
 
     void Visit(AtomicOp& stmt) override
@@ -195,7 +203,6 @@ public:
     void Visit(FetchDataPtr& expr) override
     {
         expr.vec->Accept(*this);
-        expr.idx->Accept(*this);
     }
 
     void Visit(NoOp& stmt) override {}

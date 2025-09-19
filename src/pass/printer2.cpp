@@ -205,11 +205,11 @@ CodeSeg IRPrinter2::visit(Alloc& e)
     return code("alloc ", e.type.deref().str());
 }
 
-CodeSeg IRPrinter2::visit(Load& e) { return code_func("*", {e.addr}); }
+CodeSeg IRPrinter2::visit(Load& e) { return code_func("*", {e.addr, e.offset}); }
 
 CodeSeg IRPrinter2::visit(Store& s)
 {
-    return code("*(", eval(s.addr), ") = ", eval(s.val));
+    return code("*(", eval(s.addr), " + ", eval(s.offset), ") = ", eval(s.val));
 }
 
 CodeSeg IRPrinter2::visit(AtomicOp& e)
@@ -270,7 +270,7 @@ CodeSeg IRPrinter2::visit(Loop& e)
 
 CodeSeg IRPrinter2::visit(FetchDataPtr& e)
 {
-    return code(eval(e.vec), "[", eval(e.idx), "]._" + to_string(e.col));
+    return code(eval(e.vec), "->_" + to_string(e.col));
 }
 
 CodeSeg IRPrinter2::visit(NoOp&) { return code(""); }
