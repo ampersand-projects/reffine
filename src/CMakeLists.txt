@@ -8,6 +8,9 @@ add_compile_definitions(REFFINE_HEADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../inclu
 add_compile_definitions(REFFINE_SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}/")
 
 # Generate vinstr IR for JIT
+#
+# We have two commands that run scripts/gen_vinstr.sh because
+# execute_process is for configure (cmake) and target is for build (make)
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp
     COMMAND ${CMAKE_CXX_COMPILER} -emit-llvm -S
@@ -46,7 +49,6 @@ set(SRC_FILES
     builder/reffiner.cpp
 )
 
-# --- LLVM ---
 find_package(LLVM 21.1.0 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
@@ -61,7 +63,6 @@ set(LLVM_LIBS
     LLVMObject
 )
 
-# --- Z3 ---
 find_package(Z3 REQUIRED)
 message(STATUS "Found Z3 ${Z3_VERSION_STRING}")
 
@@ -82,7 +83,6 @@ target_compile_options(reffine PRIVATE
     -Wall -Wextra -pedantic -Werror -Wno-unused-parameter
 )
 
-# --- CUDA (optional) ---
 if(ENABLE_CUDA)
     find_package(CUDA REQUIRED)
     target_include_directories(reffine SYSTEM PUBLIC ${CUDA_INCLUDE_DIRS})
