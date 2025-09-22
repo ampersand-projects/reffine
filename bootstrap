@@ -7,20 +7,6 @@ LLVM_SRC_DIR="third_party/llvm-project"
 LLVM_BUILD_DIR="${LLVM_SRC_DIR}/build"
 mkdir -p ${LLVM_BUILD_DIR}
 pushd ${LLVM_BUILD_DIR}
-# cmake -DCMAKE_BUILD_TYPE=Release \
-#       -DLLVM_ENABLE_RTTI=ON \
-#       -DLLVM_TARGETS_TO_BUILD="X86;NVPTX" \
-#       -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="NVPTX" \
-#       -DLLVM_ENABLE_BINDINGS=OFF \
-#       -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libc" \
-#       -DLLVM_ENABLE_RUNTIMES="libc;libcxx;libcxxabi;libunwind" \
-#       -DLLVM_ENABLE_ZLIB=OFF \
-#       -DLLVM_ENABLE_ZSTD=OFF \
-#       -DLLVM_ENABLE_TERMINFO=OFF \
-#       -DLLVM_BUILD_LLVM_DYLIB=ON \
-#       -DLLVM_LINK_LLVM_DYLIB=ON \
-#       -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
-#       ../llvm
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DLLVM_ENABLE_RTTI=ON \
       -DLLVM_TARGETS_TO_BUILD="X86;NVPTX" \

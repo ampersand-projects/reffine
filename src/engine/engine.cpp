@@ -48,7 +48,6 @@ void ExecEngine::AddModule(unique_ptr<Module> m)
     }
 }
 
-// LLVMContext& ExecEngine::GetCtx() { return *ctx.getContext(); }
 LLVMContext& ExecEngine::GetCtx() {
     LLVMContext* contextPtr = nullptr;
     ctx.withContextDo([&](LLVMContext* context) {
