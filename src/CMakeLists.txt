@@ -178,6 +178,14 @@
 # endif()
 
 
+
+
+
+
+
+
+### RETRY:
+
 cmake_minimum_required(VERSION 3.20)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -239,7 +247,7 @@ set(LLVM_LIBS
     LLVMExecutionEngine
     LLVMOrcJIT
     LLVMObject
-    LLVMNativeCodeGen
+    # LLVMNativeCodeGen
 )
 
 # --- Z3 ---
@@ -254,8 +262,13 @@ target_include_directories(reffine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
-target_link_libraries(reffine PRIVATE
-    ${LLVM_LIBS}
+#target_link_libraries(reffine PUBLIC
+#    ${LLVM_LIBS}
+#    ${Z3_LIBRARIES}
+#)
+
+target_link_libraries(reffine PUBLIC
+    LLVM
     ${Z3_LIBRARIES}
 )
 
@@ -269,11 +282,11 @@ if(ENABLE_CUDA)
     target_include_directories(reffine SYSTEM PUBLIC ${CUDA_INCLUDE_DIRS})
 
     if(TARGET LLVMNVPTXCodeGen)
-        target_link_libraries(reffine PRIVATE
+        target_link_libraries(reffine PUBLIC
             LLVMNVPTXCodeGen
             LLVMNVPTXDesc
             LLVMNVPTXInfo
-            LLVMNVPTXAsmPrinter
+         #   LLVMNVPTXAsmPrinter
             ${CUDA_CUDA_LIBRARY}
         )
     endif()
