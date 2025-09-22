@@ -55,18 +55,11 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
 add_definitions(${LLVM_DEFINITIONS})
 
-set(LLVM_LIBS
-    LLVMCore
-    LLVMSupport
-    LLVMExecutionEngine
-    LLVMOrcJIT
-    LLVMObject
-)
-
 find_package(Z3 REQUIRED)
 message(STATUS "Found Z3 ${Z3_VERSION_STRING}")
+message(STATUS "Z3_DIR: ${Z3_DIR}")
 
-add_library(reffine SHARED ${SRC_FILES})
+add_library(reffine SHARED ${SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp)
 
 target_include_directories(reffine PUBLIC
     ${LLVM_INCLUDE_DIRS}
@@ -80,7 +73,7 @@ target_link_libraries(reffine PUBLIC
 )
 
 target_compile_options(reffine PRIVATE
-    -Wall -Wextra -pedantic -Werror -Wno-unused-parameter
+    -Wall -Wextra -pedantic -Werror -Wno-unused-parameter ${Z3_COMPONENT_CXX_FLAGS}
 )
 
 if(ENABLE_CUDA)
