@@ -9,5 +9,5 @@ jobs:
     - name: Run clang-format style check for C/C++/Protobuf programs.
       uses: jidicula/clang-format-action@v4.14.0
       with:
-        clang-format-version: "18"
+        clang-format-version: "21"
         exclude-regex: "(third_party|benchmark/DSGen-software-code-3.2.0rc2/|main.cpp)"
