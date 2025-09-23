@@ -53,11 +53,11 @@ find_package(LLVM 21.1.0 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
-add_definitions(${LLVM_DEFINITIONS})
-
-find_package(Z3 REQUIRED)
+find_package(Z3 REQUIRED CONFIG)
 message(STATUS "Found Z3 ${Z3_VERSION_STRING}")
 message(STATUS "Z3_DIR: ${Z3_DIR}")
+
+add_definitions(${LLVM_DEFINITIONS})
 
 add_library(reffine SHARED ${SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp)
 
@@ -80,12 +80,10 @@ if(ENABLE_CUDA)
     find_package(CUDA REQUIRED)
     target_include_directories(reffine SYSTEM PUBLIC ${CUDA_INCLUDE_DIRS})
 
-    if(TARGET LLVMNVPTXCodeGen)
-        target_link_libraries(reffine PUBLIC
-            LLVMNVPTXCodeGen
-            LLVMNVPTXDesc
-            LLVMNVPTXInfo
-            ${CUDA_CUDA_LIBRARY}
-        )
-    endif()
+    target_link_libraries(reffine PUBLIC
+        LLVMNVPTXCodeGen
+        LLVMNVPTXDesc
+        LLVMNVPTXInfo
+        ${CUDA_CUDA_LIBRARY}
+    )
 endif()

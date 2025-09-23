@@ -48,11 +48,10 @@ void ExecEngine::AddModule(unique_ptr<Module> m)
     }
 }
 
-LLVMContext& ExecEngine::GetCtx() {
+LLVMContext& ExecEngine::GetCtx()
+{
     LLVMContext* contextPtr = nullptr;
-    ctx.withContextDo([&](LLVMContext* context) {
-        contextPtr = context;
-    });
+    ctx.withContextDo([&](LLVMContext* context) { contextPtr = context; });
     return *contextPtr;
 }
 

@@ -6,6 +6,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/JITSymbol.h"
+#include "llvm/ExecutionEngine/Orc/AbsoluteSymbols.h"
 #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
 #include "llvm/ExecutionEngine/Orc/Core.h"
 #include "llvm/ExecutionEngine/Orc/ExecutionUtils.h"
@@ -13,9 +14,8 @@
 #include "llvm/ExecutionEngine/Orc/IRTransformLayer.h"
 #include "llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
-#include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/ExecutionEngine/Orc/SelfExecutorProcessControl.h"
-#include "llvm/ExecutionEngine/Orc/AbsoluteSymbols.h"
+#include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManager.h"
@@ -33,9 +33,10 @@ class ExecEngine {
 public:
     ExecEngine(JITTargetMachineBuilder jtmb, DataLayout dl)
         : es(createExecutionSession()),
-          linker(*es, [](const llvm::MemoryBuffer &MB) {
-                return std::make_unique<llvm::SectionMemoryManager>();
-            }),
+          linker(*es,
+                 [](const llvm::MemoryBuffer& MB) {
+                     return std::make_unique<llvm::SectionMemoryManager>();
+                 }),
           compiler(*es, linker,
                    make_unique<ConcurrentIRCompiler>(std::move(jtmb))),
           optimizer(*es, compiler, optimize_module),
