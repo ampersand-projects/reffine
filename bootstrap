@@ -20,7 +20,6 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DLLVM_BUILD_LLVM_DYLIB=ON \
       -DLLVM_LINK_LLVM_DYLIB=ON \
       -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
-      -DCMAKE_DISABLE_FIND_PACKAGE_Clang=ON \
       ../llvm
 make -j $(nproc)
 make install
