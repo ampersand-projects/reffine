@@ -78,6 +78,10 @@ protected:
 };
 using ISpace = shared_ptr<IterSpace>;
 
+struct UniversalSpace : public IterSpace {
+    UniversalSpace(DataType type) : IterSpace(type) {}
+};
+
 struct VecSpace : public IterSpace {
     Sym vec;
 
