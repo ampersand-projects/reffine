@@ -10,6 +10,9 @@ namespace reffine {
 
 using SymExprs = vector<pair<Sym, Expr>>;
 
+struct IterSpace;
+using ISpace = shared_ptr<IterSpace>;
+
 struct IterSpace {
     const DataType type;
 
@@ -65,6 +68,9 @@ struct IterSpace {
 
     SymExprs extra_syms() { return this->_extra_syms(); }
 
+    // An alternative for intersect
+    virtual ISpace apply(ISpace) = 0;
+
 protected:
     virtual Expr _lower_bound();
     virtual Expr _upper_bound();
@@ -76,7 +82,12 @@ protected:
     virtual SymExprs _vec_idxs(Expr);
     virtual SymExprs _extra_syms();
 };
-using ISpace = shared_ptr<IterSpace>;
+
+struct UniversalSpace : public IterSpace {
+    UniversalSpace(DataType type) : IterSpace(type) {}
+
+    ISpace apply(ISpace) final;
+};
 
 struct VecSpace : public IterSpace {
     Sym vec;
@@ -89,6 +100,8 @@ struct VecSpace : public IterSpace {
         ASSERT(vec->type.is_vector());
         ASSERT(vec->type.dim == 1);  // currently only support 1d vectors
     }
+
+    ISpace apply(ISpace) final;
 
 private:
     Expr _lower_bound() final;
@@ -133,6 +146,8 @@ struct BoundSpace : public SuperSpace {
 struct LBoundSpace : public BoundSpace {
     LBoundSpace(ISpace ispace, Expr bound) : BoundSpace(ispace, bound) {}
 
+    ISpace apply(ISpace) final;
+
 private:
     Expr _lower_bound() final;
     Expr _iter_cond(Expr) final;
@@ -140,6 +155,8 @@ private:
 
 struct UBoundSpace : public BoundSpace {
     UBoundSpace(ISpace ispace, Expr bound) : BoundSpace(ispace, bound) {}
+
+    ISpace apply(ISpace) final;
 
 private:
     Expr _upper_bound() final;
@@ -168,6 +185,8 @@ protected:
 struct UnionSpace : public JointSpace {
     UnionSpace(ISpace left, ISpace right) : JointSpace(left, right) {}
 
+    ISpace apply(ISpace) final;
+
 private:
     Expr _lower_bound() final;
     Expr _upper_bound() final;
@@ -177,6 +196,8 @@ private:
 
 struct InterSpace : public JointSpace {
     InterSpace(ISpace left, ISpace right) : JointSpace(left, right) {}
+
+    ISpace apply(ISpace) final;
 
 private:
     Expr _lower_bound() final;

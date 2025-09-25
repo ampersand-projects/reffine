@@ -67,7 +67,7 @@ ISpace Reffine::visit(Sym sym)
 {
     if (sym == op().iters[0]) {
         // return universal space for operator iterator
-        return make_shared<IterSpace>(sym->type);
+        return make_shared<UniversalSpace>(sym->type);
     } else if (sym->type.is_vector()) {
         return make_shared<VecSpace>(sym);
     } else {

@@ -7,7 +7,10 @@ using namespace reffine::reffiner;
 
 ISpace reffine::operator&(ISpace left, ISpace right)
 {
-    return make_shared<InterSpace>(left, right);
+    auto l_on_r = left->apply(right);
+    auto r_on_l = right->apply(left);
+    auto l_and_r = make_shared<InterSpace>(left, right);
+    return l_on_r ? l_on_r : (r_on_l ? r_on_l : l_and_r);
 }
 
 ISpace reffine::operator|(ISpace left, ISpace right)
@@ -42,6 +45,8 @@ Expr IterSpace::_next(Expr idx) { return _add(idx, _const(this->type, 1)); }
 SymExprs IterSpace::_vec_idxs(Expr idx) { return SymExprs{}; }
 
 SymExprs IterSpace::_extra_syms() { return SymExprs{}; }
+
+ISpace UniversalSpace::apply(ISpace ispace) { return ispace; }
 
 Expr VecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
 
@@ -84,6 +89,8 @@ SymExprs VecSpace::_extra_syms()
     return SymExprs{make_pair(this->_vec_len_sym, _len(this->vec))};
 }
 
+ISpace VecSpace::apply(ISpace ispace) { return nullptr; }
+
 Expr SuperSpace::_lower_bound() { return this->ispace->lower_bound(); }
 
 Expr SuperSpace::_upper_bound() { return this->ispace->upper_bound(); }
@@ -120,6 +127,16 @@ Expr LBoundSpace::_iter_cond(Expr idx)
                 this->ispace->iter_cond(idx));
 }
 
+ISpace LBoundSpace::apply(ISpace ispace)
+{
+    auto applied = this->ispace->apply(ispace);
+    if (applied) {
+        return make_shared<LBoundSpace>(applied, this->bound);
+    } else {
+        return nullptr;
+    }
+}
+
 Expr UBoundSpace::_upper_bound()
 {
     auto ub = this->ispace->upper_bound();
@@ -136,6 +153,16 @@ Expr UBoundSpace::_is_alive(Expr idx)
 {
     return _and(_lte(this->idx_to_iter(idx), this->upper_bound()),
                 this->ispace->is_alive(idx));
+}
+
+ISpace UBoundSpace::apply(ISpace ispace)
+{
+    auto applied = this->ispace->apply(ispace);
+    if (applied) {
+        return make_shared<UBoundSpace>(applied, this->bound);
+    } else {
+        return nullptr;
+    }
 }
 
 Expr JointSpace::_idx_to_iter(Expr idx)
@@ -220,6 +247,18 @@ Expr UnionSpace::_is_alive(Expr idx)
     return _or(l_is_alive, r_is_alive);
 }
 
+ISpace UnionSpace::apply(ISpace ispace)
+{
+    auto l_applied = this->left->apply(ispace);
+    auto r_applied = this->right->apply(ispace);
+
+    if (l_applied && r_applied) {
+        return make_shared<UnionSpace>(l_applied, r_applied);
+    } else {
+        return nullptr;
+    }
+}
+
 Expr InterSpace::_lower_bound()
 {
     auto llb = this->left->lower_bound();
@@ -254,4 +293,16 @@ Expr InterSpace::_is_alive(Expr idx)
     auto l_is_alive = this->left->is_alive(_get(idx, 0));
     auto r_is_alive = this->right->is_alive(_get(idx, 1));
     return _and(l_is_alive, r_is_alive);
+}
+
+ISpace InterSpace::apply(ISpace ispace)
+{
+    auto l_applied = this->left->apply(ispace);
+    auto r_applied = this->right->apply(ispace);
+
+    if (l_applied && r_applied) {
+        return make_shared<InterSpace>(l_applied, r_applied);
+    } else {
+        return nullptr;
+    }
 }
