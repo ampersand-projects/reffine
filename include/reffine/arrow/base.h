@@ -40,7 +40,7 @@ struct ArrowSchema2 : public ArrowSchema {
         this->n_children = 0;
         this->children = nullptr;
         this->dictionary = nullptr;
-        this->release = (void (*)(ArrowSchema*)) & arrow_release_schema2;
+        this->release = (void (*)(ArrowSchema*))&arrow_release_schema2;
         this->private_data = pdata;
     }
 
@@ -97,7 +97,7 @@ struct ArrowArray2 : public ArrowArray {
         this->buffers = nullptr;
         this->children = nullptr;
         this->dictionary = nullptr;
-        this->release = (void (*)(ArrowArray*)) & arrow_release_array2;
+        this->release = (void (*)(ArrowArray*))&arrow_release_array2;
         this->private_data = pdata;
     }
 
