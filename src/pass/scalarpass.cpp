@@ -1,4 +1,5 @@
 #include "reffine/pass/scalarpass.h"
+
 #include "reffine/builder/reffiner.h"
 
 using namespace reffine;

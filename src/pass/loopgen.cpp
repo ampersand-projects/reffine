@@ -116,9 +116,11 @@ Expr LoopGen::visit(Op& op)
     vector<Expr> body_stmts;
     for (size_t i = 0; i < outputs.size(); i++) {
         auto vec_ptr = _fetch(out_vec_sym, i);
-        body_stmts.push_back(_store(vec_ptr, outputs[i], _load(out_vec_idx_addr)));
+        body_stmts.push_back(
+            _store(vec_ptr, outputs[i], _load(out_vec_idx_addr)));
     }
-    body_stmts.push_back(_store(bytemap_sym, body_cond_sym, _load(out_vec_idx_addr)));
+    body_stmts.push_back(
+        _store(bytemap_sym, body_cond_sym, _load(out_vec_idx_addr)));
 
     // Build loop
     auto loop = _loop(out_vec_sym);

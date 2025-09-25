@@ -333,7 +333,8 @@ Value* LLVMGen::visit(NoOp&) { return nullptr; }
 Value* LLVMGen::visit(FetchDataPtr& e)
 {
     auto col_val = make_shared<Const>(types::UINT32, e.col);
-    return eval(make_shared<Call>("get_vector_data_buf", e.type, vector<Expr>{e.vec, col_val}));
+    return eval(make_shared<Call>("get_vector_data_buf", e.type,
+                                  vector<Expr>{e.vec, col_val}));
 }
 
 Value* LLVMGen::visit(Call& call)
@@ -363,7 +364,8 @@ Value* LLVMGen::visit(Load& load)
 Value* LLVMGen::visit(Store& store)
 {
     auto type = lltype(store.addr->type.deref());
-    auto addr = builder()->CreateGEP(type, eval(store.addr), eval(store.offset));
+    auto addr =
+        builder()->CreateGEP(type, eval(store.addr), eval(store.offset));
     auto val = eval(store.val);
     return CreateStore(val, addr);
 }

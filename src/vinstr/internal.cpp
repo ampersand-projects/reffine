@@ -14,12 +14,12 @@ int64_t set_vector_len(ArrowTable* tbl, int64_t len)
 
 uint16_t* get_vector_bit_buf(ArrowTable* tbl, uint32_t col)
 {
-    return (uint16_t*) tbl->array->children[col]->buffers[0];
+    return (uint16_t*)tbl->array->children[col]->buffers[0];
 }
 
 void* get_vector_data_buf(ArrowTable* tbl, uint32_t col)
 {
-    return (void*) tbl->array->children[col]->buffers[1];
+    return (void*)tbl->array->children[col]->buffers[1];
 }
 
 bool get_null_bit(uint16_t* bitmap, int64_t idx)
@@ -74,12 +74,10 @@ void finalize_vector(ArrowTable* tbl, bool* bytemap, int64_t len)
     for (int64_t col = 0; col < arr->n_children; col++) {
         int64_t i = 0;
         int64_t null_count = 0;
-        while(i < len) {
-            for (int64_t j=0; j<16; j++) {
+        while (i < len) {
+            for (int64_t j = 0; j < 16; j++) {
                 set_vector_null_bit(tbl, i, bytemap[i], col);
-                if (!bytemap[i]) {
-                    null_count++;
-                }
+                if (!bytemap[i]) { null_count++; }
                 i++;
             }
         }

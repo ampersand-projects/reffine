@@ -203,7 +203,10 @@ CodeSeg IRPrinter2::visit(Alloc& e)
     return code("alloc ", e.type.deref().str(), " ", eval(e.size));
 }
 
-CodeSeg IRPrinter2::visit(Load& e) { return code_func("*", {e.addr, e.offset}); }
+CodeSeg IRPrinter2::visit(Load& e)
+{
+    return code_func("*", {e.addr, e.offset});
+}
 
 CodeSeg IRPrinter2::visit(Store& s)
 {

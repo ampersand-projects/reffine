@@ -294,7 +294,10 @@ void IRPrinter::Visit(Alloc& alloc)
     alloc.size->Accept(*this);
 }
 
-void IRPrinter::Visit(Load& load) { emitfunc("load", vector<Expr>{load.addr, load.offset}); }
+void IRPrinter::Visit(Load& load)
+{
+    emitfunc("load", vector<Expr>{load.addr, load.offset});
+}
 
 void IRPrinter::Visit(Store& store)
 {

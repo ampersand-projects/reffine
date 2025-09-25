@@ -84,7 +84,10 @@ Expr IRClone::visit(FetchDataPtr& fetch)
     return _fetch(eval(fetch.vec), fetch.col);
 }
 
-Expr IRClone::visit(Load& load) { return _load(eval(load.addr), eval(load.offset)); }
+Expr IRClone::visit(Load& load)
+{
+    return _load(eval(load.addr), eval(load.offset));
+}
 
 Expr IRClone::visit(Func& func)
 {
@@ -154,7 +157,8 @@ Expr IRClone::visit(Alloc& alloc)
 
 Expr IRClone::visit(IfElse& ifelse)
 {
-    return _ifelse(eval(ifelse.cond), eval(ifelse.true_body), eval(ifelse.false_body));
+    return _ifelse(eval(ifelse.cond), eval(ifelse.true_body),
+                   eval(ifelse.false_body));
 }
 
 Expr IRClone::visit(Loop& loop)

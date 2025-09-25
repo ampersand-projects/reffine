@@ -156,10 +156,7 @@ public:
         stmt.output->Accept(*this);
     }
 
-    void Visit(Alloc& expr) override
-    {
-        expr.size->Accept(*this);
-    }
+    void Visit(Alloc& expr) override { expr.size->Accept(*this); }
 
     void Visit(Load& expr) override
     {
@@ -198,10 +195,7 @@ public:
         expr.output->Accept(*this);
     }
 
-    void Visit(FetchDataPtr& expr) override
-    {
-        expr.vec->Accept(*this);
-    }
+    void Visit(FetchDataPtr& expr) override { expr.vec->Accept(*this); }
 
     void Visit(NoOp& stmt) override {}
 

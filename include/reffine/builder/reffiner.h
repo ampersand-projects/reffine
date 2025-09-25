@@ -9,7 +9,7 @@
 
 namespace reffine::reffiner {
 
-template<typename T>
+template <typename T>
 struct _expr;
 
 _expr<Add> _expr_add(Expr, Expr);
