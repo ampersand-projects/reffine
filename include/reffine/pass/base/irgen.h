@@ -133,6 +133,10 @@ protected:
     {
         throw runtime_error("NoOp visit not supported");
     }
+    virtual ValTy visit(Define&)
+    {
+        throw runtime_error("Define visit not supported");
+    }
 
     void Visit(Select& expr) final { val() = visit(expr); }
     void Visit(IfElse& stmt) final { val() = visit(stmt); }
@@ -159,6 +163,7 @@ protected:
     void Visit(Loop& expr) final { val() = visit(expr); }
     void Visit(FetchDataPtr& expr) final { val() = visit(expr); }
     void Visit(NoOp& stmt) final { val() = visit(stmt); }
+    void Visit(Define& expr) final { val() = visit(expr); }
     void Visit(Func& stmt) final { val() = visit(stmt); }
     void Visit(SymNode& symbol) override
     {

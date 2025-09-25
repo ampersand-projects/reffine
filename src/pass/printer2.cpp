@@ -273,6 +273,12 @@ CodeSeg IRPrinter2::visit(FetchDataPtr& e)
 
 CodeSeg IRPrinter2::visit(NoOp&) { return code(""); }
 
+CodeSeg IRPrinter2::visit(Define& define)
+{
+    emit(nl(), define.sym->name, " = ", eval(define.val));
+    return code(define.sym->name);
+}
+
 CodeSeg IRPrinter2::visit(Func& fn)
 {
     auto new_ctx = make_unique<IREmitterCtx>(fn.tbl);

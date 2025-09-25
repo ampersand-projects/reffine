@@ -1,7 +1,5 @@
 #include "reffine/pass/scalarpass.h"
-
 #include "reffine/builder/reffiner.h"
-#include "reffine/pass/printer.h"
 
 using namespace reffine;
 using namespace reffine::reffiner;

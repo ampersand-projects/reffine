@@ -205,6 +205,12 @@ public:
 
     void Visit(NoOp& stmt) override {}
 
+    void Visit(Define& define) override
+    {
+        define.sym->Accept(*this);
+        define.val->Accept(*this);
+    }
+
 protected:
     void Visit(SymNode& symbol) override
     {

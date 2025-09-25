@@ -116,6 +116,13 @@ Expr IRClone::visit(GridDim&) { return _gdim(); }
 
 Expr IRClone::visit(NoOp&) { return _noop(); }
 
+Expr IRClone::visit(Define& define)
+{
+    auto new_sym = _sym(define.sym->name, define.sym);
+    this->map_sym(define.sym, new_sym);
+    return _define(new_sym, eval(define.val));
+}
+
 Expr IRClone::visit(Store& store)
 {
     return _store(eval(store.addr), eval(store.val), eval(store.offset));

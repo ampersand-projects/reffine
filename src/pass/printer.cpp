@@ -226,6 +226,13 @@ void IRPrinter::Visit(IfElse& ifelse)
 
 void IRPrinter::Visit(NoOp&) { ostr << "noop"; }
 
+void IRPrinter::Visit(Define& define)
+{
+    ostr << define.sym->name << " = ";
+    define.val->Accept(*this);
+    emitnewline();
+}
+
 void IRPrinter::Visit(Select& select)
 {
     ostr << "(";

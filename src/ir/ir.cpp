@@ -30,6 +30,7 @@ void GridDim::Accept(Visitor& v) { v.Visit(*this); }
 void Loop::Accept(Visitor& v) { v.Visit(*this); }
 void FetchDataPtr::Accept(Visitor& v) { v.Visit(*this); }
 void NoOp::Accept(Visitor& v) { v.Visit(*this); }
+void Define::Accept(Visitor& v) { v.Visit(*this); }
 
 string ExprNode::str()
 {

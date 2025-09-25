@@ -66,6 +66,10 @@ public:
     {
         throw runtime_error("Reduce operation not supported");
     }
+    virtual void Visit(Define&)
+    {
+        throw runtime_error("Define operation not supported");
+    }
 
     /**
      * Loop IR

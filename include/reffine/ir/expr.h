@@ -13,6 +13,19 @@ using namespace std;
 
 namespace reffine {
 
+struct Define : public ExprNode {
+    Sym sym;
+    Expr val;
+
+    Define(Sym sym, Expr val) : ExprNode(sym->type), sym(sym), val(val)
+    {
+        ASSERT(sym->type == val->type);
+        ASSERT(!sym->type.is_void());
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct Call : public ExprNode {
     string name;
     vector<Expr> args;

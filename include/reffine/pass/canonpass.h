@@ -2,19 +2,15 @@
 #define INCLUDE_REFFINE_PASS_CANONPASS_H_
 
 #include "reffine/ir/loop.h"
-#include "reffine/pass/base/irpass.h"
+#include "reffine/pass/irclone.h"
 
 namespace reffine {
 
-class CanonPass : public IRPass {
-public:
-    explicit CanonPass(unique_ptr<IRPassCtx> ctx) : IRPass(std::move(ctx)) {}
-
-    static void Build(shared_ptr<Func>);
-
-protected:
-    void Visit(Loop&) final;
-    void Visit(Func&) final;
+class CanonPass : public IRClone {
+private:
+    Expr visit(Define&) final;
+    Expr visit(Loop&) final;
+    Expr visit(Func&) final;
 };
 
 }  // namespace reffine
