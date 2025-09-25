@@ -19,12 +19,12 @@ public:
     {
     }
 
-    ValTy eval(Stmt stmt)
+    ValTy eval(Expr expr)
     {
         ValTy new_val;
 
         swap(new_val, val());
-        stmt->Accept(*this);
+        expr->Accept(*this);
         swap(val(), new_val);
 
         return new_val;
@@ -32,7 +32,6 @@ public:
 
 protected:
     virtual ValTy visit(Sym) { throw runtime_error("Sym visit not supported"); }
-    virtual ValTy visit(StmtExprNode& expr) { return eval(expr.stmt); }
     virtual ValTy visit(Select&)
     {
         throw runtime_error("Select visit not supported");
@@ -134,8 +133,11 @@ protected:
     {
         throw runtime_error("NoOp visit not supported");
     }
+    virtual ValTy visit(Define&)
+    {
+        throw runtime_error("Define visit not supported");
+    }
 
-    void Visit(StmtExprNode& expr) final { val() = visit(expr); }
     void Visit(Select& expr) final { val() = visit(expr); }
     void Visit(IfElse& stmt) final { val() = visit(stmt); }
     void Visit(Const& expr) final { val() = visit(expr); }
@@ -161,6 +163,7 @@ protected:
     void Visit(Loop& expr) final { val() = visit(expr); }
     void Visit(FetchDataPtr& expr) final { val() = visit(expr); }
     void Visit(NoOp& stmt) final { val() = visit(stmt); }
+    void Visit(Define& expr) final { val() = visit(expr); }
     void Visit(Func& stmt) final { val() = visit(stmt); }
     void Visit(SymNode& symbol) override
     {

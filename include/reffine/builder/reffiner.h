@@ -10,11 +10,6 @@
 namespace reffine::reffiner {
 
 template <typename T>
-struct _stmt : public shared_ptr<T> {
-    explicit _stmt(shared_ptr<T>&& ptr) : shared_ptr<T>(std::move(ptr)) {}
-};
-
-template <typename T>
 struct _expr;
 
 _expr<Add> _expr_add(Expr, Expr);
@@ -127,6 +122,7 @@ REGISTER_EXPR(_setlen, SetLength)
 REGISTER_EXPR(_isval, IsValid)
 REGISTER_EXPR(_setval, SetValid)
 REGISTER_EXPR(_make, MakeVector)
+REGISTER_EXPR(_finalize, FinalizeVector)
 
 // CUDA
 REGISTER_EXPR(_tidx, ThreadIdx)
@@ -144,28 +140,17 @@ REGISTER_EXPR(_nary, NaryExpr)
 REGISTER_EXPR(_unary, UnaryExpr)
 REGISTER_EXPR(_binary, BinaryExpr)
 REGISTER_EXPR(_sym, SymNode)
-REGISTER_EXPR(_stmtexpr, StmtExprNode)
 REGISTER_EXPR(_structgep, StructGEP)
-#undef REGISTER_EXPR
-
-#define REGISTER_STMT(NAME, STMT)                                            \
-    template <typename... Args>                                              \
-    struct NAME : public _stmt<STMT> {                                       \
-        explicit NAME(Args... args)                                          \
-            : _stmt<STMT>(                                                   \
-                  std::move(make_shared<STMT>(std::forward<Args>(args)...))) \
-        {                                                                    \
-        }                                                                    \
-    };
 
 // Statements
-REGISTER_STMT(_func, Func)
-REGISTER_STMT(_stmts, Stmts)
-REGISTER_STMT(_ifelse, IfElse)
-REGISTER_STMT(_noop, NoOp)
-REGISTER_STMT(_store, Store)
-REGISTER_STMT(_atomic_op, AtomicOp)
-#undef REGISTER_STMT
+REGISTER_EXPR(_func, Func)
+REGISTER_EXPR(_stmts, Stmts)
+REGISTER_EXPR(_ifelse, IfElse)
+REGISTER_EXPR(_noop, NoOp)
+REGISTER_EXPR(_define, Define)
+REGISTER_EXPR(_store, Store)
+REGISTER_EXPR(_atomic_op, AtomicOp)
+#undef REGISTER_EXPR
 
 _expr<Const> _i8(int8_t);
 _expr<Const> _i16(int16_t);

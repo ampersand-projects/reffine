@@ -24,17 +24,17 @@ shared_ptr<Func> vector_loop()
     auto sum_addr = make_shared<SymNode>("sum_addr", sum_alloc);
     auto sum = make_shared<Load>(sum_addr);
 
-    auto val_ptr = make_shared<FetchDataPtr>(vec_sym, idx, 1);
-    auto val = make_shared<Load>(val_ptr);
+    auto val_ptr = make_shared<FetchDataPtr>(vec_sym, 1);
+    auto val = make_shared<Load>(val_ptr, idx);
 
     auto loop = _loop(make_shared<Load>(sum_addr));
     auto loop_sym = make_shared<SymNode>("loop", loop);
-    loop->init = make_shared<Stmts>(vector<Stmt>{
+    loop->init = make_shared<Stmts>(vector<Expr>{
         make_shared<Store>(idx_addr, make_shared<Const>(types::IDX, 0)),
         make_shared<Store>(sum_addr, make_shared<Const>(types::INT64, 0)),
     });
     loop->exit_cond = make_shared<GreaterThanEqual>(idx, len_sym);
-    loop->body = make_shared<Stmts>(vector<Stmt>{
+    loop->body = make_shared<Stmts>(vector<Expr>{
         make_shared<Store>(sum_addr, make_shared<Add>(sum, val)),
         make_shared<Store>(
             idx_addr, make_shared<Add>(idx, make_shared<Const>(types::IDX, 1))),

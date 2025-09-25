@@ -19,7 +19,7 @@ public:
         this->_header->emit(nl());
     }
 
-    static string Build(Stmt);
+    static string Build(Expr);
 
     CodeSeg visit(Sym) final;
     CodeSeg visit(Call&) final;

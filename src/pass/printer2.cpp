@@ -21,8 +21,6 @@ CodeSeg IRPrinter2::visit(Sym sym)
     return lhs;
 }
 
-CodeSeg IRPrinter2::visit(StmtExprNode& e) { return eval(e.stmt); }
-
 CodeSeg IRPrinter2::visit(Stmts& s)
 {
     for (auto& stmt : s.stmts) { emit(nl(), eval(stmt)); }
@@ -202,14 +200,17 @@ CodeSeg IRPrinter2::visit(Reduce& red)
 
 CodeSeg IRPrinter2::visit(Alloc& e)
 {
-    return code("alloc ", e.type.deref().str());
+    return code("alloc ", e.type.deref().str(), " ", eval(e.size));
 }
 
-CodeSeg IRPrinter2::visit(Load& e) { return code_func("*", {e.addr}); }
+CodeSeg IRPrinter2::visit(Load& e)
+{
+    return code_func("*", {e.addr, e.offset});
+}
 
 CodeSeg IRPrinter2::visit(Store& s)
 {
-    return code("*(", eval(s.addr), ") = ", eval(s.val));
+    return code("*(", eval(s.addr), " + ", eval(s.offset), ") = ", eval(s.val));
 }
 
 CodeSeg IRPrinter2::visit(AtomicOp& e)
@@ -270,10 +271,16 @@ CodeSeg IRPrinter2::visit(Loop& e)
 
 CodeSeg IRPrinter2::visit(FetchDataPtr& e)
 {
-    return code(eval(e.vec), "[", eval(e.idx), "]._" + to_string(e.col));
+    return code(eval(e.vec), "->_" + to_string(e.col));
 }
 
 CodeSeg IRPrinter2::visit(NoOp&) { return code(""); }
+
+CodeSeg IRPrinter2::visit(Define& define)
+{
+    emit(nl(), define.sym->name, " = ", eval(define.val));
+    return code(define.sym->name);
+}
 
 CodeSeg IRPrinter2::visit(Func& fn)
 {
@@ -296,8 +303,8 @@ CodeSeg IRPrinter2::visit(Func& fn)
     return this->_code;
 }
 
-string IRPrinter2::Build(Stmt stmt)
+string IRPrinter2::Build(Expr expr)
 {
     IRPrinter2 printer2(make_unique<IREmitterCtx>());
-    return printer2.eval(stmt)->to_string(-1);
+    return printer2.eval(expr)->to_string(-1);
 }

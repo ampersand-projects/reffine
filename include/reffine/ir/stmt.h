@@ -27,19 +27,19 @@ struct Func : public StmtNode {
 };
 
 struct Stmts : public StmtNode {
-    vector<Stmt> stmts;
+    vector<Expr> stmts;
 
-    Stmts(vector<Stmt> stmts) : StmtNode(), stmts(stmts) {}
+    Stmts(vector<Expr> stmts) : StmtNode(), stmts(stmts) {}
 
     void Accept(Visitor&) final;
 };
 
 struct IfElse : public StmtNode {
     Expr cond;
-    Stmt true_body;
-    Stmt false_body;
+    Expr true_body;
+    Expr false_body;
 
-    IfElse(Expr cond, Stmt true_body, Stmt false_body)
+    IfElse(Expr cond, Expr true_body, Expr false_body)
         : StmtNode(), cond(cond), true_body(true_body), false_body(false_body)
     {
         ASSERT(cond->type == types::BOOL);

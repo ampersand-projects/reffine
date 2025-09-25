@@ -18,10 +18,6 @@ public:
     {
         throw runtime_error("SymNode operation not supported");
     }
-    virtual void Visit(StmtExprNode&)
-    {
-        throw runtime_error("StmtExprNode operation not supported");
-    }
     virtual void Visit(Func&)
     {
         throw runtime_error("Func operation not supported");
@@ -69,6 +65,10 @@ public:
     virtual void Visit(Reduce&)
     {
         throw runtime_error("Reduce operation not supported");
+    }
+    virtual void Visit(Define&)
+    {
+        throw runtime_error("Define operation not supported");
     }
 
     /**

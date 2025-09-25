@@ -18,8 +18,7 @@ Expr LoopGen::visit(Element& elem)
 
     vector<Expr> vals;
     for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
-        auto data_ptr = _fetch(vec, idx, i);
-        auto data = _load(data_ptr);
+        auto data = _load(_fetch(vec, i), idx);
         vals.push_back(data);
     }
 
@@ -34,7 +33,7 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 
     auto ispace = Reffine::Build(op, this->ctx().in_sym_tbl);
 
-    vector<Stmt> loop_inits;
+    vector<Expr> loop_inits;
 
     // Loop index initialization
     auto idx_init = eval(ispace->iter_to_idx(ispace->lower_bound()));
@@ -80,6 +79,8 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 
 Expr LoopGen::visit(Op& op)
 {
+    auto len = _idx(100000);
+
     auto [tmp_loop, outputs] = this->build_loop(op);
 
     // Output vector builder
@@ -92,7 +93,7 @@ Expr LoopGen::visit(Op& op)
         }
         return make_shared<ArrowTable2>("out", len, out_cols, out_dtypes);
     });
-    auto out_vec = _make(op.type, _idx(10000), mem_id);
+    auto out_vec = _make(op.type, len, mem_id);
     auto out_vec_sym = _sym("out_vec", out_vec);
     this->assign(out_vec_sym, out_vec);
 
@@ -105,29 +106,37 @@ Expr LoopGen::visit(Op& op)
     auto body_cond_sym = _sym("body_cond", tmp_loop->body_cond);
     this->assign(body_cond_sym, tmp_loop->body_cond);
 
+    // Temporary boolean array for bytemap
+    // Helpful for vectorizing the loop
+    auto bytemap = _alloc(types::BOOL, len);
+    auto bytemap_sym = _sym("bytemap", bytemap);
+    this->assign(bytemap_sym, bytemap);
+
     // Write the output to the out_vec
-    vector<Stmt> body_stmts;
+    vector<Expr> body_stmts;
     for (size_t i = 0; i < outputs.size(); i++) {
-        auto vec_ptr = _fetch(out_vec_sym, _load(out_vec_idx_addr), i);
-        body_stmts.push_back(_store(vec_ptr, outputs[i]));
+        auto vec_ptr = _fetch(out_vec_sym, i);
         body_stmts.push_back(
-            _setval(out_vec_sym, _load(out_vec_idx_addr), body_cond_sym, i));
+            _store(vec_ptr, outputs[i], _load(out_vec_idx_addr)));
     }
+    body_stmts.push_back(
+        _store(bytemap_sym, body_cond_sym, _load(out_vec_idx_addr)));
 
     // Build loop
     auto loop = _loop(out_vec_sym);
-    loop->init = _stmts(vector<Stmt>{
+    loop->init = _stmts(vector<Expr>{
         tmp_loop->init,
         _store(out_vec_idx_addr, _idx(0)),
         out_vec_sym,
+        bytemap_sym,
     });
-    loop->incr = _stmts(vector<Stmt>{
+    loop->incr = _stmts(vector<Expr>{
         tmp_loop->incr,
         _store(out_vec_idx_addr, _add(_load(out_vec_idx_addr), _idx(1)))});
     loop->exit_cond = tmp_loop->exit_cond;
     loop->body = _stmts(body_stmts);
-    loop->post = _stmts(vector<Stmt>{
-        _setlen(out_vec_sym, _load(out_vec_idx_addr)),
+    loop->post = _stmts(vector<Expr>{
+        _finalize(out_vec_sym, bytemap_sym, _load(out_vec_idx_addr)),
     });
 
     auto loop_sym = _sym("loop", loop);
@@ -152,7 +161,7 @@ Expr LoopGen::visit(Reduce& red)
 
     // Build reduce loop
     auto red_loop = _loop(state_addr);
-    red_loop->init = _stmts(vector<Stmt>{
+    red_loop->init = _stmts(vector<Expr>{
         tmp_loop->init,
         _store(state_addr, red.init()),
     });

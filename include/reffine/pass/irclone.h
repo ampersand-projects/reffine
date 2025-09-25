@@ -38,6 +38,7 @@ protected:
     Expr visit(Loop&) override;
     Expr visit(FetchDataPtr&) override;
     Expr visit(NoOp&) override;
+    Expr visit(Define&) override;
     Expr visit(Func&) override;
 
 private:

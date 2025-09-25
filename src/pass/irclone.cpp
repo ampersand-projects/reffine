@@ -81,10 +81,13 @@ Expr IRClone::visit(Call& call)
 
 Expr IRClone::visit(FetchDataPtr& fetch)
 {
-    return _fetch(eval(fetch.vec), eval(fetch.idx), fetch.col);
+    return _fetch(eval(fetch.vec), fetch.col);
 }
 
-Expr IRClone::visit(Load& load) { return _load(eval(load.addr)); }
+Expr IRClone::visit(Load& load)
+{
+    return _load(eval(load.addr), eval(load.offset));
+}
 
 Expr IRClone::visit(Func& func)
 {
@@ -101,7 +104,7 @@ Expr IRClone::visit(Func& func)
 
     new_func->output = eval(func.output);
 
-    return _stmtexpr(new_func);
+    return new_func;
 }
 
 Expr IRClone::visit(Sym old_sym) { return _sym(old_sym->name, old_sym); }
@@ -114,16 +117,23 @@ Expr IRClone::visit(BlockDim&) { return _bdim(); }
 
 Expr IRClone::visit(GridDim&) { return _gdim(); }
 
-Expr IRClone::visit(NoOp&) { return _stmtexpr(_noop()); }
+Expr IRClone::visit(NoOp&) { return _noop(); }
+
+Expr IRClone::visit(Define& define)
+{
+    auto new_sym = _sym(define.sym->name, define.sym);
+    this->map_sym(define.sym, new_sym);
+    return _define(new_sym, eval(define.val));
+}
 
 Expr IRClone::visit(Store& store)
 {
-    return _stmtexpr(_store(eval(store.addr), eval(store.val)));
+    return _store(eval(store.addr), eval(store.val), eval(store.offset));
 }
 
 Expr IRClone::visit(AtomicOp& op)
 {
-    return _stmtexpr(_atomic_op(op.op, eval(op.addr), eval(op.val)));
+    return _atomic_op(op.op, eval(op.addr), eval(op.val));
 }
 
 Expr IRClone::visit(StructGEP& gep)
@@ -133,11 +143,11 @@ Expr IRClone::visit(StructGEP& gep)
 
 Expr IRClone::visit(Stmts& stmts)
 {
-    vector<Stmt> stmt_list;
+    vector<Expr> stmt_list;
 
     for (auto& stmt : stmts.stmts) { stmt_list.push_back(eval(stmt)); }
 
-    return _stmtexpr(_stmts(stmt_list));
+    return _stmts(stmt_list);
 }
 
 Expr IRClone::visit(Alloc& alloc)
@@ -147,8 +157,8 @@ Expr IRClone::visit(Alloc& alloc)
 
 Expr IRClone::visit(IfElse& ifelse)
 {
-    return _stmtexpr(_ifelse(eval(ifelse.cond), eval(ifelse.true_body),
-                             eval(ifelse.false_body)));
+    return _ifelse(eval(ifelse.cond), eval(ifelse.true_body),
+                   eval(ifelse.false_body));
 }
 
 Expr IRClone::visit(Loop& loop)

@@ -15,32 +15,25 @@ namespace reffine {
 
 class Visitor;
 
-struct StmtNode {
-    virtual ~StmtNode() {}
+struct ExprNode {
+    const DataType type;
+
+    explicit ExprNode(DataType type) : type(type) {}
+
+    virtual ~ExprNode() {}
 
     virtual void Accept(Visitor&) = 0;
 
     string str();
 };
-typedef shared_ptr<StmtNode> Stmt;
-
-struct ExprNode : public StmtNode {
-    const DataType type;
-
-    explicit ExprNode(DataType type) : StmtNode(), type(type) {}
-
-    virtual ~ExprNode() {}
-};
 typedef shared_ptr<ExprNode> Expr;
 
-struct StmtExprNode : public ExprNode {
-    Stmt stmt;
+struct StmtNode : public ExprNode {
+    explicit StmtNode() : ExprNode(types::VOID) {}
 
-    StmtExprNode(Stmt stmt) : ExprNode(types::VOID), stmt(stmt) {}
-
-    virtual void Accept(Visitor&) final;
+    virtual ~StmtNode() {}
 };
-typedef shared_ptr<StmtExprNode> StmtExpr;
+typedef shared_ptr<StmtNode> Stmt;
 
 struct SymNode : public ExprNode {
     const string name;

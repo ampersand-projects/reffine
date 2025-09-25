@@ -61,10 +61,8 @@ PYBIND11_MODULE(ir, m)
 
     /* StmtNode and Derived Structures Declarations
      */
-    py::class_<StmtNode, Stmt>(m, "_stmt");
-    py::class_<ExprNode, Expr, StmtNode>(m, "_expr");
-    py::class_<StmtExprNode, StmtExpr, ExprNode>(m, "_stmtexpr")
-        .def(py::init<Stmt>());
+    py::class_<ExprNode, Expr>(m, "_expr");
+    py::class_<StmtNode, Stmt, ExprNode>(m, "_stmt");
 
     /* Symbol Definition */
     py::class_<SymNode, Sym, ExprNode>(m, "_sym")
@@ -77,9 +75,9 @@ PYBIND11_MODULE(ir, m)
     /* Loop */
     REGISTER_CLASS(IsValid, ExprNode, m, "_isval", Expr, Expr, size_t)
     REGISTER_CLASS(SetValid, ExprNode, m, "_setvald", Expr, Expr, Expr, size_t)
-    REGISTER_CLASS(FetchDataPtr, ExprNode, m, "_fetch", Expr, Expr, size_t)
+    REGISTER_CLASS(FetchDataPtr, ExprNode, m, "_fetch", Expr, size_t)
     REGISTER_CLASS(Alloc, ExprNode, m, "_alloc", DataType, Expr)
-    REGISTER_CLASS(Load, ExprNode, m, "_load", Expr)
+    REGISTER_CLASS(Load, ExprNode, m, "_load", Expr, Expr)
     py::class_<Loop, shared_ptr<Loop>, ExprNode>(m, "_loop")
         .def(py::init<Expr>())
         .def_readwrite("init", &Loop::init)
@@ -93,10 +91,10 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(NotNull, ExprNode, m, "_notnull", Expr)
 
     /* Statements */
-    REGISTER_CLASS(Stmts, StmtNode, m, "_stmts", vector<Stmt>)
-    REGISTER_CLASS(IfElse, StmtNode, m, "_ifelse", Expr, Stmt, Stmt)
+    REGISTER_CLASS(Stmts, StmtNode, m, "_stmts", vector<Expr>)
+    REGISTER_CLASS(IfElse, StmtNode, m, "_ifelse", Expr, Expr, Expr)
     REGISTER_CLASS(NoOp, StmtNode, m, "_noop")
-    REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr)
+    REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr, Expr)
     py::class_<Func, shared_ptr<Func>, StmtNode>(m, "_func")
         .def(py::init<string, Expr, vector<Sym>, SymTable, bool>(),
              py::arg("name"), py::arg("output"), py::arg("inputs"),

@@ -52,12 +52,15 @@ Expr VecSpace::_upper_bound()
 
 Expr VecSpace::_iter_cond(Expr idx)
 {
-    return _and(_lt(idx, _len(this->vec)), _isval(this->vec, idx, 0));
+    auto isval = _isval(this->vec, idx, 0);
+    // need to define a symbol for isval to allow vectorization
+    auto var = _define(_sym("valid", isval), isval);
+    return _and(_lt(idx, _len(this->vec)), var);
 }
 
 Expr VecSpace::_idx_to_iter(Expr idx)
 {
-    return _load(_fetch(this->vec, idx, 0));
+    return _load(_fetch(this->vec, 0), idx);
 }
 
 Expr VecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }

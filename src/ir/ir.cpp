@@ -4,7 +4,6 @@
 using namespace reffine;
 
 void SymNode::Accept(Visitor& v) { v.Visit(*this); }
-void StmtExprNode::Accept(Visitor& v) { v.Visit(*this); }
 void Func::Accept(Visitor& v) { v.Visit(*this); }
 void Call::Accept(Visitor& v) { v.Visit(*this); }
 void Select::Accept(Visitor& v) { v.Visit(*this); }
@@ -31,9 +30,10 @@ void GridDim::Accept(Visitor& v) { v.Visit(*this); }
 void Loop::Accept(Visitor& v) { v.Visit(*this); }
 void FetchDataPtr::Accept(Visitor& v) { v.Visit(*this); }
 void NoOp::Accept(Visitor& v) { v.Visit(*this); }
+void Define::Accept(Visitor& v) { v.Visit(*this); }
 
-string StmtNode::str()
+string ExprNode::str()
 {
-    Stmt stmt(const_cast<StmtNode*>(this), [](StmtNode*) {});
-    return IRPrinter2::Build(stmt);
+    Expr expr(const_cast<ExprNode*>(this), [](ExprNode*) {});
+    return IRPrinter2::Build(expr);
 }

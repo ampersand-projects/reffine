@@ -92,8 +92,6 @@ public:
     {
     }
 
-    void Visit(StmtExprNode& expr) override { expr.stmt->Accept(*this); }
-
     void Visit(Select& expr) override
     {
         expr.cond->Accept(*this);
@@ -160,12 +158,17 @@ public:
 
     void Visit(Alloc& expr) override { expr.size->Accept(*this); }
 
-    void Visit(Load& expr) override { expr.addr->Accept(*this); }
+    void Visit(Load& expr) override
+    {
+        expr.addr->Accept(*this);
+        expr.offset->Accept(*this);
+    }
 
     void Visit(Store& expr) override
     {
         expr.addr->Accept(*this);
         expr.val->Accept(*this);
+        expr.offset->Accept(*this);
     }
 
     void Visit(AtomicOp& stmt) override
@@ -192,13 +195,15 @@ public:
         expr.output->Accept(*this);
     }
 
-    void Visit(FetchDataPtr& expr) override
-    {
-        expr.vec->Accept(*this);
-        expr.idx->Accept(*this);
-    }
+    void Visit(FetchDataPtr& expr) override { expr.vec->Accept(*this); }
 
     void Visit(NoOp& stmt) override {}
+
+    void Visit(Define& define) override
+    {
+        define.sym->Accept(*this);
+        define.val->Accept(*this);
+    }
 
 protected:
     void Visit(SymNode& symbol) override

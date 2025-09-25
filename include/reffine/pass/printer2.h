@@ -11,10 +11,9 @@ class IRPrinter2 : public IREmitter {
 public:
     IRPrinter2(unique_ptr<IREmitterCtx> ctx) : IREmitter(std::move(ctx)) {}
 
-    static string Build(Stmt);
+    static string Build(Expr);
 
     CodeSeg visit(Sym) final;
-    CodeSeg visit(StmtExprNode&) final;
     CodeSeg visit(New&) final;
     CodeSeg visit(Op&) final;
     CodeSeg visit(Reduce&) final;
@@ -23,6 +22,7 @@ public:
     CodeSeg visit(Call&) final;
     CodeSeg visit(IfElse&) final;
     CodeSeg visit(NoOp&) final;
+    CodeSeg visit(Define&) final;
     CodeSeg visit(Select&) final;
     CodeSeg visit(Const&) final;
     CodeSeg visit(Get&) final;
