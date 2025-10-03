@@ -267,6 +267,7 @@ enum class MathOp {
     AND,
     OR,
     IMPLIES,
+    IFF,
     FORALL,
     EXISTS,
 };

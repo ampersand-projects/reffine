@@ -2,6 +2,7 @@
 #define INCLUDE_REFFINE_BUILDER_REFFINER_H_
 
 #include "reffine/ir/expr.h"
+#include "reffine/ir/pred.h"
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/op_to_loop.h"
