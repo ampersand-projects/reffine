@@ -172,6 +172,11 @@ void IRPrinter::Visit(Element& elem)
     ostr << "]";
 }
 
+void IRPrinter::Visit(Lookup& lookup)
+{
+    emitfunc("lookup", {lookup.vec, lookup.idx});
+}
+
 void IRPrinter::Visit(NotNull& not_null)
 {
     not_null.elem->Accept(*this);

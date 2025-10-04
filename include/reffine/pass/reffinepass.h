@@ -22,6 +22,7 @@ private:
     ISpace visit(NaryExpr&) final;
     ISpace visit(Sym) final;
     ISpace visit(Element&) final;
+    ISpace visit(Lookup&) final;
     ISpace visit(NotNull&) final;
 
     Op& op() { return _op; }

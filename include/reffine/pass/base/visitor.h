@@ -59,6 +59,10 @@ public:
     {
         throw runtime_error("Element operation not supported");
     }
+    virtual void Visit(Lookup&)
+    {
+        throw runtime_error("Lookup operation not supported");
+    }
     virtual void Visit(NotNull&)
     {
         throw runtime_error("NotNull operation not supported");

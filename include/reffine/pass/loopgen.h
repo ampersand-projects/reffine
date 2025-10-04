@@ -11,6 +11,7 @@ private:
     Expr visit(Op&) final;
     Expr visit(Reduce&) final;
     Expr visit(Element&) final;
+    Expr visit(Lookup&) final;
 
     map<Expr, map<Expr, Expr>> _vec_iter_idx_map;  // vec -> iter -> idx
 };

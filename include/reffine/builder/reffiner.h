@@ -112,6 +112,7 @@ REGISTER_EXPR(_loop, reffine::Loop)
 
 // Ops
 REGISTER_EXPR(_elem, Element)
+REGISTER_EXPR(_lookup, Lookup)
 REGISTER_EXPR(_op, Op)
 REGISTER_EXPR(_red, Reduce)
 REGISTER_EXPR(_notnull, NotNull)

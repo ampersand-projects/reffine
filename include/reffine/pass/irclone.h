@@ -22,6 +22,7 @@ protected:
     Expr visit(NaryExpr&) override;
     Expr visit(Op&) override;
     Expr visit(Element&) override;
+    Expr visit(Lookup&) override;
     Expr visit(NotNull&) override;
     Expr visit(Reduce&) override;
     Expr visit(Call&) override;

@@ -25,6 +25,11 @@ Expr LoopGen::visit(Element& elem)
     return _new(vals);
 }
 
+Expr LoopGen::visit(Lookup& lookup)
+{
+    return nullptr;
+}
+
 pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 {
     // Only support 1d operators now
