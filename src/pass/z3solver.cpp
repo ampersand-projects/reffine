@@ -1,6 +1,8 @@
 #include "reffine/pass/z3solver.h"
+#include "reffine/builder/reffiner.h"
 
 using namespace reffine;
+using namespace reffine::reffiner;
 
 void Z3Solver::Visit(SymNode& s)
 {
@@ -111,6 +113,12 @@ void Z3Solver::Visit(NaryExpr& e)
         case MathOp::IMPLIES:
             assign(z3::implies(eval(e.arg(0)), eval(e.arg(1))));
             break;
+        case MathOp::IFF: {
+            auto a = e.arg(0);
+            auto b = e.arg(1);
+            assign(eval(_and(_implies(a, b), _implies(b, a))));
+            break;
+        }
         case MathOp::FORALL:
             assign(z3::forall(eval(e.arg(0)), eval(e.arg(1))));
             break;
