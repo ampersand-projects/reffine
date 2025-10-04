@@ -121,12 +121,18 @@ struct DataType {
         return this->dtypes[0];
     }
 
-    DataType valty() const
+    DataType elemty(size_t iter_dim) const
     {
         ASSERT(this->is_vector());
-        return DataType(BaseType::STRUCT,
-                        std::vector<DataType>(this->dtypes.begin() + this->dim,
-                                              this->dtypes.end()));
+
+        auto new_dim = this->dim - iter_dim;
+        ASSERT(new_dim >= 0);
+
+        return DataType(
+            (new_dim == 0) ? BaseType::STRUCT : BaseType::VECTOR,
+            std::vector<DataType>(this->dtypes.begin() + iter_dim, this->dtypes.end()),
+            new_dim
+        );
     }
 
     DataType iterty() const
