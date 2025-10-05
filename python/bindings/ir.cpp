@@ -56,7 +56,7 @@ PYBIND11_MODULE(ir, m)
         .def("is_signed", &DataType::is_signed)
         .def("ptr", &DataType::ptr)
         .def("deref", &DataType::deref)
-        .def("valty", &DataType::valty)
+        .def("elemty", &DataType::elemty)
         .def("str", &DataType::str);
 
     /* StmtNode and Derived Structures Declarations

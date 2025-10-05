@@ -121,12 +121,16 @@ struct DataType {
         return this->dtypes[0];
     }
 
-    DataType valty() const
+    DataType elemty(size_t iter_dim) const
     {
         ASSERT(this->is_vector());
-        return DataType(BaseType::STRUCT,
-                        std::vector<DataType>(this->dtypes.begin() + this->dim,
-                                              this->dtypes.end()));
+        ASSERT(this->dim >= iter_dim);
+
+        return DataType(
+            (this->dim == iter_dim) ? BaseType::STRUCT : BaseType::VECTOR,
+            std::vector<DataType>(this->dtypes.begin() + iter_dim,
+                                  this->dtypes.end()),
+            this->dim - iter_dim);
     }
 
     DataType iterty() const
@@ -267,6 +271,7 @@ enum class MathOp {
     AND,
     OR,
     IMPLIES,
+    IFF,
     FORALL,
     EXISTS,
 };

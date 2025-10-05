@@ -54,7 +54,9 @@ struct Element : public ExprNode {
     vector<Expr> iters;
 
     Element(Expr vec, vector<Expr> iters)
-        : ExprNode(vec->type.valty()), vec(vec), iters(std::move(iters))
+        : ExprNode(vec->type.elemty(iters.size())),
+          vec(vec),
+          iters(std::move(iters))
     {
         const auto& vtype = vec->type;
 
@@ -69,6 +71,19 @@ struct Element : public ExprNode {
     Element(Expr vec, std::initializer_list<Expr> iters)
         : Element(vec, vector<Expr>(iters))
     {
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct Lookup : public ExprNode {
+    Expr vec;
+    Expr idx;
+
+    Lookup(Expr vec, Expr idx) : ExprNode(vec->type.rowty()), vec(vec), idx(idx)
+    {
+        ASSERT(vec->type.is_vector());
+        ASSERT(idx->type.is_idx());
     }
 
     void Accept(Visitor&) final;

@@ -219,25 +219,6 @@ shared_ptr<Func> test_op_fn()
     return foo_fn;
 }
 
-void demorgan_test()
-{
-    auto t = make_shared<SymNode>("t", types::INT64);
-    auto lb = make_shared<Const>(types::INT64, 10);
-    auto pred = make_shared<GreaterThanEqual>(t, lb);
-
-    auto p = make_shared<SymNode>("p", t);
-    auto forall = make_shared<ForAll>(t,
-        make_shared<And>(
-            make_shared<Implies>(make_shared<GreaterThanEqual>(t, p), pred),
-            make_shared<Implies>(make_shared<LessThan>(t, p), make_shared<Not>(pred))
-        )
-    );
-
-    Z3Solver z3s;
-    int res = z3s.solve(forall, p).as_int64();
-    cout << "p = " << res << endl;
-}
-
 #ifdef ENABLE_CUDA
 void execute_kernel(string kernel_name, CUfunction kernel, void *arg, int len)
 {
@@ -308,15 +289,17 @@ shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl)
     auto vec_in_sym = _sym("vec_in", tbl->get_data_type(1));
     auto elem_expr = vec_in_sym[{t_sym}];
     auto elem = _sym("elem", elem_expr);
-    auto out_expr = _add(elem[0], _i64(10));
+    auto ten = _sym("ten", _i64_t);
+    auto out_expr = _add(elem[0], ten);
     auto out = _sym("out", out_expr);
-    auto op = _op(vector<Sym>{t_sym}, (~(elem) & _gt(t_sym, _i64(10))) & _lt(t_sym, _i64(64)), vector<Expr>{ out });
+    auto op = _op(vector<Sym>{t_sym}, (~(elem) & _gt(t_sym, ten)) & _lt(t_sym, _i64(64)), vector<Expr>{ out });
     auto op_sym = _sym("op", op);
 
     auto foo_fn = _func("foo", op_sym, vector<Sym>{vec_in_sym});
     foo_fn->tbl[elem] = elem_expr;
     foo_fn->tbl[out] = out_expr;
     foo_fn->tbl[op_sym] = op;
+    foo_fn->tbl[ten] = _i64(10);
 
     return foo_fn;
 }

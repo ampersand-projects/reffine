@@ -5,6 +5,7 @@
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/op_to_loop.h"
+#include "reffine/ir/pred.h"
 #include "reffine/ir/stmt.h"
 
 namespace reffine::reffiner {
@@ -23,6 +24,7 @@ _expr<LessThanEqual> _expr_lte(Expr, Expr);
 _expr<GreaterThan> _expr_gt(Expr, Expr);
 _expr<GreaterThanEqual> _expr_gte(Expr, Expr);
 _expr<Equals> _expr_eq(Expr, Expr);
+_expr<Not> _expr_neq(Expr, Expr);
 _expr<Not> _expr_not(Expr);
 _expr<And> _expr_and(Expr, Expr);
 _expr<Or> _expr_or(Expr, Expr);
@@ -51,6 +53,10 @@ struct _expr : public shared_ptr<T> {
         return _expr_gte(*this, o);
     }
     _expr<Equals> operator==(Expr o) const { return _expr_eq(*this, o); }
+    _expr<Not> operator!=(Expr o) const
+    {
+        return _expr_not(_expr_eq(*this, o));
+    }
     _expr<Not> operator!() const { return _expr_not(*this); }
     _expr<And> operator&(Expr o) const { return _expr_and(*this, o); }
     _expr<Or> operator|(Expr o) const { return _expr_or(*this, o); }
@@ -98,6 +104,7 @@ REGISTER_EXPR(_and, And)
 REGISTER_EXPR(_or, Or)
 REGISTER_EXPR(_forall, ForAll)
 REGISTER_EXPR(_implies, Implies)
+REGISTER_EXPR(_iff, Iff)
 REGISTER_EXPR(_exists, Exists)
 
 // Constant expressions
@@ -111,6 +118,7 @@ REGISTER_EXPR(_loop, reffine::Loop)
 
 // Ops
 REGISTER_EXPR(_elem, Element)
+REGISTER_EXPR(_lookup, Lookup)
 REGISTER_EXPR(_op, Op)
 REGISTER_EXPR(_red, Reduce)
 REGISTER_EXPR(_notnull, NotNull)

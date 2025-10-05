@@ -11,6 +11,9 @@ using namespace reffine::reffiner;
 
 Expr LoopGen::visit(Element& elem)
 {
+    ASSERT(elem.iters.size() == 1);
+    ASSERT(elem.type.is_val());  // Subspace elements are not supported yet
+
     eval(elem.iters[0]);
     auto vec = eval(elem.vec);
 
@@ -18,6 +21,20 @@ Expr LoopGen::visit(Element& elem)
 
     vector<Expr> vals;
     for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
+        auto data = _load(_fetch(vec, i), idx);
+        vals.push_back(data);
+    }
+
+    return _new(vals);
+}
+
+Expr LoopGen::visit(Lookup& lookup)
+{
+    auto idx = eval(lookup.idx);
+    auto vec = eval(lookup.vec);
+
+    vector<Expr> vals;
+    for (size_t i = 0; i < vec->type.dtypes.size(); i++) {
         auto data = _load(_fetch(vec, i), idx);
         vals.push_back(data);
     }

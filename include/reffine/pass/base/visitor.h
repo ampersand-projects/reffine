@@ -5,6 +5,7 @@
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/op_to_loop.h"
+#include "reffine/ir/pred.h"
 #include "reffine/ir/stmt.h"
 
 namespace reffine {
@@ -57,6 +58,10 @@ public:
     virtual void Visit(Element&)
     {
         throw runtime_error("Element operation not supported");
+    }
+    virtual void Visit(Lookup&)
+    {
+        throw runtime_error("Lookup operation not supported");
     }
     virtual void Visit(NotNull&)
     {

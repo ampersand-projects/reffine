@@ -176,6 +176,11 @@ CodeSeg IRPrinter2::visit(Element& elem)
     return code(eval(elem.vec), code_args("[", elem.iters, "]"));
 }
 
+CodeSeg IRPrinter2::visit(Lookup& e)
+{
+    return code_func("lookup", {e.vec, e.idx});
+}
+
 CodeSeg IRPrinter2::visit(NotNull& e) { return code(eval(e.elem), "!=", PHI); }
 
 CodeSeg IRPrinter2::visit(Reduce& red)

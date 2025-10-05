@@ -6,34 +6,37 @@
 using namespace reffine;
 using namespace reffine::reffiner;
 
-static Expr get_lower_bound(Sym iter, Expr pred)
+ISpace Reffine::extract_bound(Sym iter, NaryExpr& expr)
 {
-    auto p = _sym(iter->name + "_p", iter);
-    auto forall = _forall(iter, _and(_implies(_gte(iter, p), pred),
-                                     _implies(_lt(iter, p), _not(pred))));
-
     Z3Solver solver;
-    if (solver.check(forall) == z3::sat) {
-        auto p_val = solver.get(p).as_int64();
-        return _const(iter->type, p_val);
+
+    auto bnd = _sym(iter->name + "_bnd", iter);
+    auto pred = this->tmp_expr(expr);
+    auto lb_prop = _forall(iter, _iff(_gte(iter, bnd), pred));
+    auto ub_prop = _forall(iter, _iff(_lte(iter, bnd), pred));
+
+    auto [lb_check, lb_val] = Z3Solver::Solve(lb_prop, bnd);
+    auto [ub_check, ub_val] = Z3Solver::Solve(ub_prop, bnd);
+
+    if (lb_check == z3::sat) {
+        auto lb_uniq_prop = (bnd != lb_val) & lb_prop;
+        auto [uniq_check, _] = Z3Solver::Solve(lb_uniq_prop);
+        if (uniq_check == z3::unsat) {
+            return eval(iter) >= lb_val;
+        } else if (expr.arg(0) == iter) {
+            return eval(iter) >= expr.arg(1);
+        }
+    } else if (ub_check == z3::sat) {
+        auto ub_uniq_prop = (bnd != ub_val) & ub_prop;
+        auto [uniq_check, _] = Z3Solver::Solve(ub_uniq_prop);
+        if (uniq_check == z3::unsat) {
+            return eval(iter) <= ub_val;
+        } else if (expr.arg(0) == iter) {
+            return eval(iter) <= expr.arg(1);
+        }
     }
 
-    return nullptr;
-}
-
-static Expr get_upper_bound(Sym iter, Expr pred)
-{
-    auto p = _sym(iter->name + "_p", iter);
-    auto forall = _forall(iter, _and(_implies(_lte(iter, p), pred),
-                                     _implies(_gt(iter, p), _not(pred))));
-
-    Z3Solver solver;
-    if (solver.check(forall) == z3::sat) {
-        auto p_val = solver.get(p).as_int64();
-        return _const(iter->type, p_val);
-    }
-
-    return nullptr;
+    throw runtime_error("Unidentified bound condition");
 }
 
 ISpace Reffine::visit(NaryExpr& e)
@@ -46,18 +49,8 @@ ISpace Reffine::visit(NaryExpr& e)
         case MathOp::LT:
         case MathOp::LTE:
         case MathOp::GT:
-        case MathOp::GTE: {
-            auto iter = op().iters[0];
-            auto pred = this->tmp_expr(e);
-
-            if (auto lb = get_lower_bound(iter, pred)) {
-                return eval(iter) >= lb;
-            } else if (auto ub = get_upper_bound(iter, pred)) {
-                return eval(iter) <= ub;
-            } else {
-                throw runtime_error("Unabled to identify the bounds");
-            }
-        }
+        case MathOp::GTE:
+            return extract_bound(op().iters[0], e);
         default:
             throw runtime_error("Operator not supported by Reffine");
     }

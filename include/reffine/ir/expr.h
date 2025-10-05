@@ -198,30 +198,6 @@ struct Or : public BinaryExpr {
     }
 };
 
-struct Implies : public BinaryExpr {
-    Implies(Expr a, Expr b) : BinaryExpr(types::BOOL, MathOp::IMPLIES, a, b)
-    {
-        ASSERT(a->type == types::BOOL);
-        ASSERT(b->type == types::BOOL);
-    }
-};
-
-struct ForAll : public NaryExpr {
-    ForAll(Sym a, Expr b)
-        : NaryExpr(types::BOOL, MathOp::FORALL, vector<Expr>{a, b})
-    {
-        ASSERT(b->type == types::BOOL);
-    }
-};
-
-struct Exists : public NaryExpr {
-    Exists(Sym a, Expr b)
-        : NaryExpr(types::BOOL, MathOp::EXISTS, vector<Expr>{a, b})
-    {
-        ASSERT(b->type == types::BOOL);
-    }
-};
-
 struct LessThan : public BinaryExpr {
     LessThan(Expr a, Expr b) : BinaryExpr(types::BOOL, MathOp::LT, a, b) {}
 };
