@@ -304,24 +304,25 @@ shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl)
     return foo_fn;
 }
 
-shared_ptr<Func> vector_op(shared_ptr<ArrowTable2> tbl)
+shared_ptr<Func> nested_transform_op()
 {
-    auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym = _sym("vec_in", tbl->get_data_type(1));
+    auto a_sym = _sym("a", _i64_t);
+    auto b_sym = _sym("b", _i64_t);
 
-    Op op({t_sym}, ~(vec_in_sym[{t_sym}]), {vec_in_sym[{t_sym}][2]});
-    auto sum = _red(op,
-        []() {
-            return _i64(0);
-        },
-        [](Expr s, Expr v) {
-            return _add(s, _get(v, 1));
-        }
+    auto inner_op = _op(vector<Sym>{b_sym},
+        (_gte(b_sym, _i64(0)) & _lt(b_sym, _i64(10))),
+        vector<Expr>{ a_sym + b_sym }
     );
-    auto sum_sym = _sym("sum", sum);
+    auto outer_op = _op(
+        vector<Sym>{a_sym},
+        (_gte(a_sym, _i64(0)) & _lt(a_sym, _i64(10))),
+        vector<Expr>{ inner_op }
+    );
 
-    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
-    foo_fn->tbl[sum_sym] = sum;
+    auto op_sym = _sym("outer_op", outer_op);
+
+    auto foo_fn = _func("foo", op_sym, vector<Sym>{});
+    foo_fn->tbl[op_sym] = outer_op;
 
     return foo_fn;
 }
@@ -348,7 +349,7 @@ int main()
         }
     }
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
-    auto op = transform_op(tbl);
+    auto op = nested_transform_op();
     auto query_fn = compile_op<void (*)(void*, void*)>(op);
 
     auto status = query_arrow_file2(tbl, query_fn);
