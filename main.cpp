@@ -309,20 +309,16 @@ shared_ptr<Func> nested_transform_op()
     auto a_sym = _sym("a", _i64_t);
     auto b_sym = _sym("b", _i64_t);
 
-    auto inner_op = _op(vector<Sym>{b_sym},
-        (_gte(b_sym, _i64(0)) & _lt(b_sym, _i64(10))),
+    auto op = _op(
+        vector<Sym>{a_sym, b_sym},
+        (_gte(a_sym, _i64(0)) & _lt(a_sym, _i64(10)) & _gte(b_sym, _i64(0)) & _lt(b_sym, _i64(10))),
         vector<Expr>{ a_sym + b_sym }
     );
-    auto outer_op = _op(
-        vector<Sym>{a_sym},
-        (_gte(a_sym, _i64(0)) & _lt(a_sym, _i64(10))),
-        vector<Expr>{ inner_op }
-    );
 
-    auto op_sym = _sym("outer_op", outer_op);
+    auto op_sym = _sym("op", op);
 
     auto foo_fn = _func("foo", op_sym, vector<Sym>{});
-    foo_fn->tbl[op_sym] = outer_op;
+    foo_fn->tbl[op_sym] = op;
 
     return foo_fn;
 }

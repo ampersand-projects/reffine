@@ -36,7 +36,8 @@ ISpace Reffine::extract_bound(Sym iter, NaryExpr& expr)
         }
     }
 
-    throw runtime_error("Unidentified bound condition");
+    // Expression is not a bound on the given iter
+    return eval(iter);
 }
 
 ISpace Reffine::visit(NaryExpr& e)
