@@ -6,11 +6,12 @@
 using namespace reffine;
 using namespace reffine::reffiner;
 
-ISpace Reffine::extract_bound(Sym iter, Expr pred)
+ISpace Reffine::extract_bound(Sym iter, NaryExpr& expr)
 {
     Z3Solver solver;
 
     auto bnd = _sym(iter->name + "_bnd", iter);
+    auto pred = this->tmp_expr(expr);
     auto lb_prop = _forall(iter, _iff(_gte(iter, bnd), pred));
     auto ub_prop = _forall(iter, _iff(_lte(iter, bnd), pred));
 
@@ -18,16 +19,20 @@ ISpace Reffine::extract_bound(Sym iter, Expr pred)
     auto [ub_check, ub_val] = Z3Solver::Solve(ub_prop, bnd);
 
     if (lb_check == z3::sat) {
-        auto lb_uniq_prop = _and(_not(_eq(bnd, lb_val)), lb_prop);
+        auto lb_uniq_prop = (bnd != lb_val) & lb_prop;
         auto [uniq_check, _] = Z3Solver::Solve(lb_uniq_prop);
         if (uniq_check == z3::unsat) {
             return eval(iter) >= lb_val;
+        } else if (expr.arg(0) == iter) {
+            return eval(iter) >= expr.arg(1);
         }
     } else if (ub_check == z3::sat) {
-        auto ub_uniq_prop = _and(_not(_eq(bnd, ub_val)), ub_prop);
+        auto ub_uniq_prop = (bnd != ub_val) & ub_prop;
         auto [uniq_check, _] = Z3Solver::Solve(ub_uniq_prop);
         if (uniq_check == z3::unsat) {
             return eval(iter) <= ub_val;
+        } else if (expr.arg(0) == iter) {
+            return eval(iter) <= expr.arg(1);
         }
     }
 
@@ -45,7 +50,7 @@ ISpace Reffine::visit(NaryExpr& e)
         case MathOp::LTE:
         case MathOp::GT:
         case MathOp::GTE:
-            return extract_bound(op().iters[0], this->tmp_expr(e));
+            return extract_bound(op().iters[0], e);
         default:
             throw runtime_error("Operator not supported by Reffine");
     }

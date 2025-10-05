@@ -289,15 +289,17 @@ shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl)
     auto vec_in_sym = _sym("vec_in", tbl->get_data_type(1));
     auto elem_expr = vec_in_sym[{t_sym}];
     auto elem = _sym("elem", elem_expr);
-    auto out_expr = _add(elem[0], _i64(10));
+    auto ten = _sym("ten", _i64_t);
+    auto out_expr = _add(elem[0], ten);
     auto out = _sym("out", out_expr);
-    auto op = _op(vector<Sym>{t_sym}, (~(elem) & _gt(t_sym, _i64(10))) & _lt(t_sym, _i64(64)), vector<Expr>{ out });
+    auto op = _op(vector<Sym>{t_sym}, (~(elem) & _gt(t_sym, ten)) & _lt(t_sym, _i64(64)), vector<Expr>{ out });
     auto op_sym = _sym("op", op);
 
     auto foo_fn = _func("foo", op_sym, vector<Sym>{vec_in_sym});
     foo_fn->tbl[elem] = elem_expr;
     foo_fn->tbl[out] = out_expr;
     foo_fn->tbl[op_sym] = op;
+    foo_fn->tbl[ten] = _i64(10);
 
     return foo_fn;
 }
