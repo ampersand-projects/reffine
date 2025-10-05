@@ -55,7 +55,8 @@ PYBIND11_MODULE(ir, m)
         .def("is_signed", &DataType::is_signed)
         .def("ptr", &DataType::ptr)
         .def("deref", &DataType::deref)
-        .def("elemty", &DataType::elemty)
+        .def("iterty", &DataType::iterty)
+        .def("valty", &DataType::valty)
         .def("str", &DataType::str);
 
     /* StmtNode and Derived Structures Declarations
@@ -84,7 +85,7 @@ PYBIND11_MODULE(ir, m)
         .def_readwrite("exit_cond", &Loop::exit_cond);
 
     /* Op */
-    REGISTER_CLASS(Element, ExprNode, m, "_elem", Expr, vector<Expr>)
+    REGISTER_CLASS(Element, ExprNode, m, "_elem", Expr, Expr)
     REGISTER_CLASS(Op, ExprNode, m, "_op", vector<Sym>, Expr, vector<Expr>)
     REGISTER_CLASS(Reduce, ExprNode, m, "_red", Op, InitFnTy, AccFnTy)
     REGISTER_CLASS(NotNull, ExprNode, m, "_notnull", Expr)

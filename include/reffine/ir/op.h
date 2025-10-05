@@ -51,26 +51,15 @@ private:
 
 struct Element : public ExprNode {
     Expr vec;
-    vector<Expr> iters;
+    Expr iter;
 
-    Element(Expr vec, vector<Expr> iters)
-        : ExprNode(vec->type.elemty(iters.size())),
+    Element(Expr vec, Expr iter)
+        : ExprNode(vec->type.valty()),
           vec(vec),
-          iters(std::move(iters))
+          iter(iter)
     {
-        const auto& vtype = vec->type;
-
-        for (const auto& iter : iters) { ASSERT(iter->type.is_val()); }
-        ASSERT(vtype.is_vector());
-
-        ASSERT(vtype.dim == this->iters.size());
-        for (size_t i = 0; i < this->iters.size(); i++) {
-            ASSERT(vtype.dtypes[i] == this->iters[i]->type);
-        }
-    }
-    Element(Expr vec, std::initializer_list<Expr> iters)
-        : Element(vec, vector<Expr>(iters))
-    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->iter->type == this->vec->type.iterty());
     }
 
     void Accept(Visitor&) final;

@@ -19,9 +19,9 @@ _expr<Not> _expr_not(Expr a) { return _not(a); }
 _expr<And> _expr_and(Expr a, Expr b) { return _and(a, b); }
 _expr<Or> _expr_or(Expr a, Expr b) { return _or(a, b); }
 _expr<Get> _expr_get(Expr a, size_t n) { return _get(a, n); }
-_expr<Element> _expr_elem(Expr a, vector<Expr> iters)
+_expr<Element> _expr_elem(Expr a, Expr iter)
 {
-    return _elem(a, iters);
+    return _elem(a, iter);
 }
 _expr<NotNull> _expr_notnull(Expr a) { return _notnull(a); }
 

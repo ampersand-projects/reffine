@@ -132,7 +132,7 @@ public:
     void Visit(Element& expr) override
     {
         expr.vec->Accept(*this);
-        for (auto& iter : expr.iters) { iter->Accept(*this); }
+        expr.iter->Accept(*this);
     }
 
     void Visit(Lookup& expr) override

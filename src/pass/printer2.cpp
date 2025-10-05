@@ -172,7 +172,7 @@ CodeSeg IRPrinter2::visit(Op& op)
 
 CodeSeg IRPrinter2::visit(Element& elem)
 {
-    return code(eval(elem.vec), code_args("[", elem.iters, "]"));
+    return code(eval(elem.vec), "[", eval(elem.iter), "]");
 }
 
 CodeSeg IRPrinter2::visit(Lookup& e)

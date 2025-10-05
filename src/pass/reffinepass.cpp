@@ -70,8 +70,7 @@ ISpace Reffine::visit(Sym sym)
 
 ISpace Reffine::visit(Element& elem)
 {
-    ASSERT(elem.iters.size() == 1);
-    ASSERT(elem.iters[0] == op().iters[0]);
+    ASSERT(elem.iter == op().iters[0]);
 
     // Assuming Element is only visited through NotNull
     // Therefore, always returning vector space
