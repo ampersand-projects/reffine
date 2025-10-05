@@ -85,11 +85,6 @@ ISpace Reffine::visit(Element& elem)
     return eval(elem.vec);
 }
 
-ISpace Reffine::visit(Lookup& lookup)
-{
-    return nullptr;
-}
-
 ISpace Reffine::visit(NotNull& not_null)
 {
     // Assuming NotNull always traslates to vector space
