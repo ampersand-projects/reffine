@@ -12,7 +12,7 @@ using namespace reffine::reffiner;
 Expr LoopGen::visit(Element& elem)
 {
     ASSERT(elem.iters.size() == 1);
-    ASSERT(elem.type.is_val()); // Subspace elements are not supported yet
+    ASSERT(elem.type.is_val());  // Subspace elements are not supported yet
 
     eval(elem.iters[0]);
     auto vec = eval(elem.vec);

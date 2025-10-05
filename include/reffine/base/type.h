@@ -128,9 +128,9 @@ struct DataType {
 
         return DataType(
             (this->dim == iter_dim) ? BaseType::STRUCT : BaseType::VECTOR,
-            std::vector<DataType>(this->dtypes.begin() + iter_dim, this->dtypes.end()),
-            this->dim - iter_dim
-        );
+            std::vector<DataType>(this->dtypes.begin() + iter_dim,
+                                  this->dtypes.end()),
+            this->dim - iter_dim);
     }
 
     DataType iterty() const

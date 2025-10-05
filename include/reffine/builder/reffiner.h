@@ -2,10 +2,10 @@
 #define INCLUDE_REFFINE_BUILDER_REFFINER_H_
 
 #include "reffine/ir/expr.h"
-#include "reffine/ir/pred.h"
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/op_to_loop.h"
+#include "reffine/ir/pred.h"
 #include "reffine/ir/stmt.h"
 
 namespace reffine::reffiner {
@@ -53,7 +53,10 @@ struct _expr : public shared_ptr<T> {
         return _expr_gte(*this, o);
     }
     _expr<Equals> operator==(Expr o) const { return _expr_eq(*this, o); }
-    _expr<Not> operator!=(Expr o) const { return _expr_not(_expr_eq(*this, o)); }
+    _expr<Not> operator!=(Expr o) const
+    {
+        return _expr_not(_expr_eq(*this, o));
+    }
     _expr<Not> operator!() const { return _expr_not(*this); }
     _expr<And> operator&(Expr o) const { return _expr_and(*this, o); }
     _expr<Or> operator|(Expr o) const { return _expr_or(*this, o); }

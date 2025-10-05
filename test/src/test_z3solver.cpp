@@ -1,5 +1,5 @@
-#include "reffine/pass/z3solver.h"
 #include "reffine/builder/reffiner.h"
+#include "reffine/pass/z3solver.h"
 #include "test_base.h"
 #include "test_utils.h"
 

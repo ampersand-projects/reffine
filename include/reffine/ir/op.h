@@ -54,7 +54,9 @@ struct Element : public ExprNode {
     vector<Expr> iters;
 
     Element(Expr vec, vector<Expr> iters)
-        : ExprNode(vec->type.elemty(iters.size())), vec(vec), iters(std::move(iters))
+        : ExprNode(vec->type.elemty(iters.size())),
+          vec(vec),
+          iters(std::move(iters))
     {
         const auto& vtype = vec->type;
 
