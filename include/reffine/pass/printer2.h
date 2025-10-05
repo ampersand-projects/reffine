@@ -1,6 +1,7 @@
 #ifndef INCLUDE_REFFINE_PASS_PRINTER2_H_
 #define INCLUDE_REFFINE_PASS_PRINTER2_H_
 
+#include "llvm/IR/Module.h"
 #include "reffine/pass/iremitter.h"
 
 using namespace std;
@@ -12,6 +13,7 @@ public:
     IRPrinter2(unique_ptr<IREmitterCtx> ctx) : IREmitter(std::move(ctx)) {}
 
     static string Build(Expr);
+    static string Build(llvm::Module&);
 
     CodeSeg visit(Sym) final;
     CodeSeg visit(New&) final;

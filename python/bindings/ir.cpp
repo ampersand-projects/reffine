@@ -8,7 +8,6 @@
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/stmt.h"
-#include "reffine/pass/printer.h"
 
 using namespace std;
 using namespace reffine;
@@ -16,7 +15,7 @@ using namespace reffine::reffiner;
 
 namespace py = pybind11;
 
-string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
+string to_string(shared_ptr<Func> fn) { return fn->str(); }
 
 #define REGISTER_CLASS(CLASS, PARENT, MODULE, NAME, ...)       \
     py::class_<CLASS, shared_ptr<CLASS>, PARENT>(MODULE, NAME) \

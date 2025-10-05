@@ -259,7 +259,7 @@ void execute_kernel(string kernel_name, CUfunction kernel, void *arg, int len)
 void test_kernel() {
     /* Test kernel generation and execution*/
     auto loop = basic_transform_kernel();
-    cout << "Loop IR: " << endl << IRPrinter::Build(loop) << endl;
+    cout << "Loop IR: " << endl << loop->str() << endl;
     auto fn = CanonPass().eval(loop);
 
     auto jit = ExecEngine::Get();

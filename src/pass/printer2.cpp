@@ -1,5 +1,4 @@
 #include "reffine/pass/printer2.h"
-
 #include "reffine/builder/reffiner.h"
 
 using namespace reffine;
@@ -312,4 +311,13 @@ string IRPrinter2::Build(Expr expr)
 {
     IRPrinter2 printer2(make_unique<IREmitterCtx>());
     return printer2.eval(expr)->to_string(-1);
+}
+
+string IRPrinter2::Build(llvm::Module& llmod)
+{
+    std::string str;
+    llvm::raw_string_ostream ostr(str);
+    ostr << llmod;
+    ostr.flush();
+    return ostr.str();
 }
