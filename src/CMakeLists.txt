@@ -76,12 +76,12 @@ target_include_directories(reffine PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
-# link_directories(${LLVM_LIBRARY_DIR})
+link_directories(${LLVM_LIBRARY_DIR})
 
 
 set(MLIR_LIBS
-    MLIRIR              # <-- Add this (core MLIR library)
-    MLIRSupport         # <-- Add this
+    MLIRIR
+    MLIRSupport
     MLIRAnalysis
     MLIRArithDialect
     MLIRBuiltinToLLVMIRTranslation
@@ -98,8 +98,6 @@ set(MLIR_LIBS
     MLIRTransforms
 )
 
-link_directories(${LLVM_LIBRARY_DIR})
-
 target_link_libraries(reffine PUBLIC
     LLVM
     ${MLIR_LIBS}
@@ -115,9 +113,6 @@ if(ENABLE_CUDA)
     target_include_directories(reffine SYSTEM PUBLIC ${CUDA_INCLUDE_DIRS})
 
     target_link_libraries(reffine PUBLIC
-        # LLVMNVPTXCodeGen
-        # LLVMNVPTXDesc
-        # LLVMNVPTXInfo
         ${CUDA_CUDA_LIBRARY}
     )
 endif()
