@@ -24,6 +24,8 @@ private:
     ISpace visit(Element&) final;
     ISpace visit(NotNull&) final;
 
+    ISpace extract_bound(Sym, Expr);
+
     Op& op() { return _op; }
 
     Op& _op;

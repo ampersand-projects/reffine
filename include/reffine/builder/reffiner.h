@@ -99,6 +99,7 @@ REGISTER_EXPR(_and, And)
 REGISTER_EXPR(_or, Or)
 REGISTER_EXPR(_forall, ForAll)
 REGISTER_EXPR(_implies, Implies)
+REGISTER_EXPR(_iff, Iff)
 REGISTER_EXPR(_exists, Exists)
 
 // Constant expressions

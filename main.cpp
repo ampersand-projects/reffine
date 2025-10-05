@@ -219,25 +219,6 @@ shared_ptr<Func> test_op_fn()
     return foo_fn;
 }
 
-void demorgan_test()
-{
-    auto t = make_shared<SymNode>("t", types::INT64);
-    auto lb = make_shared<Const>(types::INT64, 10);
-    auto pred = make_shared<GreaterThanEqual>(t, lb);
-
-    auto p = make_shared<SymNode>("p", t);
-    auto forall = make_shared<ForAll>(t,
-        make_shared<And>(
-            make_shared<Implies>(make_shared<GreaterThanEqual>(t, p), pred),
-            make_shared<Implies>(make_shared<LessThan>(t, p), make_shared<Not>(pred))
-        )
-    );
-
-    Z3Solver z3s;
-    int res = z3s.solve(forall, p).as_int64();
-    cout << "p = " << res << endl;
-}
-
 #ifdef ENABLE_CUDA
 void execute_kernel(string kernel_name, CUfunction kernel, void *arg, int len)
 {

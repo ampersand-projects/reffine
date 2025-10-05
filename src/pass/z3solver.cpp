@@ -149,8 +149,16 @@ z3::check_result Z3Solver::check(Expr conj)
 
 z3::expr Z3Solver::get(Expr val) { return s().get_model().eval(eval(val)); }
 
-z3::expr Z3Solver::solve(Expr conj, Expr val)
+pair<z3::check_result, Expr> Z3Solver::Solve(Expr conj, Expr val)
 {
-    check(conj);
-    return get(val);
+    Z3Solver solver;
+    auto check = solver.check(conj);
+    Expr get = nullptr;
+
+    if (check == z3::sat && val) {
+        auto z3val = solver.get(val);
+        get = _const(val->type, z3val.as_double());
+    }
+
+    return {check, get};
 }
