@@ -11,22 +11,20 @@ using ReffineCtx = ValGenCtx<ISpace>;
 
 class Reffine : public ValGen<ISpace> {
 public:
-    Reffine(unique_ptr<ReffineCtx> ctx, Sym iter)
-        : ValGen<ISpace>(std::move(ctx)), _iter(iter)
+    Reffine(unique_ptr<ReffineCtx> ctx) : ValGen<ISpace>(std::move(ctx))
     {
     }
-
-    static ISpace Build(Sym, Expr, const SymTable&);
 
 private:
     ISpace visit(NaryExpr&) final;
     ISpace visit(Sym) final;
     ISpace visit(Element&) final;
     ISpace visit(NotNull&) final;
+    ISpace visit(Op&) final;
 
     ISpace extract_bound(Sym, NaryExpr&);
 
-    Sym iter() { return _iter; }
+    Sym& iter() { return this->_iter; }
 
     Sym _iter;
 };

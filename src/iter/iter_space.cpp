@@ -367,6 +367,32 @@ Expr NestedSpace::_next(Expr idx)
     );
 }
 
+SymExprs NestedSpace::_vec_idxs(Expr idx)
+{
+    SymExprs vec_idxs;
+
+    auto o_vec_idxs = this->outer->vec_idxs(_get(idx, 0));
+    auto i_vec_idxs = this->inner->vec_idxs(_get(idx, 1));
+    vec_idxs.insert(vec_idxs.end(), o_vec_idxs.begin(), o_vec_idxs.end());
+    vec_idxs.insert(vec_idxs.end(), i_vec_idxs.begin(), i_vec_idxs.end());
+
+    return vec_idxs;
+}
+
+SymExprs NestedSpace::_extra_syms()
+{
+    SymExprs extra_syms;
+
+    auto o_extra_syms = this->outer->extra_syms();
+    auto i_extra_syms = this->inner->extra_syms();
+    extra_syms.insert(extra_syms.end(), o_extra_syms.begin(),
+                      o_extra_syms.end());
+    extra_syms.insert(extra_syms.end(), i_extra_syms.begin(),
+                      i_extra_syms.end());
+
+    return extra_syms;
+}
+
 ISpace NestedSpace::apply(ISpace)
 {
     // TODO: implementation deferred for later

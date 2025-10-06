@@ -84,8 +84,15 @@ ISpace Reffine::visit(NotNull& not_null)
     return eval(not_null.elem);
 }
 
-ISpace Reffine::Build(Sym iter, Expr pred, const SymTable& tbl)
+ISpace Reffine::visit(Op& op)
 {
-    Reffine rpass(make_unique<ReffineCtx>(tbl), iter);
-    return rpass.eval(pred);
+    ISpace ispace = nullptr;
+
+    for (int i = op.iters.size() - 1; i >= 0; i--) {
+        this->iter() = op.iters[i];
+        auto outer_ispace = eval(op.pred);
+        ispace = ispace ? make_shared<NestedSpace>(outer_ispace, ispace) : outer_ispace;
+    }
+
+    return ispace;
 }

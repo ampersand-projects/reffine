@@ -43,11 +43,9 @@ Expr LoopGen::visit(Lookup& lookup)
 
 pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 {
-    // Only support 1d operators now
-    ASSERT(op.iters.size() == 1);
+    Reffine rpass(make_unique<ReffineCtx>(this->ctx().in_sym_tbl));
+    auto ispace = rpass.eval(this->tmp_expr(op));
     auto iter = op.iters[0];
-
-    auto ispace = Reffine::Build(op.iters[0], op.pred, this->ctx().in_sym_tbl);
 
     vector<Expr> loop_inits;
 

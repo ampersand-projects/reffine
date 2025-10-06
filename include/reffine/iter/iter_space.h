@@ -225,6 +225,8 @@ private:
     Expr _iter_to_idx(Expr) final;
     Expr _is_alive(Expr) final;
     Expr _next(Expr) final;
+    SymExprs _vec_idxs(Expr) final;
+    SymExprs _extra_syms() final;
 };
 
 ISpace operator&(ISpace, ISpace);
