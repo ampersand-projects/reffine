@@ -47,7 +47,7 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
     ASSERT(op.iters.size() == 1);
     auto iter = op.iters[0];
 
-    auto ispace = Reffine::Build(op, this->ctx().in_sym_tbl);
+    auto ispace = Reffine::Build(op.iters[0], op.pred, this->ctx().in_sym_tbl);
 
     vector<Expr> loop_inits;
 

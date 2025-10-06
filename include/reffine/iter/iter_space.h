@@ -206,6 +206,27 @@ private:
     Expr _is_alive(Expr) final;
 };
 
+struct NestedSpace : public IterSpace {
+    ISpace outer;
+    ISpace inner;
+
+    NestedSpace(ISpace outer, ISpace inner)
+        : IterSpace(DataType(BaseType::STRUCT, {outer->type, inner->type})),
+          outer(outer), inner(inner)
+    {}
+
+    ISpace apply(ISpace) final;
+
+private:
+    Expr _lower_bound() final;
+    Expr _upper_bound() final;
+    Expr _iter_cond(Expr) final;
+    Expr _idx_to_iter(Expr) final;
+    Expr _iter_to_idx(Expr) final;
+    Expr _is_alive(Expr) final;
+    Expr _next(Expr) final;
+};
+
 ISpace operator&(ISpace, ISpace);
 ISpace operator|(ISpace, ISpace);
 ISpace operator>=(ISpace, Expr);

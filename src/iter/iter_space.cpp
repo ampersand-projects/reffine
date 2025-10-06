@@ -306,3 +306,69 @@ ISpace InterSpace::apply(ISpace ispace)
         return nullptr;
     }
 }
+
+Expr NestedSpace::_lower_bound()
+{
+    return _new(vector<Expr>{this->outer->lower_bound(), this->inner->lower_bound()});
+}
+
+Expr NestedSpace::_upper_bound()
+{
+    return _new(vector<Expr>{this->outer->upper_bound(), this->inner->upper_bound()});
+}
+
+Expr NestedSpace::_iter_cond(Expr idx)
+{
+    auto o_idx = _get(idx, 0);
+    auto i_idx = _get(idx, 1);
+
+    return _and(this->outer->iter_cond(o_idx), this->inner->iter_cond(i_idx));
+}
+
+Expr NestedSpace::_idx_to_iter(Expr idx)
+{
+    auto o_idx = _get(idx, 0);
+    auto i_idx = _get(idx, 1);
+
+    return _new(vector<Expr>{this->outer->idx_to_iter(o_idx), this->inner->idx_to_iter(i_idx)});
+}
+
+Expr NestedSpace::_iter_to_idx(Expr iter)
+{
+    auto o_iter = _get(iter, 0);
+    auto i_iter = _get(iter, 1);
+
+    return _new(vector<Expr>{this->outer->iter_to_idx(o_iter), this->inner->iter_to_idx(i_iter)});
+}
+
+Expr NestedSpace::_is_alive(Expr idx)
+{
+    auto o_idx = _get(idx, 0);
+    auto i_idx = _get(idx, 1);
+
+    return _or(this->outer->is_alive(o_idx), this->inner->is_alive(i_idx));
+}
+
+Expr NestedSpace::_next(Expr idx)
+{
+    auto o_idx = _get(idx, 0);
+    auto i_idx = _get(idx, 1);
+
+    auto o_next = this->outer->next(o_idx);
+    auto i_next = this->inner->next(i_idx);
+
+    auto is_inner_active = this->inner->is_alive(i_idx);
+    auto i_start = _get(this->iter_to_idx(this->lower_bound()), 1);
+
+    return _sel(
+        is_inner_active,
+        _new(vector<Expr>{o_idx, i_next}),
+        _new(vector<Expr>{o_next, i_start})
+    );
+}
+
+ISpace NestedSpace::apply(ISpace)
+{
+    // TODO: implementation deferred for later
+    return nullptr;
+}

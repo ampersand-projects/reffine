@@ -51,7 +51,7 @@ ISpace Reffine::visit(NaryExpr& e)
         case MathOp::LTE:
         case MathOp::GT:
         case MathOp::GTE:
-            return extract_bound(op().iters[0], e);
+            return extract_bound(iter(), e);
         default:
             throw runtime_error("Operator not supported by Reffine");
     }
@@ -59,7 +59,7 @@ ISpace Reffine::visit(NaryExpr& e)
 
 ISpace Reffine::visit(Sym sym)
 {
-    if (sym == op().iters[0]) {
+    if (sym == iter()) {
         // return universal space for operator iterator
         return make_shared<UniversalSpace>(sym->type);
     } else if (sym->type.is_vector()) {
@@ -71,7 +71,7 @@ ISpace Reffine::visit(Sym sym)
 
 ISpace Reffine::visit(Element& elem)
 {
-    ASSERT(elem.iter == op().iters[0]);
+    ASSERT(elem.iter == iter());
 
     // Assuming Element is only visited through NotNull
     // Therefore, always returning vector space
@@ -84,12 +84,8 @@ ISpace Reffine::visit(NotNull& not_null)
     return eval(not_null.elem);
 }
 
-ISpace Reffine::Build(Op& op, const SymTable& tbl)
+ISpace Reffine::Build(Sym iter, Expr pred, const SymTable& tbl)
 {
-    // Only support single iterator for now
-    ASSERT(op.iters.size() == 1);
-
-    Reffine rpass(make_unique<ReffineCtx>(tbl), op);
-
-    return rpass.eval(op.pred);
+    Reffine rpass(make_unique<ReffineCtx>(tbl), iter);
+    return rpass.eval(pred);
 }
