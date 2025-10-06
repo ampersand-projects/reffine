@@ -52,7 +52,7 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
     // Loop index initialization
     auto idx_init = eval(ispace->iter_to_idx(ispace->lower_bound()));
     auto idx_alloc = _alloc(idx_init->type);
-    auto idx_addr = _sym(iter->name + "_idx_addr", idx_alloc);
+    auto idx_addr = idx_alloc->symify();
     this->assign(idx_addr, idx_alloc);
     this->map_sym(idx_addr, idx_addr);
     loop_inits.push_back(_store(idx_addr, idx_init));

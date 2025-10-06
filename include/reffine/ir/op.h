@@ -82,7 +82,10 @@ struct In : public ExprNode {
     Expr iter;
     Expr vec;
 
-    In(Expr iter, Expr vec) : ExprNode(types::BOOL), iter(iter), vec(vec) {}
+    In(Expr iter, Expr vec) : ExprNode(types::BOOL), iter(iter), vec(vec)
+    {
+        ASSERT(this->iter->type == this->vec->type.iterty());
+    }
 
     void Accept(Visitor&) final;
 };

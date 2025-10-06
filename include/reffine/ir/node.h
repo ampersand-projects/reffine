@@ -14,6 +14,8 @@ using namespace std;
 namespace reffine {
 
 class Visitor;
+struct SymNode;
+typedef shared_ptr<SymNode> Sym;
 
 struct ExprNode {
     const DataType type;
@@ -25,6 +27,8 @@ struct ExprNode {
     virtual void Accept(Visitor&) = 0;
 
     string str();
+
+    Sym symify();
 };
 typedef shared_ptr<ExprNode> Expr;
 
@@ -43,7 +47,6 @@ struct SymNode : public ExprNode {
 
     void Accept(Visitor&) final;
 };
-typedef shared_ptr<SymNode> Sym;
 
 typedef map<Sym, Expr> SymTable;
 
