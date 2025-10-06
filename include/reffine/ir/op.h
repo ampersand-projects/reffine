@@ -37,7 +37,7 @@ private:
         vector<DataType> dtypes;
 
         for (const auto& iter : iters) {
-            ASSERT(iter->type.is_val());
+            ASSERT(iter->type.is_primitive());
             dtypes.push_back(iter->type);
         }
         for (const auto& output : outputs) {

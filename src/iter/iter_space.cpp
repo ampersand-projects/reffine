@@ -40,7 +40,7 @@ Expr IterSpace::_iter_to_idx(Expr iter) { return iter; }
 
 Expr IterSpace::_is_alive(Expr idx) { return _true(); }
 
-Expr IterSpace::_next(Expr idx) { return _add(idx, _const(this->type, 1)); }
+Expr IterSpace::_next(Expr idx) { return _add(idx, _const(idx->type, 1)); }
 
 SymExprs IterSpace::_vec_idxs(Expr idx) { return SymExprs{}; }
 

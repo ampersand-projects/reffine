@@ -2,7 +2,7 @@
 #define INCLUDE_REFFINE_ITER_SPACE_ITER_H_
 
 #include "reffine/base/type.h"
-#include "reffine/ir/node.h"
+#include "reffine/ir/expr.h"
 
 using namespace std;
 
@@ -14,23 +14,26 @@ struct IterSpace;
 using ISpace = shared_ptr<IterSpace>;
 
 struct IterSpace {
-    const DataType type;
+    Expr iter;
 
-    IterSpace(DataType type) : type(type) { ASSERT(type.is_val()); }
+    IterSpace(Expr iter) : iter(iter)
+    {
+        ASSERT(iter->type.is_val());
+    }
 
     virtual ~IterSpace() {}
 
     Expr lower_bound()
     {
         auto lb = this->_lower_bound();
-        ASSERT(!lb || lb->type == this->type);
+        ASSERT(!lb || lb->type == this->iter->type);
         return lb;
     }
 
     Expr upper_bound()
     {
         auto ub = this->_upper_bound();
-        ASSERT(!ub || ub->type == this->type);
+        ASSERT(!ub || ub->type == this->iter->type);
         return ub;
     }
 
@@ -44,7 +47,7 @@ struct IterSpace {
     Expr idx_to_iter(Expr idx)
     {
         auto iter = this->_idx_to_iter(idx);
-        ASSERT(iter->type == this->type);
+        ASSERT(iter->type == this->iter->type);
         return iter;
     }
 
@@ -84,7 +87,7 @@ protected:
 };
 
 struct UniversalSpace : public IterSpace {
-    UniversalSpace(DataType type) : IterSpace(type) {}
+    UniversalSpace(Sym iter) : IterSpace(iter) {}
 
     ISpace apply(ISpace) final;
 };
@@ -92,8 +95,8 @@ struct UniversalSpace : public IterSpace {
 struct VecSpace : public IterSpace {
     Sym vec;
 
-    VecSpace(Sym vec)
-        : IterSpace(vec->type.iterty()),
+    VecSpace(Sym iter, Sym vec)
+        : IterSpace(iter),
           vec(vec),
           _vec_len_sym(make_shared<SymNode>(vec->name + "_len", types::IDX))
     {
@@ -120,7 +123,7 @@ private:
 struct SuperSpace : public IterSpace {
     ISpace ispace;
 
-    SuperSpace(ISpace ispace) : IterSpace(ispace->type), ispace(ispace) {}
+    SuperSpace(ISpace ispace) : IterSpace(ispace->iter), ispace(ispace) {}
 
 protected:
     Expr _lower_bound() override;
@@ -139,7 +142,7 @@ struct BoundSpace : public SuperSpace {
 
     BoundSpace(ISpace ispace, Expr bound) : SuperSpace(ispace), bound(bound)
     {
-        ASSERT(bound->type == ispace->type);
+        ASSERT(bound->type == ispace->iter->type);
     }
 };
 
@@ -169,9 +172,9 @@ struct JointSpace : public IterSpace {
     ISpace right;
 
     JointSpace(ISpace left, ISpace right)
-        : IterSpace(left->type), left(left), right(right)
+        : IterSpace(left->iter), left(left), right(right)
     {
-        ASSERT(left->type == right->type);
+        ASSERT(left->iter == right->iter);
     }
 
 protected:
@@ -211,9 +214,10 @@ struct NestedSpace : public IterSpace {
     ISpace inner;
 
     NestedSpace(ISpace outer, ISpace inner)
-        : IterSpace(DataType(BaseType::STRUCT, {outer->type, inner->type})),
+        : IterSpace(make_shared<New>(vector<Expr>{outer->iter, inner->iter})),
           outer(outer), inner(inner)
-    {}
+    {
+    }
 
     ISpace apply(ISpace) final;
 

@@ -61,9 +61,9 @@ ISpace Reffine::visit(Sym sym)
 {
     if (sym == iter()) {
         // return universal space for operator iterator
-        return make_shared<UniversalSpace>(sym->type);
+        return make_shared<UniversalSpace>(iter());
     } else if (sym->type.is_vector()) {
-        return make_shared<VecSpace>(sym);
+        return make_shared<VecSpace>(iter(), sym);
     } else {
         return eval(this->ctx().in_sym_tbl.at(sym));
     }
