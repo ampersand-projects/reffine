@@ -59,7 +59,7 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 
     // Populate iter_elem_map
     // Used for lowering Element expressions
-    for (auto& [vec, idx] : ispace->vec_idxs(_load(idx_addr))) {
+    for (auto& [vec, iter, idx] : ispace->vec_iter_idxs(_load(idx_addr))) {
         this->_vec_iter_idx_map[vec][iter] = idx;
     }
 

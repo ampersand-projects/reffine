@@ -8,6 +8,7 @@ using namespace std;
 
 namespace reffine {
 
+using VecIterIdxs = vector<tuple<Expr, Expr, Expr>>;
 using SymExprs = vector<pair<Sym, Expr>>;
 
 struct IterSpace;
@@ -67,7 +68,7 @@ struct IterSpace {
         return new_idx;
     }
 
-    SymExprs vec_idxs(Expr idx) { return this->_vec_idxs(idx); }
+    VecIterIdxs vec_iter_idxs(Expr idx) { return this->_vec_iter_idxs(idx); }
 
     SymExprs extra_syms() { return this->_extra_syms(); }
 
@@ -82,7 +83,7 @@ protected:
     virtual Expr _iter_to_idx(Expr);
     virtual Expr _is_alive(Expr);
     virtual Expr _next(Expr);
-    virtual SymExprs _vec_idxs(Expr);
+    virtual VecIterIdxs _vec_iter_idxs(Expr);
     virtual SymExprs _extra_syms();
 };
 
@@ -93,12 +94,12 @@ struct UniversalSpace : public IterSpace {
 };
 
 struct VecSpace : public IterSpace {
-    Sym vec;
+    Expr vec;
 
-    VecSpace(Sym iter, Sym vec)
+    VecSpace(Expr iter, Expr vec)
         : IterSpace(iter),
           vec(vec),
-          _vec_len_sym(make_shared<SymNode>(vec->name + "_len", types::IDX))
+          _vec_len_sym(make_shared<SymNode>(vec->str() + "_len", types::IDX))
     {
         ASSERT(vec->type.is_vector());
         ASSERT(vec->type.dim == 1);  // currently only support 1d vectors
@@ -114,7 +115,7 @@ private:
     Expr _iter_to_idx(Expr) final;
     Expr _is_alive(Expr) final;
     Expr _next(Expr) final;
-    SymExprs _vec_idxs(Expr) final;
+    VecIterIdxs _vec_iter_idxs(Expr) final;
     SymExprs _extra_syms() final;
 
     Sym _vec_len_sym;
@@ -133,7 +134,7 @@ protected:
     Expr _iter_to_idx(Expr) override;
     Expr _is_alive(Expr) override;
     Expr _next(Expr) override;
-    SymExprs _vec_idxs(Expr) final;
+    VecIterIdxs _vec_iter_idxs(Expr) final;
     SymExprs _extra_syms() final;
 };
 
@@ -181,7 +182,7 @@ protected:
     Expr _idx_to_iter(Expr) final;
     Expr _iter_to_idx(Expr) final;
     Expr _next(Expr) final;
-    SymExprs _vec_idxs(Expr) final;
+    VecIterIdxs _vec_iter_idxs(Expr) final;
     SymExprs _extra_syms() final;
 };
 
@@ -229,7 +230,7 @@ private:
     Expr _iter_to_idx(Expr) final;
     Expr _is_alive(Expr) final;
     Expr _next(Expr) final;
-    SymExprs _vec_idxs(Expr) final;
+    VecIterIdxs _vec_iter_idxs(Expr) final;
     SymExprs _extra_syms() final;
 };
 

@@ -42,7 +42,7 @@ Expr IterSpace::_is_alive(Expr idx) { return _true(); }
 
 Expr IterSpace::_next(Expr idx) { return _add(idx, _const(idx->type, 1)); }
 
-SymExprs IterSpace::_vec_idxs(Expr idx) { return SymExprs{}; }
+VecIterIdxs IterSpace::_vec_iter_idxs(Expr idx) { return VecIterIdxs{}; }
 
 SymExprs IterSpace::_extra_syms() { return SymExprs{}; }
 
@@ -79,9 +79,9 @@ Expr VecSpace::_is_alive(Expr idx)
 
 Expr VecSpace::_next(Expr idx) { return _add(idx, _idx(1)); }
 
-SymExprs VecSpace::_vec_idxs(Expr idx)
+VecIterIdxs VecSpace::_vec_iter_idxs(Expr idx)
 {
-    return SymExprs{make_pair(this->vec, idx)};
+    return VecIterIdxs{make_tuple(this->vec, this->iter, idx)};
 }
 
 SymExprs VecSpace::_extra_syms()
@@ -111,7 +111,7 @@ Expr SuperSpace::_is_alive(Expr idx) { return this->ispace->is_alive(idx); }
 
 Expr SuperSpace::_next(Expr idx) { return this->ispace->next(idx); }
 
-SymExprs SuperSpace::_vec_idxs(Expr idx) { return this->ispace->vec_idxs(idx); }
+VecIterIdxs SuperSpace::_vec_iter_idxs(Expr idx) { return this->ispace->vec_iter_idxs(idx); }
 
 SymExprs SuperSpace::_extra_syms() { return this->ispace->extra_syms(); }
 
@@ -193,12 +193,12 @@ Expr JointSpace::_next(Expr idx)
                      _new(vector<Expr>{new_lidx, new_ridx})));
 }
 
-SymExprs JointSpace::_vec_idxs(Expr idx)
+VecIterIdxs JointSpace::_vec_iter_idxs(Expr idx)
 {
-    SymExprs vec_idxs;
+    VecIterIdxs vec_idxs;
 
-    auto l_vec_idxs = this->left->vec_idxs(_get(idx, 0));
-    auto r_vec_idxs = this->right->vec_idxs(_get(idx, 1));
+    auto l_vec_idxs = this->left->vec_iter_idxs(_get(idx, 0));
+    auto r_vec_idxs = this->right->vec_iter_idxs(_get(idx, 1));
     vec_idxs.insert(vec_idxs.end(), l_vec_idxs.begin(), l_vec_idxs.end());
     vec_idxs.insert(vec_idxs.end(), r_vec_idxs.begin(), r_vec_idxs.end());
 
@@ -367,12 +367,12 @@ Expr NestedSpace::_next(Expr idx)
     );
 }
 
-SymExprs NestedSpace::_vec_idxs(Expr idx)
+VecIterIdxs NestedSpace::_vec_iter_idxs(Expr idx)
 {
-    SymExprs vec_idxs;
+    VecIterIdxs vec_idxs;
 
-    auto o_vec_idxs = this->outer->vec_idxs(_get(idx, 0));
-    auto i_vec_idxs = this->inner->vec_idxs(_get(idx, 1));
+    auto o_vec_idxs = this->outer->vec_iter_idxs(_get(idx, 0));
+    auto i_vec_idxs = this->inner->vec_iter_idxs(_get(idx, 1));
     vec_idxs.insert(vec_idxs.end(), o_vec_idxs.begin(), o_vec_idxs.end());
     vec_idxs.insert(vec_idxs.end(), i_vec_idxs.begin(), i_vec_idxs.end());
 
