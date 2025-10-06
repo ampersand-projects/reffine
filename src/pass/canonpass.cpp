@@ -13,6 +13,15 @@ Expr CanonPass::visit(Define& define)
     return new_sym;
 }
 
+Expr CanonPass::visit(Get& get)
+{
+    if (get.val->type.is_primitive()) {
+        return eval(get.val);
+    } else {
+        return IRClone::visit(get);
+    }
+}
+
 Expr CanonPass::visit(Loop& loop)
 {
     auto new_loop = _loop(eval(loop.output));

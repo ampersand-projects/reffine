@@ -9,6 +9,7 @@ namespace reffine {
 class CanonPass : public IRClone {
 private:
     Expr visit(Define&) final;
+    Expr visit(Get&) final;
     Expr visit(Loop&) final;
     Expr visit(Func&) final;
 };

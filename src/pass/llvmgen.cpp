@@ -117,6 +117,7 @@ Value* LLVMGen::visit(Cast& e)
 
 Value* LLVMGen::visit(Get& e)
 {
+    ASSERT(e.val->type.is_struct());
     LOG(WARNING) << "Failed to eliminate Get expression before LLVMGen"
                  << std::endl;
     auto val = eval(e.val);
