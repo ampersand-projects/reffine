@@ -141,7 +141,11 @@ public:
         expr.idx->Accept(*this);
     }
 
-    void Visit(NotNull& expr) override { expr.elem->Accept(*this); }
+    void Visit(In& expr) override
+    {
+        expr.iter->Accept(*this);
+        expr.vec->Accept(*this);
+    }
 
     void Visit(Reduce& expr) override { expr.op.Accept(*this); }
 

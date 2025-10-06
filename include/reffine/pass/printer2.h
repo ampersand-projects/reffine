@@ -21,7 +21,7 @@ public:
     CodeSeg visit(Reduce&) final;
     CodeSeg visit(Element&) final;
     CodeSeg visit(Lookup&) final;
-    CodeSeg visit(NotNull&) final;
+    CodeSeg visit(In&) final;
     CodeSeg visit(Call&) final;
     CodeSeg visit(IfElse&) final;
     CodeSeg visit(NoOp&) final;

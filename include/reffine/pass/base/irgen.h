@@ -69,9 +69,9 @@ protected:
     {
         throw runtime_error("Lookup visit not supported");
     }
-    virtual ValTy visit(NotNull&)
+    virtual ValTy visit(In&)
     {
-        throw runtime_error("NotNull visit not supported");
+        throw runtime_error("In visit not supported");
     }
     virtual ValTy visit(Reduce&)
     {
@@ -152,7 +152,7 @@ protected:
     void Visit(Op& expr) final { val() = visit(expr); }
     void Visit(Element& expr) final { val() = visit(expr); }
     void Visit(Lookup& expr) final { val() = visit(expr); }
-    void Visit(NotNull& expr) final { val() = visit(expr); }
+    void Visit(In& expr) final { val() = visit(expr); }
     void Visit(Reduce& expr) final { val() = visit(expr); }
     void Visit(Call& expr) final { val() = visit(expr); }
     void Visit(Stmts& stmt) final { val() = visit(stmt); }

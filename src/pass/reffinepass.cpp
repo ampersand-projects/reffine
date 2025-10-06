@@ -62,26 +62,15 @@ ISpace Reffine::visit(Sym sym)
     if (sym == iter()) {
         // return universal space for operator iterator
         return make_shared<UniversalSpace>(iter());
-    } else if (sym->type.is_vector()) {
-        return make_shared<VecSpace>(iter(), sym);
     } else {
         return eval(this->ctx().in_sym_tbl.at(sym));
     }
 }
 
-ISpace Reffine::visit(Element& elem)
+ISpace Reffine::visit(In& in)
 {
-    ASSERT(elem.iter == iter());
-
-    // Assuming Element is only visited through NotNull
-    // Therefore, always returning vector space
-    return eval(elem.vec);
-}
-
-ISpace Reffine::visit(NotNull& not_null)
-{
-    // Assuming NotNull always traslates to vector space
-    return eval(not_null.elem);
+    ASSERT(in.iter == iter());
+    return make_shared<VecSpace>(iter(), in.vec);
 }
 
 ISpace Reffine::visit(Op& op)

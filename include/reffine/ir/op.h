@@ -78,10 +78,11 @@ struct Lookup : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-struct NotNull : public ExprNode {
-    Expr elem;
+struct In : public ExprNode {
+    Expr iter;
+    Expr vec;
 
-    NotNull(Expr elem) : ExprNode(types::BOOL), elem(elem) {}
+    In(Expr iter, Expr vec) : ExprNode(types::BOOL), iter(iter), vec(vec) {}
 
     void Accept(Visitor&) final;
 };

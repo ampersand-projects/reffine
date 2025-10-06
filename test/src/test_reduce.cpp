@@ -69,7 +69,7 @@ shared_ptr<Func> vector_op()
                               int8_t, int64_t>());
     Op op(
         {t_sym},
-        ~(vec_in_sym[{t_sym}]) & _lte(t_sym, _i64(48)) & _gte(t_sym, _i64(10)),
+        _in(t_sym, vec_in_sym) & _lte(t_sym, _i64(48)) & _gte(t_sym, _i64(10)),
         {
             vec_in_sym[{t_sym}][2],
             _new(vector<Expr>{

@@ -43,7 +43,7 @@ Expr IRClone::visit(Lookup& lookup)
     return _lookup(eval(lookup.vec), eval(lookup.idx));
 }
 
-Expr IRClone::visit(NotNull& not_null) { return _notnull(eval(not_null.elem)); }
+Expr IRClone::visit(In& in) { return _in(eval(in.iter), eval(in.vec)); }
 
 Expr IRClone::visit(NaryExpr& nexpr)
 {

@@ -18,8 +18,7 @@ public:
 private:
     ISpace visit(NaryExpr&) final;
     ISpace visit(Sym) final;
-    ISpace visit(Element&) final;
-    ISpace visit(NotNull&) final;
+    ISpace visit(In&) final;
     ISpace visit(Op&) final;
 
     ISpace extract_bound(Sym, NaryExpr&);
