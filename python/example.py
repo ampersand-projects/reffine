@@ -58,23 +58,23 @@ def transform_fn_arrow(n=100):
     length = ir._call("get_vector_len", ir._idx_t, [vec_sym])
 
     length = ir._idx(n)
-    idx_alloc = ir._alloc(ir._idx_t, ir._u32(1))
+    idx_alloc = ir._alloc(ir._idx_t, ir._idx(1))
     idx_addr = ir._sym("idx_addr", idx_alloc)
-    idx = ir._load(idx_addr)
+    idx = ir._load(idx_addr, ir._idx(0))
 
-    val_ptr = ir._fetch(vec_sym, idx, 0)
-    val = ir._load(val_ptr)
+    val_ptr = ir._fetch(vec_sym, 0)
+    val = ir._load(val_ptr, ir._idx(0))
     
-    val_ptr2 = ir._fetch(vec_sym, idx, 1)
-    val2 = ir._load(val_ptr2)
+    val_ptr2 = ir._fetch(vec_sym, 1)
+    val2 = ir._load(val_ptr2, ir._idx(0))
 
-    out_ptr = ir._fetch(vec_out_sym, idx, 0)
+    out_ptr = ir._fetch(vec_out_sym, 0)
 
     loop = ir._loop(vec_out_sym)
-    loop.init = ir._stmts([idx_alloc, ir._store(idx_addr, ir._idx(0))])
+    loop.init = ir._stmts([idx_alloc, ir._store(idx_addr, ir._idx(0), ir._idx(0))])
     loop.body = ir._stmts([
-        ir._store(out_ptr, ir._add(val, val2)),
-        ir._store(idx_addr, ir._add(idx, ir._idx(1))),
+        ir._store(out_ptr, ir._add(val, val2), ir._idx(0)),
+        ir._store(idx_addr, ir._add(idx, ir._idx(1)), ir._idx(0)),
     ])
     loop.exit_cond = ir._gte(idx, length)
 
@@ -106,6 +106,7 @@ def test_arrow():
     print("Executing query...\n")
     exec.run(query, [c_out_arr, c_in_arr])
     print(f"Output:\n{out_arr}\n\n")
+    
 
 test_arrow()
 # test_numpy()

@@ -81,7 +81,8 @@ void init_ir(py::module_& m)
         .def(py::init<Expr>())
         .def_readwrite("init", &Loop::init)
         .def_readwrite("body", &Loop::body)
-        .def_readwrite("exit_cond", &Loop::exit_cond);
+        .def_readwrite("exit_cond", &Loop::exit_cond)
+        .def_readwrite("post", &Loop::post);
 
     /* Op */
     REGISTER_CLASS(Element, ExprNode, m, "_elem", Expr, Expr)
