@@ -80,7 +80,8 @@ ISpace Reffine::visit(Op& op)
     for (int i = op.iters.size() - 1; i >= 0; i--) {
         this->iter() = op.iters[i];
         auto outer_ispace = eval(op.pred);
-        ispace = ispace ? make_shared<NestedSpace>(outer_ispace, ispace) : outer_ispace;
+        ispace = ispace ? make_shared<NestedSpace>(outer_ispace, ispace)
+                        : outer_ispace;
     }
 
     return ispace;

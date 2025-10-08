@@ -69,10 +69,7 @@ protected:
     {
         throw runtime_error("Lookup visit not supported");
     }
-    virtual ValTy visit(In&)
-    {
-        throw runtime_error("In visit not supported");
-    }
+    virtual ValTy visit(In&) { throw runtime_error("In visit not supported"); }
     virtual ValTy visit(Reduce&)
     {
         throw runtime_error("Reduce visit not supported");

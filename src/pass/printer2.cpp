@@ -1,4 +1,5 @@
 #include "reffine/pass/printer2.h"
+
 #include "reffine/builder/reffiner.h"
 
 using namespace reffine;
@@ -7,7 +8,7 @@ using namespace reffine::reffiner;
 static const auto FORALL = "\u2200";
 static const auto REDCLE = "\u2295";
 static const auto PHI = "\u0278";
-//static const auto IN = "\u2208";
+// static const auto IN = "\u2208";
 
 CodeSeg IRPrinter2::visit(Sym sym)
 {
@@ -181,7 +182,10 @@ CodeSeg IRPrinter2::visit(Lookup& e)
     return code_func("lookup", {e.vec, e.idx});
 }
 
-CodeSeg IRPrinter2::visit(In& e) { return code(eval(e.vec), "[", eval(e.iter), "] !=", PHI); }
+CodeSeg IRPrinter2::visit(In& e)
+{
+    return code(eval(e.vec), "[", eval(e.iter), "] !=", PHI);
+}
 
 CodeSeg IRPrinter2::visit(Reduce& red)
 {

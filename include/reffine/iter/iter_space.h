@@ -17,10 +17,7 @@ using ISpace = shared_ptr<IterSpace>;
 struct IterSpace {
     Expr iter;
 
-    IterSpace(Expr iter) : iter(iter)
-    {
-        ASSERT(iter->type.is_val());
-    }
+    IterSpace(Expr iter) : iter(iter) { ASSERT(iter->type.is_val()); }
 
     virtual ~IterSpace() {}
 
@@ -216,7 +213,8 @@ struct NestedSpace : public IterSpace {
 
     NestedSpace(ISpace outer, ISpace inner)
         : IterSpace(make_shared<New>(vector<Expr>{outer->iter, inner->iter})),
-          outer(outer), inner(inner)
+          outer(outer),
+          inner(inner)
     {
     }
 

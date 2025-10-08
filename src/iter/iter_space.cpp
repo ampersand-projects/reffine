@@ -111,7 +111,10 @@ Expr SuperSpace::_is_alive(Expr idx) { return this->ispace->is_alive(idx); }
 
 Expr SuperSpace::_next(Expr idx) { return this->ispace->next(idx); }
 
-VecIterIdxs SuperSpace::_vec_iter_idxs(Expr idx) { return this->ispace->vec_iter_idxs(idx); }
+VecIterIdxs SuperSpace::_vec_iter_idxs(Expr idx)
+{
+    return this->ispace->vec_iter_idxs(idx);
+}
 
 SymExprs SuperSpace::_extra_syms() { return this->ispace->extra_syms(); }
 
@@ -309,12 +312,14 @@ ISpace InterSpace::apply(ISpace ispace)
 
 Expr NestedSpace::_lower_bound()
 {
-    return _new(vector<Expr>{this->outer->lower_bound(), this->inner->lower_bound()});
+    return _new(
+        vector<Expr>{this->outer->lower_bound(), this->inner->lower_bound()});
 }
 
 Expr NestedSpace::_upper_bound()
 {
-    return _new(vector<Expr>{this->outer->upper_bound(), this->inner->upper_bound()});
+    return _new(
+        vector<Expr>{this->outer->upper_bound(), this->inner->upper_bound()});
 }
 
 Expr NestedSpace::_iter_cond(Expr idx)
@@ -330,7 +335,8 @@ Expr NestedSpace::_idx_to_iter(Expr idx)
     auto o_idx = _get(idx, 0);
     auto i_idx = _get(idx, 1);
 
-    return _new(vector<Expr>{this->outer->idx_to_iter(o_idx), this->inner->idx_to_iter(i_idx)});
+    return _new(vector<Expr>{this->outer->idx_to_iter(o_idx),
+                             this->inner->idx_to_iter(i_idx)});
 }
 
 Expr NestedSpace::_iter_to_idx(Expr iter)
@@ -338,7 +344,8 @@ Expr NestedSpace::_iter_to_idx(Expr iter)
     auto o_iter = _get(iter, 0);
     auto i_iter = _get(iter, 1);
 
-    return _new(vector<Expr>{this->outer->iter_to_idx(o_iter), this->inner->iter_to_idx(i_iter)});
+    return _new(vector<Expr>{this->outer->iter_to_idx(o_iter),
+                             this->inner->iter_to_idx(i_iter)});
 }
 
 Expr NestedSpace::_is_alive(Expr idx)
@@ -361,11 +368,8 @@ Expr NestedSpace::_next(Expr idx)
     auto is_inner_active = this->inner->is_alive(i_idx);
     auto var = _define(is_inner_active->symify(), is_inner_active);
 
-    return _sel(
-        var,
-        _new(vector<Expr>{o_idx, i_next}),
-        _new(vector<Expr>{o_next, i_start})
-    );
+    return _sel(var, _new(vector<Expr>{o_idx, i_next}),
+                _new(vector<Expr>{o_next, i_start}));
 }
 
 VecIterIdxs NestedSpace::_vec_iter_idxs(Expr idx)

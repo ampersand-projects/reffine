@@ -54,9 +54,7 @@ struct Element : public ExprNode {
     Expr iter;
 
     Element(Expr vec, Expr iter)
-        : ExprNode(vec->type.valty()),
-          vec(vec),
-          iter(iter)
+        : ExprNode(vec->type.valty()), vec(vec), iter(iter)
     {
         ASSERT(this->vec->type.is_vector());
         ASSERT(this->iter->type == this->vec->type.iterty());

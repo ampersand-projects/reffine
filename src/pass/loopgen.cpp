@@ -49,9 +49,7 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
     vector<Expr> loop_inits;
 
     string loop_iter_name = "";
-    for (auto iter : op.iters) {
-        loop_iter_name += ("_" + iter->name);
-    }
+    for (auto iter : op.iters) { loop_iter_name += ("_" + iter->name); }
 
     // Loop index initialization
     auto idx_init = eval(ispace->iter_to_idx(ispace->lower_bound()));
@@ -76,12 +74,11 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 
     // Derive op iterator from loop idx
     auto loop_iter_expr = eval(ispace->idx_to_iter(_load(idx_addr)));
-
     auto loop_iter = _sym(loop_iter_name, loop_iter_expr);
     this->assign(loop_iter, loop_iter_expr);
 
     // Map op iters to loop iter
-    for (size_t i = 0; i<op.iters.size(); i++) {
+    for (size_t i = 0; i < op.iters.size(); i++) {
         auto iter = op.iters[i];
         auto new_iter = _sym(iter->name, iter);
         this->assign(new_iter, _get(loop_iter, i));

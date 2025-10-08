@@ -126,9 +126,7 @@ protected:
         auto line = code(open);
         for (size_t i = 0; i < args.size(); i++) {
             line->emit(eval(args[i]));
-            if (i < args.size() - 1) {
-                line->emit(", ");
-            }
+            if (i < args.size() - 1) { line->emit(", "); }
         }
         line->emit(close);
         return line;

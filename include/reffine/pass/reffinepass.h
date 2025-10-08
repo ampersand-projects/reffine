@@ -11,9 +11,7 @@ using ReffineCtx = ValGenCtx<ISpace>;
 
 class Reffine : public ValGen<ISpace> {
 public:
-    Reffine(unique_ptr<ReffineCtx> ctx) : ValGen<ISpace>(std::move(ctx))
-    {
-    }
+    Reffine(unique_ptr<ReffineCtx> ctx) : ValGen<ISpace>(std::move(ctx)) {}
 
 private:
     ISpace visit(NaryExpr&) final;
