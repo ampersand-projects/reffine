@@ -11,11 +11,10 @@ shared_ptr<Func> nested_op(int a_ub, int b_ub)
     auto a_sym = _sym("a", _i64_t);
     auto b_sym = _sym("b", _i64_t);
 
-    auto op = _op(
-        vector<Sym>{a_sym, b_sym},
-        (_gte(a_sym, _i64(0)) & _lt(a_sym, _i64(a_ub)) & _gte(b_sym, _i64(0)) & _lt(b_sym, _i64(b_ub))),
-        vector<Expr>{ a_sym + b_sym }
-    );
+    auto op = _op(vector<Sym>{a_sym, b_sym},
+                  (_gte(a_sym, _i64(0)) & _lt(a_sym, _i64(a_ub)) &
+                   _gte(b_sym, _i64(0)) & _lt(b_sym, _i64(b_ub))),
+                  vector<Expr>{a_sym + b_sym});
 
     auto op_sym = _sym("op", op);
 
@@ -44,11 +43,11 @@ void nested_op_test()
     for (int i = 0; i < get_vector_len(out_tbl); i++) {
         auto cond = get_vector_null_bit(out_tbl, i, 0);
         if (cond) {
-            auto a = idx/a_ub;
-            auto b = idx%b_ub;
+            auto a = idx / a_ub;
+            auto b = idx % b_ub;
             ASSERT_EQ(out_data_a[i], a);
             ASSERT_EQ(out_data_b[i], b);
-            ASSERT_EQ(out_data_a_b[i], a+b);
+            ASSERT_EQ(out_data_a_b[i], a + b);
             idx++;
         }
     }
