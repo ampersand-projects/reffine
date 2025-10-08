@@ -32,7 +32,6 @@ set(SRC_FILES
     arrow/base.cpp
     ir/ir.cpp
     iter/iter_space.cpp
-    pass/printer.cpp
     pass/printer2.cpp
     pass/cemitter.cpp
     pass/loopgen.cpp

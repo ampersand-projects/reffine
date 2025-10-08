@@ -40,9 +40,9 @@ Expr IterSpace::_iter_to_idx(Expr iter) { return iter; }
 
 Expr IterSpace::_is_alive(Expr idx) { return _true(); }
 
-Expr IterSpace::_next(Expr idx) { return _add(idx, _const(this->type, 1)); }
+Expr IterSpace::_next(Expr idx) { return _add(idx, _const(idx->type, 1)); }
 
-SymExprs IterSpace::_vec_idxs(Expr idx) { return SymExprs{}; }
+VecIterIdxs IterSpace::_vec_iter_idxs(Expr idx) { return VecIterIdxs{}; }
 
 SymExprs IterSpace::_extra_syms() { return SymExprs{}; }
 
@@ -79,9 +79,9 @@ Expr VecSpace::_is_alive(Expr idx)
 
 Expr VecSpace::_next(Expr idx) { return _add(idx, _idx(1)); }
 
-SymExprs VecSpace::_vec_idxs(Expr idx)
+VecIterIdxs VecSpace::_vec_iter_idxs(Expr idx)
 {
-    return SymExprs{make_pair(this->vec, idx)};
+    return VecIterIdxs{make_tuple(this->vec, this->iter, idx)};
 }
 
 SymExprs VecSpace::_extra_syms()
@@ -111,7 +111,10 @@ Expr SuperSpace::_is_alive(Expr idx) { return this->ispace->is_alive(idx); }
 
 Expr SuperSpace::_next(Expr idx) { return this->ispace->next(idx); }
 
-SymExprs SuperSpace::_vec_idxs(Expr idx) { return this->ispace->vec_idxs(idx); }
+VecIterIdxs SuperSpace::_vec_iter_idxs(Expr idx)
+{
+    return this->ispace->vec_iter_idxs(idx);
+}
 
 SymExprs SuperSpace::_extra_syms() { return this->ispace->extra_syms(); }
 
@@ -193,12 +196,12 @@ Expr JointSpace::_next(Expr idx)
                      _new(vector<Expr>{new_lidx, new_ridx})));
 }
 
-SymExprs JointSpace::_vec_idxs(Expr idx)
+VecIterIdxs JointSpace::_vec_iter_idxs(Expr idx)
 {
-    SymExprs vec_idxs;
+    VecIterIdxs vec_idxs;
 
-    auto l_vec_idxs = this->left->vec_idxs(_get(idx, 0));
-    auto r_vec_idxs = this->right->vec_idxs(_get(idx, 1));
+    auto l_vec_idxs = this->left->vec_iter_idxs(_get(idx, 0));
+    auto r_vec_idxs = this->right->vec_iter_idxs(_get(idx, 1));
     vec_idxs.insert(vec_idxs.end(), l_vec_idxs.begin(), l_vec_idxs.end());
     vec_idxs.insert(vec_idxs.end(), r_vec_idxs.begin(), r_vec_idxs.end());
 
@@ -305,4 +308,98 @@ ISpace InterSpace::apply(ISpace ispace)
     } else {
         return nullptr;
     }
+}
+
+Expr NestedSpace::_lower_bound()
+{
+    return _new(
+        vector<Expr>{this->outer->lower_bound(), this->inner->lower_bound()});
+}
+
+Expr NestedSpace::_upper_bound()
+{
+    return _new(
+        vector<Expr>{this->outer->upper_bound(), this->inner->upper_bound()});
+}
+
+Expr NestedSpace::_iter_cond(Expr idx)
+{
+    auto o_idx = _get(idx, 0);
+    auto i_idx = _get(idx, 1);
+
+    return _and(this->outer->iter_cond(o_idx), this->inner->iter_cond(i_idx));
+}
+
+Expr NestedSpace::_idx_to_iter(Expr idx)
+{
+    auto o_idx = _get(idx, 0);
+    auto i_idx = _get(idx, 1);
+
+    return _new(vector<Expr>{this->outer->idx_to_iter(o_idx),
+                             this->inner->idx_to_iter(i_idx)});
+}
+
+Expr NestedSpace::_iter_to_idx(Expr iter)
+{
+    auto o_iter = _get(iter, 0);
+    auto i_iter = _get(iter, 1);
+
+    return _new(vector<Expr>{this->outer->iter_to_idx(o_iter),
+                             this->inner->iter_to_idx(i_iter)});
+}
+
+Expr NestedSpace::_is_alive(Expr idx)
+{
+    auto o_idx = _get(idx, 0);
+    auto i_idx = _get(idx, 1);
+
+    return this->outer->is_alive(o_idx);
+}
+
+Expr NestedSpace::_next(Expr idx)
+{
+    auto o_idx = _get(idx, 0);
+    auto i_idx = _get(idx, 1);
+
+    auto o_next = this->outer->next(o_idx);
+    auto i_next = this->inner->next(i_idx);
+    auto i_start = _get(this->iter_to_idx(this->lower_bound()), 1);
+
+    auto is_inner_active = this->inner->is_alive(i_idx);
+    auto var = _define(is_inner_active->symify(), is_inner_active);
+
+    return _sel(var, _new(vector<Expr>{o_idx, i_next}),
+                _new(vector<Expr>{o_next, i_start}));
+}
+
+VecIterIdxs NestedSpace::_vec_iter_idxs(Expr idx)
+{
+    VecIterIdxs vec_idxs;
+
+    auto o_vec_idxs = this->outer->vec_iter_idxs(_get(idx, 0));
+    auto i_vec_idxs = this->inner->vec_iter_idxs(_get(idx, 1));
+    vec_idxs.insert(vec_idxs.end(), o_vec_idxs.begin(), o_vec_idxs.end());
+    vec_idxs.insert(vec_idxs.end(), i_vec_idxs.begin(), i_vec_idxs.end());
+
+    return vec_idxs;
+}
+
+SymExprs NestedSpace::_extra_syms()
+{
+    SymExprs extra_syms;
+
+    auto o_extra_syms = this->outer->extra_syms();
+    auto i_extra_syms = this->inner->extra_syms();
+    extra_syms.insert(extra_syms.end(), o_extra_syms.begin(),
+                      o_extra_syms.end());
+    extra_syms.insert(extra_syms.end(), i_extra_syms.begin(),
+                      i_extra_syms.end());
+
+    return extra_syms;
+}
+
+ISpace NestedSpace::apply(ISpace)
+{
+    // TODO: implementation deferred for later
+    return nullptr;
 }

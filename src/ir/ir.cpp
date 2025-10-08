@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "reffine/pass/base/visitor.h"
 #include "reffine/pass/printer2.h"
 
@@ -16,7 +18,7 @@ void NaryExpr::Accept(Visitor& v) { v.Visit(*this); }
 void Op::Accept(Visitor& v) { v.Visit(*this); }
 void Element::Accept(Visitor& v) { v.Visit(*this); }
 void Lookup::Accept(Visitor& v) { v.Visit(*this); }
-void NotNull::Accept(Visitor& v) { v.Visit(*this); }
+void In::Accept(Visitor& v) { v.Visit(*this); }
 void Reduce::Accept(Visitor& v) { v.Visit(*this); }
 void Stmts::Accept(Visitor& v) { v.Visit(*this); }
 void Alloc::Accept(Visitor& v) { v.Visit(*this); }
@@ -32,6 +34,14 @@ void Loop::Accept(Visitor& v) { v.Visit(*this); }
 void FetchDataPtr::Accept(Visitor& v) { v.Visit(*this); }
 void NoOp::Accept(Visitor& v) { v.Visit(*this); }
 void Define::Accept(Visitor& v) { v.Visit(*this); }
+
+Sym ExprNode::symify()
+{
+    auto* addr = static_cast<void*>(this);
+    std::stringstream ss;
+    ss << "_" << addr;
+    return make_shared<SymNode>(ss.str(), this->type);
+}
 
 string ExprNode::str()
 {

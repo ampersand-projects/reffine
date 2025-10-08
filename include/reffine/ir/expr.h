@@ -88,12 +88,23 @@ struct Get : public ExprNode {
     size_t col;
 
     Get(Expr val, size_t col)
-        : ExprNode(val->type.dtypes[col]), val(val), col(col)
+        : ExprNode(extract_type(val, col)), val(val), col(col)
     {
-        ASSERT(val->type.is_struct());
     }
 
     void Accept(Visitor&) final;
+
+private:
+    static DataType extract_type(Expr val, size_t col)
+    {
+        if (val->type.is_struct()) {
+            return val->type.dtypes[col];
+        } else {
+            ASSERT(val->type.is_primitive());
+            ASSERT(col == 0);
+            return val->type;
+        }
+    }
 };
 
 struct New : public ExprNode {

@@ -29,8 +29,7 @@ _expr<Not> _expr_not(Expr);
 _expr<And> _expr_and(Expr, Expr);
 _expr<Or> _expr_or(Expr, Expr);
 _expr<Get> _expr_get(Expr, size_t);
-_expr<Element> _expr_elem(Expr, vector<Expr>);
-_expr<NotNull> _expr_notnull(Expr);
+_expr<Element> _expr_elem(Expr, Expr);
 
 template <typename T>
 struct _expr : public shared_ptr<T> {
@@ -61,11 +60,10 @@ struct _expr : public shared_ptr<T> {
     _expr<And> operator&(Expr o) const { return _expr_and(*this, o); }
     _expr<Or> operator|(Expr o) const { return _expr_or(*this, o); }
     _expr<Get> operator[](size_t n) const { return _expr_get(*this, n); }
-    _expr<Element> operator[](std::initializer_list<Expr> iters) const
+    _expr<Element> operator[](Expr iter) const
     {
-        return _expr_elem(*this, iters);
+        return _expr_elem(*this, iter);
     }
-    _expr<NotNull> operator~() const { return _expr_notnull(*this); }
 };
 
 #define REGISTER_EXPR(NAME, EXPR)                                            \
@@ -121,7 +119,7 @@ REGISTER_EXPR(_elem, Element)
 REGISTER_EXPR(_lookup, Lookup)
 REGISTER_EXPR(_op, Op)
 REGISTER_EXPR(_red, Reduce)
-REGISTER_EXPR(_notnull, NotNull)
+REGISTER_EXPR(_in, In)
 
 // Op to Loop
 REGISTER_EXPR(_locate, Locate)

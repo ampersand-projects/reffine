@@ -11,24 +11,19 @@ using ReffineCtx = ValGenCtx<ISpace>;
 
 class Reffine : public ValGen<ISpace> {
 public:
-    Reffine(unique_ptr<ReffineCtx> ctx, Op& op)
-        : ValGen<ISpace>(std::move(ctx)), _op(op)
-    {
-    }
-
-    static ISpace Build(Op&, const SymTable&);
+    Reffine(unique_ptr<ReffineCtx> ctx) : ValGen<ISpace>(std::move(ctx)) {}
 
 private:
     ISpace visit(NaryExpr&) final;
     ISpace visit(Sym) final;
-    ISpace visit(Element&) final;
-    ISpace visit(NotNull&) final;
+    ISpace visit(In&) final;
+    ISpace visit(Op&) final;
 
     ISpace extract_bound(Sym, NaryExpr&);
 
-    Op& op() { return _op; }
+    Sym& iter() { return this->_iter; }
 
-    Op& _op;
+    Sym _iter;
 };
 
 }  // namespace reffine

@@ -11,13 +11,12 @@ using namespace reffine::reffiner;
 
 Expr LoopGen::visit(Element& elem)
 {
-    ASSERT(elem.iters.size() == 1);
     ASSERT(elem.type.is_val());  // Subspace elements are not supported yet
 
-    eval(elem.iters[0]);
+    eval(elem.iter);
     auto vec = eval(elem.vec);
 
-    auto idx = this->_vec_iter_idx_map.at(elem.vec).at(elem.iters[0]);
+    auto idx = this->_vec_iter_idx_map.at(elem.vec).at(elem.iter);
 
     vector<Expr> vals;
     for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
@@ -44,25 +43,25 @@ Expr LoopGen::visit(Lookup& lookup)
 
 pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
 {
-    // Only support 1d operators now
-    ASSERT(op.iters.size() == 1);
-    auto iter = op.iters[0];
-
-    auto ispace = Reffine::Build(op, this->ctx().in_sym_tbl);
+    Reffine rpass(make_unique<ReffineCtx>(this->ctx().in_sym_tbl));
+    auto ispace = rpass.eval(this->tmp_expr(op));
 
     vector<Expr> loop_inits;
+
+    string loop_iter_name = "";
+    for (auto iter : op.iters) { loop_iter_name += ("_" + iter->name); }
 
     // Loop index initialization
     auto idx_init = eval(ispace->iter_to_idx(ispace->lower_bound()));
     auto idx_alloc = _alloc(idx_init->type);
-    auto idx_addr = _sym(iter->name + "_idx_addr", idx_alloc);
+    auto idx_addr = _sym(loop_iter_name + "_idx_addr", idx_alloc);
     this->assign(idx_addr, idx_alloc);
     this->map_sym(idx_addr, idx_addr);
     loop_inits.push_back(_store(idx_addr, idx_init));
 
     // Populate iter_elem_map
     // Used for lowering Element expressions
-    for (auto& [vec, idx] : ispace->vec_idxs(_load(idx_addr))) {
+    for (auto& [vec, iter, idx] : ispace->vec_iter_idxs(_load(idx_addr))) {
         this->_vec_iter_idx_map[vec][iter] = idx;
     }
 
@@ -74,14 +73,21 @@ pair<shared_ptr<Loop>, vector<Expr>> LoopGen::build_loop(Op& op)
     }
 
     // Derive op iterator from loop idx
-    auto loop_iter = _sym(iter->name, iter);
-    auto iter_expr = eval(ispace->idx_to_iter(_load(idx_addr)));
-    this->assign(loop_iter, iter_expr);
-    this->map_sym(iter, loop_iter);
+    auto loop_iter_expr = eval(ispace->idx_to_iter(_load(idx_addr)));
+    auto loop_iter = _sym(loop_iter_name, loop_iter_expr);
+    this->assign(loop_iter, loop_iter_expr);
+
+    // Map op iters to loop iter
+    for (size_t i = 0; i < op.iters.size(); i++) {
+        auto iter = op.iters[i];
+        auto new_iter = _sym(iter->name, iter);
+        this->assign(new_iter, _get(loop_iter, i));
+        this->map_sym(iter, new_iter);
+    }
 
     // Loop output
     vector<Expr> outputs;
-    outputs.push_back(loop_iter);
+    for (auto iter : op.iters) { outputs.push_back(eval(iter)); }
     for (auto output : op.outputs) { outputs.push_back(eval(output)); }
 
     // Loop definition

@@ -16,7 +16,6 @@
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/llvmgen.h"
 #include "reffine/pass/loopgen.h"
-#include "reffine/pass/printer.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/scalarpass.h"
 #include "reffine/utils/utils.h"

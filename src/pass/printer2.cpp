@@ -8,6 +8,7 @@ using namespace reffine::reffiner;
 static const auto FORALL = "\u2200";
 static const auto REDCLE = "\u2295";
 static const auto PHI = "\u0278";
+// static const auto IN = "\u2208";
 
 CodeSeg IRPrinter2::visit(Sym sym)
 {
@@ -173,7 +174,7 @@ CodeSeg IRPrinter2::visit(Op& op)
 
 CodeSeg IRPrinter2::visit(Element& elem)
 {
-    return code(eval(elem.vec), code_args("[", elem.iters, "]"));
+    return code(eval(elem.vec), "[", eval(elem.iter), "]");
 }
 
 CodeSeg IRPrinter2::visit(Lookup& e)
@@ -181,7 +182,10 @@ CodeSeg IRPrinter2::visit(Lookup& e)
     return code_func("lookup", {e.vec, e.idx});
 }
 
-CodeSeg IRPrinter2::visit(NotNull& e) { return code(eval(e.elem), "!=", PHI); }
+CodeSeg IRPrinter2::visit(In& e)
+{
+    return code(eval(e.vec), "[", eval(e.iter), "] !=", PHI);
+}
 
 CodeSeg IRPrinter2::visit(Reduce& red)
 {
@@ -312,4 +316,13 @@ string IRPrinter2::Build(Expr expr)
 {
     IRPrinter2 printer2(make_unique<IREmitterCtx>());
     return printer2.eval(expr)->to_string(-1);
+}
+
+string IRPrinter2::Build(llvm::Module& llmod)
+{
+    std::string str;
+    llvm::raw_string_ostream ostr(str);
+    ostr << llmod;
+    ostr.flush();
+    return ostr.str();
 }

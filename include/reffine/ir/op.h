@@ -37,7 +37,7 @@ private:
         vector<DataType> dtypes;
 
         for (const auto& iter : iters) {
-            ASSERT(iter->type.is_val());
+            ASSERT(iter->type.is_primitive());
             dtypes.push_back(iter->type);
         }
         for (const auto& output : outputs) {
@@ -51,26 +51,13 @@ private:
 
 struct Element : public ExprNode {
     Expr vec;
-    vector<Expr> iters;
+    Expr iter;
 
-    Element(Expr vec, vector<Expr> iters)
-        : ExprNode(vec->type.elemty(iters.size())),
-          vec(vec),
-          iters(std::move(iters))
+    Element(Expr vec, Expr iter)
+        : ExprNode(vec->type.valty()), vec(vec), iter(iter)
     {
-        const auto& vtype = vec->type;
-
-        for (const auto& iter : iters) { ASSERT(iter->type.is_val()); }
-        ASSERT(vtype.is_vector());
-
-        ASSERT(vtype.dim == this->iters.size());
-        for (size_t i = 0; i < this->iters.size(); i++) {
-            ASSERT(vtype.dtypes[i] == this->iters[i]->type);
-        }
-    }
-    Element(Expr vec, std::initializer_list<Expr> iters)
-        : Element(vec, vector<Expr>(iters))
-    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->iter->type == this->vec->type.iterty());
     }
 
     void Accept(Visitor&) final;
@@ -89,10 +76,14 @@ struct Lookup : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-struct NotNull : public ExprNode {
-    Expr elem;
+struct In : public ExprNode {
+    Expr iter;
+    Expr vec;
 
-    NotNull(Expr elem) : ExprNode(types::BOOL), elem(elem) {}
+    In(Expr iter, Expr vec) : ExprNode(types::BOOL), iter(iter), vec(vec)
+    {
+        ASSERT(this->iter->type == this->vec->type.iterty());
+    }
 
     void Accept(Visitor&) final;
 };

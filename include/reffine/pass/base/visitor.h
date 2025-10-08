@@ -63,9 +63,9 @@ public:
     {
         throw runtime_error("Lookup operation not supported");
     }
-    virtual void Visit(NotNull&)
+    virtual void Visit(In&)
     {
-        throw runtime_error("NotNull operation not supported");
+        throw runtime_error("In operation not supported");
     }
     virtual void Visit(Reduce&)
     {

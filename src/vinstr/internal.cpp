@@ -75,11 +75,9 @@ void finalize_vector(ArrowTable* tbl, bool* bytemap, int64_t len)
         int64_t i = 0;
         int64_t null_count = 0;
         while (i < len) {
-            for (int64_t j = 0; j < 16; j++) {
-                set_vector_null_bit(tbl, i, bytemap[i], col);
-                if (!bytemap[i]) { null_count++; }
-                i++;
-            }
+            set_vector_null_bit(tbl, i, bytemap[i], col);
+            if (!bytemap[i]) { null_count++; }
+            i++;
         }
 
         arr->children[col]->null_count = null_count;

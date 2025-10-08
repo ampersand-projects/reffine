@@ -10,7 +10,7 @@
 #include "reffine/pass/cemitter.h"
 #include "reffine/pass/llvmgen.h"
 #include "reffine/pass/loopgen.h"
-#include "reffine/pass/printer.h"
+#include "reffine/pass/printer2.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/scalarpass.h"
 
@@ -38,10 +38,10 @@ T compile_loop(shared_ptr<Func> loop, bool use_cemitter = true)
         LLVMGen(*llmod).eval(loop3);
     }
     LOG(INFO) << "LLVM IR (raw):" << std::endl
-              << IRPrinter::Build(*llmod) << std::endl;
+              << IRPrinter2::Build(*llmod) << std::endl;
     jit->Optimize(*llmod);
     LOG(INFO) << "LLVM IR (optimized):" << std::endl
-              << IRPrinter::Build(*llmod) << std::endl;
+              << IRPrinter2::Build(*llmod) << std::endl;
     jit->AddModule(std::move(llmod));
     return jit->Lookup<T>(loop->name);
 }

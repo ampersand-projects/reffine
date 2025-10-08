@@ -124,9 +124,9 @@ protected:
     shared_ptr<LineSeg> code_args(string open, vector<T> args, string close)
     {
         auto line = code(open);
-        line->emit(eval(args[0]));
-        for (size_t i = 1; i < args.size(); i++) {
-            line->emit(", ", eval(args[i]));
+        for (size_t i = 0; i < args.size(); i++) {
+            line->emit(eval(args[i]));
+            if (i < args.size() - 1) { line->emit(", "); }
         }
         line->emit(close);
         return line;

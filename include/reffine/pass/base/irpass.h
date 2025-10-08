@@ -3,7 +3,6 @@
 
 #include <memory>
 #include <set>
-#include <sstream>
 #include <utility>
 
 #include "reffine/pass/base/visitor.h"
@@ -70,14 +69,6 @@ protected:
         return tmp_expr;
     }
 
-    Sym symify(ExprNode& expr)
-    {
-        auto* addr = static_cast<const void*>(&expr);
-        std::stringstream ss;
-        ss << "_" << addr;
-        return make_shared<SymNode>(ss.str(), expr.type);
-    }
-
     void switch_ctx(unique_ptr<CtxTy>& octx) { std::swap(octx, this->_ctx); }
 
     unique_ptr<CtxTy> _ctx;
@@ -132,7 +123,7 @@ public:
     void Visit(Element& expr) override
     {
         expr.vec->Accept(*this);
-        for (auto& iter : expr.iters) { iter->Accept(*this); }
+        expr.iter->Accept(*this);
     }
 
     void Visit(Lookup& expr) override
@@ -141,7 +132,11 @@ public:
         expr.idx->Accept(*this);
     }
 
-    void Visit(NotNull& expr) override { expr.elem->Accept(*this); }
+    void Visit(In& expr) override
+    {
+        expr.iter->Accept(*this);
+        expr.vec->Accept(*this);
+    }
 
     void Visit(Reduce& expr) override { expr.op.Accept(*this); }
 

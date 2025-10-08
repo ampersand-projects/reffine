@@ -56,6 +56,7 @@ struct DataType {
                 ASSERT(dtypes.size() == 1);
                 break;
             case BaseType::VECTOR:
+                ASSERT(dim > 0);
                 ASSERT(dtypes.size() >= dim);
                 break;
             default:
@@ -121,29 +122,20 @@ struct DataType {
         return this->dtypes[0];
     }
 
-    DataType elemty(size_t iter_dim) const
+    DataType valty() const
     {
         ASSERT(this->is_vector());
-        ASSERT(this->dim >= iter_dim);
 
         return DataType(
-            (this->dim == iter_dim) ? BaseType::STRUCT : BaseType::VECTOR,
-            std::vector<DataType>(this->dtypes.begin() + iter_dim,
-                                  this->dtypes.end()),
-            this->dim - iter_dim);
+            (this->dim == 1) ? BaseType::STRUCT : BaseType::VECTOR,
+            std::vector<DataType>(this->dtypes.begin() + 1, this->dtypes.end()),
+            this->dim - 1);
     }
 
     DataType iterty() const
     {
         ASSERT(this->is_vector());
-        if (this->dim == 1) {
-            return this->dtypes[0];
-        } else {
-            return DataType(
-                BaseType::STRUCT,
-                std::vector<DataType>(this->dtypes.begin(),
-                                      this->dtypes.begin() + this->dim));
-        }
+        return this->dtypes[0];
     }
 
     DataType rowty() const

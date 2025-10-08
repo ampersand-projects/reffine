@@ -36,7 +36,8 @@ ISpace Reffine::extract_bound(Sym iter, NaryExpr& expr)
         }
     }
 
-    throw runtime_error("Unidentified bound condition");
+    // Expression is not a bound on the given iter
+    return eval(iter);
 }
 
 ISpace Reffine::visit(NaryExpr& e)
@@ -50,7 +51,7 @@ ISpace Reffine::visit(NaryExpr& e)
         case MathOp::LTE:
         case MathOp::GT:
         case MathOp::GTE:
-            return extract_bound(op().iters[0], e);
+            return extract_bound(iter(), e);
         default:
             throw runtime_error("Operator not supported by Reffine");
     }
@@ -58,38 +59,30 @@ ISpace Reffine::visit(NaryExpr& e)
 
 ISpace Reffine::visit(Sym sym)
 {
-    if (sym == op().iters[0]) {
+    if (sym == iter()) {
         // return universal space for operator iterator
-        return make_shared<UniversalSpace>(sym->type);
-    } else if (sym->type.is_vector()) {
-        return make_shared<VecSpace>(sym);
+        return make_shared<UniversalSpace>(iter());
     } else {
         return eval(this->ctx().in_sym_tbl.at(sym));
     }
 }
 
-ISpace Reffine::visit(Element& elem)
+ISpace Reffine::visit(In& in)
 {
-    ASSERT(elem.iters.size() == 1);
-    ASSERT(elem.iters[0] == op().iters[0]);
-
-    // Assuming Element is only visited through NotNull
-    // Therefore, always returning vector space
-    return eval(elem.vec);
+    ASSERT(in.iter == iter());
+    return make_shared<VecSpace>(iter(), in.vec);
 }
 
-ISpace Reffine::visit(NotNull& not_null)
+ISpace Reffine::visit(Op& op)
 {
-    // Assuming NotNull always traslates to vector space
-    return eval(not_null.elem);
-}
+    ISpace ispace = nullptr;
 
-ISpace Reffine::Build(Op& op, const SymTable& tbl)
-{
-    // Only support single iterator for now
-    ASSERT(op.iters.size() == 1);
+    for (int i = op.iters.size() - 1; i >= 0; i--) {
+        this->iter() = op.iters[i];
+        auto outer_ispace = eval(op.pred);
+        ispace = ispace ? make_shared<NestedSpace>(outer_ispace, ispace)
+                        : outer_ispace;
+    }
 
-    Reffine rpass(make_unique<ReffineCtx>(tbl), op);
-
-    return rpass.eval(op.pred);
+    return ispace;
 }

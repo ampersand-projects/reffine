@@ -259,7 +259,7 @@ void execute_kernel(string kernel_name, CUfunction kernel, void *arg, int len)
 void test_kernel() {
     /* Test kernel generation and execution*/
     auto loop = basic_transform_kernel();
-    cout << "Loop IR: " << endl << IRPrinter::Build(loop) << endl;
+    cout << "Loop IR: " << endl << loop->str() << endl;
     auto fn = CanonPass().eval(loop);
 
     auto jit = ExecEngine::Get();
@@ -292,7 +292,7 @@ shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl)
     auto ten = _sym("ten", _i64_t);
     auto out_expr = _add(elem[0], ten);
     auto out = _sym("out", out_expr);
-    auto op = _op(vector<Sym>{t_sym}, (~(elem) & _gt(t_sym, ten)) & _lt(t_sym, _i64(64)), vector<Expr>{ out });
+    auto op = _op(vector<Sym>{t_sym}, (_in(t_sym, vec_in_sym) & _gt(t_sym, ten)) & _lt(t_sym, _i64(64)), vector<Expr>{ out });
     auto op_sym = _sym("op", op);
 
     auto foo_fn = _func("foo", op_sym, vector<Sym>{vec_in_sym});
@@ -304,24 +304,21 @@ shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl)
     return foo_fn;
 }
 
-shared_ptr<Func> vector_op(shared_ptr<ArrowTable2> tbl)
+shared_ptr<Func> nested_transform_op()
 {
-    auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym = _sym("vec_in", tbl->get_data_type(1));
+    auto a_sym = _sym("a", _i64_t);
+    auto b_sym = _sym("b", _i64_t);
 
-    Op op({t_sym}, ~(vec_in_sym[{t_sym}]), {vec_in_sym[{t_sym}][2]});
-    auto sum = _red(op,
-        []() {
-            return _i64(0);
-        },
-        [](Expr s, Expr v) {
-            return _add(s, _get(v, 1));
-        }
+    auto op = _op(
+        vector<Sym>{a_sym, b_sym},
+        (_gte(a_sym, _i64(0)) & _lt(a_sym, _i64(10)) & _gte(b_sym, _i64(0)) & _lt(b_sym, _i64(10))),
+        vector<Expr>{ a_sym + b_sym }
     );
-    auto sum_sym = _sym("sum", sum);
 
-    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
-    foo_fn->tbl[sum_sym] = sum;
+    auto op_sym = _sym("op", op);
+
+    auto foo_fn = _func("foo", op_sym, vector<Sym>{});
+    foo_fn->tbl[op_sym] = op;
 
     return foo_fn;
 }
@@ -348,7 +345,7 @@ int main()
         }
     }
     auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
-    auto op = transform_op(tbl);
+    auto op = nested_transform_op();
     auto query_fn = compile_op<void (*)(void*, void*)>(op);
 
     auto status = query_arrow_file2(tbl, query_fn);

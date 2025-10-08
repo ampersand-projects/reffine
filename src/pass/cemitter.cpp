@@ -161,7 +161,7 @@ CodeSeg CEmitter::visit(NaryExpr& e)
 
 CodeSeg CEmitter::visit(Alloc& e)
 {
-    auto var = this->symify(e);
+    auto var = e.symify();
     emit(nl(), get_type_str(e.type.deref()), " ", var->name, "[", eval(e.size),
          "];");
     return code(var->name);
