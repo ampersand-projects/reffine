@@ -346,7 +346,7 @@ Expr NestedSpace::_is_alive(Expr idx)
     auto o_idx = _get(idx, 0);
     auto i_idx = _get(idx, 1);
 
-    return _or(this->outer->is_alive(o_idx), this->inner->is_alive(i_idx));
+    return this->outer->is_alive(o_idx);
 }
 
 Expr NestedSpace::_next(Expr idx)
@@ -356,12 +356,13 @@ Expr NestedSpace::_next(Expr idx)
 
     auto o_next = this->outer->next(o_idx);
     auto i_next = this->inner->next(i_idx);
-
-    auto is_inner_active = this->inner->is_alive(i_idx);
     auto i_start = _get(this->iter_to_idx(this->lower_bound()), 1);
 
+    auto is_inner_active = this->inner->is_alive(i_idx);
+    auto var = _define(is_inner_active->symify(), is_inner_active);
+
     return _sel(
-        is_inner_active,
+        var,
         _new(vector<Expr>{o_idx, i_next}),
         _new(vector<Expr>{o_next, i_start})
     );
