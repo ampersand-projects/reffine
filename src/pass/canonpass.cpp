@@ -30,11 +30,12 @@ Expr CanonPass::visit(Loop& loop)
     new_loop->exit_cond = loop.exit_cond ? eval(loop.exit_cond) : nullptr;
     new_loop->body = loop.body ? eval(loop.body) : nullptr;
     new_loop->post = loop.post ? eval(loop.post) : nullptr;
-    if (loop.incr) {
-        new_loop->body = _stmts(vector<Expr>{new_loop->body, eval(loop.incr)});
-    }
+
     if (loop.body_cond) {
         new_loop->body = _ifelse(eval(loop.body_cond), new_loop->body, _noop());
+    }
+    if (loop.incr) {
+        new_loop->body = _stmts(vector<Expr>{new_loop->body, eval(loop.incr)});
     }
 
     return new_loop;

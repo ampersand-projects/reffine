@@ -6,6 +6,10 @@ TEST(BasicTests, TransformOpTest) { transform_op_test(); }
 TEST(BasicTests, NestedOpTest) { nested_op_test(); }
 TEST(BasicTests, Z3SolverTest) { z3solver_test(); }
 
+TEST(VectorizeTests, ReduceOpTest) { aggregate_op_test(true); }
+TEST(VectorizeTests, TransformOpTest) { transform_op_test(true); }
+TEST(VectorizeTests, NestedOpTest) { nested_op_test(true); }
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);

@@ -311,7 +311,7 @@ shared_ptr<Func> nested_transform_op()
 
     auto op = _op(
         vector<Sym>{a_sym, b_sym},
-        (_gte(a_sym, _i64(0)) & _lt(a_sym, _i64(10)) & _gte(b_sym, _i64(0)) & _lt(b_sym, _i64(10))),
+        (_gte(a_sym, _i64(0)) & _lt(a_sym, _i64(3)) & _gte(b_sym, _i64(0)) & _lt(b_sym, _i64(3))),
         vector<Expr>{ a_sym + b_sym }
     );
 
