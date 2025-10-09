@@ -44,7 +44,7 @@ REFFINE_VINSTR_ATTR
 int64_t* get_elem_ptr(int64_t*, int64_t);
 
 REFFINE_VINSTR_ATTR
-void finalize_vector(ArrowTable*, bool*, int64_t);
+void finalize_vector(ArrowTable*, bool*, int64_t, int64_t);
 
 /**
  * External

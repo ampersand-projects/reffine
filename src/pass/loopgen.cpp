@@ -133,6 +133,22 @@ Expr LoopGen::visit(Op& op)
     auto out_vec_idx_addr = _sym("out_vec_idx_addr", out_vec_idx_alloc);
     this->assign(out_vec_idx_addr, out_vec_idx_alloc);
 
+    // Counter for the number of nulls in the output
+    auto null_count_alloc = _alloc(_idx_t);
+    auto null_count_addr = _sym("null_count", null_count_alloc);
+    this->assign(null_count_addr, null_count_alloc);
+
+    // Loop body condition
+    auto body_cond_sym = _sym("body_cond", loop->body_cond);
+    this->assign(body_cond_sym, loop->body_cond);
+    loop->body_cond = body_cond_sym;
+
+    // Temporary boolean array for storing bitmap
+    // Used only for vectorization
+    auto bytemap = _alloc(types::BOOL, len);
+    auto bytemap_sym = _sym("bytemap", bytemap);
+    this->assign(bytemap_sym, bytemap);
+
     // Write the output to the out_vec
     vector<Expr> body_stmts;
     for (size_t i = 0; i < op.iters.size() + op.outputs.size(); i++) {
@@ -145,32 +161,28 @@ Expr LoopGen::visit(Op& op)
     loop->init = _stmts(vector<Expr>{
         loop->init,
         _store(out_vec_idx_addr, _idx(0)),
+        _store(null_count_addr, _idx(0)),
         out_vec_sym,
+        bytemap_sym,
     });
-    loop->incr = _stmts(vector<Expr>{
-        loop->incr,
-        _store(out_vec_idx_addr, _add(_load(out_vec_idx_addr), _idx(1)))});
     loop->body = _stmts(body_stmts);
-    loop->post = _setlen(out_vec_sym, _load(out_vec_idx_addr));
 
     if (this->_vectorize) {
-        auto bytemap = _alloc(types::BOOL, len);
-        auto bytemap_sym = _sym("bytemap", bytemap);
-        this->assign(bytemap_sym, bytemap);
-        loop->init = _stmts(vector<Expr>{loop->init, bytemap_sym});
-
-        auto body_cond_sym = _sym("body_cond", loop->body_cond);
-        this->assign(body_cond_sym, loop->body_cond);
-        loop->body_cond = nullptr;
         loop->body = _stmts(vector<Expr>{
             loop->body,
-            _store(bytemap_sym, body_cond_sym, _load(out_vec_idx_addr)),
+            _store(bytemap_sym, loop->body_cond, _load(out_vec_idx_addr)),
+            _store(null_count_addr,
+                _add(_load(null_count_addr), _sel(loop->body_cond, _idx(0), _idx(1)))
+            ),
         });
-
-        loop->post =
-            _finalize(out_vec_sym, bytemap_sym, _load(out_vec_idx_addr));
+        loop->body_cond = nullptr;
     }
 
+    loop->body = _stmts(vector<Expr>{
+        loop->body,
+        _store(out_vec_idx_addr, _add(_load(out_vec_idx_addr), _idx(1))),
+    });
+    loop->post = _finalize(out_vec_sym, bytemap_sym, _load(out_vec_idx_addr), _load(null_count_addr));
     loop->output = out_vec_sym;
     auto loop_sym = _sym("loop", loop);
     this->assign(loop_sym, loop);
@@ -193,7 +205,6 @@ Expr LoopGen::visit(Reduce& red)
         loop->init,
         _store(state_addr, red.init()),
     });
-    loop->body = _store(state_addr, red.acc(_load(state_addr), loop->output));
 
     if (this->_vectorize) {
         loop->body =
@@ -201,6 +212,8 @@ Expr LoopGen::visit(Reduce& red)
                                     red.acc(_load(state_addr), loop->output),
                                     _load(state_addr)));
         loop->body_cond = nullptr;
+    } else {
+        loop->body = _store(state_addr, red.acc(_load(state_addr), loop->output));
     }
 
     loop->output = state_addr;

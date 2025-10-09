@@ -74,12 +74,13 @@ struct MakeVector : public Call {
 };
 
 struct FinalizeVector : public Call {
-    FinalizeVector(Expr vec, Expr bytemap, Expr len)
-        : Call("finalize_vector", types::VOID, vector<Expr>{vec, bytemap, len})
+    FinalizeVector(Expr vec, Expr bytemap, Expr len, Expr null_count)
+        : Call("finalize_vector", types::VOID, vector<Expr>{vec, bytemap, len, null_count})
     {
         ASSERT(vec->type.is_vector());
         ASSERT(bytemap->type.deref() == types::BOOL);
         ASSERT(len->type.is_idx());
+        ASSERT(null_count->type.is_idx());
     }
 };
 
