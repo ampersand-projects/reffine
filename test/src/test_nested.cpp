@@ -24,13 +24,13 @@ shared_ptr<Func> nested_op(int a_ub, int b_ub)
     return foo_fn;
 }
 
-void nested_op_test()
+void nested_op_test(bool vectorize)
 {
     int a_ub = 10;
     int b_ub = 10;
 
     auto op = nested_op(a_ub, b_ub);
-    auto query_fn = compile_op<void (*)(ArrowTable**)>(op);
+    auto query_fn = compile_op<void (*)(ArrowTable**)>(op, vectorize);
 
     ArrowTable* out_tbl;
     query_fn(&out_tbl);

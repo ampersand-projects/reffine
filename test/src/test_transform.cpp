@@ -27,14 +27,14 @@ shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl, long lb, long n)
     return foo_fn;
 }
 
-void transform_op_test()
+void transform_op_test(bool vectorize)
 {
     auto lb = 5;
     auto n = 10;
 
     auto in_tbl = get_input_vector().ValueOrDie();
     auto op = transform_op(in_tbl, lb, n);
-    auto query_fn = compile_op<void (*)(ArrowTable**, ArrowTable*)>(op);
+    auto query_fn = compile_op<void (*)(ArrowTable**, ArrowTable*)>(op, vectorize);
 
     ArrowTable* out_tbl;
     query_fn(&out_tbl, in_tbl.get());

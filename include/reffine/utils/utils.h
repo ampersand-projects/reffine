@@ -47,10 +47,10 @@ T compile_loop(shared_ptr<Func> loop, bool use_cemitter = true)
 }
 
 template <typename T>
-T compile_op(std::shared_ptr<Func> op)
+T compile_op(std::shared_ptr<Func> op, bool vectorize = false)
 {
     LOG(INFO) << "Reffine IR:" << std::endl << op->str() << std::endl;
-    auto loopgen = LoopGen();
+    auto loopgen = LoopGen(nullptr, vectorize);
     loopgen.eval(op);
     return compile_loop<T>(loopgen.ctx().out_func);
 }

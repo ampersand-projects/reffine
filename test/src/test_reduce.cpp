@@ -114,11 +114,11 @@ shared_ptr<Func> vector_op()
     return foo_fn;
 }
 
-void aggregate_op_test()
+void aggregate_op_test(bool vectorize)
 {
     auto op = vector_op();
     long output = 0;
-    auto query_fn = compile_op<void (*)(long*, void*)>(op);
+    auto query_fn = compile_op<void (*)(long*, void*)>(op, vectorize);
 
     auto tbl = get_input_vector().ValueOrDie();
     query_fn(&output, tbl.get());
