@@ -75,7 +75,8 @@ struct MakeVector : public Call {
 
 struct FinalizeVector : public Call {
     FinalizeVector(Expr vec, Expr bytemap, Expr len, Expr null_count)
-        : Call("finalize_vector", types::VOID, vector<Expr>{vec, bytemap, len, null_count})
+        : Call("finalize_vector", types::VOID,
+               vector<Expr>{vec, bytemap, len, null_count})
     {
         ASSERT(vec->type.is_vector());
         ASSERT(bytemap->type.deref() == types::BOOL);

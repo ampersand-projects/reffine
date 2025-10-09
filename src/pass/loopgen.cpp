@@ -172,8 +172,8 @@ Expr LoopGen::visit(Op& op)
             loop->body,
             _store(bytemap_sym, loop->body_cond, _load(out_vec_idx_addr)),
             _store(null_count_addr,
-                _add(_load(null_count_addr), _sel(loop->body_cond, _idx(0), _idx(1)))
-            ),
+                   _add(_load(null_count_addr),
+                        _sel(loop->body_cond, _idx(0), _idx(1)))),
         });
         loop->body_cond = nullptr;
     }
@@ -182,7 +182,8 @@ Expr LoopGen::visit(Op& op)
         loop->body,
         _store(out_vec_idx_addr, _add(_load(out_vec_idx_addr), _idx(1))),
     });
-    loop->post = _finalize(out_vec_sym, bytemap_sym, _load(out_vec_idx_addr), _load(null_count_addr));
+    loop->post = _finalize(out_vec_sym, bytemap_sym, _load(out_vec_idx_addr),
+                           _load(null_count_addr));
     loop->output = out_vec_sym;
     auto loop_sym = _sym("loop", loop);
     this->assign(loop_sym, loop);
@@ -213,7 +214,8 @@ Expr LoopGen::visit(Reduce& red)
                                     _load(state_addr)));
         loop->body_cond = nullptr;
     } else {
-        loop->body = _store(state_addr, red.acc(_load(state_addr), loop->output));
+        loop->body =
+            _store(state_addr, red.acc(_load(state_addr), loop->output));
     }
 
     loop->output = state_addr;

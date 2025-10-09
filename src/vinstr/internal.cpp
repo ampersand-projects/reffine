@@ -67,7 +67,8 @@ int64_t vector_locate(ArrowTable* tbl, int64_t t)
 
 int64_t* get_elem_ptr(int64_t* arr, int64_t idx) { return arr + idx; }
 
-void finalize_vector(ArrowTable* tbl, bool* bytemap, int64_t len, int64_t null_count)
+void finalize_vector(ArrowTable* tbl, bool* bytemap, int64_t len,
+                     int64_t null_count)
 {
     auto* arr = tbl->array;
 

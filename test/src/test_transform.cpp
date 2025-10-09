@@ -34,7 +34,8 @@ void transform_op_test(bool vectorize)
 
     auto in_tbl = get_input_vector().ValueOrDie();
     auto op = transform_op(in_tbl, lb, n);
-    auto query_fn = compile_op<void (*)(ArrowTable**, ArrowTable*)>(op, vectorize);
+    auto query_fn =
+        compile_op<void (*)(ArrowTable**, ArrowTable*)>(op, vectorize);
 
     ArrowTable* out_tbl;
     query_fn(&out_tbl, in_tbl.get());
