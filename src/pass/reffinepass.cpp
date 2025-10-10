@@ -75,14 +75,18 @@ ISpace Reffine::visit(In& in)
 
 ISpace Reffine::visit(Op& op)
 {
-    ISpace ispace = nullptr;
+    this->iter() = op.iters[0];
+    auto ispace = eval(op.pred);
 
-    for (int i = op.iters.size() - 1; i >= 0; i--) {
-        this->iter() = op.iters[i];
-        auto outer_ispace = eval(op.pred);
-        ispace = ispace ? make_shared<NestedSpace>(outer_ispace, ispace)
-                        : outer_ispace;
+    if (op.iters.size() > 1) {
+        auto iters = op.iters;
+        this->sym_set().insert(iters[0]);
+        op.iters = vector<Sym>(iters.begin() + 1, iters.end());
+        auto inner_ispace = eval(this->tmp_expr(op));
+        op.iters = iters;
+
+        return make_shared<NestedSpace>(ispace, inner_ispace);
+    } else {
+        return ispace;
     }
-
-    return ispace;
 }
