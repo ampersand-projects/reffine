@@ -69,8 +69,9 @@ struct IterSpace {
 
     SymExprs extra_syms() { return this->_extra_syms(); }
 
-    // An alternative for intersect
-    virtual ISpace apply(ISpace) = 0;
+    virtual ISpace intersect(ISpace);
+
+    virtual bool is_const();
 
 protected:
     virtual Expr _lower_bound();
@@ -87,7 +88,19 @@ protected:
 struct UniversalSpace : public IterSpace {
     UniversalSpace(Sym iter) : IterSpace(iter) {}
 
-    ISpace apply(ISpace) final;
+    ISpace intersect(ISpace) final;
+};
+
+struct ConstantSpace : public IterSpace {
+    ConstantSpace(Expr expr) : IterSpace(expr) {}
+
+    ISpace intersect(ISpace) final;
+    bool is_const() final;
+
+private:
+    virtual Expr _lower_bound();
+    virtual Expr _upper_bound();
+    virtual Expr _next(Expr);
 };
 
 struct VecSpace : public IterSpace {
@@ -101,8 +114,6 @@ struct VecSpace : public IterSpace {
         ASSERT(vec->type.is_vector());
         ASSERT(vec->type.dim == 1);  // currently only support 1d vectors
     }
-
-    ISpace apply(ISpace) final;
 
 private:
     Expr _lower_bound() final;
@@ -147,7 +158,7 @@ struct BoundSpace : public SuperSpace {
 struct LBoundSpace : public BoundSpace {
     LBoundSpace(ISpace ispace, Expr bound) : BoundSpace(ispace, bound) {}
 
-    ISpace apply(ISpace) final;
+    ISpace intersect(ISpace) final;
 
 private:
     Expr _lower_bound() final;
@@ -157,7 +168,7 @@ private:
 struct UBoundSpace : public BoundSpace {
     UBoundSpace(ISpace ispace, Expr bound) : BoundSpace(ispace, bound) {}
 
-    ISpace apply(ISpace) final;
+    ISpace intersect(ISpace) final;
 
 private:
     Expr _upper_bound() final;
@@ -186,7 +197,7 @@ protected:
 struct UnionSpace : public JointSpace {
     UnionSpace(ISpace left, ISpace right) : JointSpace(left, right) {}
 
-    ISpace apply(ISpace) final;
+    ISpace intersect(ISpace) final;
 
 private:
     Expr _lower_bound() final;
@@ -198,7 +209,7 @@ private:
 struct InterSpace : public JointSpace {
     InterSpace(ISpace left, ISpace right) : JointSpace(left, right) {}
 
-    ISpace apply(ISpace) final;
+    ISpace intersect(ISpace) final;
 
 private:
     Expr _lower_bound() final;
@@ -217,8 +228,6 @@ struct NestedSpace : public IterSpace {
           inner(inner)
     {
     }
-
-    ISpace apply(ISpace) final;
 
 private:
     Expr _lower_bound() final;
