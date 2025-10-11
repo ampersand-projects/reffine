@@ -8,10 +8,8 @@ namespace reffine {
 
 class Z3Solver : public Visitor {
 public:
-    static pair<z3::check_result, Expr> Solve(Expr, Expr = nullptr);
-
-    z3::check_result check(Expr);
-    z3::expr get(Expr);
+    bool check(Expr);
+    shared_ptr<Const> get(Expr);
 
 private:
     void Visit(SymNode&) final;

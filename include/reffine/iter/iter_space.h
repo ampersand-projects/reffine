@@ -92,7 +92,9 @@ struct UniversalSpace : public IterSpace {
 };
 
 struct ConstantSpace : public IterSpace {
-    ConstantSpace(Expr expr) : IterSpace(expr) {}
+    ConstantSpace(Expr iter) : IterSpace(iter)
+    {
+    }
 
     ISpace intersect(ISpace) final;
     bool is_const() final;
@@ -147,16 +149,17 @@ protected:
 };
 
 struct BoundSpace : public SuperSpace {
-    Expr bound;
+    ISpace bound;
 
-    BoundSpace(ISpace ispace, Expr bound) : SuperSpace(ispace), bound(bound)
+    BoundSpace(ISpace ispace, ISpace bound) : SuperSpace(ispace), bound(bound)
     {
-        ASSERT(bound->type == ispace->iter->type);
+        ASSERT(bound->is_const());
+        ASSERT(bound->iter->type == ispace->iter->type);
     }
 };
 
 struct LBoundSpace : public BoundSpace {
-    LBoundSpace(ISpace ispace, Expr bound) : BoundSpace(ispace, bound) {}
+    LBoundSpace(ISpace ispace, ISpace bound) : BoundSpace(ispace, bound) {}
 
     ISpace intersect(ISpace) final;
 
@@ -166,7 +169,7 @@ private:
 };
 
 struct UBoundSpace : public BoundSpace {
-    UBoundSpace(ISpace ispace, Expr bound) : BoundSpace(ispace, bound) {}
+    UBoundSpace(ISpace ispace, ISpace bound) : BoundSpace(ispace, bound) {}
 
     ISpace intersect(ISpace) final;
 
@@ -243,8 +246,6 @@ private:
 
 ISpace operator&(ISpace, ISpace);
 ISpace operator|(ISpace, ISpace);
-ISpace operator>=(ISpace, Expr);
-ISpace operator<=(ISpace, Expr);
 
 }  // namespace reffine
 

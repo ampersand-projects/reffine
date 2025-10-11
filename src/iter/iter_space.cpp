@@ -18,16 +18,6 @@ ISpace reffine::operator|(ISpace left, ISpace right)
     return make_shared<UnionSpace>(left, right);
 }
 
-ISpace reffine::operator>=(ISpace iter, Expr bound)
-{
-    return make_shared<LBoundSpace>(iter, bound);
-}
-
-ISpace reffine::operator<=(ISpace iter, Expr bound)
-{
-    return make_shared<UBoundSpace>(iter, bound);
-}
-
 ISpace IterSpace::intersect(ISpace ispace) { return nullptr; }
 
 bool IterSpace::is_const() { return false; }
@@ -133,7 +123,7 @@ SymExprs SuperSpace::_extra_syms() { return this->ispace->extra_syms(); }
 Expr LBoundSpace::_lower_bound()
 {
     auto lb = this->ispace->lower_bound();
-    return lb ? _max(this->bound, lb) : this->bound;
+    return lb ? _max(this->bound->iter, lb) : this->bound->iter;
 }
 
 Expr LBoundSpace::_iter_cond(Expr idx)
@@ -155,7 +145,7 @@ ISpace LBoundSpace::intersect(ISpace ispace)
 Expr UBoundSpace::_upper_bound()
 {
     auto ub = this->ispace->upper_bound();
-    return ub ? _min(this->bound, ub) : this->bound;
+    return ub ? _min(this->bound->iter, ub) : this->bound->iter;
 }
 
 Expr UBoundSpace::_iter_cond(Expr idx)

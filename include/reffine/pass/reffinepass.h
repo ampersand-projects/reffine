@@ -6,6 +6,7 @@
 #include "reffine/iter/iter_space.h"
 #include "reffine/pass/base/irgen.h"
 #include "reffine/pass/irclone.h"
+#include "reffine/pass/loopgen.h"
 
 namespace reffine {
 
@@ -18,16 +19,19 @@ public:
 private:
     ISpace visit(NaryExpr&) final;
     ISpace visit(Sym) final;
+    ISpace visit(Const&) final;
     ISpace visit(In&) final;
     ISpace visit(Op&) final;
 
-    ISpace extract_bound(Sym, NaryExpr&);
+    ISpace extract_bound(NaryExpr&);
 
     Sym& iter() { return this->_iter; }
-    set<Sym>& sym_set() { return this->_sym_set; }
+    set<Sym>& vars() { return this->_vars; }
 
     Sym _iter;
-    set<Sym> _sym_set;
+    set<Sym> _vars;
+
+    friend class LoopGen;
 };
 
 }  // namespace reffine
