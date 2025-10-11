@@ -74,7 +74,8 @@ ISpace Reffine::visit(Sym sym)
     if (sym == this->iter()) {
         // return universal space for operator iterator
         return make_shared<UniversalSpace>(this->iter());
-    } else if (this->ctx().in_sym_tbl.find(sym) != this->ctx().in_sym_tbl.end()) {
+    } else if (this->ctx().in_sym_tbl.find(sym) !=
+               this->ctx().in_sym_tbl.end()) {
         return eval(this->ctx().in_sym_tbl.at(sym));
     } else {
         throw runtime_error("Unabled to reffine symbol");

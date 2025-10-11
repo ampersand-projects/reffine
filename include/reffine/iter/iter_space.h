@@ -92,9 +92,7 @@ struct UniversalSpace : public IterSpace {
 };
 
 struct ConstantSpace : public IterSpace {
-    ConstantSpace(Expr iter) : IterSpace(iter)
-    {
-    }
+    ConstantSpace(Expr iter) : IterSpace(iter) {}
 
     ISpace intersect(ISpace) final;
     bool is_const() final;
