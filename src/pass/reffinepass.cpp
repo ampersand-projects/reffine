@@ -6,38 +6,50 @@
 using namespace reffine;
 using namespace reffine::reffiner;
 
-ISpace Reffine::extract_bound(Sym iter, NaryExpr& expr)
+ISpace Reffine::extract_bound(NaryExpr& e)
 {
-    Z3Solver solver;
+    auto pred = this->tmp_expr(e);
+    auto bias = _sym("b_" + this->iter()->name, this->iter());
+    Expr bound = bias;
 
-    auto bnd = _sym(iter->name + "_bnd", iter);
-    auto pred = this->tmp_expr(expr);
-    auto lb_prop = _forall(iter, _iff(_gte(iter, bnd), pred));
-    auto ub_prop = _forall(iter, _iff(_lte(iter, bnd), pred));
-
-    auto [lb_check, lb_val] = Z3Solver::Solve(lb_prop, bnd);
-    auto [ub_check, ub_val] = Z3Solver::Solve(ub_prop, bnd);
-
-    if (lb_check == z3::sat) {
-        auto lb_uniq_prop = (bnd != lb_val) & lb_prop;
-        auto [uniq_check, _] = Z3Solver::Solve(lb_uniq_prop);
-        if (uniq_check == z3::unsat) {
-            return eval(iter) >= lb_val;
-        } else if (expr.arg(0) == iter) {
-            return eval(iter) >= expr.arg(1);
-        }
-    } else if (ub_check == z3::sat) {
-        auto ub_uniq_prop = (bnd != ub_val) & ub_prop;
-        auto [uniq_check, _] = Z3Solver::Solve(ub_uniq_prop);
-        if (uniq_check == z3::unsat) {
-            return eval(iter) <= ub_val;
-        } else if (expr.arg(0) == iter) {
-            return eval(iter) <= expr.arg(1);
-        }
+    vector<Expr> vars;
+    vars.push_back(this->iter());
+    map<Sym, Sym> var_weight_map;
+    for (auto var : this->vars()) {
+        auto weight = _sym("w_" + var->name, var);
+        // Note: `bound` should always be the second argument of _add().
+        // Otherwise, for some reason SMT solver fails to satisfy valid prop
+        bound = _add(_mul(weight, var), bound);
+        var_weight_map[var] = weight;
+        vars.push_back(var);
     }
 
-    // Expression is not a bound on the given iter
-    return eval(iter);
+    auto lb_prop = _forall(vars, _eq(_gte(this->iter(), bound), pred));
+    auto ub_prop = _forall(vars, _eq(_lte(this->iter(), bound), pred));
+
+    Z3Solver lb_solver, ub_solver;
+    auto lb_check = lb_solver.check(lb_prop);
+    auto ub_check = ub_solver.check(ub_prop);
+
+    if (lb_check || ub_check) {
+        auto& solver = lb_check ? lb_solver : ub_solver;
+        Expr bound_val = solver.get(bias);
+        for (auto [v, w] : var_weight_map) {
+            auto weight = solver.get(w);
+            if (weight->val != 0) {
+                bound_val = _add(bound_val, _mul(weight, v));
+            }
+        }
+        auto iter_ispace = eval(this->iter());
+        auto const_ispace = make_shared<ConstantSpace>(bound_val);
+        if (lb_check) {
+            return make_shared<LBoundSpace>(iter_ispace, const_ispace);
+        } else {
+            return make_shared<UBoundSpace>(iter_ispace, const_ispace);
+        }
+    } else {
+        return make_shared<UniversalSpace>(this->iter());
+    }
 }
 
 ISpace Reffine::visit(NaryExpr& e)
@@ -51,7 +63,7 @@ ISpace Reffine::visit(NaryExpr& e)
         case MathOp::LTE:
         case MathOp::GT:
         case MathOp::GTE:
-            return extract_bound(iter(), e);
+            return extract_bound(e);
         default:
             throw runtime_error("Operator not supported by Reffine");
     }
@@ -59,12 +71,20 @@ ISpace Reffine::visit(NaryExpr& e)
 
 ISpace Reffine::visit(Sym sym)
 {
-    if (sym == iter()) {
+    if (sym == this->iter()) {
         // return universal space for operator iterator
-        return make_shared<UniversalSpace>(iter());
-    } else {
+        return make_shared<UniversalSpace>(this->iter());
+    } else if (this->ctx().in_sym_tbl.find(sym) !=
+               this->ctx().in_sym_tbl.end()) {
         return eval(this->ctx().in_sym_tbl.at(sym));
+    } else {
+        throw runtime_error("Unable to reffine symbol");
     }
+}
+
+ISpace Reffine::visit(Const& cnst)
+{
+    return make_shared<ConstantSpace>(_const(cnst.type, cnst.val));
 }
 
 ISpace Reffine::visit(In& in)
@@ -75,14 +95,18 @@ ISpace Reffine::visit(In& in)
 
 ISpace Reffine::visit(Op& op)
 {
-    ISpace ispace = nullptr;
+    this->iter() = op.iters[0];
+    auto ispace = eval(op.pred);
 
-    for (int i = op.iters.size() - 1; i >= 0; i--) {
-        this->iter() = op.iters[i];
-        auto outer_ispace = eval(op.pred);
-        ispace = ispace ? make_shared<NestedSpace>(outer_ispace, ispace)
-                        : outer_ispace;
+    if (op.iters.size() > 1) {
+        auto iters = op.iters;
+        this->vars().insert(iters[0]);
+        op.iters = vector<Sym>(iters.begin() + 1, iters.end());
+        auto inner_ispace = eval(this->tmp_expr(op));
+        op.iters = iters;
+
+        return make_shared<NestedSpace>(ispace, inner_ispace);
+    } else {
+        return ispace;
     }
-
-    return ispace;
 }

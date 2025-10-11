@@ -147,6 +147,14 @@ CodeSeg IRPrinter2::visit(NaryExpr& e)
             return code_binary(e.arg(0), ">", e.arg(1));
         case MathOp::GTE:
             return code_binary(e.arg(0), ">=", e.arg(1));
+        case MathOp::IMPLIES:
+            return code_binary(e.arg(0), "=>", e.arg(1));
+        case MathOp::IFF:
+            return code_binary(e.arg(0), "<=>", e.arg(1));
+        case MathOp::FORALL:
+            return code_func("forall", e.args);
+        case MathOp::EXISTS:
+            return code_func("exists", e.args);
         default:
             throw std::runtime_error("Invalid math operation");
     }

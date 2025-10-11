@@ -323,6 +323,25 @@ shared_ptr<Func> nested_transform_op()
     return foo_fn;
 }
 
+shared_ptr<Func> gen_fake_table()
+{
+    auto t_sym = _sym("t", _i64_t);
+    auto lb_sym = _sym("lb", _i64_t);
+    auto ub_sym = _sym("ub", _i64_t);
+
+    auto op = _op(
+        vector<Sym>{t_sym},
+        (_gte(t_sym, lb_sym) & _lt(t_sym, ub_sym)),
+        vector<Expr>{ t_sym }
+    );
+    auto op_sym = _sym("op", op);
+
+    auto fn = _func("first", op_sym, vector<Sym>{lb_sym, ub_sym});
+    fn->tbl[op_sym] = op;
+
+    return fn;
+}
+
 int main()
 {   
     /*
@@ -344,14 +363,24 @@ int main()
             }
         }
     }
-    auto tbl = load_arrow_file("../students.arrow").ValueOrDie();
-    auto op = nested_transform_op();
-    auto query_fn = compile_op<void (*)(void*, void*)>(op);
+    auto op = gen_fake_table();
+    auto query_fn = compile_op<void (*)(void*, int64_t, int64_t)>(op);
 
-    auto status = query_arrow_file2(tbl, query_fn);
+    ArrowTable* out_table1;
+    ArrowTable* out_table2;
 
-    if (!status.ok()) {
-        cerr << status.ToString() << endl;
-    }
+    auto t1 = high_resolution_clock::now();
+    query_fn(&out_table1, 0, 10);
+    query_fn(&out_table2, 5, 15);
+    auto t2 = high_resolution_clock::now();
+
+    auto res1 = arrow::ImportRecordBatch(out_table1->array, out_table1->schema).ValueOrDie();
+    cout << "Output1: " << endl << res1->ToString() << endl;
+    auto res2 = arrow::ImportRecordBatch(out_table2->array, out_table2->schema).ValueOrDie();
+    cout << "Output2: " << endl << res2->ToString() << endl;
+
+    auto us_int = duration_cast<microseconds>(t2 - t1);
+    std::cout << "Time: " << us_int.count() << "us\n";
+
     return 0;
 }

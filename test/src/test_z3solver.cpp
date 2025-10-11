@@ -14,9 +14,8 @@ void run_lower_bound_check(int lb)
     auto prop = _forall(t, _iff(_gte(t, bnd), pred));
 
     Z3Solver solver;
-    auto res = solver.check(prop);
-    ASSERT_EQ(res, z3::sat);
-    ASSERT_EQ(solver.get(bnd).as_int64(), lb);
+    ASSERT_TRUE(solver.check(prop));
+    ASSERT_EQ(solver.get(bnd)->val, lb);
 }
 
 void z3solver_test()

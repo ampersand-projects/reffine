@@ -24,11 +24,14 @@ struct Iff : public BinaryExpr {
 };
 
 struct ForAll : public NaryExpr {
-    ForAll(Sym a, Expr b)
-        : NaryExpr(types::BOOL, MathOp::FORALL, vector<Expr>{a, b})
+    ForAll(vector<Expr> iters, Expr b)
+        : NaryExpr(types::BOOL, MathOp::FORALL, iters)
     {
+        ASSERT(iters.size() > 0);
+        this->args.push_back(b);
         ASSERT(b->type == types::BOOL);
     }
+    ForAll(Sym iter, Expr b) : ForAll(vector<Expr>{iter}, b) {}
 };
 
 struct Exists : public NaryExpr {

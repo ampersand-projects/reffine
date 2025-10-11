@@ -44,6 +44,9 @@ Expr LoopGen::visit(Lookup& lookup)
 shared_ptr<Loop> LoopGen::build_loop(Op& op, shared_ptr<Loop> loop)
 {
     Reffine rpass(make_unique<ReffineCtx>(this->ctx().in_sym_tbl));
+    for (auto input : this->ctx().out_func->inputs) {
+        if (input->type.is_val()) { rpass.vars().insert(input); }
+    }
     auto ispace = rpass.eval(this->tmp_expr(op));
 
     vector<Expr> loop_inits;

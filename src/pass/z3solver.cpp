@@ -120,9 +120,14 @@ void Z3Solver::Visit(NaryExpr& e)
             assign(eval(_and(_implies(a, b), _implies(b, a))));
             break;
         }
-        case MathOp::FORALL:
-            assign(z3::forall(eval(e.arg(0)), eval(e.arg(1))));
+        case MathOp::FORALL: {
+            z3::expr_vector iters(ctx());
+            for (size_t i = 0; i < e.args.size() - 1; i++) {
+                iters.push_back(eval(e.arg(i)));
+            }
+            assign(z3::forall(iters, eval(e.args.back())));
             break;
+        }
         case MathOp::EXISTS:
             assign(z3::exists(eval(e.arg(0)), eval(e.arg(1))));
             break;
@@ -142,24 +147,14 @@ z3::expr Z3Solver::eval(Expr expr)
     return new_val;
 }
 
-z3::check_result Z3Solver::check(Expr conj)
+bool Z3Solver::check(Expr conj)
 {
     s().add(eval(conj));
-    return s().check();
+    return s().check() == z3::sat;
 }
 
-z3::expr Z3Solver::get(Expr val) { return s().get_model().eval(eval(val)); }
-
-pair<z3::check_result, Expr> Z3Solver::Solve(Expr conj, Expr val)
+shared_ptr<Const> Z3Solver::get(Expr val)
 {
-    Z3Solver solver;
-    auto check = solver.check(conj);
-    Expr get = nullptr;
-
-    if (check == z3::sat && val) {
-        auto z3val = solver.get(val);
-        get = _const(val->type, z3val.as_double());
-    }
-
-    return {check, get};
+    auto z3val = s().get_model().eval(eval(val));
+    return _const(val->type, z3val.as_double());
 }

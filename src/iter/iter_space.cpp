@@ -7,8 +7,8 @@ using namespace reffine::reffiner;
 
 ISpace reffine::operator&(ISpace left, ISpace right)
 {
-    auto l_on_r = left->apply(right);
-    auto r_on_l = right->apply(left);
+    auto l_on_r = left->intersect(right);
+    auto r_on_l = right->intersect(left);
     auto l_and_r = make_shared<InterSpace>(left, right);
     return l_on_r ? l_on_r : (r_on_l ? r_on_l : l_and_r);
 }
@@ -18,15 +18,9 @@ ISpace reffine::operator|(ISpace left, ISpace right)
     return make_shared<UnionSpace>(left, right);
 }
 
-ISpace reffine::operator>=(ISpace iter, Expr bound)
-{
-    return make_shared<LBoundSpace>(iter, bound);
-}
+ISpace IterSpace::intersect(ISpace ispace) { return nullptr; }
 
-ISpace reffine::operator<=(ISpace iter, Expr bound)
-{
-    return make_shared<UBoundSpace>(iter, bound);
-}
+bool IterSpace::is_const() { return false; }
 
 Expr IterSpace::_lower_bound() { return nullptr; }
 
@@ -46,7 +40,17 @@ VecIterIdxs IterSpace::_vec_iter_idxs(Expr idx) { return VecIterIdxs{}; }
 
 SymExprs IterSpace::_extra_syms() { return SymExprs{}; }
 
-ISpace UniversalSpace::apply(ISpace ispace) { return ispace; }
+ISpace UniversalSpace::intersect(ISpace ispace) { return ispace; }
+
+bool ConstantSpace::is_const() { return true; }
+
+ISpace ConstantSpace::intersect(ISpace ispace) { return nullptr; }
+
+Expr ConstantSpace::_lower_bound() { return this->iter; }
+
+Expr ConstantSpace::_upper_bound() { return this->iter; }
+
+Expr ConstantSpace::_next(Expr idx) { return idx; }
 
 Expr VecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
 
@@ -89,8 +93,6 @@ SymExprs VecSpace::_extra_syms()
     return SymExprs{make_pair(this->_vec_len_sym, _len(this->vec))};
 }
 
-ISpace VecSpace::apply(ISpace ispace) { return nullptr; }
-
 Expr SuperSpace::_lower_bound() { return this->ispace->lower_bound(); }
 
 Expr SuperSpace::_upper_bound() { return this->ispace->upper_bound(); }
@@ -121,7 +123,7 @@ SymExprs SuperSpace::_extra_syms() { return this->ispace->extra_syms(); }
 Expr LBoundSpace::_lower_bound()
 {
     auto lb = this->ispace->lower_bound();
-    return lb ? _max(this->bound, lb) : this->bound;
+    return lb ? _max(this->bound->iter, lb) : this->bound->iter;
 }
 
 Expr LBoundSpace::_iter_cond(Expr idx)
@@ -130,9 +132,9 @@ Expr LBoundSpace::_iter_cond(Expr idx)
                 this->ispace->iter_cond(idx));
 }
 
-ISpace LBoundSpace::apply(ISpace ispace)
+ISpace LBoundSpace::intersect(ISpace ispace)
 {
-    auto applied = this->ispace->apply(ispace);
+    auto applied = this->ispace->intersect(ispace);
     if (applied) {
         return make_shared<LBoundSpace>(applied, this->bound);
     } else {
@@ -143,7 +145,7 @@ ISpace LBoundSpace::apply(ISpace ispace)
 Expr UBoundSpace::_upper_bound()
 {
     auto ub = this->ispace->upper_bound();
-    return ub ? _min(this->bound, ub) : this->bound;
+    return ub ? _min(this->bound->iter, ub) : this->bound->iter;
 }
 
 Expr UBoundSpace::_iter_cond(Expr idx)
@@ -158,9 +160,9 @@ Expr UBoundSpace::_is_alive(Expr idx)
                 this->ispace->is_alive(idx));
 }
 
-ISpace UBoundSpace::apply(ISpace ispace)
+ISpace UBoundSpace::intersect(ISpace ispace)
 {
-    auto applied = this->ispace->apply(ispace);
+    auto applied = this->ispace->intersect(ispace);
     if (applied) {
         return make_shared<UBoundSpace>(applied, this->bound);
     } else {
@@ -250,10 +252,10 @@ Expr UnionSpace::_is_alive(Expr idx)
     return _or(l_is_alive, r_is_alive);
 }
 
-ISpace UnionSpace::apply(ISpace ispace)
+ISpace UnionSpace::intersect(ISpace ispace)
 {
-    auto l_applied = this->left->apply(ispace);
-    auto r_applied = this->right->apply(ispace);
+    auto l_applied = this->left->intersect(ispace);
+    auto r_applied = this->right->intersect(ispace);
 
     if (l_applied && r_applied) {
         return make_shared<UnionSpace>(l_applied, r_applied);
@@ -298,10 +300,10 @@ Expr InterSpace::_is_alive(Expr idx)
     return _and(l_is_alive, r_is_alive);
 }
 
-ISpace InterSpace::apply(ISpace ispace)
+ISpace InterSpace::intersect(ISpace ispace)
 {
-    auto l_applied = this->left->apply(ispace);
-    auto r_applied = this->right->apply(ispace);
+    auto l_applied = this->left->intersect(ispace);
+    auto r_applied = this->right->intersect(ispace);
 
     if (l_applied && r_applied) {
         return make_shared<InterSpace>(l_applied, r_applied);
@@ -396,10 +398,4 @@ SymExprs NestedSpace::_extra_syms()
                       i_extra_syms.end());
 
     return extra_syms;
-}
-
-ISpace NestedSpace::apply(ISpace)
-{
-    // TODO: implementation deferred for later
-    return nullptr;
 }
