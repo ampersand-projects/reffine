@@ -193,9 +193,15 @@ Expr JointSpace::_next(Expr idx)
     auto new_lidx = this->left->next(lidx);
     auto new_ridx = this->right->next(ridx);
 
-    return _sel(_lt(liter, riter), _new(vector<Expr>{new_lidx, ridx}),
-                _sel(_lt(riter, liter), _new(vector<Expr>{lidx, new_ridx}),
-                     _new(vector<Expr>{new_lidx, new_ridx})));
+    auto lcond = _lte(liter, riter);
+    auto lcond_sym = _define(lcond->symify(), lcond);
+    auto rcond = _lte(riter, liter);
+    auto rcond_sym = _define(rcond->symify(), rcond);
+
+    return _new(vector<Expr>{
+        _sel(lcond_sym, new_lidx, lidx),
+        _sel(rcond_sym, new_ridx, ridx)
+    });
 }
 
 VecIterIdxs JointSpace::_vec_iter_idxs(Expr idx)
