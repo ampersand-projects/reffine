@@ -63,7 +63,7 @@ Expr VecSpace::_iter_cond(Expr idx)
 {
     auto isval = _isval(this->vec, idx, 0);
     // need to define a symbol for isval to allow vectorization
-    auto var = _define(_sym("valid", isval), isval);
+    auto var = _define(isval->symify("valid"), isval);
     return _and(_lt(idx, _len(this->vec)), var);
 }
 

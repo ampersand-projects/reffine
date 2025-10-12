@@ -28,7 +28,7 @@ struct ExprNode {
 
     string str();
 
-    Sym symify();
+    Sym symify(string = "");
 };
 typedef shared_ptr<ExprNode> Expr;
 
