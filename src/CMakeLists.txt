@@ -59,6 +59,8 @@ find_package(Z3 REQUIRED CONFIG)
 message(STATUS "Found Z3 ${Z3_VERSION_STRING}")
 message(STATUS "Z3_DIR: ${Z3_DIR}")
 
+find_package(Boost REQUIRED COMPONENTS unordered)
+
 add_definitions(${LLVM_DEFINITIONS})
 
 add_library(reffine SHARED ${SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp)
@@ -66,12 +68,14 @@ add_library(reffine SHARED ${SRC_FILES} ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.c
 target_include_directories(reffine PUBLIC
     ${LLVM_INCLUDE_DIRS}
     ${Z3_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
 )
 
 target_link_libraries(reffine PUBLIC
     LLVM
     ${Z3_LIBRARIES}
+    Boost::unordered
 )
 
 target_compile_options(reffine PRIVATE
