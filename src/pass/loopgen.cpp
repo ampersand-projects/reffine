@@ -95,7 +95,8 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op, shared_ptr<Loop> loop)
 
     // Loop definition
     loop->init = _stmts(loop_inits);
-    loop->incr = _store(idx_addr, eval(ispace->next(_load(idx_addr))));
+    loop->incr = _stmts(
+        vector<Expr>{_store(idx_addr, eval(ispace->next(_load(idx_addr))))});
     loop->exit_cond = _not(eval(ispace->is_alive(_load(idx_addr))));
     loop->body_cond = eval(ispace->iter_cond(_load(idx_addr)));
     loop->output = _new(outputs);

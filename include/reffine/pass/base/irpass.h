@@ -54,7 +54,10 @@ public:
     CtxTy& ctx() { return *this->_ctx; }
 
 protected:
-    void assign(Sym sym, ValTy val) { this->ctx().out_sym_tbl[sym] = val; }
+    virtual void assign(Sym sym, ValTy val)
+    {
+        this->ctx().out_sym_tbl[sym] = val;
+    }
 
     Sym tmp_sym(SymNode& symbol)
     {
@@ -115,7 +118,7 @@ public:
 
     void Visit(Op& expr) override
     {
-        for (auto& iter : expr.iters) { this->assign(iter); }
+        for (auto& iter : expr.iters) { this->assign(iter, iter); }
         expr.pred->Accept(*this);
         for (auto& output : expr.outputs) { output->Accept(*this); }
     }
@@ -152,7 +155,7 @@ public:
 
     void Visit(Func& stmt) override
     {
-        for (auto& input : stmt.inputs) { this->assign(input); }
+        for (auto& input : stmt.inputs) { this->assign(input, input); }
 
         stmt.output->Accept(*this);
     }
@@ -213,11 +216,9 @@ protected:
 
         if (ctx().out_sym_tbl.find(tmp) == ctx().out_sym_tbl.end()) {
             ctx().in_sym_tbl.at(tmp)->Accept(*this);
-            this->assign(tmp);
+            this->assign(tmp, tmp);
         }
     }
-
-    void assign(Sym sym) { IRPassBase<IRPassCtx, Sym>::assign(sym, sym); }
 };
 
 }  // namespace reffine
