@@ -22,10 +22,8 @@ T compile_loop(shared_ptr<Func> loop, bool use_cemitter = true)
     LOG(INFO) << "Loop IR (raw):" << std::endl << loop->str() << std::endl;
     auto loop1 = CanonPass().eval(loop);
     LOG(INFO) << "Loop IR (canon):" << std::endl << loop1->str() << std::endl;
-    auto loop2 = LoadStoreExpand().eval(loop1);
-    LOG(INFO) << "Loop IR (expand):" << std::endl << loop2->str() << std::endl;
-    auto loop3 = NewGetElimination().eval(loop2);
-    LOG(INFO) << "Loop IR (eliminate):" << std::endl
+    auto loop3 = ScalarPass().eval(loop1);
+    LOG(INFO) << "Loop IR (scalar):" << std::endl
               << loop3->str() << std::endl;
 
     auto jit = ExecEngine::Get();

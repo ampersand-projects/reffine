@@ -115,7 +115,7 @@ Expr ScalarPass::visit(Alloc& alloc)
     if (alloc.type.is_struct()) {
         auto dtypes = alloc.type.deref().dtypes;
         for (size_t i = 0; i < dtypes.size(); i++) {
-
+            
         }
     }
 
@@ -133,7 +133,7 @@ Expr ScalarPass::visit(Load& load)
             vals.push_back(eval(_load(_structgep(addr, i), offset)));
         }
 
-        return _new(vals);
+        return eval(_new(vals));
     } else {
         return _load(addr, offset);
     }
