@@ -99,3 +99,129 @@ Expr NewGetElimination::visit(Func& func)
 
     return IRClone::visit(func);
 }
+
+
+
+
+
+
+
+
+
+Expr ScalarPass::visit(Alloc& alloc)
+{
+    auto size = eval(alloc.size);
+
+    if (alloc.type.is_struct()) {
+        auto dtypes = alloc.type.deref().dtypes;
+        for (size_t i = 0; i < dtypes.size(); i++) {
+
+        }
+    }
+
+    return _alloc(alloc.type.deref(), size);
+}
+
+Expr ScalarPass::visit(Load& load)
+{
+    auto addr = eval(load.addr);
+    auto offset = eval(load.offset);
+
+    if (load.type.is_struct()) {
+        vector<Expr> vals;
+        for (size_t i = 0; i < load.type.dtypes.size(); i++) {
+            vals.push_back(eval(_load(_structgep(addr, i), offset)));
+        }
+
+        return _new(vals);
+    } else {
+        return _load(addr, offset);
+    }
+}
+
+Expr ScalarPass::visit(Store& store)
+{
+    auto addr = eval(store.addr);
+    auto val = eval(store.val);
+    auto offset = eval(store.offset);
+
+    if (store.val->type.is_struct()) {
+        vector<Expr> stmt_list;
+        for (size_t i = 0; i < store.val->type.dtypes.size(); i++) {
+            stmt_list.push_back(
+                eval(_store(_structgep(addr, i), _get(val, i), offset)));
+        }
+
+        return _stmts(stmt_list);
+    } else {
+        return _store(addr, val, offset);
+    }
+}
+
+Expr ScalarPass::visit(Select& sel)
+{
+    auto new_cond = eval(sel.cond);
+    auto new_true_body = eval(sel.true_body);
+    auto new_false_body = eval(sel.false_body);
+
+    if (sel.type.is_struct()) {
+        vector<Expr> new_sel_exprs;
+
+        for (size_t i = 0; i < sel.type.dtypes.size(); i++) {
+            auto new_true_body_i = this->scalar().at(new_true_body)[i];
+            auto new_false_body_i = this->scalar().at(new_false_body)[i];
+            new_sel_exprs.push_back(
+                eval(_sel(new_cond, new_true_body_i, new_false_body_i)));
+        }
+
+        return _new(new_sel_exprs);
+    } else {
+        return _sel(new_cond, new_true_body, new_false_body);
+    }
+}
+
+Expr ScalarPass::visit(New& expr)
+{
+    vector<Expr> new_vals;
+    for (auto& val : expr.vals) { new_vals.push_back(eval(val)); }
+
+    auto new_expr = _new(new_vals);
+    this->scalar()[new_expr] = new_vals;
+
+    return new_expr;
+}
+
+Expr ScalarPass::visit(Get& get)
+{
+    auto val = eval(get.val);
+
+    if (this->scalar().find(val) != this->scalar().end()) {
+        return this->scalar().at(val)[get.col];
+    } else {  // might be a symbol to New expression
+        throw runtime_error("Unable to eliminate Get expression");
+    }
+}
+
+Expr ScalarPass::visit(Func& func)
+{
+    // Struct type inputs are not supported yet
+    for (const auto& input : func.inputs) { ASSERT(!input->type.is_struct()); }
+
+    return IRClone::visit(func);
+}
+
+void ScalarPass::assign(Sym sym, Expr expr)
+{
+    IRClone::assign(sym, expr);
+
+    if (this->scalar().find(expr) != this->scalar().end()) {
+        auto exprs = this->scalar().at(expr);
+        for (size_t i = 0; i < exprs.size(); i++) {
+            auto e = exprs[i];
+            auto s = _sym(sym->name + "_" + to_string(i), e);
+            this->assign(s, e);
+            this->map_sym(s, s);
+            this->scalar()[sym].push_back(s);
+        }
+    }
+}
