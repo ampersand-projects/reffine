@@ -54,7 +54,10 @@ public:
     CtxTy& ctx() { return *this->_ctx; }
 
 protected:
-    virtual void assign(Sym sym, ValTy val) { this->ctx().out_sym_tbl[sym] = val; }
+    virtual void assign(Sym sym, ValTy val)
+    {
+        this->ctx().out_sym_tbl[sym] = val;
+    }
 
     Sym tmp_sym(SymNode& symbol)
     {

@@ -23,8 +23,7 @@ T compile_loop(shared_ptr<Func> loop, bool use_cemitter = true)
     auto loop1 = CanonPass().eval(loop);
     LOG(INFO) << "Loop IR (canon):" << std::endl << loop1->str() << std::endl;
     auto loop3 = ScalarPass().eval(loop1);
-    LOG(INFO) << "Loop IR (scalar):" << std::endl
-              << loop3->str() << std::endl;
+    LOG(INFO) << "Loop IR (scalar):" << std::endl << loop3->str() << std::endl;
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
