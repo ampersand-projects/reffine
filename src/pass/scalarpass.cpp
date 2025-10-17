@@ -100,28 +100,6 @@ Expr NewGetElimination::visit(Func& func)
     return IRClone::visit(func);
 }
 
-
-
-
-
-
-
-
-
-Expr ScalarPass::visit(Alloc& alloc)
-{
-    auto size = eval(alloc.size);
-
-    if (alloc.type.is_struct()) {
-        auto dtypes = alloc.type.deref().dtypes;
-        for (size_t i = 0; i < dtypes.size(); i++) {
-            
-        }
-    }
-
-    return _alloc(alloc.type.deref(), size);
-}
-
 Expr ScalarPass::visit(Load& load)
 {
     auto addr = eval(load.addr);
