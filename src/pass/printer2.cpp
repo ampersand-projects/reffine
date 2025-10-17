@@ -25,7 +25,6 @@ CodeSeg IRPrinter2::visit(Sym sym)
 CodeSeg IRPrinter2::visit(Stmts& s)
 {
     for (auto& stmt : s.stmts) { emit(nl(), eval(stmt)); }
-    emit(nl());
     return code("");
 }
 
@@ -297,7 +296,7 @@ CodeSeg IRPrinter2::visit(NoOp&) { return code(""); }
 
 CodeSeg IRPrinter2::visit(Define& define)
 {
-    emit(nl(), define.sym->name, " = ", eval(define.val), nl());
+    emit(nl(), define.sym->name, " = ", eval(define.val));
     return code(define.sym->name);
 }
 
