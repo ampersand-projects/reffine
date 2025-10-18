@@ -188,6 +188,19 @@ Expr ScalarPass::visit(Func& func)
     return IRClone::visit(func);
 }
 
+Expr ScalarPass::visit(InitVal& init_val)
+{
+    auto init = eval(init_val.init);
+    auto val = eval(init_val.val);
+    auto new_init_val = _initval(init, val);
+
+    if (this->scalar().find(val) != this->scalar().end()) {
+        this->scalar()[new_init_val] = this->scalar()[val];
+    }
+
+    return new_init_val;
+}
+
 void ScalarPass::assign(Sym sym, Expr expr)
 {
     IRClone::assign(sym, expr);

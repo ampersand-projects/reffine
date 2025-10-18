@@ -25,6 +25,7 @@ private:
 class ScalarPass : public IRClone {
 private:
     Expr visit(Load&) final;
+    Expr visit(InitVal&) final;
     Expr visit(Store&) final;
     Expr visit(Select&) final;
     Expr visit(New&) final;
