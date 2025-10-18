@@ -7,10 +7,15 @@ using namespace reffine::reffiner;
 
 Expr CanonPass::visit(Define& define)
 {
-    auto new_sym = _sym(define.sym->name, define.sym);
-    this->map_sym(define.sym, new_sym);
-    this->assign(new_sym, eval(define.val));
-    return new_sym;
+    if (this->ctx().sym_sym_map.find(define.sym) == this->ctx().sym_sym_map.end()) {
+        auto new_sym = _sym(define.sym->name, define.sym);
+        this->map_sym(define.sym, new_sym);
+        this->assign(new_sym, eval(define.val));
+        this->map_sym(new_sym, new_sym);
+        return new_sym;
+    } else {
+        return eval(define.sym);
+    }
 }
 
 Expr CanonPass::visit(Get& get)
