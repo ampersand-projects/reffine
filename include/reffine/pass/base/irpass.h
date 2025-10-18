@@ -209,6 +209,12 @@ public:
         define.val->Accept(*this);
     }
 
+    void Visit(InitVal& initval) override
+    {
+        initval.init->Accept(*this);
+        initval.val->Accept(*this);
+    }
+
 protected:
     void Visit(SymNode& symbol) override
     {

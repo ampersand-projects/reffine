@@ -300,6 +300,12 @@ CodeSeg IRPrinter2::visit(Define& define)
     return code(define.sym->name);
 }
 
+CodeSeg IRPrinter2::visit(InitVal& init_val)
+{
+    emit(eval(init_val.init));
+    return eval(init_val.val);
+}
+
 CodeSeg IRPrinter2::visit(Func& fn)
 {
     auto new_ctx = make_unique<IREmitterCtx>(fn.tbl);

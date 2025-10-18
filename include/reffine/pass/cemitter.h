@@ -35,6 +35,7 @@ public:
     CodeSeg visit(Store&) final;
     CodeSeg visit(Loop&) final;
     CodeSeg visit(StructGEP&) final;
+    CodeSeg visit(InitVal&) final;
     CodeSeg visit(FetchDataPtr&) final;
     CodeSeg visit(Func&) final;
 

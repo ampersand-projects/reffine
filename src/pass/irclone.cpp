@@ -128,6 +128,11 @@ Expr IRClone::visit(Define& define)
     return _define(new_sym, eval(define.val));
 }
 
+Expr IRClone::visit(InitVal& init_val)
+{
+    return _initval(eval(init_val.init), eval(init_val.val));
+}
+
 Expr IRClone::visit(Store& store)
 {
     return _store(eval(store.addr), eval(store.val), eval(store.offset));

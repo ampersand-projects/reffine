@@ -34,6 +34,7 @@ void Loop::Accept(Visitor& v) { v.Visit(*this); }
 void FetchDataPtr::Accept(Visitor& v) { v.Visit(*this); }
 void NoOp::Accept(Visitor& v) { v.Visit(*this); }
 void Define::Accept(Visitor& v) { v.Visit(*this); }
+void InitVal::Accept(Visitor& v) { v.Visit(*this); }
 
 Sym ExprNode::symify(string prefix)
 {

@@ -154,6 +154,7 @@ REGISTER_EXPR(_stmts, Stmts)
 REGISTER_EXPR(_ifelse, IfElse)
 REGISTER_EXPR(_noop, NoOp)
 REGISTER_EXPR(_define, Define)
+REGISTER_EXPR(_initval, InitVal)
 REGISTER_EXPR(_store, Store)
 REGISTER_EXPR(_atomic_op, AtomicOp)
 #undef REGISTER_EXPR
