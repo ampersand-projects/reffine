@@ -218,7 +218,9 @@ CodeSeg CEmitter::visit(NoOp&) { return code(""); }
 
 CodeSeg CEmitter::visit(InitVal& init_val)
 {
-    emit(eval(init_val.init));
+    for (auto init : init_val.inits) {
+        emit(nl(), eval(init), ";");
+    }
     return eval(init_val.val);
 }
 

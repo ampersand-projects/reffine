@@ -134,7 +134,15 @@ Expr IRClone::visit(Define& define)
 
 Expr IRClone::visit(InitVal& init_val)
 {
-    return _initval(eval(init_val.init), eval(init_val.val));
+    auto val = eval(init_val.val);
+
+    vector<Sym> inits;
+    for (auto init : init_val.inits) {
+        eval(init);
+        inits.push_back(this->ctx().sym_sym_map.at(init));
+    }
+
+    return _initval(inits, val);
 }
 
 Expr IRClone::visit(Store& store)

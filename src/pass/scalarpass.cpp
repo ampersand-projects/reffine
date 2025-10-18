@@ -190,12 +190,21 @@ Expr ScalarPass::visit(Func& func)
 
 Expr ScalarPass::visit(InitVal& init_val)
 {
-    auto init = eval(init_val.init);
     auto val = eval(init_val.val);
-    auto new_init_val = _initval(init, val);
+
+    vector<Sym> inits;
+    for (auto init : init_val.inits) {
+        eval(init);
+        inits.push_back(this->ctx().sym_sym_map.at(init));
+    }
+
+    auto new_init_val = _initval(inits, val);
 
     if (this->scalar().find(val) != this->scalar().end()) {
-        this->scalar()[new_init_val] = this->scalar()[val];
+        auto scalars = this->scalar().at(val);
+        for (auto scalar : scalars) {
+            this->scalar()[new_init_val].push_back(_initval(inits, scalar));
+        }
     }
 
     return new_init_val;

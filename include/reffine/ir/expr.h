@@ -14,10 +14,10 @@ using namespace std;
 namespace reffine {
 
 struct InitVal : public ExprNode {
-    Expr init;
+    vector<Sym> inits;
     Expr val;
 
-    InitVal(Expr init, Expr val) : ExprNode(val->type), init(init), val(val)
+    InitVal(vector<Sym> inits, Expr val) : ExprNode(val->type), inits(std::move(inits)), val(val)
     {
     }
 

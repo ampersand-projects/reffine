@@ -199,13 +199,11 @@ Expr JointSpace::_next(Expr idx)
     auto rcond_sym = rcond->symify();
 
     auto joincond = _new(vector<Expr>{
-        _sel(lcond_sym, new_lidx, lidx),
-        _sel(rcond_sym, new_ridx, ridx)
+        _sel(_define(lcond_sym, lcond), new_lidx, lidx),
+        _sel(_define(rcond_sym, rcond), new_ridx, ridx)
     });
 
-    return _initval(_stmts(vector<Expr>{
-        _define(lcond_sym, lcond), _define(rcond_sym, rcond),
-    }), joincond);
+    return _initval(vector<Sym>{lcond_sym, rcond_sym}, joincond);
 }
 
 VecIterIdxs JointSpace::_vec_iter_idxs(Expr idx)
