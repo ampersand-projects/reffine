@@ -212,9 +212,7 @@ public:
     void Visit(InitVal& initval) override
     {
         initval.val->Accept(*this);
-        for (auto init : initval.inits) {
-            init->Accept(*this);
-        }
+        for (auto init : initval.inits) { init->Accept(*this); }
     }
 
 protected:

@@ -17,7 +17,8 @@ struct InitVal : public ExprNode {
     vector<Sym> inits;
     Expr val;
 
-    InitVal(vector<Sym> inits, Expr val) : ExprNode(val->type), inits(std::move(inits)), val(val)
+    InitVal(vector<Sym> inits, Expr val)
+        : ExprNode(val->type), inits(std::move(inits)), val(val)
     {
     }
 

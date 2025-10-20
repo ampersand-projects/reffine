@@ -1,5 +1,6 @@
-#include "reffine/builder/reffiner.h"
 #include "test_utils.h"
+
+#include "reffine/builder/reffiner.h"
 
 using namespace reffine;
 using namespace reffine::reffiner;
@@ -32,11 +33,9 @@ static shared_ptr<Func> gen_table_op()
     auto lb_sym = _sym("lb", _i64_t);
     auto ub_sym = _sym("ub", _i64_t);
 
-    auto op = _op(
-        vector<Sym>{t_sym},
-        (_gte(t_sym, lb_sym) & _lt(t_sym, ub_sym)),
-        vector<Expr>{ t_sym }
-    );
+    auto op =
+        _op(vector<Sym>{t_sym}, (_gte(t_sym, lb_sym) & _lt(t_sym, ub_sym)),
+            vector<Expr>{t_sym});
     auto op_sym = _sym("op", op);
 
     auto fn = _func("gen_table", op_sym, vector<Sym>{lb_sym, ub_sym});

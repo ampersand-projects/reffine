@@ -198,10 +198,9 @@ Expr JointSpace::_next(Expr idx)
     auto rcond = _lte(riter, liter);
     auto rcond_sym = rcond->symify();
 
-    auto joincond = _new(vector<Expr>{
-        _sel(_define(lcond_sym, lcond), new_lidx, lidx),
-        _sel(_define(rcond_sym, rcond), new_ridx, ridx)
-    });
+    auto joincond =
+        _new(vector<Expr>{_sel(_define(lcond_sym, lcond), new_lidx, lidx),
+                          _sel(_define(rcond_sym, rcond), new_ridx, ridx)});
 
     return _initval(vector<Sym>{lcond_sym, rcond_sym}, joincond);
 }

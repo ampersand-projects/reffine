@@ -123,12 +123,14 @@ Expr IRClone::visit(NoOp&) { return _noop(); }
 
 Expr IRClone::visit(Define& define)
 {
-    if (this->ctx().sym_sym_map.find(define.sym) == this->ctx().sym_sym_map.end()) {
+    if (this->ctx().sym_sym_map.find(define.sym) ==
+        this->ctx().sym_sym_map.end()) {
         auto new_sym = _sym(define.sym->name, define.sym);
         this->map_sym(define.sym, new_sym);
         return _define(new_sym, eval(define.val));
     } else {
-        throw runtime_error("Multiple Definition on same symbol found. " + define.sym->name);
+        throw runtime_error("Multiple Definition on same symbol found. " +
+                            define.sym->name);
     }
 }
 

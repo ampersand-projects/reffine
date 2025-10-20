@@ -6,7 +6,8 @@
 using namespace reffine;
 using namespace reffine::reffiner;
 
-shared_ptr<Func> join_op(ArrowTable2* left, ArrowTable2* right) {
+shared_ptr<Func> join_op(ArrowTable2* left, ArrowTable2* right)
+{
     auto lvec_sym = _sym("left", left->get_data_type(1));
     auto rvec_sym = _sym("right", right->get_data_type(1));
     auto t_sym = _sym("t", _i64_t);
@@ -16,19 +17,17 @@ shared_ptr<Func> join_op(ArrowTable2* left, ArrowTable2* right) {
     auto lelem_sym = _sym("l", lelem);
     auto relem_sym = _sym("r", relem);
 
-    auto op = _op(
-        vector<Sym>{t_sym},
-        (_in(t_sym, lvec_sym) & _in(t_sym, rvec_sym)),
-        vector<Expr>{ _add(lelem_sym, relem_sym) }
-    );  
+    auto op =
+        _op(vector<Sym>{t_sym}, (_in(t_sym, lvec_sym) & _in(t_sym, rvec_sym)),
+            vector<Expr>{_add(lelem_sym, relem_sym)});
     auto op_sym = _sym("op", op);
 
     auto fn = _func("join", op_sym, vector<Sym>{lvec_sym, rvec_sym});
     fn->tbl[lelem_sym] = lelem;
     fn->tbl[relem_sym] = relem;
-    fn->tbl[op_sym] = op; 
+    fn->tbl[op_sym] = op;
 
-    return fn; 
+    return fn;
 }
 
 void join_op_test(bool vectorize)
