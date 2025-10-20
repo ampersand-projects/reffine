@@ -26,6 +26,7 @@ public:
     CodeSeg visit(IfElse&) final;
     CodeSeg visit(NoOp&) final;
     CodeSeg visit(Define&) final;
+    CodeSeg visit(InitVal&) final;
     CodeSeg visit(Select&) final;
     CodeSeg visit(Const&) final;
     CodeSeg visit(Get&) final;

@@ -54,8 +54,14 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op, shared_ptr<Loop> loop)
     string loop_iter_name = "";
     for (auto iter : op.iters) { loop_iter_name += ("_" + iter->name); }
 
+    // Loop lower bound
+    auto lb = eval(ispace->lower_bound());
+    auto lb_sym = lb->symify("lb");
+    this->assign(lb_sym, lb);
+    this->map_sym(lb_sym, lb_sym);
+
     // Loop index initialization
-    auto idx_init = eval(ispace->iter_to_idx(ispace->lower_bound()));
+    auto idx_init = eval(ispace->iter_to_idx(lb_sym));
     auto idx_alloc = _alloc(idx_init->type);
     auto idx_addr = _sym(loop_iter_name + "_idx_addr", idx_alloc);
     this->assign(idx_addr, idx_alloc);

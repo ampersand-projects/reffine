@@ -40,6 +40,7 @@ protected:
     Expr visit(FetchDataPtr&) override;
     Expr visit(NoOp&) override;
     Expr visit(Define&) override;
+    Expr visit(InitVal&) override;
     Expr visit(Func&) override;
 
 private:

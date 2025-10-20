@@ -342,6 +342,32 @@ shared_ptr<Func> gen_fake_table()
     return fn;
 }
 
+shared_ptr<Func> join_op(ArrowTable2* left, ArrowTable2* right)
+{
+    auto lvec_sym = _sym("left", left->get_data_type(1));
+    auto rvec_sym = _sym("right", right->get_data_type(1));
+    auto t_sym = _sym("t", _i64_t);
+
+    auto lelem = lvec_sym[{t_sym}][0];
+    auto relem = rvec_sym[{t_sym}][0];
+    auto lelem_sym = _sym("l", lelem);
+    auto relem_sym = _sym("r", relem);
+
+    auto op = _op(
+        vector<Sym>{t_sym},
+        (_in(t_sym, lvec_sym) & _in(t_sym, rvec_sym)),
+        vector<Expr>{ lelem_sym, relem_sym, _add(lelem_sym, relem_sym) }
+    );
+    auto op_sym = _sym("op", op);
+
+    auto fn = _func("join", op_sym, vector<Sym>{lvec_sym, rvec_sym});
+    fn->tbl[lelem_sym] = lelem;
+    fn->tbl[relem_sym] = relem;
+    fn->tbl[op_sym] = op;
+
+    return fn;
+}
+
 int main()
 {   
     /*
@@ -363,24 +389,31 @@ int main()
             }
         }
     }
-    auto op = gen_fake_table();
-    auto query_fn = compile_op<void (*)(void*, int64_t, int64_t)>(op);
 
-    ArrowTable* out_table1;
-    ArrowTable* out_table2;
+    ArrowTable2* left_table;
+    ArrowTable2* right_table;
 
-    auto t1 = high_resolution_clock::now();
-    query_fn(&out_table1, 0, 10);
-    query_fn(&out_table2, 5, 15);
-    auto t2 = high_resolution_clock::now();
+    auto data_op = gen_fake_table();
+    auto data_fn = compile_op<void (*)(void*, int64_t, int64_t)>(data_op);
 
-    auto res1 = arrow::ImportRecordBatch(out_table1->array, out_table1->schema).ValueOrDie();
-    cout << "Output1: " << endl << res1->ToString() << endl;
-    auto res2 = arrow::ImportRecordBatch(out_table2->array, out_table2->schema).ValueOrDie();
-    cout << "Output2: " << endl << res2->ToString() << endl;
+    data_fn(&left_table, 0, 10);
+    data_fn(&right_table, 5, 15);
 
-    auto us_int = duration_cast<microseconds>(t2 - t1);
-    std::cout << "Time: " << us_int.count() << "us\n";
+    /*
+    auto lres = arrow::ImportRecordBatch(left_table->array, left_table->schema).ValueOrDie();
+    cout << "Left output: " << endl << lres->ToString() << endl;
+    auto rres = arrow::ImportRecordBatch(right_table->array, right_table->schema).ValueOrDie();
+    cout << "Right output: " << endl << rres->ToString() << endl;
+    */
+
+    auto jop = join_op(left_table, right_table);
+    auto join_fn = compile_op<void (*)(void*, void*, void*)>(jop);
+
+    ArrowTable2* join_table;
+    join_fn(&join_table, left_table, right_table);
+
+    auto res = arrow::ImportRecordBatch(join_table->array, join_table->schema).ValueOrDie();
+    cout << "Output: " << endl << res->ToString() << endl;
 
     return 0;
 }

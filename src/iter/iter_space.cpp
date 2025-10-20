@@ -63,7 +63,7 @@ Expr VecSpace::_iter_cond(Expr idx)
 {
     auto isval = _isval(this->vec, idx, 0);
     // need to define a symbol for isval to allow vectorization
-    auto var = _define(_sym("valid", isval), isval);
+    auto var = _define(isval->symify("valid"), isval);
     return _and(_lt(idx, _len(this->vec)), var);
 }
 
@@ -193,9 +193,16 @@ Expr JointSpace::_next(Expr idx)
     auto new_lidx = this->left->next(lidx);
     auto new_ridx = this->right->next(ridx);
 
-    return _sel(_lt(liter, riter), _new(vector<Expr>{new_lidx, ridx}),
-                _sel(_lt(riter, liter), _new(vector<Expr>{lidx, new_ridx}),
-                     _new(vector<Expr>{new_lidx, new_ridx})));
+    auto lcond = _lte(liter, riter);
+    auto lcond_sym = lcond->symify();
+    auto rcond = _lte(riter, liter);
+    auto rcond_sym = rcond->symify();
+
+    auto joincond =
+        _new(vector<Expr>{_sel(_define(lcond_sym, lcond), new_lidx, lidx),
+                          _sel(_define(rcond_sym, rcond), new_ridx, ridx)});
+
+    return _initval(vector<Sym>{lcond_sym, rcond_sym}, joincond);
 }
 
 VecIterIdxs JointSpace::_vec_iter_idxs(Expr idx)

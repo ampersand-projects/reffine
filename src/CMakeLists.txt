@@ -42,7 +42,6 @@ set(SRC_FILES
     pass/irclone.cpp
     pass/z3solver.cpp
     pass/llvmgen.cpp
-    vinstr/internal.cpp
     vinstr/external.cpp
     ${CMAKE_CURRENT_BINARY_DIR}/vinstr_str.cpp
     engine/engine.cpp

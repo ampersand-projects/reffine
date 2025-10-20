@@ -15,7 +15,7 @@ public:
         : IREmitter(std::move(ctx)), _header(make_shared<BlockSeg>())
     {
         this->_header->emit("#include <algorithm>", nl());
-        this->_header->emit("#include \"vinstr/internal.cpp\"", nl());
+        this->_header->emit("#include \"reffine/vinstr/vinstr.h\"", nl());
         this->_header->emit(nl());
     }
 
@@ -35,6 +35,7 @@ public:
     CodeSeg visit(Store&) final;
     CodeSeg visit(Loop&) final;
     CodeSeg visit(StructGEP&) final;
+    CodeSeg visit(InitVal&) final;
     CodeSeg visit(FetchDataPtr&) final;
     CodeSeg visit(Func&) final;
 

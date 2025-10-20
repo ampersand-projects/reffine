@@ -34,12 +34,13 @@ void Loop::Accept(Visitor& v) { v.Visit(*this); }
 void FetchDataPtr::Accept(Visitor& v) { v.Visit(*this); }
 void NoOp::Accept(Visitor& v) { v.Visit(*this); }
 void Define::Accept(Visitor& v) { v.Visit(*this); }
+void InitVal::Accept(Visitor& v) { v.Visit(*this); }
 
-Sym ExprNode::symify()
+Sym ExprNode::symify(string prefix)
 {
     auto* addr = static_cast<void*>(this);
     std::stringstream ss;
-    ss << "_" << addr;
+    ss << prefix << "_" << addr;
     return make_shared<SymNode>(ss.str(), this->type);
 }
 

@@ -216,6 +216,12 @@ CodeSeg CEmitter::visit(FetchDataPtr& e)
 
 CodeSeg CEmitter::visit(NoOp&) { return code(""); }
 
+CodeSeg CEmitter::visit(InitVal& init_val)
+{
+    for (auto init : init_val.inits) { emit(nl(), eval(init), ";"); }
+    return eval(init_val.val);
+}
+
 CodeSeg CEmitter::visit(Func& fn)
 {
     auto new_ctx = make_unique<IREmitterCtx>(fn.tbl);

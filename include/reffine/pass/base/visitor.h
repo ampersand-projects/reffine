@@ -75,6 +75,10 @@ public:
     {
         throw runtime_error("Define operation not supported");
     }
+    virtual void Visit(InitVal&)
+    {
+        throw runtime_error("InitVal operation not supported");
+    }
 
     /**
      * Loop IR

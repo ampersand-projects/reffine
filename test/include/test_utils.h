@@ -21,6 +21,9 @@
 #include "reffine/utils/utils.h"
 
 arrow::Result<std::shared_ptr<reffine::ArrowTable2>> get_input_vector();
+
 std::string print_arrow_table(ArrowTable*);
 
+typedef void (*gen_table_ty)(void*, int64_t, int64_t);
+gen_table_ty gen_fake_table();
 #endif  // TEST_INCLUDE_TEST_UTILS_H_

@@ -13,6 +13,18 @@ using namespace std;
 
 namespace reffine {
 
+struct InitVal : public ExprNode {
+    vector<Sym> inits;
+    Expr val;
+
+    InitVal(vector<Sym> inits, Expr val)
+        : ExprNode(val->type), inits(std::move(inits)), val(val)
+    {
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct Define : public ExprNode {
     Sym sym;
     Expr val;
