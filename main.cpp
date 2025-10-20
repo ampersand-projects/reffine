@@ -342,27 +342,31 @@ shared_ptr<Func> gen_fake_table()
     return fn;
 }
 
-shared_ptr<Func> join_op(ArrowTable2* left, ArrowTable2* right)
+shared_ptr<Func> join_op(ArrowTable2* left, ArrowTable2* right, ArrowTable2* another)
 {
     auto lvec_sym = _sym("left", left->get_data_type(1));
     auto rvec_sym = _sym("right", right->get_data_type(1));
+    auto avec_sym = _sym("another", another->get_data_type(1));
     auto t_sym = _sym("t", _i64_t);
 
     auto lelem = lvec_sym[{t_sym}][0];
     auto relem = rvec_sym[{t_sym}][0];
+    auto aelem = avec_sym[{t_sym}][0];
     auto lelem_sym = _sym("l", lelem);
     auto relem_sym = _sym("r", relem);
+    auto aelem_sym = _sym("a", aelem);
 
     auto op = _op(
         vector<Sym>{t_sym},
-        (_in(t_sym, lvec_sym) & _in(t_sym, rvec_sym)),
-        vector<Expr>{ lelem_sym, relem_sym, _add(lelem_sym, relem_sym) }
+        (_in(t_sym, lvec_sym) & _in(t_sym, rvec_sym) & _in(t_sym, avec_sym)),
+        vector<Expr>{ lelem_sym, relem_sym, aelem_sym, _add(_add(lelem_sym, relem_sym), aelem_sym) }
     );
     auto op_sym = _sym("op", op);
 
-    auto fn = _func("join", op_sym, vector<Sym>{lvec_sym, rvec_sym});
+    auto fn = _func("join", op_sym, vector<Sym>{lvec_sym, rvec_sym, avec_sym});
     fn->tbl[lelem_sym] = lelem;
     fn->tbl[relem_sym] = relem;
+    fn->tbl[aelem_sym] = aelem;
     fn->tbl[op_sym] = op;
 
     return fn;
@@ -392,12 +396,14 @@ int main()
 
     ArrowTable2* left_table;
     ArrowTable2* right_table;
+    ArrowTable2* another_table;
 
     auto data_op = gen_fake_table();
     auto data_fn = compile_op<void (*)(void*, int64_t, int64_t)>(data_op);
 
     data_fn(&left_table, 0, 10);
     data_fn(&right_table, 5, 15);
+    data_fn(&another_table, 7, 20);
 
     /*
     auto lres = arrow::ImportRecordBatch(left_table->array, left_table->schema).ValueOrDie();
@@ -406,11 +412,11 @@ int main()
     cout << "Right output: " << endl << rres->ToString() << endl;
     */
 
-    auto jop = join_op(left_table, right_table);
-    auto join_fn = compile_op<void (*)(void*, void*, void*)>(jop);
+    auto jop = join_op(left_table, right_table, another_table);
+    auto join_fn = compile_op<void (*)(void*, void*, void*, void*)>(jop);
 
     ArrowTable2* join_table;
-    join_fn(&join_table, left_table, right_table);
+    join_fn(&join_table, left_table, right_table, another_table);
 
     auto res = arrow::ImportRecordBatch(join_table->array, join_table->schema).ValueOrDie();
     cout << "Output: " << endl << res->ToString() << endl;
