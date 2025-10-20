@@ -26,7 +26,7 @@ T compile_loop(shared_ptr<Func> loop, bool use_cemitter = true)
     LOG(INFO) << "Loop IR (scalar):" << std::endl << loop3->str() << std::endl;
 
     auto jit = ExecEngine::Get();
-    auto llmod = make_unique<llvm::Module>(loop->name, jit->GetCtx());
+    auto llmod = make_unique<llvm::Module>("__" + loop->name, jit->GetCtx());
     if (use_cemitter) {
         auto ccode = CEmitter::Build(loop3);
         LOG(INFO) << "C Code:" << std::endl << ccode << std::endl;
