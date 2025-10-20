@@ -3,6 +3,7 @@ set(TEST_FILES
     src/test_reduce.cpp
     src/test_transform.cpp
     src/test_nested.cpp
+    src/test_join.cpp
     src/test_z3solver.cpp
     src/basic_tests.cpp
 )
