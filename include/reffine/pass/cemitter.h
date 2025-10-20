@@ -15,7 +15,7 @@ public:
         : IREmitter(std::move(ctx)), _header(make_shared<BlockSeg>())
     {
         this->_header->emit("#include <algorithm>", nl());
-        this->_header->emit("#include \"vinstr/internal.cpp\"", nl());
+        this->_header->emit("#include \"reffine/vinstr/vinstr.h\"", nl());
         this->_header->emit(nl());
     }
 

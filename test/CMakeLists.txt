@@ -10,7 +10,7 @@ set(TEST_FILES
 find_package(Arrow REQUIRED)
 
 add_executable(reffine_test ${TEST_FILES})
-target_include_directories(reffine_test PUBLIC include)
+target_include_directories(reffine_test PUBLIC include ${CMAKE_CURRENT_SOURCE_DIR}/../include/)
 target_link_libraries(reffine_test gtest_main Arrow::arrow_shared reffine)
 
 include(GoogleTest)

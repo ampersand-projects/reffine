@@ -26,7 +26,7 @@ T compile_loop(shared_ptr<Func> loop, bool use_cemitter = true)
     LOG(INFO) << "Loop IR (scalar):" << std::endl << loop3->str() << std::endl;
 
     auto jit = ExecEngine::Get();
-    auto llmod = make_unique<llvm::Module>("test", jit->GetCtx());
+    auto llmod = make_unique<llvm::Module>(loop->name, jit->GetCtx());
     if (use_cemitter) {
         auto ccode = CEmitter::Build(loop3);
         LOG(INFO) << "C Code:" << std::endl << ccode << std::endl;
@@ -34,10 +34,7 @@ T compile_loop(shared_ptr<Func> loop, bool use_cemitter = true)
     } else {
         LLVMGen(*llmod).eval(loop3);
     }
-    LOG(INFO) << "LLVM IR (raw):" << std::endl
-              << IRPrinter2::Build(*llmod) << std::endl;
-    jit->Optimize(*llmod);
-    LOG(INFO) << "LLVM IR (optimized):" << std::endl
+    LOG(INFO) << "LLVM IR:" << std::endl
               << IRPrinter2::Build(*llmod) << std::endl;
     jit->AddModule(std::move(llmod));
     return jit->Lookup<T>(loop->name);
