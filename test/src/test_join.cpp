@@ -20,7 +20,8 @@ shared_ptr<Func> join_op(ArrowTable2* a, ArrowTable2* b, ArrowTable2* c)
     auto belem_sym = _sym("b", belem);
     auto celem_sym = _sym("c", celem);
 
-    auto op = _op(vector<Sym>{t_sym},
+    auto op = _op(
+        vector<Sym>{t_sym},
         (_in(t_sym, avec_sym) & _in(t_sym, bvec_sym) & _in(t_sym, cvec_sym)),
         vector<Expr>{_add(_add(aelem_sym, belem_sym), celem_sym)});
     auto op_sym = _sym("op", op);
@@ -48,7 +49,8 @@ void join_op_test(bool vectorize)
     data_fn(&c_table, clb, cub);
 
     auto jop = join_op(a_table, b_table, c_table);
-    auto join_fn = compile_op<void (*)(void*, void*, void*, void*)>(jop, vectorize);
+    auto join_fn =
+        compile_op<void (*)(void*, void*, void*, void*)>(jop, vectorize);
 
     ArrowTable2* join_table;
     join_fn(&join_table, a_table, b_table, c_table);
