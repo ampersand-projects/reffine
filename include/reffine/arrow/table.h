@@ -7,20 +7,20 @@
 namespace reffine {
 
 struct ArrowTable2 : public ArrowTable {
-    ArrowTable2()
-        : ArrowTable(),
+    ArrowTable2(int64_t dim)
+        : ArrowTable(dim),
           schema2(make_shared<ArrowSchema2>()),
           array2(make_shared<ArrowArray2>())
     {
         init();
     }
 
-    ArrowTable2(std::string name, size_t len, std::vector<std::string> cols,
-                std::vector<DataType> dtypes)
+    ArrowTable2(std::string name, int64_t dim, size_t len,
+                std::vector<std::string> cols, std::vector<DataType> dtypes)
+        : ArrowTable(dim),
+          schema2(make_shared<VectorSchema>(name)),
+          array2(make_shared<VectorArray>(len))
     {
-        this->schema2 = make_shared<VectorSchema>(name);
-        this->array2 = make_shared<VectorArray>(len);
-
         ASSERT(cols.size() == dtypes.size());
         for (size_t i = 0; i < cols.size(); i++) {
             auto& col = cols[i];
@@ -55,7 +55,7 @@ struct ArrowTable2 : public ArrowTable {
 
     ~ArrowTable2() override {}
 
-    DataType get_data_type(size_t dim)
+    DataType get_data_type()
     {
         vector<DataType> dtypes;
 
@@ -82,7 +82,7 @@ struct ArrowTable2 : public ArrowTable {
             }
         }
 
-        return DataType(BaseType::VECTOR, dtypes, dim);
+        return DataType(BaseType::VECTOR, dtypes, this->dim);
     }
 
 private:

@@ -6,12 +6,9 @@ using namespace std;
 using namespace reffine;
 using namespace reffine::reffiner;
 
-shared_ptr<Func> vector_loop()
+shared_ptr<Func> vector_loop(shared_ptr<ArrowTable2> tbl)
 {
-    auto vec_sym = make_shared<SymNode>(
-        "vec", types::VECTOR<1>(vector<DataType>{
-                   types::INT64, types::INT64, types::INT64, types::INT64,
-                   types::INT64, types::INT8, types::INT64}));
+    auto vec_sym = make_shared<SymNode>("vec", tbl->get_data_type());
 
     auto len =
         make_shared<Call>("get_vector_len", types::IDX, vector<Expr>{vec_sym});
@@ -51,22 +48,20 @@ shared_ptr<Func> vector_loop()
 
 void aggregate_loop_test()
 {
-    auto loop = vector_loop();
+    auto tbl = get_input_vector().ValueOrDie();
+    auto loop = vector_loop(tbl);
     long output = 0;
     auto query_fn = compile_loop<void (*)(long*, void*)>(loop);
 
-    auto tbl = get_input_vector().ValueOrDie();
     query_fn(&output, tbl.get());
 
     ASSERT_EQ(output, 131977);
 }
 
-shared_ptr<Func> vector_op()
+shared_ptr<Func> vector_op(shared_ptr<ArrowTable2> tbl)
 {
     auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym =
-        _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
-                              int8_t, int64_t>());
+    auto vec_in_sym = _sym("vec_in", tbl->get_data_type());
     Op op(
         {t_sym},
         _in(t_sym, vec_in_sym) & _lte(t_sym, _i64(48)) & _gte(t_sym, _i64(10)),
@@ -116,11 +111,11 @@ shared_ptr<Func> vector_op()
 
 void aggregate_op_test(bool vectorize)
 {
-    auto op = vector_op();
+    auto tbl = get_input_vector().ValueOrDie();
+    auto op = vector_op(tbl);
     long output = 0;
     auto query_fn = compile_op<void (*)(long*, void*)>(op, vectorize);
 
-    auto tbl = get_input_vector().ValueOrDie();
     query_fn(&output, tbl.get());
 
     ASSERT_EQ(output, 696);

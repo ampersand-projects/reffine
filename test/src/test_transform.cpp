@@ -9,7 +9,7 @@ using namespace reffine::reffiner;
 shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl, long lb, long n)
 {
     auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym = _sym("vec_in", tbl->get_data_type(1));
+    auto vec_in_sym = _sym("vec_in", tbl->get_data_type());
     auto elem = vec_in_sym[{t_sym}];
     auto elem_sym = _sym("elem", elem);
     auto out = _add(elem_sym[0], _i64(n));

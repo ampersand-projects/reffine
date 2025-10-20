@@ -51,14 +51,12 @@ void arrow_print_schema(ArrowSchema*);
 void arrow_print_array(ArrowArray*);
 
 struct ArrowTable {
+    int64_t dim;
     ArrowSchema* schema;
     ArrowArray* array;
 
-    ArrowTable() {}
-    ArrowTable(ArrowSchema* schema, ArrowArray* array)
-        : schema(schema), array(array)
-    {
-    }
+    ArrowTable(int64_t dim, ArrowSchema* schema = nullptr, ArrowArray* array = nullptr)
+        : dim(dim), schema(schema), array(array) {}
 
     virtual ~ArrowTable() {}
 };

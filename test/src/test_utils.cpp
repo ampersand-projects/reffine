@@ -14,7 +14,7 @@ arrow::Result<std::shared_ptr<ArrowTable2>> get_input_vector()
                           arrow::ipc::RecordBatchFileReader::Open(infile));
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
 
-    auto table = std::make_shared<ArrowTable2>();
+    auto table = std::make_shared<ArrowTable2>(1);
     ARROW_RETURN_NOT_OK(
         arrow::ExportRecordBatch(*rbatch, table->array, table->schema));
 
