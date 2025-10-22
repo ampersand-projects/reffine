@@ -59,6 +59,7 @@ message(STATUS "Found Z3 ${Z3_VERSION_STRING}")
 message(STATUS "Z3_DIR: ${Z3_DIR}")
 
 find_package(Boost REQUIRED COMPONENTS unordered)
+find_package(unordered_dense CONFIG REQUIRED)
 
 add_definitions(${LLVM_DEFINITIONS})
 
@@ -75,6 +76,7 @@ target_link_libraries(reffine PUBLIC
     LLVM
     ${Z3_LIBRARIES}
     Boost::unordered
+    unordered_dense::unordered_dense
 )
 
 target_compile_options(reffine PRIVATE

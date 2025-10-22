@@ -2,8 +2,8 @@
 #define INCLUDE_REFFINE_ARROW_DEFS_H_
 
 #include <unordered_map>
-#include <map>
 
+#include "ankerl/unordered_dense.h"
 #include <boost/unordered/unordered_flat_map.hpp>
 #include "reffine/arrow/base.h"
 #include "reffine/base/type.h"
@@ -12,7 +12,7 @@
 
 namespace reffine {
 
-using IndexTy = boost::unordered_flat_map<int64_t, int64_t>;
+using IndexTy = std::unordered_map<int64_t, int64_t>;
 
 struct ArrowTable2 : public ArrowTable {
     ArrowTable2(int64_t dim)
