@@ -129,7 +129,8 @@ Expr LoopGen::visit(Op& op)
             out_cols.push_back(o->str());
         }
 
-        return make_shared<ArrowTable2>("out", op.iters.size(), len, out_cols, out_dtypes);
+        return make_shared<ArrowTable2>("out", op.iters.size(), len, out_cols,
+                                        out_dtypes);
     });
     auto out_vec = _make(op.type, len, mem_id);
     auto out_vec_sym = _sym("out_vec", out_vec);

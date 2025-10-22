@@ -4,8 +4,8 @@
 #include <unordered_map>
 
 #include "reffine/arrow/base.h"
-#include "reffine/base/type.h"
 #include "reffine/base/log.h"
+#include "reffine/base/type.h"
 #include "reffine/vinstr/vinstr.h"
 
 namespace reffine {
@@ -102,14 +102,15 @@ struct ArrowTable2 : public ArrowTable {
         auto size = this->array->length;
         this->index().reserve(size);
         if (dtype == types::INT64) {
-            auto* iter_col = (int64_t*) get_vector_data_buf(this, 0);
+            auto* iter_col = (int64_t*)get_vector_data_buf(this, 0);
             for (int64_t i = 0; i < size; i++) {
                 if (get_vector_null_bit(this, i, 0)) {
                     this->index().emplace(iter_col[i], i);
                 }
             }
         } else {
-            throw runtime_error("Data type not supported for indexing: " + dtype.str());
+            throw runtime_error("Data type not supported for indexing: " +
+                                dtype.str());
         }
     }
 

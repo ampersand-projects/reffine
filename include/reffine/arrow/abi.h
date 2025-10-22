@@ -55,8 +55,11 @@ struct ArrowTable {
     ArrowSchema* schema;
     ArrowArray* array;
 
-    ArrowTable(int64_t dim, ArrowSchema* schema = nullptr, ArrowArray* array = nullptr)
-        : dim(dim), schema(schema), array(array) {}
+    ArrowTable(int64_t dim, ArrowSchema* schema = nullptr,
+               ArrowArray* array = nullptr)
+        : dim(dim), schema(schema), array(array)
+    {
+    }
 
     virtual ~ArrowTable() {}
 };
