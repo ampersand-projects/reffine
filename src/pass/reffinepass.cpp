@@ -90,7 +90,7 @@ ISpace Reffine::visit(Const& cnst)
 ISpace Reffine::visit(In& in)
 {
     ASSERT(in.iter == iter());
-    return make_shared<VecSpace>(iter(), in.vec);
+    return make_shared<FlatVecSpace>(iter(), in.vec);
 }
 
 ISpace Reffine::visit(Op& op)

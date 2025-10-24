@@ -52,14 +52,14 @@ Expr ConstantSpace::_upper_bound() { return this->iter; }
 
 Expr ConstantSpace::_next(Expr idx) { return idx; }
 
-Expr VecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
+Expr FlatVecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
 
-Expr VecSpace::_upper_bound()
+Expr FlatVecSpace::_upper_bound()
 {
     return this->idx_to_iter(_len(this->vec) - _idx(1));
 }
 
-Expr VecSpace::_iter_cond(Expr idx)
+Expr FlatVecSpace::_iter_cond(Expr idx)
 {
     auto isval = _isval(this->vec, idx, 0);
     // need to define a symbol for isval to allow vectorization
@@ -67,28 +67,28 @@ Expr VecSpace::_iter_cond(Expr idx)
     return _and(_lt(idx, _len(this->vec)), var);
 }
 
-Expr VecSpace::_idx_to_iter(Expr idx)
+Expr FlatVecSpace::_idx_to_iter(Expr idx)
 {
     return _load(_fetch(this->vec, 0), idx);
 }
 
-Expr VecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
+Expr FlatVecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
 
-Expr VecSpace::_is_alive(Expr idx)
+Expr FlatVecSpace::_is_alive(Expr idx)
 {
     // Loop boundary needs to be explicitly assigned to a variable
     // to help with vectorization
     return _lt(idx, this->_vec_len_sym);
 }
 
-Expr VecSpace::_next(Expr idx) { return _add(idx, _idx(1)); }
+Expr FlatVecSpace::_next(Expr idx) { return _add(idx, _idx(1)); }
 
-VecIterIdxs VecSpace::_vec_iter_idxs(Expr idx)
+VecIterIdxs FlatVecSpace::_vec_iter_idxs(Expr idx)
 {
     return VecIterIdxs{make_tuple(this->vec, this->iter, idx)};
 }
 
-SymExprs VecSpace::_extra_syms()
+SymExprs FlatVecSpace::_extra_syms()
 {
     return SymExprs{make_pair(this->_vec_len_sym, _len(this->vec))};
 }

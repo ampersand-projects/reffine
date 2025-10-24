@@ -103,10 +103,36 @@ private:
     virtual Expr _next(Expr);
 };
 
-struct VecSpace : public IterSpace {
+struct FlatVecSpace : public IterSpace {
     Expr vec;
 
-    VecSpace(Expr iter, Expr vec)
+    FlatVecSpace(Expr iter, Expr vec)
+        : IterSpace(iter),
+          vec(vec),
+          _vec_len_sym(make_shared<SymNode>(vec->str() + "_len", types::IDX))
+    {
+        ASSERT(vec->type.is_vector());
+        ASSERT(vec->type.dim == 1);  // currently only support 1d vectors
+    }
+
+private:
+    Expr _lower_bound() final;
+    Expr _upper_bound() final;
+    Expr _iter_cond(Expr) final;
+    Expr _idx_to_iter(Expr) final;
+    Expr _iter_to_idx(Expr) final;
+    Expr _is_alive(Expr) final;
+    Expr _next(Expr) final;
+    VecIterIdxs _vec_iter_idxs(Expr) final;
+    SymExprs _extra_syms() final;
+
+    Sym _vec_len_sym;
+};
+
+struct RunEndVecSpace : public IterSpace {
+    Expr vec;
+
+    RunEndVecSpace(Expr iter, Expr vec)
         : IterSpace(iter),
           vec(vec),
           _vec_len_sym(make_shared<SymNode>(vec->str() + "_len", types::IDX))
