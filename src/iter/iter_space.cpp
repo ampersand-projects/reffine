@@ -93,6 +93,47 @@ SymExprs FlatVecSpace::_extra_syms()
     return SymExprs{make_pair(this->_vec_len_sym, _len(this->vec))};
 }
 
+Expr RunEndVecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
+
+Expr RunEndVecSpace::_upper_bound()
+{
+    return this->idx_to_iter(_len(this->vec) - _idx(1));
+}
+
+Expr RunEndVecSpace::_iter_cond(Expr idx)
+{
+    auto isval = _isval(this->vec, idx, 0);
+    // need to define a symbol for isval to allow vectorization
+    auto var = _define(isval->symify("valid"), isval);
+    return _and(_lt(idx, _len(this->vec)), var);
+}
+
+Expr RunEndVecSpace::_idx_to_iter(Expr idx)
+{
+    return _load(_fetch(this->vec, 0), idx);
+}
+
+Expr RunEndVecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
+
+Expr RunEndVecSpace::_is_alive(Expr idx)
+{
+    // Loop boundary needs to be explicitly assigned to a variable
+    // to help with vectorization
+    return _lt(idx, this->_vec_len_sym);
+}
+
+Expr RunEndVecSpace::_next(Expr idx) { return _add(idx, _idx(1)); }
+
+VecIterIdxs RunEndVecSpace::_vec_iter_idxs(Expr idx)
+{
+    return VecIterIdxs{make_tuple(this->vec, this->iter, idx)};
+}
+
+SymExprs RunEndVecSpace::_extra_syms()
+{
+    return SymExprs{make_pair(this->_vec_len_sym, _len(this->vec))};
+}
+
 Expr SuperSpace::_lower_bound() { return this->ispace->lower_bound(); }
 
 Expr SuperSpace::_upper_bound() { return this->ispace->upper_bound(); }
