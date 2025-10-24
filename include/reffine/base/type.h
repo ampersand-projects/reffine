@@ -37,31 +37,43 @@ enum BaseType {
     VECTOR,
 };
 
+enum EncodeType {
+    FLAT,
+    RUNEND,
+};
+
 struct DataType {
-    const BaseType btype;
-    const vector<DataType> dtypes;
-    const size_t dim;
+    BaseType btype;
+    vector<DataType> dtypes;
+    size_t dim;
+    vector<EncodeType> encoding;
 
     explicit DataType(BaseType btype, vector<DataType> dtypes = {},
-                      size_t dim = 0)
-        : btype(btype), dtypes(dtypes), dim(dim)
+                      size_t dim = 0, vector<EncodeType> encoding = {})
+        : btype(btype), dtypes(dtypes), dim(dim), encoding(encoding)
     {
         switch (btype) {
             case BaseType::STRUCT:
-                ASSERT(dim == 0);
-                ASSERT(dtypes.size() > 0);
+                ASSERT(this->dim == 0);
+                ASSERT(this->dtypes.size() > 0);
                 break;
             case BaseType::PTR:
-                ASSERT(dim == 0);
-                ASSERT(dtypes.size() == 1);
+                ASSERT(this->dim == 0);
+                ASSERT(this->dtypes.size() == 1);
                 break;
             case BaseType::VECTOR:
-                ASSERT(dim > 0);
-                ASSERT(dtypes.size() >= dim);
+                ASSERT(this->dim > 0);
+                ASSERT(this->dtypes.size() >= this->dim);
+                if (this->encoding.size() == 0) {
+                    for (auto _ : this->dtypes) {
+                        this->encoding.push_back(EncodeType::FLAT);
+                    }
+                }
+                ASSERT(this->encoding.size() == this->dtypes.size());
                 break;
             default:
-                ASSERT(dtypes.size() == 0);
-                ASSERT(dim == 0);
+                ASSERT(this->dtypes.size() == 0);
+                ASSERT(this->dim == 0);
                 break;
         }
     }
