@@ -70,7 +70,7 @@ arrow::Status csv_to_arrow()
     return arrow::Status::OK();
 }
 
-arrow::Result<shared_ptr<ArrowTable2>> load_arrow_file(string filename)
+arrow::Result<shared_ptr<ArrowTable2>> load_arrow_file(string filename, int64_t dim)
 {
     ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(
                 filename, arrow::default_memory_pool()));
@@ -80,7 +80,7 @@ arrow::Result<shared_ptr<ArrowTable2>> load_arrow_file(string filename)
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
     cout << "Input: " << endl << rbatch->ToString() << endl;
 
-    auto tbl = make_shared<ArrowTable2>();
+    auto tbl = make_shared<ArrowTable2>(dim);
     ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, tbl->array, tbl->schema));
 
     return tbl;
@@ -286,7 +286,7 @@ void test_kernel() {
 shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl)
 {
     auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym = _sym("vec_in", tbl->get_data_type(1));
+    auto vec_in_sym = _sym("vec_in", tbl->get_data_type());
     auto elem_expr = vec_in_sym[{t_sym}];
     auto elem = _sym("elem", elem_expr);
     auto ten = _sym("ten", _i64_t);
@@ -344,9 +344,9 @@ shared_ptr<Func> gen_fake_table()
 
 shared_ptr<Func> join_op(ArrowTable2* left, ArrowTable2* right, ArrowTable2* another)
 {
-    auto lvec_sym = _sym("left", left->get_data_type(1));
-    auto rvec_sym = _sym("right", right->get_data_type(1));
-    auto avec_sym = _sym("another", another->get_data_type(1));
+    auto lvec_sym = _sym("left", left->get_data_type());
+    auto rvec_sym = _sym("right", right->get_data_type());
+    auto avec_sym = _sym("another", another->get_data_type());
     auto t_sym = _sym("t", _i64_t);
 
     auto lelem = lvec_sym[{t_sym}][0];

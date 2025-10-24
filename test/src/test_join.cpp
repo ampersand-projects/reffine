@@ -8,9 +8,9 @@ using namespace reffine::reffiner;
 
 shared_ptr<Func> join_op(ArrowTable2* a, ArrowTable2* b, ArrowTable2* c)
 {
-    auto avec_sym = _sym("avec", a->get_data_type(1));
-    auto bvec_sym = _sym("bvec", b->get_data_type(1));
-    auto cvec_sym = _sym("cvec", c->get_data_type(1));
+    auto avec_sym = _sym("avec", a->get_data_type());
+    auto bvec_sym = _sym("bvec", b->get_data_type());
+    auto cvec_sym = _sym("cvec", c->get_data_type());
     auto t_sym = _sym("t", _i64_t);
 
     auto aelem = avec_sym[{t_sym}][0];

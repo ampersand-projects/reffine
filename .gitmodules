@@ -17,3 +17,6 @@
 	path = third_party/boost
 	url = https://github.com/ampersand-projects/boost.git
 	branch = anandj/reffine_boost
+[submodule "third_party/unordered_dense"]
+	path = third_party/unordered_dense
+	url = https://github.com/martinus/unordered_dense.git

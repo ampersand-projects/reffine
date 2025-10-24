@@ -82,6 +82,18 @@ make -j $(nproc)
 make install
 popd
 
+# Build ankerl::unordered_dense
+ANKERL_SRC_DIR="third_party/unordered_dense"
+ANKERL_BUILD_DIR="${ANKERL_SRC_DIR}/build"
+mkdir -p ${ANKERL_BUILD_DIR}
+pushd ${ANKERL_BUILD_DIR}
+cmake -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+      ..
+make -j $(nproc)
+make install
+popd
+
 # Build Reffine
 REFFINE_BUILD_DIR="build/"
 mkdir -p ${REFFINE_BUILD_DIR}
