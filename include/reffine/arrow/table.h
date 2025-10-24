@@ -93,7 +93,7 @@ struct ArrowTable2 : public ArrowTable {
 
     void build_index()
     {
-        // Only support indexing for uni-dimensional veectors
+        // Only support indexing for uni-dimensional vectors
         // with integer iter type
         ASSERT(this->dim == 1);
         auto dtype = this->get_data_type().iterty();
