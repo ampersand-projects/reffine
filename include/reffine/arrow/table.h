@@ -12,6 +12,38 @@ namespace reffine {
 
 using IndexTy = std::unordered_map<int64_t, int64_t>;
 
+static pair<DataType, EncodeType> schema_dtype(ArrowSchema* schema)
+{
+    auto fmt = std::string(schema->format);
+
+    DataType dtype = types::UNKNOWN;
+    EncodeType encoding = EncodeType::FLAT;
+
+    if (fmt == "c") {
+        dtype = types::INT8;
+    } else if (fmt == "s") {
+        dtype = types::INT16;
+    } else if (fmt == "i") {
+        dtype = types::INT32;
+    } else if (fmt == "l") {
+        dtype = types::INT64;
+    } else if (fmt == "f") {
+        dtype = types::FLOAT32;
+    } else if (fmt == "g") {
+        dtype = types::FLOAT64;
+    } else if (fmt == "u") {
+        dtype = types::STR;
+    } else if (fmt == "+r") {
+        // Get the type of values child of runend schema
+        dtype = schema_dtype(schema->children[1]).first;
+        encoding = EncodeType::RUNEND;
+    } else {
+        throw std::runtime_error("schema type not supported " + fmt);
+    }
+
+    return {dtype, encoding};
+}
+
 struct ArrowTable2 : public ArrowTable {
     ArrowTable2(int64_t dim)
         : ArrowTable(dim),
@@ -64,31 +96,16 @@ struct ArrowTable2 : public ArrowTable {
     DataType get_data_type()
     {
         vector<DataType> dtypes;
+        vector<EncodeType> encodings;
 
         for (long i = 0; i < this->_schema->n_children; i++) {
             auto child = this->_schema->children[i];
-            auto fmt = std::string(child->format);
-
-            if (fmt == "c") {
-                dtypes.push_back(types::INT8);
-            } else if (fmt == "s") {
-                dtypes.push_back(types::INT16);
-            } else if (fmt == "i") {
-                dtypes.push_back(types::INT32);
-            } else if (fmt == "l") {
-                dtypes.push_back(types::INT64);
-            } else if (fmt == "f") {
-                dtypes.push_back(types::FLOAT32);
-            } else if (fmt == "g") {
-                dtypes.push_back(types::FLOAT64);
-            } else if (fmt == "u") {
-                dtypes.push_back(types::STR);
-            } else {
-                throw std::runtime_error("schema type not supported " + fmt);
-            }
+            auto [dtype, encoding] = schema_dtype(child);
+            dtypes.push_back(dtype);
+            encodings.push_back(encoding);
         }
 
-        return DataType(BaseType::VECTOR, dtypes, this->dim);
+        return DataType(BaseType::VECTOR, dtypes, this->dim, encodings);
     }
 
     void build_index()

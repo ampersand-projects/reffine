@@ -394,6 +394,10 @@ int main()
         }
     }
 
+    auto tbl = load_arrow_file("../benchmark/runend.arrow", 2).ValueOrDie();
+    cout << "TYPE: " << tbl->get_data_type().str() << endl;
+    return 0;
+
     ArrowTable2* left_table;
     ArrowTable2* right_table;
     ArrowTable2* another_table;

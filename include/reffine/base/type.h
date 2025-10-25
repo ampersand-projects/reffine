@@ -46,11 +46,11 @@ struct DataType {
     BaseType btype;
     vector<DataType> dtypes;
     size_t dim;
-    vector<EncodeType> encoding;
+    vector<EncodeType> encodings;
 
     explicit DataType(BaseType btype, vector<DataType> dtypes = {},
-                      size_t dim = 0, vector<EncodeType> encoding = {})
-        : btype(btype), dtypes(dtypes), dim(dim), encoding(encoding)
+                      size_t dim = 0, vector<EncodeType> encodings = {})
+        : btype(btype), dtypes(dtypes), dim(dim), encodings(encodings)
     {
         switch (btype) {
             case BaseType::STRUCT:
@@ -64,12 +64,12 @@ struct DataType {
             case BaseType::VECTOR:
                 ASSERT(this->dim > 0);
                 ASSERT(this->dtypes.size() >= this->dim);
-                if (this->encoding.size() == 0) {
+                if (this->encodings.size() == 0) {
                     for (auto _ : this->dtypes) {
-                        this->encoding.push_back(EncodeType::FLAT);
+                        this->encodings.push_back(EncodeType::FLAT);
                     }
                 }
-                ASSERT(this->encoding.size() == this->dtypes.size());
+                ASSERT(this->encodings.size() == this->dtypes.size());
                 break;
             default:
                 ASSERT(this->dtypes.size() == 0);
