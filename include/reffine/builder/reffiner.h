@@ -147,6 +147,7 @@ REGISTER_EXPR(_unary, UnaryExpr)
 REGISTER_EXPR(_binary, BinaryExpr)
 REGISTER_EXPR(_sym, SymNode)
 REGISTER_EXPR(_structgep, StructGEP)
+REGISTER_EXPR(_reelen, REELength)
 
 // Statements
 REGISTER_EXPR(_func, Func)

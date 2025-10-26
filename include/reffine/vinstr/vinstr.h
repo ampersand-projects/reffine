@@ -16,6 +16,12 @@ REFFINE_VINSTR_ATTR
 int64_t get_vector_len(ArrowTable* tbl) { return tbl->array->length; }
 
 REFFINE_VINSTR_ATTR
+int64_t get_ree_vector_len(ArrowTable* tbl, uint32_t col)
+{
+    return tbl->array->children[col]->children[1]->length;
+}
+
+REFFINE_VINSTR_ATTR
 int64_t set_vector_len(ArrowTable* tbl, int64_t len)
 {
     auto* arr = tbl->array;
@@ -36,6 +42,24 @@ REFFINE_VINSTR_ATTR
 void* get_vector_data_buf(ArrowTable* tbl, uint32_t col)
 {
     return (void*)tbl->array->children[col]->buffers[1];
+}
+
+REFFINE_VINSTR_ATTR
+uint16_t* get_ree_vector_bit_buf(ArrowTable* tbl, uint32_t col)
+{
+    return (uint16_t*)tbl->array->children[col]->children[1]->buffers[0];
+}
+
+REFFINE_VINSTR_ATTR
+void* get_ree_vector_data_buf(ArrowTable* tbl, uint32_t col)
+{
+    return (void*)tbl->array->children[col]->children[1]->buffers[1];
+}
+
+REFFINE_VINSTR_ATTR
+int32_t* get_ree_vector_runend_buf(ArrowTable* tbl, uint32_t col)
+{
+    return (int32_t*)tbl->array->children[col]->children[0]->buffers[0];
 }
 
 REFFINE_VINSTR_ATTR

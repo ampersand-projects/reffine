@@ -30,6 +30,15 @@ struct Length : public Call {
     }
 };
 
+struct REELength : public Call {
+    REELength(Expr vec, size_t col)
+        : Call("get_ree_vector_len", types::IDX, vector<Expr>{vec, make_shared<Const>(types::UINT32, col)})
+    {
+        ASSERT(vec->type.is_vector());
+        ASSERT(col < vec->type.dtypes.size());
+    }
+};
+
 struct SetLength : public Call {
     SetLength(Expr vec, Expr idx)
         : Call("set_vector_len", types::IDX, vector<Expr>{vec, idx})
