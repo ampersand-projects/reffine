@@ -306,6 +306,26 @@ CodeSeg IRPrinter2::visit(InitVal& init_val)
     return eval(init_val.val);
 }
 
+CodeSeg IRPrinter2::visit(ReadData& expr)
+{
+    return code_func("read_data", vector<Expr>{expr.vec, expr.idx, _idx(expr.col)});
+}
+
+CodeSeg IRPrinter2::visit(WriteData& expr)
+{
+    return code_func("write_data", vector<Expr>{expr.vec, expr.idx, _idx(expr.col), expr.val});
+}
+
+CodeSeg IRPrinter2::visit(ReadBit& expr)
+{
+    return code_func("read_bit", vector<Expr>{expr.vec, expr.idx, _idx(expr.col)});
+}
+
+CodeSeg IRPrinter2::visit(WriteBit& expr)
+{
+    return code_func("write_bit", vector<Expr>{expr.vec, expr.idx, _idx(expr.col), expr.val});
+}
+
 CodeSeg IRPrinter2::visit(Func& fn)
 {
     auto new_ctx = make_unique<IREmitterCtx>(fn.tbl);

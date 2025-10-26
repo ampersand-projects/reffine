@@ -8,6 +8,70 @@ using namespace std;
 
 namespace reffine {
 
+struct ReadData : public ExprNode {
+    Expr vec;
+    Expr idx;
+    size_t col;
+
+    ReadData(Expr vec, Expr idx, size_t col)
+        : ExprNode(vec->type.dtypes[col]), vec(vec), idx(idx), col(col)
+    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->col < this->vec->type.dtypes.size());
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct WriteData : public StmtNode {
+    Expr vec;
+    Expr idx;
+    size_t col;
+    Expr val;
+
+    WriteData(Expr vec, Expr idx, size_t col, Expr val)
+        : StmtNode(), vec(vec), idx(idx), col(col), val(val)
+    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->col < this->vec->type.dtypes.size());
+        ASSERT(this->val->type == this->vec->type.dtypes[col]);
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct ReadBit : public ExprNode {
+    Expr vec;
+    Expr idx;
+    size_t col;
+
+    ReadBit(Expr vec, Expr idx, size_t col)
+        : ExprNode(types::BOOL), vec(vec), idx(idx), col(col)
+    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->col < this->vec->type.dtypes.size());
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct WriteBit : public StmtNode {
+    Expr vec;
+    Expr idx;
+    size_t col;
+    Expr val;
+
+    WriteBit(Expr vec, Expr idx, size_t col, Expr val)
+        : StmtNode(), vec(vec), idx(idx), col(col), val(val)
+    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->col < this->vec->type.dtypes.size());
+        ASSERT(this->val->type == types::BOOL);
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct Locate : public Call {
     Expr vec;
     Expr iter;

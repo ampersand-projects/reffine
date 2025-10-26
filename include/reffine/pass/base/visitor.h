@@ -79,6 +79,22 @@ public:
     {
         throw runtime_error("InitVal operation not supported");
     }
+    virtual void Visit(ReadData&)
+    {
+        throw runtime_error("ReadData operation not supported");
+    }
+    virtual void Visit(WriteData&)
+    {
+        throw runtime_error("WriteData operation not supported");
+    }
+    virtual void Visit(ReadBit&)
+    {
+        throw runtime_error("ReadBit operation not supported");
+    }
+    virtual void Visit(WriteBit&)
+    {
+        throw runtime_error("WriteBit operation not supported");
+    }
 
     /**
      * Loop IR

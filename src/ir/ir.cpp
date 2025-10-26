@@ -35,6 +35,10 @@ void FetchDataPtr::Accept(Visitor& v) { v.Visit(*this); }
 void NoOp::Accept(Visitor& v) { v.Visit(*this); }
 void Define::Accept(Visitor& v) { v.Visit(*this); }
 void InitVal::Accept(Visitor& v) { v.Visit(*this); }
+void ReadData::Accept(Visitor& v) { v.Visit(*this); }
+void WriteData::Accept(Visitor& v) { v.Visit(*this); }
+void ReadBit::Accept(Visitor& v) { v.Visit(*this); }
+void WriteBit::Accept(Visitor& v) { v.Visit(*this); }
 
 Sym ExprNode::symify(string prefix)
 {

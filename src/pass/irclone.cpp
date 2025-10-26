@@ -147,6 +147,40 @@ Expr IRClone::visit(InitVal& init_val)
     return _initval(inits, val);
 }
 
+Expr IRClone::visit(ReadData& expr)
+{
+    auto vec = eval(expr.vec);
+    auto idx = eval(expr.idx);
+
+    return _readdata(vec, idx, expr.col);
+}
+
+Expr IRClone::visit(WriteData& expr)
+{
+    auto vec = eval(expr.vec);
+    auto idx = eval(expr.idx);
+    auto val = eval(expr.val);
+
+    return _writedata(vec, idx, expr.col, val);
+}
+
+Expr IRClone::visit(ReadBit& expr)
+{
+    auto vec = eval(expr.vec);
+    auto idx = eval(expr.idx);
+
+    return _readbit(vec, idx, expr.col);
+}
+
+Expr IRClone::visit(WriteBit& expr)
+{
+    auto vec = eval(expr.vec);
+    auto idx = eval(expr.idx);
+    auto val = eval(expr.val);
+
+    return _writebit(vec, idx, expr.col, val);
+}
+
 Expr IRClone::visit(Store& store)
 {
     return _store(eval(store.addr), eval(store.val), eval(store.offset));

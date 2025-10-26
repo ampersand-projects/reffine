@@ -122,6 +122,10 @@ REGISTER_EXPR(_red, Reduce)
 REGISTER_EXPR(_in, In)
 
 // Op to Loop
+REGISTER_EXPR(_readdata, ReadData)
+REGISTER_EXPR(_writedata, WriteData)
+REGISTER_EXPR(_readbit, ReadBit)
+REGISTER_EXPR(_writebit, WriteBit)
 REGISTER_EXPR(_locate, Locate)
 REGISTER_EXPR(_len, Length)
 REGISTER_EXPR(_setlen, SetLength)
