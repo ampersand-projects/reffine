@@ -61,7 +61,7 @@ Expr VecSpace::_upper_bound()
 
 Expr VecSpace::_iter_cond(Expr idx)
 {
-    auto isval = _isval(this->vec, idx, 0);
+    auto isval = _readbit(this->vec, idx, 0);
     // need to define a symbol for isval to allow vectorization
     auto var = _define(isval->symify("valid"), isval);
     return _and(_lt(idx, _len(this->vec)), var);
@@ -69,7 +69,7 @@ Expr VecSpace::_iter_cond(Expr idx)
 
 Expr VecSpace::_idx_to_iter(Expr idx)
 {
-    return _load(_fetch(this->vec, 0), idx);
+    return _readdata(this->vec, idx, 0);
 }
 
 Expr VecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
