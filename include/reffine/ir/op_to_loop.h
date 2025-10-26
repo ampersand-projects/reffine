@@ -87,11 +87,17 @@ struct Locate : public Call {
     }
 };
 
-struct Length : public Call {
-    Length(Expr vec) : Call("get_vector_len", types::IDX, vector<Expr>{vec})
+struct Length : public ExprNode {
+    Expr vec;
+    size_t col;
+
+    Length(Expr vec, size_t col) : ExprNode(types::IDX), vec(vec), col(col)
     {
         ASSERT(vec->type.is_vector());
+        ASSERT(col < vec->type.dtypes.size());
     }
+
+    void Accept(Visitor&) final;
 };
 
 struct SetLength : public Call {
@@ -146,6 +152,38 @@ struct FinalizeVector : public Call {
         ASSERT(bytemap->type.deref() == types::BOOL);
         ASSERT(len->type.is_idx());
         ASSERT(null_count->type.is_idx());
+    }
+};
+
+struct GetVectorArray : public Call {
+    GetVectorArray(Expr vec)
+        : Call("get_vector_array", types::VOID.ptr(), vector<Expr>{vec})
+    {
+        ASSERT(vec->type.is_vector());
+    }
+};
+
+struct GetArrayChild : public Call {
+    GetArrayChild(Expr arr, size_t col)
+        : Call("get_array_child", types::VOID.ptr(), vector<Expr>{arr, make_shared<Const>(types::UINT32, col)})
+    {
+        ASSERT(arr->type == types::VOID.ptr());
+    }
+};
+
+struct GetArrayBuf : public Call {
+    GetArrayBuf(Expr arr, size_t col)
+        : Call("get_array_buf", types::VOID.ptr(), vector<Expr>{arr, make_shared<Const>(types::UINT32, col)})
+    {
+        ASSERT(arr->type == types::VOID.ptr());
+    }
+};
+
+struct GetArrayLength : public Call {
+    GetArrayLength(Expr arr)
+        : Call("get_array_len", types::IDX, vector<Expr>{arr})
+    {
+        ASSERT(arr->type == types::VOID.ptr());
     }
 };
 

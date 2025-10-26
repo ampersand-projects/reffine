@@ -133,6 +133,10 @@ REGISTER_EXPR(_isval, IsValid)
 REGISTER_EXPR(_setval, SetValid)
 REGISTER_EXPR(_make, MakeVector)
 REGISTER_EXPR(_finalize, FinalizeVector)
+REGISTER_EXPR(_vecarr, GetVectorArray)
+REGISTER_EXPR(_arrchild, GetArrayChild)
+REGISTER_EXPR(_arrbuf, GetArrayBuf)
+REGISTER_EXPR(_arrlen, GetArrayLength)
 
 // CUDA
 REGISTER_EXPR(_tidx, ThreadIdx)

@@ -31,6 +31,7 @@ public:
     CodeSeg visit(WriteData&) final;
     CodeSeg visit(ReadBit&) final;
     CodeSeg visit(WriteBit&) final;
+    CodeSeg visit(Length&) final;
     CodeSeg visit(Select&) final;
     CodeSeg visit(Const&) final;
     CodeSeg visit(Get&) final;

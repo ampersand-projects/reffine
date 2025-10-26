@@ -241,6 +241,11 @@ public:
         expr.val->Accept(*this);
     }
 
+    void Visit(Length& expr) override
+    {
+        expr.vec->Accept(*this);
+    }
+
 protected:
     void Visit(SymNode& symbol) override
     {

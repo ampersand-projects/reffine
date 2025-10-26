@@ -326,6 +326,11 @@ CodeSeg IRPrinter2::visit(WriteBit& expr)
     return code_func("write_bit", vector<Expr>{expr.vec, expr.idx, _idx(expr.col), expr.val});
 }
 
+CodeSeg IRPrinter2::visit(Length& expr)
+{
+    return code_func("length", vector<Expr>{expr.vec, _idx(expr.col)});
+}
+
 CodeSeg IRPrinter2::visit(Func& fn)
 {
     auto new_ctx = make_unique<IREmitterCtx>(fn.tbl);

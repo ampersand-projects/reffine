@@ -158,6 +158,10 @@ protected:
     {
         throw runtime_error("WriteBit visit not supported");
     }
+    virtual ValTy visit(Length&)
+    {
+        throw runtime_error("Length visit not supported");
+    }
 
     void Visit(Select& expr) final { val() = visit(expr); }
     void Visit(IfElse& stmt) final { val() = visit(stmt); }
@@ -191,6 +195,7 @@ protected:
     void Visit(WriteData& expr) final { val() = visit(expr); }
     void Visit(ReadBit& expr) final { val() = visit(expr); }
     void Visit(WriteBit& expr) final { val() = visit(expr); }
+    void Visit(Length& expr) final { val() = visit(expr); }
     void Visit(Func& stmt) final { val() = visit(stmt); }
     void Visit(SymNode& symbol) override
     {

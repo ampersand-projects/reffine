@@ -45,6 +45,7 @@ protected:
     Expr visit(WriteData&) override;
     Expr visit(ReadBit&) override;
     Expr visit(WriteBit&) override;
+    Expr visit(Length&) override;
     Expr visit(Func&) override;
 
 private:

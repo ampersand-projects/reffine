@@ -95,6 +95,10 @@ public:
     {
         throw runtime_error("WriteBit operation not supported");
     }
+    virtual void Visit(Length&)
+    {
+        throw runtime_error("Length operation not supported");
+    }
 
     /**
      * Loop IR

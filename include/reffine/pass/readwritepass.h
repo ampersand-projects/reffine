@@ -12,6 +12,7 @@ private:
     Expr visit(WriteData&) final;
     Expr visit(ReadBit&) final;
     Expr visit(WriteBit&) final;
+    Expr visit(Length&) final;
 };
 
 }  // namespace reffine
