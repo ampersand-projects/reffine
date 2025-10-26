@@ -405,6 +405,10 @@ int main()
     data_fn(&right_table, 5, 15);
     data_fn(&another_table, 7, 20);
 
+    left_table->build_index();
+    right_table->build_index();
+    another_table->build_index();
+
     /*
     auto lres = arrow::ImportRecordBatch(left_table->array, left_table->schema).ValueOrDie();
     cout << "Left output: " << endl << lres->ToString() << endl;

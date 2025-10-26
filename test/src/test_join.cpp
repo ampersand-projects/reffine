@@ -48,6 +48,10 @@ void join_op_test(bool vectorize)
     data_fn(&b_table, blb, bub);
     data_fn(&c_table, clb, cub);
 
+    a_table->build_index();
+    b_table->build_index();
+    c_table->build_index();
+
     auto jop = join_op(a_table, b_table, c_table);
     auto join_fn =
         compile_op<void (*)(void*, void*, void*, void*)>(jop, vectorize);
