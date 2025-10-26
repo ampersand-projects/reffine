@@ -83,9 +83,10 @@ unique_ptr<ExecutionSession> ExecEngine::createExecutionSession()
 
 void ExecEngine::register_symbols()
 {
-    cantFail(jd.define(absoluteSymbols(SymbolMap(
-        {{mangler("make_vector"),
-          {ExecutorAddr::fromPtr(&make_vector), JITSymbolFlags::Callable}}}))));
+    cantFail(jd.define(absoluteSymbols(SymbolMap({
+        {mangler("make_vector"), {ExecutorAddr::fromPtr(&make_vector), JITSymbolFlags::Callable}},
+        {mangler("vector_locate"), {ExecutorAddr::fromPtr(&vector_locate), JITSymbolFlags::Callable}}
+    }))));
 }
 
 void ExecEngine::add_opt_passes()

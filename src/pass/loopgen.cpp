@@ -13,10 +13,15 @@ Expr LoopGen::visit(Element& elem)
 {
     ASSERT(elem.type.is_val());  // Subspace elements are not supported yet
 
-    eval(elem.iter);
+    auto iter = eval(elem.iter);
     auto vec = eval(elem.vec);
 
-    auto idx = this->_vec_iter_idx_map.at(elem.vec).at(elem.iter);
+    Expr idx;
+    if (this->_vec_iter_idx_map.contains(elem.vec)) {
+        idx = this->_vec_iter_idx_map.at(elem.vec).at(elem.iter);
+    } else {
+        idx = _locate(vec, iter);
+    }
 
     vector<Expr> vals;
     for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {

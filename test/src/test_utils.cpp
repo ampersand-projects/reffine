@@ -17,6 +17,7 @@ arrow::Result<std::shared_ptr<ArrowTable2>> get_input_vector()
     auto table = std::make_shared<ArrowTable2>(1);
     ARROW_RETURN_NOT_OK(
         arrow::ExportRecordBatch(*rbatch, table->array, table->schema));
+    table->build_index();
 
     return table;
 }

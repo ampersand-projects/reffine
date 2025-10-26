@@ -7,3 +7,13 @@ ArrowTable* make_vector(int64_t len, uint32_t mem_id)
 {
     return memman.get_table(mem_id, len);
 }
+
+int64_t vector_locate(ArrowTable* tbl, int64_t val)
+{
+    auto* tbl2 = reinterpret_cast<ArrowTable2*>(tbl);
+    if (tbl2->index().contains(val)) {
+        return tbl2->index().at(val);
+    } else {
+        return -1;
+    }
+}

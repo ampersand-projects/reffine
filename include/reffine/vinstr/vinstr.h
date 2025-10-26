@@ -79,15 +79,6 @@ int64_t vector_lookup(ArrowTable* tbl, int64_t idx)
 }
 
 REFFINE_VINSTR_ATTR
-int64_t vector_locate(ArrowTable* tbl, int64_t t)
-{
-    for (int i = 0; i < get_vector_len(tbl); i++) {
-        if (vector_lookup(tbl, i) == t) { return i; }
-    }
-    return -1;
-}
-
-REFFINE_VINSTR_ATTR
 int64_t* get_elem_ptr(int64_t* arr, int64_t idx) { return arr + idx; }
 
 REFFINE_VINSTR_ATTR
@@ -118,6 +109,8 @@ void finalize_vector(ArrowTable* tbl, bool* bytemap, int64_t len,
  * External
  */
 ArrowTable* make_vector(int64_t, uint32_t);
+
+int64_t vector_locate(ArrowTable*, int64_t);
 
 }  // extern "C"
 
