@@ -165,7 +165,8 @@ struct GetVectorArray : public Call {
 
 struct GetArrayChild : public Call {
     GetArrayChild(Expr arr, size_t col)
-        : Call("get_array_child", types::VOID.ptr(), vector<Expr>{arr, make_shared<Const>(types::UINT32, col)})
+        : Call("get_array_child", types::VOID.ptr(),
+               vector<Expr>{arr, make_shared<Const>(types::UINT32, col)})
     {
         ASSERT(arr->type == types::VOID.ptr());
     }
@@ -173,7 +174,8 @@ struct GetArrayChild : public Call {
 
 struct GetArrayBuf : public Call {
     GetArrayBuf(Expr arr, size_t col)
-        : Call("get_array_buf", types::VOID.ptr(), vector<Expr>{arr, make_shared<Const>(types::UINT32, col)})
+        : Call("get_array_buf", types::VOID.ptr(),
+               vector<Expr>{arr, make_shared<Const>(types::UINT32, col)})
     {
         ASSERT(arr->type == types::VOID.ptr());
     }

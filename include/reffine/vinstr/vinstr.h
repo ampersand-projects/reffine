@@ -13,10 +13,7 @@ extern "C" {
  * Internal
  */
 REFFINE_VINSTR_ATTR
-ArrowArray* get_vector_array(ArrowTable* tbl)
-{
-    return tbl->array;
-}
+ArrowArray* get_vector_array(ArrowTable* tbl) { return tbl->array; }
 
 REFFINE_VINSTR_ATTR
 ArrowArray* get_array_child(ArrowArray* arr, uint32_t col)
@@ -27,14 +24,11 @@ ArrowArray* get_array_child(ArrowArray* arr, uint32_t col)
 REFFINE_VINSTR_ATTR
 void* get_array_buf(ArrowArray* arr, uint32_t col)
 {
-    return (void*) arr->buffers[col];
+    return (void*)arr->buffers[col];
 }
 
 REFFINE_VINSTR_ATTR
-int64_t get_array_len(ArrowArray* arr)
-{
-    return arr->length;
-}
+int64_t get_array_len(ArrowArray* arr) { return arr->length; }
 
 REFFINE_VINSTR_ATTR
 int64_t get_vector_len(ArrowTable* tbl) { return tbl->array->length; }

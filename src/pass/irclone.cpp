@@ -181,10 +181,7 @@ Expr IRClone::visit(WriteBit& expr)
     return _writebit(vec, idx, expr.col, val);
 }
 
-Expr IRClone::visit(Length& expr)
-{
-    return _len(eval(expr.vec), expr.col);
-}
+Expr IRClone::visit(Length& expr) { return _len(eval(expr.vec), expr.col); }
 
 Expr IRClone::visit(Store& store)
 {

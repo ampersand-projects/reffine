@@ -154,7 +154,8 @@ Expr LoopGen::visit(Op& op)
     // Write the output to the out_vec
     vector<Expr> body_stmts;
     for (size_t i = 0; i < op.iters.size() + op.outputs.size(); i++) {
-        body_stmts.push_back(_writedata(out_vec_sym, _load(out_vec_idx_addr), i, _get(loop->output, i)));
+        body_stmts.push_back(_writedata(out_vec_sym, _load(out_vec_idx_addr), i,
+                                        _get(loop->output, i)));
     }
 
     // Update loop

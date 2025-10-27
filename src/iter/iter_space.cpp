@@ -67,10 +67,7 @@ Expr VecSpace::_iter_cond(Expr idx)
     return _and(_lt(idx, this->_vec_len_sym), var);
 }
 
-Expr VecSpace::_idx_to_iter(Expr idx)
-{
-    return _readdata(this->vec, idx, 0);
-}
+Expr VecSpace::_idx_to_iter(Expr idx) { return _readdata(this->vec, idx, 0); }
 
 Expr VecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
 
