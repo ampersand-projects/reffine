@@ -8,6 +8,70 @@ using namespace std;
 
 namespace reffine {
 
+struct ReadData : public ExprNode {
+    Expr vec;
+    Expr idx;
+    size_t col;
+
+    ReadData(Expr vec, Expr idx, size_t col)
+        : ExprNode(vec->type.dtypes[col]), vec(vec), idx(idx), col(col)
+    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->col < this->vec->type.dtypes.size());
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct WriteData : public StmtNode {
+    Expr vec;
+    Expr idx;
+    size_t col;
+    Expr val;
+
+    WriteData(Expr vec, Expr idx, size_t col, Expr val)
+        : StmtNode(), vec(vec), idx(idx), col(col), val(val)
+    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->col < this->vec->type.dtypes.size());
+        ASSERT(this->val->type == this->vec->type.dtypes[col]);
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct ReadBit : public ExprNode {
+    Expr vec;
+    Expr idx;
+    size_t col;
+
+    ReadBit(Expr vec, Expr idx, size_t col)
+        : ExprNode(types::BOOL), vec(vec), idx(idx), col(col)
+    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->col < this->vec->type.dtypes.size());
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct WriteBit : public StmtNode {
+    Expr vec;
+    Expr idx;
+    size_t col;
+    Expr val;
+
+    WriteBit(Expr vec, Expr idx, size_t col, Expr val)
+        : StmtNode(), vec(vec), idx(idx), col(col), val(val)
+    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->col < this->vec->type.dtypes.size());
+        ASSERT(this->val->type == types::BOOL);
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct Locate : public Call {
     Expr vec;
     Expr iter;
@@ -23,11 +87,17 @@ struct Locate : public Call {
     }
 };
 
-struct Length : public Call {
-    Length(Expr vec) : Call("get_vector_len", types::IDX, vector<Expr>{vec})
+struct Length : public ExprNode {
+    Expr vec;
+    size_t col;
+
+    Length(Expr vec, size_t col) : ExprNode(types::IDX), vec(vec), col(col)
     {
         ASSERT(vec->type.is_vector());
+        ASSERT(col < vec->type.dtypes.size());
     }
+
+    void Accept(Visitor&) final;
 };
 
 struct SetLength : public Call {
@@ -82,6 +152,40 @@ struct FinalizeVector : public Call {
         ASSERT(bytemap->type.deref() == types::BOOL);
         ASSERT(len->type.is_idx());
         ASSERT(null_count->type.is_idx());
+    }
+};
+
+struct GetVectorArray : public Call {
+    GetVectorArray(Expr vec)
+        : Call("get_vector_array", types::VOID.ptr(), vector<Expr>{vec})
+    {
+        ASSERT(vec->type.is_vector());
+    }
+};
+
+struct GetArrayChild : public Call {
+    GetArrayChild(Expr arr, size_t col)
+        : Call("get_array_child", types::VOID.ptr(),
+               vector<Expr>{arr, make_shared<Const>(types::UINT32, col)})
+    {
+        ASSERT(arr->type == types::VOID.ptr());
+    }
+};
+
+struct GetArrayBuf : public Call {
+    GetArrayBuf(Expr arr, size_t col)
+        : Call("get_array_buf", types::VOID.ptr(),
+               vector<Expr>{arr, make_shared<Const>(types::UINT32, col)})
+    {
+        ASSERT(arr->type == types::VOID.ptr());
+    }
+};
+
+struct GetArrayLength : public Call {
+    GetArrayLength(Expr arr)
+        : Call("get_array_len", types::IDX, vector<Expr>{arr})
+    {
+        ASSERT(arr->type == types::VOID.ptr());
     }
 };
 

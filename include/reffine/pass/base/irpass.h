@@ -215,6 +215,34 @@ public:
         for (auto init : initval.inits) { init->Accept(*this); }
     }
 
+    void Visit(ReadData& expr) override
+    {
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
+    }
+
+    void Visit(WriteData& expr) override
+    {
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
+        expr.val->Accept(*this);
+    }
+
+    void Visit(ReadBit& expr) override
+    {
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
+    }
+
+    void Visit(WriteBit& expr) override
+    {
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
+        expr.val->Accept(*this);
+    }
+
+    void Visit(Length& expr) override { expr.vec->Accept(*this); }
+
 protected:
     void Visit(SymNode& symbol) override
     {

@@ -56,21 +56,18 @@ Expr VecSpace::_lower_bound() { return this->idx_to_iter(_idx(0)); }
 
 Expr VecSpace::_upper_bound()
 {
-    return this->idx_to_iter(_len(this->vec) - _idx(1));
+    return this->idx_to_iter(_sub(this->_vec_len_sym, _idx(1)));
 }
 
 Expr VecSpace::_iter_cond(Expr idx)
 {
-    auto isval = _isval(this->vec, idx, 0);
+    auto isval = _readbit(this->vec, idx, 0);
     // need to define a symbol for isval to allow vectorization
     auto var = _define(isval->symify("valid"), isval);
-    return _and(_lt(idx, _len(this->vec)), var);
+    return _and(_lt(idx, this->_vec_len_sym), var);
 }
 
-Expr VecSpace::_idx_to_iter(Expr idx)
-{
-    return _load(_fetch(this->vec, 0), idx);
-}
+Expr VecSpace::_idx_to_iter(Expr idx) { return _readdata(this->vec, idx, 0); }
 
 Expr VecSpace::_iter_to_idx(Expr iter) { return _locate(this->vec, iter); }
 
@@ -90,7 +87,7 @@ VecIterIdxs VecSpace::_vec_iter_idxs(Expr idx)
 
 SymExprs VecSpace::_extra_syms()
 {
-    return SymExprs{make_pair(this->_vec_len_sym, _len(this->vec))};
+    return SymExprs{make_pair(this->_vec_len_sym, _len(this->vec, 0))};
 }
 
 Expr SuperSpace::_lower_bound() { return this->ispace->lower_bound(); }

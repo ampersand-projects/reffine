@@ -11,6 +11,7 @@
 #include "reffine/pass/llvmgen.h"
 #include "reffine/pass/loopgen.h"
 #include "reffine/pass/printer2.h"
+#include "reffine/pass/readwritepass.h"
 #include "reffine/pass/reffinepass.h"
 #include "reffine/pass/scalarpass.h"
 
@@ -22,7 +23,10 @@ T compile_loop(shared_ptr<Func> loop, bool use_cemitter = true)
     LOG(INFO) << "Loop IR (raw):" << std::endl << loop->str() << std::endl;
     auto loop1 = CanonPass().eval(loop);
     LOG(INFO) << "Loop IR (canon):" << std::endl << loop1->str() << std::endl;
-    auto loop3 = ScalarPass().eval(loop1);
+    auto loop2 = ReadWritePass().eval(loop1);
+    LOG(INFO) << "Loop IR (readwrite):" << std::endl
+              << loop2->str() << std::endl;
+    auto loop3 = ScalarPass().eval(loop2);
     LOG(INFO) << "Loop IR (scalar):" << std::endl << loop3->str() << std::endl;
 
     auto jit = ExecEngine::Get();

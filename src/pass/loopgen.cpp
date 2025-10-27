@@ -25,21 +25,7 @@ Expr LoopGen::visit(Element& elem)
 
     vector<Expr> vals;
     for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
-        auto data = _load(_fetch(vec, i), idx);
-        vals.push_back(data);
-    }
-
-    return _new(vals);
-}
-
-Expr LoopGen::visit(Lookup& lookup)
-{
-    auto idx = eval(lookup.idx);
-    auto vec = eval(lookup.vec);
-
-    vector<Expr> vals;
-    for (size_t i = 0; i < vec->type.dtypes.size(); i++) {
-        auto data = _load(_fetch(vec, i), idx);
+        auto data = _readdata(vec, idx, i);
         vals.push_back(data);
     }
 
@@ -168,9 +154,8 @@ Expr LoopGen::visit(Op& op)
     // Write the output to the out_vec
     vector<Expr> body_stmts;
     for (size_t i = 0; i < op.iters.size() + op.outputs.size(); i++) {
-        auto vec_ptr = _fetch(out_vec_sym, i);
-        body_stmts.push_back(
-            _store(vec_ptr, _get(loop->output, i), _load(out_vec_idx_addr)));
+        body_stmts.push_back(_writedata(out_vec_sym, _load(out_vec_idx_addr), i,
+                                        _get(loop->output, i)));
     }
 
     // Update loop
