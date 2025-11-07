@@ -93,28 +93,30 @@ struct ArrowTable2 : public ArrowTable {
 
     void build_index()
     {
-        // Only support indexing for uni-dimensional vectors
-        // with integer iter type
-        ASSERT(this->dim == 1);
-        auto dtype = this->get_data_type().iterty();
-        ASSERT(dtype.is_int());
+        this->index() = make_shared<std::vector<IndexTy>>(this->dim);
+        for (int64_t d = 0; d < this->dim; d++) {
+            auto& idx_map = this->index()->at(d);
 
-        auto size = this->array->length;
-        this->index() = make_shared<IndexTy>(size);
-        if (dtype == types::INT64) {
-            auto* iter_col = (int64_t*)get_vector_data_buf(this, 0);
-            for (int64_t i = 0; i < size; i++) {
-                if (get_vector_null_bit(this, i, 0)) {
-                    this->index()->emplace(iter_col[i], i);
+            auto* arr = get_array_child(get_vector_array(this), d);
+            auto size = get_array_len(arr);
+            idx_map.reserve(size);
+
+            auto dtype = this->get_data_type().dtypes[d];
+            if (dtype == types::INT64) {
+                auto* iter_col = (int64_t*)get_vector_data_buf(this, d);
+                for (int64_t i = 0; i < size; i++) {
+                    if (get_vector_null_bit(this, i, d)) {
+                        idx_map.emplace(iter_col[i], i);
+                    }
                 }
+            } else {
+                throw runtime_error("Data type not supported for indexing: " +
+                                    dtype.str());
             }
-        } else {
-            throw runtime_error("Data type not supported for indexing: " +
-                                dtype.str());
         }
     }
 
-    shared_ptr<IndexTy>& index() { return this->_index; }
+    shared_ptr<std::vector<IndexTy>>& index() { return this->_index; }
 
 private:
     void init()
@@ -125,7 +127,7 @@ private:
 
     shared_ptr<ArrowSchema2> _schema;
     shared_ptr<ArrowArray2> _array;
-    shared_ptr<IndexTy> _index;
+    shared_ptr<std::vector<IndexTy>> _index;
 };
 
 }  // namespace reffine
