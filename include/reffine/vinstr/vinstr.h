@@ -47,13 +47,13 @@ int64_t set_vector_len(ArrowTable* tbl, int64_t len)
 REFFINE_VINSTR_ATTR
 uint16_t* get_vector_bit_buf(ArrowTable* tbl, uint32_t col)
 {
-    return (uint16_t*)tbl->array->children[col]->buffers[0];
+    return (uint16_t*)get_array_buf(get_array_child(get_vector_array(tbl), col), 0);
 }
 
 REFFINE_VINSTR_ATTR
 void* get_vector_data_buf(ArrowTable* tbl, uint32_t col)
 {
-    return (void*)tbl->array->children[col]->buffers[1];
+    return (void*)get_array_buf(get_array_child(get_vector_array(tbl), col), 1);
 }
 
 REFFINE_VINSTR_ATTR
