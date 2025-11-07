@@ -123,13 +123,17 @@ struct ArrowArray2 : public ArrowArray {
     template <typename T>
     T* add_buffer(size_t len)
     {
-        auto* buf = new char[len * sizeof(T)];
+        void* buf = new char[len * sizeof(T)];
+        return (T*) this->add_buffer(buf);
+    }
 
-        this->pdata()->buffers.push_back(buf);
+    void* add_buffer(void* buf)
+    {
+        this->pdata()->buffers.push_back((char*)buf);
         this->buffers = (const void**)this->pdata()->buffers.data();
         this->n_buffers = this->pdata()->buffers.size();
 
-        return (T*)buf;
+        return buf;
     }
 
     ArrowArray2* get_child(int idx) { return this->pdata()->children[idx]; }
