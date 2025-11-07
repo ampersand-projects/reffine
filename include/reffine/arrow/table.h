@@ -100,12 +100,12 @@ struct ArrowTable2 : public ArrowTable {
         ASSERT(dtype.is_int());
 
         auto size = this->array->length;
-        this->index().reserve(size);
+        this->index() = make_shared<IndexTy>(size);
         if (dtype == types::INT64) {
             auto* iter_col = (int64_t*)get_vector_data_buf(this, 0);
             for (int64_t i = 0; i < size; i++) {
                 if (get_vector_null_bit(this, i, 0)) {
-                    this->index().emplace(iter_col[i], i);
+                    this->index()->emplace(iter_col[i], i);
                 }
             }
         } else {
@@ -114,7 +114,7 @@ struct ArrowTable2 : public ArrowTable {
         }
     }
 
-    IndexTy& index() { return this->_index; }
+    shared_ptr<IndexTy>& index() { return this->_index; }
 
 private:
     void init()
@@ -125,7 +125,7 @@ private:
 
     shared_ptr<ArrowSchema2> _schema;
     shared_ptr<ArrowArray2> _array;
-    IndexTy _index;
+    shared_ptr<IndexTy> _index;
 };
 
 }  // namespace reffine
