@@ -412,13 +412,6 @@ int main()
     right_table->build_index();
     another_table->build_index();
 
-    auto clone_tbl = clone_table(left_table);
-
-    cout << "Left output: " << endl << left_table->to_string() << endl;
-    cout << "Clone output: " << endl << clone_tbl->to_string() << endl;
-
-    return 0;
-
     auto jop = join_op(left_table, right_table, another_table);
     auto join_fn = compile_op<void (*)(void*, void*, void*, void*)>(jop);
 

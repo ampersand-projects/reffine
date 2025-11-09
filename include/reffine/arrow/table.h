@@ -107,22 +107,11 @@ struct ArrowTable2 : public ArrowTable {
 
     void build_index()
     {
-        this->index() = make_shared<std::vector<IndexTy>>(this->dim);
         for (int64_t d = 0; d < this->dim; d++) {
-            auto& idx_map = this->index()->at(d);
-
-            auto* arr = get_array_child(get_vector_array(this), d);
-            auto size = get_array_len(arr);
-            idx_map.reserve(size);
-
             auto dtype = this->get_data_type().dtypes[d];
+
             if (dtype == types::INT64) {
-                auto* iter_col = (int64_t*)get_vector_data_buf(this, d);
-                for (int64_t i = 0; i < size; i++) {
-                    if (get_vector_null_bit(this, i, d)) {
-                        idx_map.emplace(iter_col[i], i);
-                    }
-                }
+                this->_array->get_child(d)->build_flat_index<int64_t>();
             } else {
                 throw runtime_error("Data type not supported for indexing: " +
                                     dtype.str());
@@ -130,10 +119,14 @@ struct ArrowTable2 : public ArrowTable {
         }
     }
 
-    shared_ptr<std::vector<IndexTy>>& index() { return this->_index; }
+    const shared_ptr<IndexTy> index(int i)
+    {
+        return this->_array->get_child(i)->index();
+    }
 
     string to_string()
     {
+        // WARNING: ImportRecordBatch will delete the array and schema
         auto res = arrow::ImportRecordBatch(this->array, this->schema).ValueOrDie();
         return res->ToString();
     }
@@ -147,7 +140,6 @@ private:
 
     shared_ptr<ArrowSchema2> _schema;
     shared_ptr<ArrowArray2> _array;
-    shared_ptr<std::vector<IndexTy>> _index;
 };
 
 }  // namespace reffine

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "reffine/arrow/abi.h"
+#include "reffine/vinstr/vinstr.h"
 
 namespace reffine {
 
@@ -68,6 +69,8 @@ struct ArrowSchema2 : public ArrowSchema {
 };
 
 struct ArrowArray2 : public ArrowArray {
+    using IndexTy = std::unordered_map<int64_t, int64_t>;
+
     struct Private {
         Private(size_t len) : children(0), buffers(0) {}
 
@@ -81,6 +84,7 @@ struct ArrowArray2 : public ArrowArray {
         size_t len;
         vector<ArrowArray2*> children;
         vector<const char*> buffers;
+        shared_ptr<IndexTy> index;
     };
 
     ArrowArray2() {}
@@ -144,7 +148,28 @@ struct ArrowArray2 : public ArrowArray {
         return (T*)this->pdata()->buffers[idx];
     }
 
+    shared_ptr<IndexTy>& index()
+    {
+        return this->pdata()->index;
+    }
+
     Private* pdata() { return (Private*)this->private_data; }
+
+    template <typename T>
+    void build_flat_index()
+    {
+        auto size = get_array_len(this);
+        auto* bitmap = this->get_buffer<uint16_t>(0);
+        auto* iter_col = this->get_buffer<T>(1);
+
+        this->index() = make_shared<IndexTy>(size);
+
+        for (int64_t i = 0; i < size; i++) {
+            if (get_null_bit(bitmap, i)) {
+                this->index()->emplace(iter_col[i], i);
+            }
+        }
+    }
 };
 
 /*

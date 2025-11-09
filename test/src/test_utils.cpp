@@ -1,5 +1,6 @@
 #include "test_utils.h"
 
+#include "reffine/utils/utils.h"
 #include "reffine/builder/reffiner.h"
 
 using namespace reffine;
@@ -17,9 +18,11 @@ arrow::Result<std::shared_ptr<ArrowTable2>> get_input_vector()
     auto table = std::make_shared<ArrowTable2>(1);
     ARROW_RETURN_NOT_OK(
         arrow::ExportRecordBatch(*rbatch, table->array, table->schema));
-    table->build_index();
 
-    return table;
+    auto table2 = clone_table(table.get());
+    table2->build_index();
+
+    return table2;
 }
 
 std::string print_arrow_table(ArrowTable* tbl)
