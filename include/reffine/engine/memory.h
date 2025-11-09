@@ -14,6 +14,7 @@ class MemoryManager {
 public:
     uint32_t add_builder(VectorBuilderFnTy);
     ArrowTable* get_table(uint32_t, int64_t);
+    shared_ptr<ArrowTable2> fetch_table(ArrowTable*);
 
 private:
     std::vector<VectorBuilderFnTy> _builders;

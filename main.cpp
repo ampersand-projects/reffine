@@ -329,15 +329,18 @@ shared_ptr<Func> gen_fake_table()
     auto lb_sym = _sym("lb", _i64_t);
     auto ub_sym = _sym("ub", _i64_t);
 
+    auto val_sym = _sym("val", t_sym);
+
     auto op = _op(
         vector<Sym>{t_sym},
         (_gte(t_sym, lb_sym) & _lt(t_sym, ub_sym)),
-        vector<Expr>{ t_sym }
+        vector<Expr>{ val_sym }
     );
     auto op_sym = _sym("op", op);
 
     auto fn = _func("first", op_sym, vector<Sym>{lb_sym, ub_sym});
     fn->tbl[op_sym] = op;
+    fn->tbl[val_sym] = t_sym;
 
     return fn;
 }
@@ -409,12 +412,12 @@ int main()
     right_table->build_index();
     another_table->build_index();
 
-    /*
-    auto lres = arrow::ImportRecordBatch(left_table->array, left_table->schema).ValueOrDie();
-    cout << "Left output: " << endl << lres->ToString() << endl;
-    auto rres = arrow::ImportRecordBatch(right_table->array, right_table->schema).ValueOrDie();
-    cout << "Right output: " << endl << rres->ToString() << endl;
-    */
+    auto clone_tbl = clone_table(left_table);
+
+    cout << "Left output: " << endl << left_table->to_string() << endl;
+    cout << "Clone output: " << endl << clone_tbl->to_string() << endl;
+
+    return 0;
 
     auto jop = join_op(left_table, right_table, another_table);
     auto join_fn = compile_op<void (*)(void*, void*, void*, void*)>(jop);

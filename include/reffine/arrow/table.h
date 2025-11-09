@@ -3,6 +3,9 @@
 
 #include <unordered_map>
 
+#include <arrow/ipc/api.h>
+#include <arrow/c/bridge.h>
+
 #include "reffine/arrow/base.h"
 #include "reffine/base/log.h"
 #include "reffine/base/type.h"
@@ -61,12 +64,12 @@ struct ArrowTable2 : public ArrowTable {
 
     ~ArrowTable2() override {}
 
-    DataType get_data_type()
+    DataType get_data_type() const
     {
         vector<DataType> dtypes;
 
-        for (long i = 0; i < this->_schema->n_children; i++) {
-            auto child = this->_schema->children[i];
+        for (long i = 0; i < this->schema->n_children; i++) {
+            auto child = this->schema->children[i];
             auto fmt = std::string(child->format);
 
             if (fmt == "c") {
@@ -89,6 +92,17 @@ struct ArrowTable2 : public ArrowTable {
         }
 
         return DataType(BaseType::VECTOR, dtypes, this->dim);
+    }
+
+    vector<string> get_col_names() const
+    {
+        vector<string> names;
+        for (long i = 0; i < this->schema->n_children; i++) {
+            auto* child = this->schema->children[i];
+            auto name = string(child->name);
+            names.push_back(name);
+        }
+        return names;
     }
 
     void build_index()
@@ -117,6 +131,12 @@ struct ArrowTable2 : public ArrowTable {
     }
 
     shared_ptr<std::vector<IndexTy>>& index() { return this->_index; }
+
+    string to_string()
+    {
+        auto res = arrow::ImportRecordBatch(this->array, this->schema).ValueOrDie();
+        return res->ToString();
+    }
 
 private:
     void init()
