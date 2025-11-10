@@ -11,8 +11,8 @@ ArrowTable* make_vector(int64_t len, uint32_t mem_id)
 int64_t vector_locate(ArrowTable* tbl, int64_t val)
 {
     auto* tbl2 = reinterpret_cast<ArrowTable2*>(tbl);
-    auto it = tbl2->index().find(val);
-    if (it != tbl2->index().end()) {
+    auto it = tbl2->index()->at(0).find(val);
+    if (it != tbl2->index()->at(0).end()) {
         return it->second;
     } else {
         return -1;
