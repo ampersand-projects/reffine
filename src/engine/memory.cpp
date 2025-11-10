@@ -14,14 +14,3 @@ ArrowTable* MemoryManager::get_table(uint32_t mem_id, int64_t len)
     this->_tables.push_back(tbl);
     return tbl.get();
 }
-
-shared_ptr<ArrowTable2> MemoryManager::fetch_table(ArrowTable* table)
-{
-    for (auto tbl : this->_tables) {
-        if (tbl.get() == table) {
-            return tbl;
-        }
-    }
-
-    return nullptr;
-}
