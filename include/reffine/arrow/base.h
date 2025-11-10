@@ -124,7 +124,7 @@ struct ArrowArray2 : public ArrowArray {
     T* add_buffer(size_t len)
     {
         void* buf = new char[len * sizeof(T)];
-        return (T*) this->add_buffer(buf);
+        return (T*)this->add_buffer(buf);
     }
 
     void* add_buffer(void* buf)
