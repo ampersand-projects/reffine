@@ -197,9 +197,9 @@ const DataType _idx_t = types::IDX;
 const DataType _bool_t = types::BOOL;
 
 template <size_t dim, typename... Ts>
-DataType _field_t()
+DataType _vec_t()
 {
-    return types::FLD<dim, Ts...>();
+    return types::VEC<dim, Ts...>();
 }
 
 template <typename... Ts>

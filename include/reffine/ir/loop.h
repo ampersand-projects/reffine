@@ -20,7 +20,7 @@ struct FetchDataPtr : public ExprNode {
     FetchDataPtr(Expr vec, size_t col)
         : ExprNode(vec->type.dtypes[col].ptr()), vec(vec), col(col)
     {
-        ASSERT(vec->type.is_field());
+        ASSERT(vec->type.is_vector());
         ASSERT(col < vec->type.dtypes.size());
     }
 

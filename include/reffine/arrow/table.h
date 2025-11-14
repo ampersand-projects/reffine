@@ -88,7 +88,7 @@ struct ArrowTable2 : public ArrowTable {
             }
         }
 
-        return DataType(BaseType::FIELD, dtypes, this->dim);
+        return DataType(BaseType::VECTOR, dtypes, this->dim);
     }
 
     void build_index()
