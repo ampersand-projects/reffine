@@ -16,7 +16,7 @@ struct ReadData : public ExprNode {
     ReadData(Expr vec, Expr idx, size_t col)
         : ExprNode(vec->type.dtypes[col]), vec(vec), idx(idx), col(col)
     {
-        ASSERT(this->vec->type.is_field());
+        ASSERT(this->vec->type.is_vector());
         ASSERT(this->col < this->vec->type.dtypes.size());
     }
 
@@ -32,7 +32,7 @@ struct WriteData : public StmtNode {
     WriteData(Expr vec, Expr idx, size_t col, Expr val)
         : StmtNode(), vec(vec), idx(idx), col(col), val(val)
     {
-        ASSERT(this->vec->type.is_field());
+        ASSERT(this->vec->type.is_vector());
         ASSERT(this->col < this->vec->type.dtypes.size());
         ASSERT(this->val->type == this->vec->type.dtypes[col]);
     }
@@ -48,7 +48,7 @@ struct ReadBit : public ExprNode {
     ReadBit(Expr vec, Expr idx, size_t col)
         : ExprNode(types::BOOL), vec(vec), idx(idx), col(col)
     {
-        ASSERT(this->vec->type.is_field());
+        ASSERT(this->vec->type.is_vector());
         ASSERT(this->col < this->vec->type.dtypes.size());
     }
 
@@ -64,7 +64,7 @@ struct WriteBit : public StmtNode {
     WriteBit(Expr vec, Expr idx, size_t col, Expr val)
         : StmtNode(), vec(vec), idx(idx), col(col), val(val)
     {
-        ASSERT(this->vec->type.is_field());
+        ASSERT(this->vec->type.is_vector());
         ASSERT(this->col < this->vec->type.dtypes.size());
         ASSERT(this->val->type == types::BOOL);
     }
@@ -81,7 +81,7 @@ struct Locate : public Call {
     {
         auto& vtype = vec->type;
 
-        ASSERT(vtype.is_field());
+        ASSERT(vtype.is_vector());
         ASSERT(vtype.dim == 1);
         ASSERT(vtype.iterty() == iter->type);
     }
@@ -93,7 +93,7 @@ struct Length : public ExprNode {
 
     Length(Expr vec, size_t col) : ExprNode(types::IDX), vec(vec), col(col)
     {
-        ASSERT(vec->type.is_field());
+        ASSERT(vec->type.is_vector());
         ASSERT(col < vec->type.dtypes.size());
     }
 
@@ -104,7 +104,7 @@ struct SetLength : public Call {
     SetLength(Expr vec, Expr idx)
         : Call("set_vector_len", types::IDX, vector<Expr>{vec, idx})
     {
-        ASSERT(vec->type.is_field());
+        ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
     }
 };
@@ -114,7 +114,7 @@ struct IsValid : public Call {
         : Call("get_vector_null_bit", types::BOOL,
                vector<Expr>{vec, idx, make_shared<Const>(types::UINT32, col)})
     {
-        ASSERT(vec->type.is_field());
+        ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
         ASSERT(col < vec->type.dtypes.size());
     }
@@ -126,7 +126,7 @@ struct SetValid : public Call {
                vector<Expr>{vec, idx, validity,
                             make_shared<Const>(types::UINT32, col)})
     {
-        ASSERT(vec->type.is_field());
+        ASSERT(vec->type.is_vector());
         ASSERT(idx->type.is_idx());
         ASSERT(validity->type == types::BOOL);
         ASSERT(col < vec->type.dtypes.size());
@@ -138,7 +138,7 @@ struct MakeVector : public Call {
         : Call("make_vector", type,
                vector<Expr>{len, make_shared<Const>(types::UINT32, mem_id)})
     {
-        ASSERT(type.is_field());
+        ASSERT(type.is_vector());
         ASSERT(len->type == types::IDX);
     }
 };
@@ -148,7 +148,7 @@ struct FinalizeVector : public Call {
         : Call("finalize_vector", types::VOID,
                vector<Expr>{vec, bytemap, len, null_count})
     {
-        ASSERT(vec->type.is_field());
+        ASSERT(vec->type.is_vector());
         ASSERT(bytemap->type.deref() == types::BOOL);
         ASSERT(len->type.is_idx());
         ASSERT(null_count->type.is_idx());
@@ -159,7 +159,7 @@ struct GetVectorArray : public Call {
     GetVectorArray(Expr vec)
         : Call("get_vector_array", types::VOID.ptr(), vector<Expr>{vec})
     {
-        ASSERT(vec->type.is_field());
+        ASSERT(vec->type.is_vector());
     }
 };
 

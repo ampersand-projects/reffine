@@ -34,7 +34,6 @@ enum BaseType {
 
     // Reffine IR types
     IDX,
-    FIELD,
     VECTOR,
 };
 
@@ -56,14 +55,10 @@ struct DataType {
                 ASSERT(dim == 0);
                 ASSERT(dtypes.size() == 1);
                 break;
-            case BaseType::FIELD:
+            case BaseType::VECTOR:
                 ASSERT(dim > 0);
                 ASSERT(dtypes.size() >= dim);
                 break;
-            case BaseType::VECTOR:
-                ASSERT(dim == 0);
-                ASSERT(dtypes.size() == 1);
-                ASSERT(dtypes[0].is_val());
             default:
                 ASSERT(dtypes.size() == 0);
                 ASSERT(dim == 0);
@@ -80,11 +75,10 @@ struct DataType {
     bool is_struct() const { return btype == BaseType::STRUCT; }
     bool is_ptr() const { return btype == BaseType::PTR; }
     bool is_idx() const { return btype == BaseType::IDX; }
-    bool is_field() const { return btype == BaseType::FIELD; }
     bool is_vector() const { return btype == BaseType::VECTOR; }
     bool is_void() const { return btype == BaseType::VOID; }
 
-    bool is_val() const { return !(this->is_field()); }
+    bool is_val() const { return !(this->is_vector()); }
 
     bool is_float() const
     {
@@ -130,23 +124,23 @@ struct DataType {
 
     DataType valty() const
     {
-        ASSERT(this->is_field());
+        ASSERT(this->is_vector());
 
         return DataType(
-            (this->dim == 1) ? BaseType::STRUCT : BaseType::FIELD,
+            (this->dim == 1) ? BaseType::STRUCT : BaseType::VECTOR,
             std::vector<DataType>(this->dtypes.begin() + 1, this->dtypes.end()),
             this->dim - 1);
     }
 
     DataType iterty() const
     {
-        ASSERT(this->is_field());
+        ASSERT(this->is_vector());
         return this->dtypes[0];
     }
 
     DataType rowty() const
     {
-        ASSERT(this->is_field());
+        ASSERT(this->is_vector());
         return DataType(BaseType::STRUCT, this->dtypes);
     }
 
@@ -189,7 +183,7 @@ struct DataType {
             }
             case BaseType::IDX:
                 return "x";
-            case BaseType::FIELD: {
+            case BaseType::VECTOR: {
                 string res = "<";
                 for (size_t i = 0; i < dim; i++) {
                     res += dtypes[i].str() + ", ";
@@ -238,7 +232,7 @@ struct DataType {
                 return dtypes[0].cppstr() + "*";
             case BaseType::STR:
                 return "char*";
-            case BaseType::FIELD:
+            case BaseType::VECTOR:
                 return "ArrowTable*";
             default:
                 throw std::runtime_error("Invalid type " + this->str());
@@ -372,20 +366,20 @@ DataType STRUCT()
 }
 
 template <size_t dim>
-DataType FIELD(vector<DataType> types)
+DataType VECTOR(vector<DataType> types)
 {
-    return DataType(BaseType::FIELD, types, dim);
+    return DataType(BaseType::VECTOR, types, dim);
 }
 
 template <size_t dim, typename... Ts>
-DataType FLD()
+DataType VEC()
 {
     vector<BaseType> btypes(sizeof...(Ts));
     convert<sizeof...(Ts), Ts...>(btypes.data());
 
     vector<DataType> dtypes;
     for (const auto& btype : btypes) { dtypes.push_back(DataType(btype)); }
-    return DataType(BaseType::FIELD, dtypes, dim);
+    return DataType(BaseType::VECTOR, dtypes, dim);
 }
 
 }  // namespace reffine::types
