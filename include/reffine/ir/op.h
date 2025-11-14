@@ -45,7 +45,7 @@ private:
             dtypes.push_back(output->type);
         }
 
-        return DataType(BaseType::VECTOR, std::move(dtypes), iters.size());
+        return DataType(BaseType::FIELD, std::move(dtypes), iters.size());
     }
 };
 
@@ -56,7 +56,7 @@ struct Element : public ExprNode {
     Element(Expr vec, Expr iter)
         : ExprNode(vec->type.valty()), vec(vec), iter(iter)
     {
-        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->vec->type.is_field());
         ASSERT(this->iter->type == this->vec->type.iterty());
     }
 
@@ -69,7 +69,7 @@ struct Lookup : public ExprNode {
 
     Lookup(Expr vec, Expr idx) : ExprNode(vec->type.rowty()), vec(vec), idx(idx)
     {
-        ASSERT(vec->type.is_vector());
+        ASSERT(vec->type.is_field());
         ASSERT(idx->type.is_idx());
     }
 
