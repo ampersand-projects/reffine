@@ -335,6 +335,11 @@ CodeSeg IRPrinter2::visit(Length& expr)
     return code_func("length", vector<Expr>{expr.vec, _idx(expr.col)});
 }
 
+CodeSeg IRPrinter2::visit(SubVector& expr)
+{
+    return code(eval(expr.vec), "[", eval(expr.start), " : ", eval(expr.end), "]");
+}
+
 CodeSeg IRPrinter2::visit(Func& fn)
 {
     auto new_ctx = make_unique<IREmitterCtx>(fn.tbl);

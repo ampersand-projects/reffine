@@ -46,6 +46,7 @@ protected:
     Expr visit(ReadBit&) override;
     Expr visit(WriteBit&) override;
     Expr visit(Length&) override;
+    Expr visit(SubVector&) override;
     Expr visit(Func&) override;
 
 private:

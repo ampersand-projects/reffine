@@ -8,6 +8,22 @@ using namespace std;
 
 namespace reffine {
 
+struct SubVector : public ExprNode {
+    Expr vec;
+    Expr start;
+    Expr end;
+
+    SubVector(Expr vec, Expr start, Expr end)
+        : ExprNode(vec->type), vec(vec), start(start), end(end)
+    {
+        ASSERT(vec->type.is_vector());
+        ASSERT(start->type.is_idx());
+        ASSERT(end->type.is_idx());
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct ReadData : public ExprNode {
     Expr vec;
     Expr idx;

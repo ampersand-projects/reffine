@@ -99,6 +99,10 @@ public:
     {
         throw runtime_error("Length operation not supported");
     }
+    virtual void Visit(SubVector&)
+    {
+        throw runtime_error("SubVector operation not supported");
+    }
 
     /**
      * Loop IR

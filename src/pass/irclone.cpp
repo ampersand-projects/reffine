@@ -182,6 +182,11 @@ Expr IRClone::visit(WriteBit& expr)
 
 Expr IRClone::visit(Length& expr) { return _len(eval(expr.vec), expr.col); }
 
+Expr IRClone::visit(SubVector& expr)
+{
+    return _subvec(eval(expr.vec), eval(expr.start), eval(expr.end));
+}
+
 Expr IRClone::visit(Store& store)
 {
     return _store(eval(store.addr), eval(store.val), eval(store.offset));

@@ -243,6 +243,13 @@ public:
 
     void Visit(Length& expr) override { expr.vec->Accept(*this); }
 
+    void Visit(SubVector& expr) override
+    {
+        expr.vec->Accept(*this);
+        expr.start->Accept(*this);
+        expr.end->Accept(*this);
+    }
+
 protected:
     void Visit(SymNode& symbol) override
     {

@@ -162,6 +162,10 @@ protected:
     {
         throw runtime_error("Length visit not supported");
     }
+    virtual ValTy visit(SubVector&)
+    {
+        throw runtime_error("SubVector visit not supported");
+    }
 
     void Visit(Select& expr) final { val() = visit(expr); }
     void Visit(IfElse& stmt) final { val() = visit(stmt); }
@@ -196,6 +200,7 @@ protected:
     void Visit(ReadBit& expr) final { val() = visit(expr); }
     void Visit(WriteBit& expr) final { val() = visit(expr); }
     void Visit(Length& expr) final { val() = visit(expr); }
+    void Visit(SubVector& expr) final { val() = visit(expr); }
     void Visit(Func& stmt) final { val() = visit(stmt); }
     void Visit(SymNode& symbol) override
     {
