@@ -204,18 +204,33 @@ Expr LoopGen::visit(Reduce& red)
 
     // Build reduction loop
     shared_ptr<Loop> loop;
-    auto op_ptr = dynamic_pointer_cast<Op>(red.vec);
-    if (op_ptr) {
+    if (auto op_ptr = dynamic_pointer_cast<Op>(red.vec)) {
         loop = this->build_loop(*op_ptr, _loop(state_addr));
-    } else {
-        auto red_vec = eval(red.vec);
-        auto red_iter = _sym("red_iter", red_vec->type.iterty());
+    } else if (auto subvec_ptr = dynamic_pointer_cast<SubVector>(eval(red.vec))) {
+        auto red_vec = subvec_ptr->vec;
+        auto red_start = subvec_ptr->start;
+        auto red_end = subvec_ptr->end;
+
+        auto red_idx_alloc = _alloc(red_start->type);
+        auto red_idx_addr = _sym("red_idx_addr", red_idx_alloc);
+        this->assign(red_idx_addr, red_idx_alloc);
+        this->map_sym(red_idx_addr, red_idx_addr);
+
         vector<Expr> red_outputs;
         for (size_t i = 0; i < red_vec->type.dtypes.size(); i++) {
-            red_outputs.push_back(_get(_elem(red_vec, red_iter), i));
+            red_outputs.push_back(_readdata(red_vec, _load(red_idx_addr), i));
         }
-        Op red_op({red_iter}, _in(red_iter, red_vec), red_outputs);
-        loop = this->build_loop(red_op, _loop(state_addr));
+        loop = _loop(state_addr);
+        loop->init = _stmts(vector<Expr>{
+            _store(red_idx_addr, red_start)
+        });
+        loop->incr = _stmts(vector<Expr>{
+            _store(red_idx_addr, _add(_load(red_idx_addr), _idx(1)))
+        });
+        loop->exit_cond = _gte(_load(red_idx_addr), red_end);
+        loop->output = _new(red_outputs);
+    } else {
+        throw runtime_error("Unsupported reduction vector");
     }
 
     // Build reduce loop
@@ -225,14 +240,16 @@ Expr LoopGen::visit(Reduce& red)
     });
 
     if (this->_vectorize) {
-        loop->body =
+        loop->body = _stmts(vector<Expr>{
             _store(state_addr, _sel(loop->body_cond,
                                     red.acc(_load(state_addr), loop->output),
-                                    _load(state_addr)));
+                                    _load(state_addr)))
+            });
         loop->body_cond = nullptr;
     } else {
-        loop->body =
-            _store(state_addr, red.acc(_load(state_addr), loop->output));
+        loop->body = _stmts(vector<Expr>{
+            _store(state_addr, red.acc(_load(state_addr), loop->output))
+        });
     }
 
     loop->output = state_addr;

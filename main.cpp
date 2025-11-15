@@ -372,6 +372,25 @@ shared_ptr<Func> join_op(ArrowTable2* left, ArrowTable2* right, ArrowTable2* ano
     return fn;
 }
 
+shared_ptr<Func> red_op(ArrowTable2* tbl)
+{
+    auto vec_sym = _sym("vec_in", tbl->get_data_type());
+    auto subvec = _subvec(vec_sym, _idx(0), _idx(10));
+    auto red = _red(subvec,
+        []() { return _i64(0); },
+        [](Expr s, Expr v) {
+            auto v1 = _get(v, 1);
+            return _add(s, v1);
+        }
+    );
+    auto red_sym = _sym("red", red);
+
+    auto fn = _func("red", red_sym, vector<Sym>{vec_sym});
+    fn->tbl[red_sym] = red;
+
+    return fn;
+}
+
 int main()
 {   
     /*
@@ -409,9 +428,16 @@ int main()
     right_table->build_index();
     another_table->build_index();
 
-    /*
+    auto red = red_op(left_table);
+    auto red_fn = compile_op<void (*)(long*, void*)>(red);
+    long sum;
+    red_fn(&sum, left_table);
+
     auto lres = arrow::ImportRecordBatch(left_table->array, left_table->schema).ValueOrDie();
     cout << "Left output: " << endl << lres->ToString() << endl;
+    cout << "SUM: " << sum << endl;
+    return 0;
+    /*
     auto rres = arrow::ImportRecordBatch(right_table->array, right_table->schema).ValueOrDie();
     cout << "Right output: " << endl << rres->ToString() << endl;
     */
