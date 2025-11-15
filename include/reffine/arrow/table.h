@@ -67,28 +67,35 @@ struct ArrowTable2 : public ArrowTable {
 
         for (long i = 0; i < this->_schema->n_children; i++) {
             auto child = this->_schema->children[i];
-            auto fmt = std::string(child->format);
-
-            if (fmt == "c") {
-                dtypes.push_back(types::INT8);
-            } else if (fmt == "s") {
-                dtypes.push_back(types::INT16);
-            } else if (fmt == "i") {
-                dtypes.push_back(types::INT32);
-            } else if (fmt == "l") {
-                dtypes.push_back(types::INT64);
-            } else if (fmt == "f") {
-                dtypes.push_back(types::FLOAT32);
-            } else if (fmt == "g") {
-                dtypes.push_back(types::FLOAT64);
-            } else if (fmt == "u") {
-                dtypes.push_back(types::STR);
-            } else {
-                throw std::runtime_error("schema type not supported " + fmt);
-            }
+            dtypes.push_back(this->arrow_to_dtype(child));
         }
 
         return DataType(BaseType::VECTOR, dtypes, this->dim);
+    }
+
+    DataType arrow_to_dtype(ArrowSchema* schema)
+    {
+        auto fmt = std::string(schema->format);
+
+        if (fmt == "c") {
+            return types::INT8;
+        } else if (fmt == "s") {
+            return types::INT16;
+        } else if (fmt == "i") {
+            return types::INT32;
+        } else if (fmt == "l") {
+            return types::INT64;
+        } else if (fmt == "f") {
+            return types::FLOAT32;
+        } else if (fmt == "g") {
+            return types::FLOAT64;
+        } else if (fmt == "u") {
+            return types::STR;
+        } else if (fmt == "+r") {
+            return arrow_to_dtype(schema->children[1]);
+        } else {
+            throw std::runtime_error("schema type not supported " + fmt);
+        }
     }
 
     void build_index()

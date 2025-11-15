@@ -413,42 +413,10 @@ int main()
         }
     }
 
-    ArrowTable2* left_table;
-    ArrowTable2* right_table;
-    ArrowTable2* another_table;
+    auto tbl = load_arrow_file("../benchmark/runend.arrow", 2).ValueOrDie();
+    cout << "Type: " << tbl->get_data_type().str() << endl;
 
-    auto data_op = gen_fake_table();
-    auto data_fn = compile_op<void (*)(void*, int64_t, int64_t)>(data_op);
-
-    data_fn(&left_table, 0, 10);
-    data_fn(&right_table, 5, 15);
-    data_fn(&another_table, 7, 20);
-
-    left_table->build_index();
-    right_table->build_index();
-    another_table->build_index();
-
-    auto red = red_op(left_table);
-    auto red_fn = compile_op<void (*)(long*, void*)>(red);
-    long sum;
-    red_fn(&sum, left_table);
-
-    auto lres = arrow::ImportRecordBatch(left_table->array, left_table->schema).ValueOrDie();
-    cout << "Left output: " << endl << lres->ToString() << endl;
-    cout << "SUM: " << sum << endl;
-    return 0;
-    /*
-    auto rres = arrow::ImportRecordBatch(right_table->array, right_table->schema).ValueOrDie();
-    cout << "Right output: " << endl << rres->ToString() << endl;
-    */
-
-    auto jop = join_op(left_table, right_table, another_table);
-    auto join_fn = compile_op<void (*)(void*, void*, void*, void*)>(jop);
-
-    ArrowTable2* join_table;
-    join_fn(&join_table, left_table, right_table, another_table);
-
-    auto res = arrow::ImportRecordBatch(join_table->array, join_table->schema).ValueOrDie();
+    auto res = arrow::ImportRecordBatch(tbl->array, tbl->schema).ValueOrDie();
     cout << "Output: " << endl << res->ToString() << endl;
 
     return 0;
