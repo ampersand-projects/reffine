@@ -198,14 +198,14 @@ CodeSeg IRPrinter2::visit(In& e)
 CodeSeg IRPrinter2::visit(Reduce& red)
 {
     auto state_val = red.init();
-    auto val = _sym("val", red.op.type.rowty());
+    auto val = _sym("val", red.vec->type.rowty());
     auto state = _sym("state", state_val->type);
     auto state2 = red.acc(state, val);
 
     auto line = code(REDCLE, " {");
 
     auto parent = enter_block();
-    emit(nl(), eval(this->tmp_expr(red.op)), ", ", nl());
+    emit(nl(), eval(red.vec), ", ", nl());
     emit("state <- ", eval(state_val), ", ", nl());
     emit("state <- ", eval(state2));
 

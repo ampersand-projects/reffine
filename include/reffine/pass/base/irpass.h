@@ -141,7 +141,7 @@ public:
         expr.vec->Accept(*this);
     }
 
-    void Visit(Reduce& expr) override { expr.op.Accept(*this); }
+    void Visit(Reduce& expr) override { expr.vec->Accept(*this); }
 
     void Visit(Call& expr) override
     {

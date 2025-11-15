@@ -194,7 +194,7 @@ shared_ptr<Func> basic_transform_kernel()
 shared_ptr<Func> test_op_fn()
 {
     auto t_sym = make_shared<SymNode>("t", types::INT32);
-    Op op(
+    auto op = _op(
         vector<Sym>{t_sym},
         make_shared<And>(
             make_shared<GreaterThan>(t_sym, make_shared<Const>(types::INT32, 0)),

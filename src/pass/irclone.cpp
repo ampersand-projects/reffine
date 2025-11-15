@@ -27,8 +27,7 @@ shared_ptr<Op> IRClone::visit_op(Op& op)
 
 Expr IRClone::visit(Reduce& red)
 {
-    auto new_op = IRClone::visit_op(red.op);
-    return _red(*new_op, red.init, red.acc);
+    return _red(eval(red.vec), red.init, red.acc);
 }
 
 Expr IRClone::visit(Op& op) { return IRClone::visit_op(op); }

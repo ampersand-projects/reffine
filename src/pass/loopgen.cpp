@@ -194,13 +194,29 @@ Expr LoopGen::visit(Op& op)
 
 Expr LoopGen::visit(Reduce& red)
 {
+    // Only allow aggregating unidimensional vectors
+    ASSERT(red.vec->type.dim == 1);
+
     // State allocation and initialization
     auto state_alloc = _alloc(red.type);
     auto state_addr = _sym("state_addr", state_alloc);
     this->assign(state_addr, state_alloc);
 
     // Build reduction loop
-    auto loop = this->build_loop(red.op, _loop(state_addr));
+    shared_ptr<Loop> loop;
+    auto op_ptr = dynamic_pointer_cast<Op>(red.vec);
+    if (op_ptr) {
+        loop = this->build_loop(*op_ptr, _loop(state_addr));
+    } else {
+        auto red_vec = eval(red.vec);
+        auto red_iter = _sym("red_iter", red_vec->type.iterty());
+        vector<Expr> red_outputs;
+        for (size_t i = 0; i < red_vec->type.dtypes.size(); i++) {
+            red_outputs.push_back(_get(_elem(red_vec, red_iter), i));
+        }
+        Op red_op({red_iter}, _in(red_iter, red_vec), red_outputs);
+        loop = this->build_loop(red_op, _loop(state_addr));
+    }
 
     // Build reduce loop
     loop->init = _stmts(vector<Expr>{

@@ -87,7 +87,7 @@ PYBIND11_MODULE(ir, m)
     /* Op */
     REGISTER_CLASS(Element, ExprNode, m, "_elem", Expr, Expr)
     REGISTER_CLASS(Op, ExprNode, m, "_op", vector<Sym>, Expr, vector<Expr>)
-    REGISTER_CLASS(Reduce, ExprNode, m, "_red", Op, InitFnTy, AccFnTy)
+    REGISTER_CLASS(Reduce, ExprNode, m, "_red", Expr, InitFnTy, AccFnTy)
     REGISTER_CLASS(In, ExprNode, m, "_in", Expr, Expr)
 
     /* Statements */

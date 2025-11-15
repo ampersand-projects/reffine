@@ -62,10 +62,10 @@ shared_ptr<Func> vector_op(shared_ptr<ArrowTable2> tbl)
 {
     auto t_sym = _sym("t", _i64_t);
     auto vec_in_sym = _sym("vec_in", tbl->get_data_type());
-    Op op(
-        {t_sym},
+    auto op = _op(
+        vector<Sym>{t_sym},
         _in(t_sym, vec_in_sym) & _lte(t_sym, _i64(48)) & _gte(t_sym, _i64(10)),
-        {
+        vector<Expr>{
             vec_in_sym[{t_sym}][2],
             _new(vector<Expr>{
                 vec_in_sym[{t_sym}][1],

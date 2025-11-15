@@ -92,15 +92,16 @@ typedef function<Expr()> InitFnTy;           // () -> state
 typedef function<Expr(Expr, Expr)> AccFnTy;  // (state, val) -> state
 
 struct Reduce : public ExprNode {
-    Op op;
+    Expr vec;
     InitFnTy init;
     AccFnTy acc;
 
-    Reduce(Op op, InitFnTy init, AccFnTy acc)
-        : ExprNode(init()->type), op(std::move(op)), init(init), acc(acc)
+    Reduce(Expr vec, InitFnTy init, AccFnTy acc)
+        : ExprNode(init()->type), vec(vec), init(init), acc(acc)
     {
+        ASSERT(vec->type.is_vector());
         auto tmp_state = init();
-        auto tmp_val = make_shared<SymNode>("tmp_val", op.type.rowty());
+        auto tmp_val = make_shared<SymNode>("tmp_val", vec->type.rowty());
         auto tmp_state2 = acc(tmp_state, tmp_val);
 
         ASSERT(tmp_state2->type == tmp_state->type);
