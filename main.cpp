@@ -332,7 +332,7 @@ shared_ptr<Func> gen_fake_table()
     auto op = _op(
         vector<Sym>{t_sym},
         (_gte(t_sym, lb_sym) & _lt(t_sym, ub_sym)),
-        vector<Expr>{ t_sym }
+        vector<Expr>{ _add(t_sym, _i64(10)) }
     );
     auto op_sym = _sym("op", op);
 
@@ -375,7 +375,7 @@ shared_ptr<Func> join_op(ArrowTable2* left, ArrowTable2* right, ArrowTable2* ano
 shared_ptr<Func> red_op(ArrowTable2* tbl)
 {
     auto vec_sym = _sym("vec_in", tbl->get_data_type());
-    auto subvec = _subvec(vec_sym, _idx(0), _idx(10));
+    auto subvec = _subvec(vec_sym, _idx(2), _idx(5));
     auto red = _red(subvec,
         []() { return _i64(0); },
         [](Expr s, Expr v) {
