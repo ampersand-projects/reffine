@@ -88,6 +88,21 @@ struct WriteBit : public StmtNode {
     void Accept(Visitor&) final;
 };
 
+struct ReadRunEnd : public ExprNode {
+    Expr vec;
+    Expr idx;
+    size_t col;
+
+    ReadRunEnd(Expr vec, Expr idx, size_t col)
+        : ExprNode(types::INT32), vec(vec), idx(idx), col(col)
+    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->col < this->vec->type.dtypes.size());
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct Locate : public Call {
     Expr vec;
     Expr iter;
@@ -98,7 +113,7 @@ struct Locate : public Call {
         auto& vtype = vec->type;
 
         ASSERT(vtype.is_vector());
-        ASSERT(vtype.dim == 1);
+        ASSERT(vtype.dim <= 2);
         ASSERT(vtype.iterty() == iter->type);
     }
 };

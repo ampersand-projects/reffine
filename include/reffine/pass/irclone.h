@@ -41,6 +41,7 @@ protected:
     Expr visit(NoOp&) override;
     Expr visit(Define&) override;
     Expr visit(InitVal&) override;
+    Expr visit(ReadRunEnd&) override;
     Expr visit(ReadData&) override;
     Expr visit(WriteData&) override;
     Expr visit(ReadBit&) override;

@@ -79,6 +79,10 @@ public:
     {
         throw runtime_error("InitVal operation not supported");
     }
+    virtual void Visit(ReadRunEnd&)
+    {
+        throw runtime_error("ReadRunEnd operation not supported");
+    }
     virtual void Visit(ReadData&)
     {
         throw runtime_error("ReadData operation not supported");

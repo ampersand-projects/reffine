@@ -39,6 +39,7 @@ void ReadData::Accept(Visitor& v) { v.Visit(*this); }
 void WriteData::Accept(Visitor& v) { v.Visit(*this); }
 void ReadBit::Accept(Visitor& v) { v.Visit(*this); }
 void WriteBit::Accept(Visitor& v) { v.Visit(*this); }
+void ReadRunEnd::Accept(Visitor& v) { v.Visit(*this); }
 void Length::Accept(Visitor& v) { v.Visit(*this); }
 void SubVector::Accept(Visitor& v) { v.Visit(*this); }
 

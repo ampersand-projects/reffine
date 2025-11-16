@@ -146,6 +146,14 @@ Expr IRClone::visit(InitVal& init_val)
     return _initval(inits, val);
 }
 
+Expr IRClone::visit(ReadRunEnd& expr)
+{
+    auto vec = eval(expr.vec);
+    auto idx = eval(expr.idx);
+
+    return _readrunend(vec, idx, expr.col);
+}
+
 Expr IRClone::visit(ReadData& expr)
 {
     auto vec = eval(expr.vec);

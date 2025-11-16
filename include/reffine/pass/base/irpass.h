@@ -215,6 +215,12 @@ public:
         for (auto init : initval.inits) { init->Accept(*this); }
     }
 
+    void Visit(ReadRunEnd& expr) override
+    {
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
+    }
+
     void Visit(ReadData& expr) override
     {
         expr.vec->Accept(*this);

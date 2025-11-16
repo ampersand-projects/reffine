@@ -8,6 +8,7 @@ namespace reffine {
 
 class ReadWritePass : public IRClone {
 private:
+    Expr visit(ReadRunEnd&) final;
     Expr visit(ReadData&) final;
     Expr visit(WriteData&) final;
     Expr visit(ReadBit&) final;

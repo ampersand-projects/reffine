@@ -14,14 +14,14 @@ Expr LoopGen::visit(Element& elem)
     auto iter = eval(elem.iter);
     auto vec = eval(elem.vec);
 
-    if (vec->type.dim == 1) {
-        Expr idx;
-        if (this->_vec_iter_idx_map.contains(elem.vec)) {
-            idx = this->_vec_iter_idx_map.at(elem.vec).at(elem.iter);
-        } else {
-            idx = _locate(vec, iter);
-        }
+    Expr idx;
+    if (this->_vec_iter_idx_map.contains(elem.vec)) {
+        idx = this->_vec_iter_idx_map.at(elem.vec).at(elem.iter);
+    } else {
+        idx = _locate(vec, iter);
+    }
 
+    if (vec->type.dim == 1) {
         vector<Expr> vals;
         for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
             auto data = _readdata(vec, idx, i);
@@ -30,7 +30,9 @@ Expr LoopGen::visit(Element& elem)
 
         return _new(vals);
     } else if (vec->type.dim == 2) {
-        throw runtime_error("2d vector element not supported");
+        auto start_idx = _sel(_lte(idx, _idx(0)), _idx(0), _readrunend(vec, _sub(idx, _idx(1)), 0));
+        auto end_idx = _readrunend(vec, idx, 0);
+        return _subvec(vec, start_idx, end_idx);
     } else {
         throw runtime_error("Only support 1d and 2d vectors");
     }

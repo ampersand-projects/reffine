@@ -5,6 +5,13 @@
 using namespace reffine;
 using namespace reffine::reffiner;
 
+Expr ReadWritePass::visit(ReadRunEnd& expr)
+{
+    auto buf = _cast(expr.type.ptr(),
+                     _arrbuf(_arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1), 1));
+    return _load(buf, eval(expr.idx));
+}
+
 Expr ReadWritePass::visit(ReadData& expr)
 {
     auto buf = _cast(expr.type.ptr(),

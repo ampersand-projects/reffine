@@ -142,6 +142,10 @@ protected:
     {
         throw runtime_error("InitVal visit not supported");
     }
+    virtual ValTy visit(ReadRunEnd&)
+    {
+        throw runtime_error("ReadRunEnd visit not supported");
+    }
     virtual ValTy visit(ReadData&)
     {
         throw runtime_error("ReadData visit not supported");
@@ -195,6 +199,7 @@ protected:
     void Visit(NoOp& stmt) final { val() = visit(stmt); }
     void Visit(Define& expr) final { val() = visit(expr); }
     void Visit(InitVal& expr) final { val() = visit(expr); }
+    void Visit(ReadRunEnd& expr) final { val() = visit(expr); }
     void Visit(ReadData& expr) final { val() = visit(expr); }
     void Visit(WriteData& expr) final { val() = visit(expr); }
     void Visit(ReadBit& expr) final { val() = visit(expr); }
