@@ -39,13 +39,15 @@ Expr ReadWritePass::visit(WriteData& expr)
 
 Expr ReadWritePass::visit(ReadBit& expr)
 {
+    Expr buf;
     if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
-        throw runtime_error("RunEnd not supported for ReadBit");
+        buf = _cast(types::UINT16.ptr(),
+                         _arrbuf(_arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1), 0));
     } else {
-        auto buf = _cast(types::UINT16.ptr(),
+        buf = _cast(types::UINT16.ptr(),
                          _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 0));
-        return _isval(buf, eval(expr.idx));
     }
+    return _isval(buf, eval(expr.idx));
 }
 
 Expr ReadWritePass::visit(WriteBit& expr)
