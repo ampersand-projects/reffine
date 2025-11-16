@@ -11,25 +11,29 @@ using namespace reffine::reffiner;
 
 Expr LoopGen::visit(Element& elem)
 {
-    ASSERT(elem.type.is_val());  // Subspace elements are not supported yet
-
     auto iter = eval(elem.iter);
     auto vec = eval(elem.vec);
 
-    Expr idx;
-    if (this->_vec_iter_idx_map.contains(elem.vec)) {
-        idx = this->_vec_iter_idx_map.at(elem.vec).at(elem.iter);
+    if (vec->type.dim == 1) {
+        Expr idx;
+        if (this->_vec_iter_idx_map.contains(elem.vec)) {
+            idx = this->_vec_iter_idx_map.at(elem.vec).at(elem.iter);
+        } else {
+            idx = _locate(vec, iter);
+        }
+
+        vector<Expr> vals;
+        for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
+            auto data = _readdata(vec, idx, i);
+            vals.push_back(data);
+        }
+
+        return _new(vals);
+    } else if (vec->type.dim == 2) {
+        throw runtime_error("2d vector element not supported");
     } else {
-        idx = _locate(vec, iter);
+        throw runtime_error("Only support 1d and 2d vectors");
     }
-
-    vector<Expr> vals;
-    for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
-        auto data = _readdata(vec, idx, i);
-        vals.push_back(data);
-    }
-
-    return _new(vals);
 }
 
 shared_ptr<Loop> LoopGen::build_loop(Op& op, shared_ptr<Loop> loop)

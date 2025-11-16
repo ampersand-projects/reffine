@@ -112,7 +112,7 @@ struct VecSpace : public IterSpace {
           _vec_len_sym(make_shared<SymNode>(vec->str() + "_len", types::IDX))
     {
         ASSERT(vec->type.is_vector());
-        ASSERT(vec->type.dim == 1);  // currently only support 1d vectors
+        ASSERT(vec->type.dim <= 2);  // currently only support 1d and 2d vectors
     }
 
 private:
