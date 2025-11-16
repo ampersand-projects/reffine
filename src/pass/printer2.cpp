@@ -306,6 +306,12 @@ CodeSeg IRPrinter2::visit(InitVal& init_val)
     return eval(init_val.val);
 }
 
+CodeSeg IRPrinter2::visit(ReadRunEnd& expr)
+{
+    return code_func("read_runend",
+                     vector<Expr>{expr.vec, expr.idx, _idx(expr.col)});
+}
+
 CodeSeg IRPrinter2::visit(ReadData& expr)
 {
     return code_func("read_data",

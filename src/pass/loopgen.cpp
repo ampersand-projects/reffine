@@ -223,7 +223,7 @@ Expr LoopGen::visit(Reduce& red)
         this->map_sym(red_idx_addr, red_idx_addr);
 
         vector<Expr> red_outputs;
-        for (size_t i = 0; i < red_vec->type.dtypes.size(); i++) {
+        for (size_t i = 1; i < red_vec->type.dtypes.size(); i++) {
             red_outputs.push_back(_readdata(red_vec, _load(red_idx_addr), i));
         }
         loop = _loop(state_addr);

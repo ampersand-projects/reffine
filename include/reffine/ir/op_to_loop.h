@@ -94,7 +94,7 @@ struct ReadRunEnd : public ExprNode {
     size_t col;
 
     ReadRunEnd(Expr vec, Expr idx, size_t col)
-        : ExprNode(types::INT32), vec(vec), idx(idx), col(col)
+        : ExprNode(types::IDX), vec(vec), idx(idx), col(col)
     {
         ASSERT(this->vec->type.is_vector());
         ASSERT(this->col < this->vec->type.dtypes.size());

@@ -27,6 +27,7 @@ public:
     CodeSeg visit(NoOp&) final;
     CodeSeg visit(Define&) final;
     CodeSeg visit(InitVal&) final;
+    CodeSeg visit(ReadRunEnd&) final;
     CodeSeg visit(ReadData&) final;
     CodeSeg visit(WriteData&) final;
     CodeSeg visit(ReadBit&) final;
