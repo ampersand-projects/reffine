@@ -136,7 +136,8 @@ struct DataType {
         return DataType(
             (this->dim == 1) ? BaseType::STRUCT : BaseType::VECTOR,
             std::vector<DataType>(this->dtypes.begin() + 1, this->dtypes.end()),
-            this->dim - 1);
+            this->dim - 1,
+            std::vector<EncodeType>(this->encodings.begin() + 1, this->encodings.end()));
     }
 
     DataType iterty() const

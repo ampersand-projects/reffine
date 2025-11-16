@@ -421,10 +421,15 @@ int main()
     auto tbl = load_arrow_file("../benchmark/runend.arrow", 2).ValueOrDie();
     auto red = red_op(tbl);
     auto red_fn = compile_op<void (*)(void*, void*)>(red);
-    return 0;
 
-    auto res = arrow::ImportRecordBatch(tbl->array, tbl->schema).ValueOrDie();
-    cout << "Output: " << endl << res->ToString() << endl;
+    ArrowTable2* out;
+    red_fn(&out, tbl.get());
+
+    auto in_res = arrow::ImportRecordBatch(tbl->array, tbl->schema).ValueOrDie();
+    cout << "Input: " << endl << in_res->ToString() << endl;
+
+    auto out_res = arrow::ImportRecordBatch(out->array, out->schema).ValueOrDie();
+    cout << "Output: " << endl << out_res->ToString() << endl;
 
     return 0;
 }
