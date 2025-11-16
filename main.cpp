@@ -372,21 +372,26 @@ shared_ptr<Func> join_op(ArrowTable2* left, ArrowTable2* right, ArrowTable2* ano
     return fn;
 }
 
-shared_ptr<Func> red_op(ArrowTable2* tbl)
+shared_ptr<Func> red_op(shared_ptr<ArrowTable2> tbl)
 {
     auto vec_sym = _sym("vec_in", tbl->get_data_type());
-    auto subvec = _subvec(vec_sym, _idx(2), _idx(5));
-    auto red = _red(subvec,
+    auto t_sym = _sym("t_sym", _i64_t);
+
+    auto red = _red(vec_sym[t_sym],
         []() { return _i64(0); },
         [](Expr s, Expr v) {
             auto v1 = _get(v, 1);
             return _add(s, v1);
         }
     );
-    auto red_sym = _sym("red", red);
+    auto op = _op(vector<Sym>{t_sym},
+        _in(t_sym, vec_sym),
+        vector<Expr>{red}
+    );
+    auto op_sym = _sym("op", op);
 
-    auto fn = _func("red", red_sym, vector<Sym>{vec_sym});
-    fn->tbl[red_sym] = red;
+    auto fn = _func("red", op_sym, vector<Sym>{vec_sym});
+    fn->tbl[op_sym] = op;
 
     return fn;
 }
@@ -414,7 +419,9 @@ int main()
     }
 
     auto tbl = load_arrow_file("../benchmark/runend.arrow", 2).ValueOrDie();
-    cout << "Type: " << tbl->get_data_type().str() << endl;
+    auto red = red_op(tbl);
+    auto red_fn = compile_op<void (*)(void*, void*)>(red);
+    return 0;
 
     auto res = arrow::ImportRecordBatch(tbl->array, tbl->schema).ValueOrDie();
     cout << "Output: " << endl << res->ToString() << endl;
