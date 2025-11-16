@@ -21,20 +21,23 @@ Expr LoopGen::visit(Element& elem)
         idx = _locate(vec, iter);
     }
 
-    if (vec->type.dim == 1) {
-        vector<Expr> vals;
-        for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
-            auto data = _readdata(vec, idx, i);
-            vals.push_back(data);
-        }
+    switch (vec->type.dim) {
+        case 1: {
+            vector<Expr> vals;
+            for (size_t i = vec->type.dim; i < vec->type.dtypes.size(); i++) {
+                auto data = _readdata(vec, idx, i);
+                vals.push_back(data);
+            }
 
-        return _new(vals);
-    } else if (vec->type.dim == 2) {
-        auto start_idx = _sel(_lte(idx, _idx(0)), _idx(0), _readrunend(vec, _sub(idx, _idx(1)), 0));
-        auto end_idx = _readrunend(vec, idx, 0);
-        return _subvec(vec, start_idx, end_idx);
-    } else {
-        throw runtime_error("Only support 1d and 2d vectors");
+            return _new(vals);
+        } 
+        case 2: {
+            auto start_idx = _sel(_lte(idx, _idx(0)), _idx(0), _readrunend(vec, _sub(idx, _idx(1)), 0));
+            auto end_idx = _readrunend(vec, idx, 0);
+            return _subvec(vec, start_idx, end_idx);
+        }
+        default: 
+            throw runtime_error("Only support 1d and 2d vectors");
     }
 }
 
