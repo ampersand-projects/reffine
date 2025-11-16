@@ -22,7 +22,8 @@ struct ArrowTable2 : public ArrowTable {
     }
 
     ArrowTable2(std::string name, int64_t dim, size_t len,
-                std::vector<std::string> cols, std::vector<DataType> dtypes)
+                std::vector<std::string> cols,
+                std::vector<DataType> dtypes)
         : ArrowTable(dim),
           _schema(make_shared<VectorSchema>(name)),
           _array(make_shared<VectorArray>(len))
@@ -64,13 +65,18 @@ struct ArrowTable2 : public ArrowTable {
     DataType get_data_type()
     {
         vector<DataType> dtypes;
+        vector<EncodeType> etypes;
 
         for (long i = 0; i < this->_schema->n_children; i++) {
             auto child = this->_schema->children[i];
+            auto fmt = std::string(schema->format);
+            auto dtype = this->arrow_to_dtype(child);
+
             dtypes.push_back(this->arrow_to_dtype(child));
+            etypes.push_back((fmt == "+r") ? EncodeType::RUNEND : EncodeType::FLAT);
         }
 
-        return DataType(BaseType::VECTOR, dtypes, this->dim);
+        return DataType(BaseType::VECTOR, dtypes, this->dim, etypes);
     }
 
     DataType arrow_to_dtype(ArrowSchema* schema)

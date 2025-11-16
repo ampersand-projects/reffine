@@ -15,7 +15,7 @@ Expr ReadWritePass::visit(ReadRunEnd& expr)
 Expr ReadWritePass::visit(ReadData& expr)
 {
     Expr buf;
-    if (expr.col < expr.vec->type.dim - 1) {
+    if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
         buf = _cast(expr.type.ptr(),
                 _arrbuf(_arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1), 1));
     } else {
@@ -35,8 +35,8 @@ Expr ReadWritePass::visit(WriteData& expr)
 
 Expr ReadWritePass::visit(ReadBit& expr)
 {
-    if (expr.col < expr.vec->type.dim - 1) {
-        throw runtime_error("Only 1d vectors supported for ReadBit");
+    if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
+        throw runtime_error("RunEnd not supported for ReadBit");
     } else {
         return _isval(eval(expr.vec), eval(expr.idx), expr.col);
     }
@@ -44,8 +44,8 @@ Expr ReadWritePass::visit(ReadBit& expr)
 
 Expr ReadWritePass::visit(WriteBit& expr)
 {
-    if (expr.col < expr.vec->type.dim - 1) {
-        throw runtime_error("Only 1d vectors supported for WriteBit");
+    if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
+        throw runtime_error("RunEnd not supported for WriteBit");
     } else {
         return _setval(eval(expr.vec), eval(expr.idx), eval(expr.val), expr.col);
     }

@@ -35,17 +35,20 @@ private:
                                  const vector<Expr>& outputs)
     {
         vector<DataType> dtypes;
+        vector<EncodeType> etypes;
 
         for (const auto& iter : iters) {
             ASSERT(iter->type.is_primitive());
             dtypes.push_back(iter->type);
+            etypes.push_back(EncodeType::FLAT);
         }
         for (const auto& output : outputs) {
             ASSERT(output->type.is_val());
             dtypes.push_back(output->type);
+            etypes.push_back(EncodeType::FLAT);
         }
 
-        return DataType(BaseType::VECTOR, std::move(dtypes), iters.size());
+        return DataType(BaseType::VECTOR, dtypes, iters.size(), etypes);
     }
 };
 
