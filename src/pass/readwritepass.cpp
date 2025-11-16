@@ -28,9 +28,13 @@ Expr ReadWritePass::visit(ReadData& expr)
 
 Expr ReadWritePass::visit(WriteData& expr)
 {
-    auto buf = _cast(expr.val->type.ptr(),
-                     _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1));
-    return _store(buf, eval(expr.val), eval(expr.idx));
+    if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
+        throw runtime_error("RunEnd not supported for WriteData");
+    } else {
+        auto buf = _cast(expr.val->type.ptr(),
+                         _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1));
+        return _store(buf, eval(expr.val), eval(expr.idx));
+    }
 }
 
 Expr ReadWritePass::visit(ReadBit& expr)
@@ -38,7 +42,9 @@ Expr ReadWritePass::visit(ReadBit& expr)
     if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
         throw runtime_error("RunEnd not supported for ReadBit");
     } else {
-        return _isval(eval(expr.vec), eval(expr.idx), expr.col);
+        auto buf = _cast(types::UINT16.ptr(),
+                         _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 0));
+        return _isval(buf, eval(expr.idx));
     }
 }
 
@@ -47,7 +53,9 @@ Expr ReadWritePass::visit(WriteBit& expr)
     if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
         throw runtime_error("RunEnd not supported for WriteBit");
     } else {
-        return _setval(eval(expr.vec), eval(expr.idx), eval(expr.val), expr.col);
+        auto buf = _cast(types::UINT16.ptr(),
+                         _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 0));
+        return _setval(buf, eval(expr.idx), eval(expr.val));
     }
 }
 

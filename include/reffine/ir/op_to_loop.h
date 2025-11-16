@@ -141,26 +141,21 @@ struct SetLength : public Call {
 };
 
 struct IsValid : public Call {
-    IsValid(Expr vec, Expr idx, size_t col)
-        : Call("get_vector_null_bit", types::BOOL,
-               vector<Expr>{vec, idx, make_shared<Const>(types::UINT32, col)})
+    IsValid(Expr buf, Expr idx)
+        : Call("get_null_bit", types::BOOL, vector<Expr>{buf, idx})
     {
-        ASSERT(vec->type.is_vector());
+        ASSERT(buf->type == types::UINT16.ptr());
         ASSERT(idx->type.is_idx());
-        ASSERT(col < vec->type.dtypes.size());
     }
 };
 
 struct SetValid : public Call {
-    SetValid(Expr vec, Expr idx, Expr validity, size_t col)
-        : Call("set_vector_null_bit", types::VOID,
-               vector<Expr>{vec, idx, validity,
-                            make_shared<Const>(types::UINT32, col)})
+    SetValid(Expr buf, Expr idx, Expr validity)
+        : Call("set_null_bit", types::VOID, vector<Expr>{buf, idx, validity})
     {
-        ASSERT(vec->type.is_vector());
+        ASSERT(buf->type == types::UINT16.ptr());
         ASSERT(idx->type.is_idx());
         ASSERT(validity->type == types::BOOL);
-        ASSERT(col < vec->type.dtypes.size());
     }
 };
 
