@@ -106,28 +106,32 @@ struct ArrowTable2 : public ArrowTable {
 
     void build_index()
     {
-        for (int64_t d = 0; d < this->dim; d++) {
-            auto* arr = get_array_child(get_vector_array(this), d);
+        size_t col = 0;
+        auto dtype = this->get_data_type().dtypes[col];
+        auto etype = this->get_data_type().encodings[col];
+        if (dtype == types::INT64) {
+            ArrowArray* arr = nullptr;
+            if (etype == EncodeType::FLAT) {
+                arr = get_array_child(get_vector_array(this), col);
+            } else if (etype == EncodeType::RUNEND) {
+                arr = get_array_child(get_array_child(get_vector_array(this), col), 1);
+            } else {
+                throw runtime_error("Unknown encode type in indexing");
+            }
             auto size = get_array_len(arr);
             this->index() = make_shared<IndexTy>(size);
 
-            auto dtype = this->get_data_type().dtypes[0];
-            auto etype = this->get_data_type().encodings[0];
-            if (dtype == types::INT64) {
-                if (etype == EncodeType::FLAT) {
-                    auto* iter_col = (int64_t*)get_vector_data_buf(this, 0);
-                    for (int64_t i = 0; i < size; i++) {
-                        if (get_vector_null_bit(this, i, d)) {
-                            this->index()->emplace(iter_col[i], i);
-                        }
-                    }
-                } else {
-                    throw runtime_error("Unknown encode type in indexing");
+            auto* bit_buf = (uint16_t*) get_array_buf(arr, 0);
+            auto* data_buf = (int64_t*) get_array_buf(arr, 1);
+
+            for (int64_t i = 0; i < size; i++) {
+                if (get_null_bit(bit_buf, i)) {
+                    this->index()->emplace(data_buf[i], i);
                 }
-            } else {
-                throw runtime_error("Data type not supported for indexing: " +
-                                    dtype.str());
             }
+        } else {
+            throw runtime_error("Data type not supported for indexing: " +
+                    dtype.str());
         }
     }
 
