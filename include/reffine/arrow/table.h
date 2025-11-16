@@ -69,7 +69,7 @@ struct ArrowTable2 : public ArrowTable {
 
         for (long i = 0; i < this->_schema->n_children; i++) {
             auto child = this->_schema->children[i];
-            auto fmt = std::string(schema->format);
+            auto fmt = std::string(child->format);
             auto dtype = this->arrow_to_dtype(child);
 
             dtypes.push_back(this->arrow_to_dtype(child));
