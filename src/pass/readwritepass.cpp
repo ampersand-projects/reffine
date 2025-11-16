@@ -28,12 +28,12 @@ Expr ReadWritePass::visit(ReadData& expr)
 
 Expr ReadWritePass::visit(WriteData& expr)
 {
-    if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
-        throw runtime_error("RunEnd not supported for WriteData");
-    } else {
+    if (expr.vec->type.encodings[expr.col] == EncodeType::FLAT) {
         auto buf = _cast(expr.val->type.ptr(),
                          _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1));
         return _store(buf, eval(expr.val), eval(expr.idx));
+    } else {
+        throw runtime_error("Encoding type not supported for WriteData");
     }
 }
 
@@ -53,11 +53,11 @@ Expr ReadWritePass::visit(ReadBit& expr)
 Expr ReadWritePass::visit(WriteBit& expr)
 {
     if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
-        throw runtime_error("RunEnd not supported for WriteBit");
-    } else {
         auto buf = _cast(types::UINT16.ptr(),
                          _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 0));
         return _setval(buf, eval(expr.idx), eval(expr.val));
+    } else {
+        throw runtime_error("Encoding type not supported for WriteBit");
     }
 }
 
