@@ -32,7 +32,7 @@ Expr LoopGen::visit(Element& elem)
             return _new(vals);
         } 
         case 2: {
-            auto start_idx = _sel(_lte(idx, _idx(0)), _idx(0), _readrunend(vec, _sub(idx, _idx(1)), 0));
+            auto start_idx = _readrunend(vec, _sub(idx, _idx(1)), 0);
             auto end_idx = _readrunend(vec, idx, 0);
             return _subvec(vec, start_idx, end_idx);
         }

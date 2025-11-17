@@ -384,14 +384,16 @@ shared_ptr<Func> red_op(shared_ptr<ArrowTable2> tbl)
             return _add(s, v1);
         }
     );
+    auto red_sym = _sym("sum", red);
     auto op = _op(vector<Sym>{t_sym},
         _in(t_sym, vec_sym),
-        vector<Expr>{red}
+        vector<Expr>{red_sym}
     );
     auto op_sym = _sym("op", op);
 
     auto fn = _func("red", op_sym, vector<Sym>{vec_sym});
     fn->tbl[op_sym] = op;
+    fn->tbl[red_sym] = red;
 
     return fn;
 }

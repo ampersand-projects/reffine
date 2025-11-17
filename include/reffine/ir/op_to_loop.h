@@ -215,6 +215,15 @@ struct GetArrayLength : public Call {
     }
 };
 
+struct ReadRunEndBuf : public Call {
+    ReadRunEndBuf(Expr buf, Expr idx)
+        : Call("read_runend_buf", types::IDX, vector<Expr>{buf, idx})
+    {
+        ASSERT(buf->type == types::INT32.ptr());
+        ASSERT(idx->type.is_idx());
+    }
+};
+
 }  // namespace reffine
 
 #endif  // INCLUDE_REFFINE_IR_OP_TO_LOOP_H_

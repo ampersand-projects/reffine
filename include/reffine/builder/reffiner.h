@@ -139,6 +139,7 @@ REGISTER_EXPR(_vecarr, GetVectorArray)
 REGISTER_EXPR(_arrchild, GetArrayChild)
 REGISTER_EXPR(_arrbuf, GetArrayBuf)
 REGISTER_EXPR(_arrlen, GetArrayLength)
+REGISTER_EXPR(_readrunendbuf, ReadRunEndBuf)
 
 // CUDA
 REGISTER_EXPR(_tidx, ThreadIdx)

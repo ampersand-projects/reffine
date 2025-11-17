@@ -9,7 +9,7 @@ Expr ReadWritePass::visit(ReadRunEnd& expr)
 {
     auto buf = _cast(types::INT32.ptr(),
                      _arrbuf(_arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 0), 1));
-    return _cast(types::IDX, _load(buf, eval(expr.idx)));
+    return _readrunendbuf(buf, eval(expr.idx));
 }
 
 Expr ReadWritePass::visit(ReadData& expr)
@@ -63,7 +63,7 @@ Expr ReadWritePass::visit(WriteBit& expr)
 
 Expr ReadWritePass::visit(Length& expr)
 {
-    if (expr.col < expr.vec->type.dim - 1) {
+    if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
         return _arrlen(_arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1));
     } else {
         return _arrlen(_arrchild(_vecarr(eval(expr.vec)), expr.col));
