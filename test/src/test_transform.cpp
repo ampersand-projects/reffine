@@ -32,7 +32,7 @@ void transform_op_test(bool vectorize)
     auto lb = 5;
     auto n = 10;
 
-    auto in_tbl = get_input_vector().ValueOrDie();
+    auto in_tbl = get_input_vector(STUDENTS_ARROW_FILE, 1).ValueOrDie();
     auto op = transform_op(in_tbl, lb, n);
     auto query_fn =
         compile_op<void (*)(ArrowTable**, ArrowTable*)>(op, vectorize);

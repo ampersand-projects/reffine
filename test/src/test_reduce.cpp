@@ -48,7 +48,7 @@ shared_ptr<Func> vector_loop(shared_ptr<ArrowTable2> tbl)
 
 void aggregate_loop_test()
 {
-    auto tbl = get_input_vector().ValueOrDie();
+    auto tbl = get_input_vector(STUDENTS_ARROW_FILE, 1).ValueOrDie();
     auto loop = vector_loop(tbl);
     long output = 0;
     auto query_fn = compile_loop<void (*)(long*, void*)>(loop);
@@ -111,7 +111,7 @@ shared_ptr<Func> vector_op(shared_ptr<ArrowTable2> tbl)
 
 void aggregate_op_test(bool vectorize)
 {
-    auto tbl = get_input_vector().ValueOrDie();
+    auto tbl = get_input_vector(STUDENTS_ARROW_FILE, 1).ValueOrDie();
     auto op = vector_op(tbl);
     long output = 0;
     auto query_fn = compile_op<void (*)(long*, void*)>(op, vectorize);
