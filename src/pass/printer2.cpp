@@ -343,7 +343,8 @@ CodeSeg IRPrinter2::visit(Length& expr)
 
 CodeSeg IRPrinter2::visit(SubVector& expr)
 {
-    return code(eval(expr.vec), "[", eval(expr.start), " : ", eval(expr.end), "]");
+    return code(eval(expr.vec), "[", eval(expr.start), " : ", eval(expr.end),
+                "]");
 }
 
 CodeSeg IRPrinter2::visit(Func& fn)

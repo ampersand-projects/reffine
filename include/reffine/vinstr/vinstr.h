@@ -18,7 +18,7 @@ int64_t read_runend_buf(void* buf, int64_t idx)
     if (idx < 0) {
         return 0;
     } else {
-        return (int64_t)((int32_t*) buf)[idx];
+        return (int64_t)((int32_t*)buf)[idx];
     }
 }
 

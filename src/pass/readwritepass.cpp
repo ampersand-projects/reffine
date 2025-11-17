@@ -7,8 +7,9 @@ using namespace reffine::reffiner;
 
 Expr ReadWritePass::visit(ReadRunEnd& expr)
 {
-    auto buf = _cast(types::INT32.ptr(),
-                     _arrbuf(_arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 0), 1));
+    auto buf = _cast(
+        types::INT32.ptr(),
+        _arrbuf(_arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 0), 1));
     return _readrunendbuf(buf, eval(expr.idx));
 }
 
@@ -16,11 +17,13 @@ Expr ReadWritePass::visit(ReadData& expr)
 {
     Expr buf;
     if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
-        buf = _cast(expr.type.ptr(),
-                _arrbuf(_arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1), 1));
+        buf = _cast(
+            expr.type.ptr(),
+            _arrbuf(_arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1),
+                    1));
     } else {
         buf = _cast(expr.type.ptr(),
-                _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1));
+                    _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1));
     }
 
     return _load(buf, eval(expr.idx));
@@ -29,8 +32,9 @@ Expr ReadWritePass::visit(ReadData& expr)
 Expr ReadWritePass::visit(WriteData& expr)
 {
     if (expr.vec->type.encodings[expr.col] == EncodeType::FLAT) {
-        auto buf = _cast(expr.val->type.ptr(),
-                         _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1));
+        auto buf =
+            _cast(expr.val->type.ptr(),
+                  _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1));
         return _store(buf, eval(expr.val), eval(expr.idx));
     } else {
         throw runtime_error("Encoding type not supported for WriteData");
@@ -41,11 +45,13 @@ Expr ReadWritePass::visit(ReadBit& expr)
 {
     Expr buf;
     if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
-        buf = _cast(types::UINT16.ptr(),
-                         _arrbuf(_arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1), 0));
+        buf = _cast(
+            types::UINT16.ptr(),
+            _arrbuf(_arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1),
+                    0));
     } else {
         buf = _cast(types::UINT16.ptr(),
-                         _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 0));
+                    _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 0));
     }
     return _isval(buf, eval(expr.idx));
 }
@@ -53,8 +59,9 @@ Expr ReadWritePass::visit(ReadBit& expr)
 Expr ReadWritePass::visit(WriteBit& expr)
 {
     if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
-        auto buf = _cast(types::UINT16.ptr(),
-                         _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 0));
+        auto buf =
+            _cast(types::UINT16.ptr(),
+                  _arrbuf(_arrchild(_vecarr(eval(expr.vec)), expr.col), 0));
         return _setval(buf, eval(expr.idx), eval(expr.val));
     } else {
         throw runtime_error("Encoding type not supported for WriteBit");
@@ -64,7 +71,8 @@ Expr ReadWritePass::visit(WriteBit& expr)
 Expr ReadWritePass::visit(Length& expr)
 {
     if (expr.vec->type.encodings[expr.col] == EncodeType::RUNEND) {
-        return _arrlen(_arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1));
+        return _arrlen(
+            _arrchild(_arrchild(_vecarr(eval(expr.vec)), expr.col), 1));
     } else {
         return _arrlen(_arrchild(_vecarr(eval(expr.vec)), expr.col));
     }

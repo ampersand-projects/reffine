@@ -22,8 +22,7 @@ struct ArrowTable2 : public ArrowTable {
     }
 
     ArrowTable2(std::string name, int64_t dim, size_t len,
-                std::vector<std::string> cols,
-                std::vector<DataType> dtypes)
+                std::vector<std::string> cols, std::vector<DataType> dtypes)
         : ArrowTable(dim),
           _schema(make_shared<VectorSchema>(name)),
           _array(make_shared<VectorArray>(len))
@@ -73,7 +72,8 @@ struct ArrowTable2 : public ArrowTable {
             auto dtype = this->arrow_to_dtype(child);
 
             dtypes.push_back(this->arrow_to_dtype(child));
-            etypes.push_back((fmt == "+r") ? EncodeType::RUNEND : EncodeType::FLAT);
+            etypes.push_back((fmt == "+r") ? EncodeType::RUNEND
+                                           : EncodeType::FLAT);
         }
 
         return DataType(BaseType::VECTOR, dtypes, this->dim, etypes);
@@ -114,15 +114,16 @@ struct ArrowTable2 : public ArrowTable {
             if (etype == EncodeType::FLAT) {
                 arr = get_array_child(get_vector_array(this), col);
             } else if (etype == EncodeType::RUNEND) {
-                arr = get_array_child(get_array_child(get_vector_array(this), col), 1);
+                arr = get_array_child(
+                    get_array_child(get_vector_array(this), col), 1);
             } else {
                 throw runtime_error("Unknown encode type in indexing");
             }
             auto size = get_array_len(arr);
             this->index() = make_shared<IndexTy>(size);
 
-            auto* bit_buf = (uint16_t*) get_array_buf(arr, 0);
-            auto* data_buf = (int64_t*) get_array_buf(arr, 1);
+            auto* bit_buf = (uint16_t*)get_array_buf(arr, 0);
+            auto* data_buf = (int64_t*)get_array_buf(arr, 1);
 
             for (int64_t i = 0; i < size; i++) {
                 if (get_null_bit(bit_buf, i)) {
@@ -131,7 +132,7 @@ struct ArrowTable2 : public ArrowTable {
             }
         } else {
             throw runtime_error("Data type not supported for indexing: " +
-                    dtype.str());
+                                dtype.str());
         }
     }
 
