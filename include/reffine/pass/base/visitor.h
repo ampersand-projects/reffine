@@ -79,6 +79,10 @@ public:
     {
         throw runtime_error("InitVal operation not supported");
     }
+    virtual void Visit(ReadRunEnd&)
+    {
+        throw runtime_error("ReadRunEnd operation not supported");
+    }
     virtual void Visit(ReadData&)
     {
         throw runtime_error("ReadData operation not supported");
@@ -98,6 +102,10 @@ public:
     virtual void Visit(Length&)
     {
         throw runtime_error("Length operation not supported");
+    }
+    virtual void Visit(SubVector&)
+    {
+        throw runtime_error("SubVector operation not supported");
     }
 
     /**

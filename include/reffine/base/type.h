@@ -37,14 +37,20 @@ enum BaseType {
     VECTOR,
 };
 
+enum EncodeType {
+    FLAT,
+    RUNEND,
+};
+
 struct DataType {
     const BaseType btype;
     const vector<DataType> dtypes;
     const size_t dim;
+    const vector<EncodeType> encodings;
 
     explicit DataType(BaseType btype, vector<DataType> dtypes = {},
-                      size_t dim = 0)
-        : btype(btype), dtypes(dtypes), dim(dim)
+                      size_t dim = 0, vector<EncodeType> encodings = {})
+        : btype(btype), dtypes(dtypes), dim(dim), encodings(encodings)
     {
         switch (btype) {
             case BaseType::STRUCT:
@@ -58,6 +64,7 @@ struct DataType {
             case BaseType::VECTOR:
                 ASSERT(dim > 0);
                 ASSERT(dtypes.size() >= dim);
+                ASSERT(dtypes.size() == encodings.size());
                 break;
             default:
                 ASSERT(dtypes.size() == 0);
@@ -129,7 +136,9 @@ struct DataType {
         return DataType(
             (this->dim == 1) ? BaseType::STRUCT : BaseType::VECTOR,
             std::vector<DataType>(this->dtypes.begin() + 1, this->dtypes.end()),
-            this->dim - 1);
+            this->dim - 1,
+            std::vector<EncodeType>(this->encodings.begin() + 1,
+                                    this->encodings.end()));
     }
 
     DataType iterty() const

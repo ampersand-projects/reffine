@@ -73,8 +73,8 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(Const, ExprNode, m, "_const", DataType, double)
 
     /* Loop */
-    REGISTER_CLASS(IsValid, ExprNode, m, "_isval", Expr, Expr, size_t)
-    REGISTER_CLASS(SetValid, ExprNode, m, "_setvald", Expr, Expr, Expr, size_t)
+    REGISTER_CLASS(IsValid, ExprNode, m, "_isval", Expr, Expr)
+    REGISTER_CLASS(SetValid, ExprNode, m, "_setvald", Expr, Expr, Expr)
     REGISTER_CLASS(FetchDataPtr, ExprNode, m, "_fetch", Expr, size_t)
     REGISTER_CLASS(Alloc, ExprNode, m, "_alloc", DataType, Expr)
     REGISTER_CLASS(Load, ExprNode, m, "_load", Expr, Expr)
@@ -87,7 +87,7 @@ PYBIND11_MODULE(ir, m)
     /* Op */
     REGISTER_CLASS(Element, ExprNode, m, "_elem", Expr, Expr)
     REGISTER_CLASS(Op, ExprNode, m, "_op", vector<Sym>, Expr, vector<Expr>)
-    REGISTER_CLASS(Reduce, ExprNode, m, "_red", Op, InitFnTy, AccFnTy)
+    REGISTER_CLASS(Reduce, ExprNode, m, "_red", Expr, InitFnTy, AccFnTy)
     REGISTER_CLASS(In, ExprNode, m, "_in", Expr, Expr)
 
     /* Statements */

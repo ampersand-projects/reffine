@@ -27,11 +27,13 @@ public:
     CodeSeg visit(NoOp&) final;
     CodeSeg visit(Define&) final;
     CodeSeg visit(InitVal&) final;
+    CodeSeg visit(ReadRunEnd&) final;
     CodeSeg visit(ReadData&) final;
     CodeSeg visit(WriteData&) final;
     CodeSeg visit(ReadBit&) final;
     CodeSeg visit(WriteBit&) final;
     CodeSeg visit(Length&) final;
+    CodeSeg visit(SubVector&) final;
     CodeSeg visit(Select&) final;
     CodeSeg visit(Const&) final;
     CodeSeg visit(Get&) final;

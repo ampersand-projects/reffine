@@ -8,6 +8,22 @@ using namespace std;
 
 namespace reffine {
 
+struct SubVector : public ExprNode {
+    Expr vec;
+    Expr start;
+    Expr end;
+
+    SubVector(Expr vec, Expr start, Expr end)
+        : ExprNode(vec->type), vec(vec), start(start), end(end)
+    {
+        ASSERT(vec->type.is_vector());
+        ASSERT(start->type.is_idx());
+        ASSERT(end->type.is_idx());
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct ReadData : public ExprNode {
     Expr vec;
     Expr idx;
@@ -72,6 +88,21 @@ struct WriteBit : public StmtNode {
     void Accept(Visitor&) final;
 };
 
+struct ReadRunEnd : public ExprNode {
+    Expr vec;
+    Expr idx;
+    size_t col;
+
+    ReadRunEnd(Expr vec, Expr idx, size_t col)
+        : ExprNode(types::IDX), vec(vec), idx(idx), col(col)
+    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->col < this->vec->type.dtypes.size());
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct Locate : public Call {
     Expr vec;
     Expr iter;
@@ -82,7 +113,7 @@ struct Locate : public Call {
         auto& vtype = vec->type;
 
         ASSERT(vtype.is_vector());
-        ASSERT(vtype.dim == 1);
+        ASSERT(vtype.dim <= 2);
         ASSERT(vtype.iterty() == iter->type);
     }
 };
@@ -110,26 +141,21 @@ struct SetLength : public Call {
 };
 
 struct IsValid : public Call {
-    IsValid(Expr vec, Expr idx, size_t col)
-        : Call("get_vector_null_bit", types::BOOL,
-               vector<Expr>{vec, idx, make_shared<Const>(types::UINT32, col)})
+    IsValid(Expr buf, Expr idx)
+        : Call("get_null_bit", types::BOOL, vector<Expr>{buf, idx})
     {
-        ASSERT(vec->type.is_vector());
+        ASSERT(buf->type == types::UINT16.ptr());
         ASSERT(idx->type.is_idx());
-        ASSERT(col < vec->type.dtypes.size());
     }
 };
 
 struct SetValid : public Call {
-    SetValid(Expr vec, Expr idx, Expr validity, size_t col)
-        : Call("set_vector_null_bit", types::VOID,
-               vector<Expr>{vec, idx, validity,
-                            make_shared<Const>(types::UINT32, col)})
+    SetValid(Expr buf, Expr idx, Expr validity)
+        : Call("set_null_bit", types::VOID, vector<Expr>{buf, idx, validity})
     {
-        ASSERT(vec->type.is_vector());
+        ASSERT(buf->type == types::UINT16.ptr());
         ASSERT(idx->type.is_idx());
         ASSERT(validity->type == types::BOOL);
-        ASSERT(col < vec->type.dtypes.size());
     }
 };
 
@@ -186,6 +212,15 @@ struct GetArrayLength : public Call {
         : Call("get_array_len", types::IDX, vector<Expr>{arr})
     {
         ASSERT(arr->type == types::VOID.ptr());
+    }
+};
+
+struct ReadRunEndBuf : public Call {
+    ReadRunEndBuf(Expr buf, Expr idx)
+        : Call("read_runend_buf", types::IDX, vector<Expr>{buf, idx})
+    {
+        ASSERT(buf->type == types::INT32.ptr());
+        ASSERT(idx->type.is_idx());
     }
 };
 

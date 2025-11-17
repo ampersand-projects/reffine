@@ -141,7 +141,7 @@ public:
         expr.vec->Accept(*this);
     }
 
-    void Visit(Reduce& expr) override { expr.op.Accept(*this); }
+    void Visit(Reduce& expr) override { expr.vec->Accept(*this); }
 
     void Visit(Call& expr) override
     {
@@ -215,6 +215,12 @@ public:
         for (auto init : initval.inits) { init->Accept(*this); }
     }
 
+    void Visit(ReadRunEnd& expr) override
+    {
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
+    }
+
     void Visit(ReadData& expr) override
     {
         expr.vec->Accept(*this);
@@ -242,6 +248,13 @@ public:
     }
 
     void Visit(Length& expr) override { expr.vec->Accept(*this); }
+
+    void Visit(SubVector& expr) override
+    {
+        expr.vec->Accept(*this);
+        expr.start->Accept(*this);
+        expr.end->Accept(*this);
+    }
 
 protected:
     void Visit(SymNode& symbol) override

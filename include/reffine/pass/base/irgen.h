@@ -142,6 +142,10 @@ protected:
     {
         throw runtime_error("InitVal visit not supported");
     }
+    virtual ValTy visit(ReadRunEnd&)
+    {
+        throw runtime_error("ReadRunEnd visit not supported");
+    }
     virtual ValTy visit(ReadData&)
     {
         throw runtime_error("ReadData visit not supported");
@@ -161,6 +165,10 @@ protected:
     virtual ValTy visit(Length&)
     {
         throw runtime_error("Length visit not supported");
+    }
+    virtual ValTy visit(SubVector&)
+    {
+        throw runtime_error("SubVector visit not supported");
     }
 
     void Visit(Select& expr) final { val() = visit(expr); }
@@ -191,11 +199,13 @@ protected:
     void Visit(NoOp& stmt) final { val() = visit(stmt); }
     void Visit(Define& expr) final { val() = visit(expr); }
     void Visit(InitVal& expr) final { val() = visit(expr); }
+    void Visit(ReadRunEnd& expr) final { val() = visit(expr); }
     void Visit(ReadData& expr) final { val() = visit(expr); }
     void Visit(WriteData& expr) final { val() = visit(expr); }
     void Visit(ReadBit& expr) final { val() = visit(expr); }
     void Visit(WriteBit& expr) final { val() = visit(expr); }
     void Visit(Length& expr) final { val() = visit(expr); }
+    void Visit(SubVector& expr) final { val() = visit(expr); }
     void Visit(Func& stmt) final { val() = visit(stmt); }
     void Visit(SymNode& symbol) override
     {

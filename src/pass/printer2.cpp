@@ -198,14 +198,14 @@ CodeSeg IRPrinter2::visit(In& e)
 CodeSeg IRPrinter2::visit(Reduce& red)
 {
     auto state_val = red.init();
-    auto val = _sym("val", red.op.type.rowty());
+    auto val = _sym("val", red.vec->type.rowty());
     auto state = _sym("state", state_val->type);
     auto state2 = red.acc(state, val);
 
     auto line = code(REDCLE, " {");
 
     auto parent = enter_block();
-    emit(nl(), eval(this->tmp_expr(red.op)), ", ", nl());
+    emit(nl(), eval(red.vec), ", ", nl());
     emit("state <- ", eval(state_val), ", ", nl());
     emit("state <- ", eval(state2));
 
@@ -306,6 +306,12 @@ CodeSeg IRPrinter2::visit(InitVal& init_val)
     return eval(init_val.val);
 }
 
+CodeSeg IRPrinter2::visit(ReadRunEnd& expr)
+{
+    return code_func("read_runend",
+                     vector<Expr>{expr.vec, expr.idx, _idx(expr.col)});
+}
+
 CodeSeg IRPrinter2::visit(ReadData& expr)
 {
     return code_func("read_data",
@@ -333,6 +339,12 @@ CodeSeg IRPrinter2::visit(WriteBit& expr)
 CodeSeg IRPrinter2::visit(Length& expr)
 {
     return code_func("length", vector<Expr>{expr.vec, _idx(expr.col)});
+}
+
+CodeSeg IRPrinter2::visit(SubVector& expr)
+{
+    return code(eval(expr.vec), "[", eval(expr.start), " : ", eval(expr.end),
+                "]");
 }
 
 CodeSeg IRPrinter2::visit(Func& fn)

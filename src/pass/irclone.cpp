@@ -27,8 +27,7 @@ shared_ptr<Op> IRClone::visit_op(Op& op)
 
 Expr IRClone::visit(Reduce& red)
 {
-    auto new_op = IRClone::visit_op(red.op);
-    return _red(*new_op, red.init, red.acc);
+    return _red(eval(red.vec), red.init, red.acc);
 }
 
 Expr IRClone::visit(Op& op) { return IRClone::visit_op(op); }
@@ -147,6 +146,14 @@ Expr IRClone::visit(InitVal& init_val)
     return _initval(inits, val);
 }
 
+Expr IRClone::visit(ReadRunEnd& expr)
+{
+    auto vec = eval(expr.vec);
+    auto idx = eval(expr.idx);
+
+    return _readrunend(vec, idx, expr.col);
+}
+
 Expr IRClone::visit(ReadData& expr)
 {
     auto vec = eval(expr.vec);
@@ -182,6 +189,11 @@ Expr IRClone::visit(WriteBit& expr)
 }
 
 Expr IRClone::visit(Length& expr) { return _len(eval(expr.vec), expr.col); }
+
+Expr IRClone::visit(SubVector& expr)
+{
+    return _subvec(eval(expr.vec), eval(expr.start), eval(expr.end));
+}
 
 Expr IRClone::visit(Store& store)
 {

@@ -122,12 +122,14 @@ REGISTER_EXPR(_red, Reduce)
 REGISTER_EXPR(_in, In)
 
 // Op to Loop
+REGISTER_EXPR(_readrunend, ReadRunEnd)
 REGISTER_EXPR(_readdata, ReadData)
 REGISTER_EXPR(_writedata, WriteData)
 REGISTER_EXPR(_readbit, ReadBit)
 REGISTER_EXPR(_writebit, WriteBit)
 REGISTER_EXPR(_locate, Locate)
 REGISTER_EXPR(_len, Length)
+REGISTER_EXPR(_subvec, SubVector)
 REGISTER_EXPR(_setlen, SetLength)
 REGISTER_EXPR(_isval, IsValid)
 REGISTER_EXPR(_setval, SetValid)
@@ -137,6 +139,7 @@ REGISTER_EXPR(_vecarr, GetVectorArray)
 REGISTER_EXPR(_arrchild, GetArrayChild)
 REGISTER_EXPR(_arrbuf, GetArrayBuf)
 REGISTER_EXPR(_arrlen, GetArrayLength)
+REGISTER_EXPR(_readrunendbuf, ReadRunEndBuf)
 
 // CUDA
 REGISTER_EXPR(_tidx, ThreadIdx)

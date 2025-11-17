@@ -5,16 +5,17 @@
 using namespace reffine;
 using namespace reffine::reffiner;
 
-arrow::Result<std::shared_ptr<ArrowTable2>> get_input_vector()
+arrow::Result<std::shared_ptr<ArrowTable2>> get_input_vector(
+    std::string filename, int64_t dim)
 {
     ARROW_ASSIGN_OR_RAISE(
-        auto infile, arrow::io::ReadableFile::Open(
-                         "../../students.arrow", arrow::default_memory_pool()));
+        auto infile,
+        arrow::io::ReadableFile::Open(filename, arrow::default_memory_pool()));
     ARROW_ASSIGN_OR_RAISE(auto ipc_reader,
                           arrow::ipc::RecordBatchFileReader::Open(infile));
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
 
-    auto table = std::make_shared<ArrowTable2>(1);
+    auto table = std::make_shared<ArrowTable2>(dim);
     ARROW_RETURN_NOT_OK(
         arrow::ExportRecordBatch(*rbatch, table->array, table->schema));
     table->build_index();

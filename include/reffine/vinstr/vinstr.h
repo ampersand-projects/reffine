@@ -13,6 +13,16 @@ extern "C" {
  * Internal
  */
 REFFINE_VINSTR_ATTR
+int64_t read_runend_buf(void* buf, int64_t idx)
+{
+    if (idx < 0) {
+        return 0;
+    } else {
+        return (int64_t)((int32_t*)buf)[idx];
+    }
+}
+
+REFFINE_VINSTR_ATTR
 ArrowArray* get_vector_array(ArrowTable* tbl) { return tbl->array; }
 
 REFFINE_VINSTR_ATTR
