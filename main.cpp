@@ -423,7 +423,7 @@ int main()
     auto tbl = load_arrow_file("../benchmark/runend.arrow", 2).ValueOrDie();
     tbl->build_index();
     auto red = red_op(tbl);
-    auto red_fn = compile_op<void (*)(void*, void*)>(red);
+    auto red_fn = compile_op<void (*)(void*, void*)>(red, true);
 
     ArrowTable2* out;
     red_fn(&out, tbl.get());

@@ -233,6 +233,7 @@ Expr LoopGen::visit(Reduce& red)
         loop->init = _stmts(vector<Expr>{
             _store(red_idx_addr, red_start)
         });
+        loop->body_cond = _readbit(red_vec, _load(red_idx_addr), 1);
         loop->incr = _stmts(vector<Expr>{
             _store(red_idx_addr, _add(_load(red_idx_addr), _idx(1)))
         });
