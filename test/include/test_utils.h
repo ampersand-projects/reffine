@@ -20,8 +20,8 @@
 #include "reffine/pass/scalarpass.h"
 #include "reffine/utils/utils.h"
 
-#define STUDENTS_ARROW_FILE "../../students.arrow"
-#define RUNEND_ARROW_FILE "../../benchmark/runend.arrow"
+#define STUDENTS_ARROW_FILE "../../benchmark/lib/students.arrow"
+#define RUNEND_ARROW_FILE "../../benchmark/lib/runend.arrow"
 
 arrow::Result<std::shared_ptr<reffine::ArrowTable2>> get_input_vector(
     std::string, int64_t);
