@@ -217,3 +217,4 @@
 #define DOUBLE_CAST (double)
 #endif /* DOUBLE_CAST */
 
+#define EOL_HANDLING 1

@@ -1,1 +1,1 @@
-./dbgen -s 1
+./dbgen -s 1 -f -v

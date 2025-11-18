@@ -1,1 +1,1 @@
-./dsdgen -SCALE 1 -SUFFIX .tbl
+./dsdgen -SCALE 1 -SUFFIX .tbl -FORCE Y -TERMINATE N -VERBOSE Y
