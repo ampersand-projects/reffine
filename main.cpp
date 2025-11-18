@@ -403,7 +403,7 @@ int main()
         }
     }
 
-    auto tbl = load_arrow_file("../benchmark/runend.arrow", 2);
+    auto tbl = load_arrow_file("../benchmark/lib/runend.arrow", 2);
     tbl->build_index();
     auto red = red_op(tbl);
     auto red_fn = compile_op<void (*)(void*, void*)>(red, true);
