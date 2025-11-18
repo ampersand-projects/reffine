@@ -53,4 +53,6 @@ T compile_op(std::shared_ptr<Func> op, bool vectorize = false)
     return compile_loop<T>(loopgen.ctx().out_func);
 }
 
+shared_ptr<ArrowTable2> load_arrow_file(string, int64_t);
+
 #endif  // INCLUDE_REFFINE_UTILS_H_
