@@ -10,9 +10,18 @@ def write_dataframe(filename, df):
         writer.write(table)
 
 def write_table(filename, table):
+    combined_table = table.combine_chunks()
+    '''
     with pa.OSFile(filename, "wb") as sink:
-        with pa.ipc.RecordBatchFileWriter(sink, table.schema) as writer:
-            writer.write_table(table)
+        with pa.ipc.RecordBatchFileWriter(sink, combined_table.schema) as writer:
+            writer.write_table(combined_table)
+    '''
+    with pa.ipc.new_file(filename, combined_table.schema) as writer:
+        writer.write(combined_table)
+
+def read_table(filename):
+    with pa.ipc.open_file(filename) as reader:
+        return reader.read_all()
 
 def tpch_query6():
     dtypes = {
@@ -52,3 +61,4 @@ def tpch_query6():
     write_table("lineitem.arrow", tbl)
 
 tpch_query6()
+print(read_table("lineitem.arrow"))
