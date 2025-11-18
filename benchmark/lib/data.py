@@ -33,13 +33,13 @@ def tpch_query6():
         "L_EXTENDEDPRICE": np.float64,
         "L_DISCOUNT": np.float64,
         "L_TAX": np.float64,
-        "L_RETURNFLAG": np.bytes_,
-        "L_LINESTATUS": np.bytes_,
+        "L_RETURNFLAG": np.str_,
+        "L_LINESTATUS": np.str_,
         "L_SHIPDATE": np.dtype('datetime64[s]'),
         "L_COMMITDATE": np.dtype('datetime64[s]'),
         "L_RECEIPTDATE": np.dtype('datetime64[s]'),
-        "L_SHIPINSTRUCT": np.bytes_,
-        "L_SHIPMODE": np.bytes_,
+        "L_SHIPINSTRUCT": np.str_,
+        "L_SHIPMODE": np.str_,
         "L_COMMENT": np.str_,
     }
     
