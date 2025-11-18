@@ -32,3 +32,7 @@ if(ENABLE_CUDA)
     target_compile_definitions(reffine PUBLIC ENABLE_CUDA)
     target_include_directories(reffine SYSTEM PUBLIC ${CUDA_INCLUDE_DIRS})
 endif()
+
+add_executable(bench benchmark/main.cpp)
+target_include_directories(bench PRIVATE benchmark/include)
+target_link_libraries(bench reffine Arrow::arrow_shared)
