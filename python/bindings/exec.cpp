@@ -10,7 +10,7 @@ using namespace reffine;
 
 namespace py = pybind11;
 
-string to_string(shared_ptr<Func> fn) { return IRPrinter::Build(fn); }
+string to_string(shared_ptr<Func> fn) { return IRPrinter2::Build(fn); }
 
 std::vector<void*> run(void* query, std::vector<void*> inputs)
 {

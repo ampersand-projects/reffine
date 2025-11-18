@@ -8,7 +8,7 @@
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/stmt.h"
-#include "reffine/pass/printer.h"
+// #include "reffine/pass/printer.h"
 
 using namespace std;
 using namespace reffine;
@@ -57,6 +57,10 @@ void init_ir(py::module_& m)
         .def("iterty", &DataType::iterty)
         .def("valty", &DataType::valty)
         .def("str", &DataType::str);
+
+    py::enum_<EncodeType>(m, "EncodeType")
+        .value("FLAT", EncodeType::FLAT)
+        .value("RUNEND", EncodeType::RUNEND);
 
     /* StmtNode and Derived Structures Declarations
      */
@@ -215,7 +219,7 @@ void init_ir(py::module_& m)
     m.def("STRUCT", [](std::vector<DataType> types) {
         return DataType(BaseType::STRUCT, types);
     });
-    m.def("VECTOR", [](size_t dim, std::vector<DataType> types) {
-        return DataType(BaseType::VECTOR, types, dim);
+    m.def("VECTOR", [](size_t dim, std::vector<DataType> types, std::vector<EncodeType> encode_types) {
+        return DataType(BaseType::VECTOR, types, dim, encode_types);
     });
 }

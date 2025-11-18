@@ -52,8 +52,8 @@ def test_numpy():
 
     
 def transform_fn_arrow(n=100):
-    vec_out_sym = ir._sym("out", ir.VECTOR(1, [ir._i64_t]))
-    vec_sym = ir._sym("in", ir.VECTOR(1, [ir._i64_t, ir._i64_t]))
+    vec_out_sym = ir._sym("out", ir.VECTOR(1, [ir._i64_t], [ir.EncodeType.FLAT]))
+    vec_sym = ir._sym("in", ir.VECTOR(1, [ir._i64_t, ir._i64_t], [ir.EncodeType.FLAT, ir.EncodeType.FLAT]))
 
     length = ir._call("get_vector_len", ir._idx_t, [vec_sym])
 
