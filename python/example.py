@@ -108,5 +108,5 @@ def test_arrow():
     print(f"Output:\n{out_arr}\n\n")
     
 
-test_arrow()
-# test_numpy()
+# test_arrow()
+test_numpy()
