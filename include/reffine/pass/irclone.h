@@ -5,24 +5,11 @@
 
 namespace reffine {
 
-class IRCloneCtx : public IRGenCtx {
-public:
-    IRCloneCtx(shared_ptr<Func> old_func, shared_ptr<Func> new_func)
-        : IRGenCtx(old_func->tbl, new_func->tbl), new_func(new_func)
-    {
-    }
-
-private:
-    shared_ptr<Func> new_func;
-
-    friend class IRClone;
-};
-
 class IRClone : public IRGen {
 public:
-    explicit IRClone(IRCloneCtx& ctx) : IRGen(ctx), _irclonectx(ctx) {}
-
-    static shared_ptr<Func> Build(shared_ptr<Func> func);
+    explicit IRClone(unique_ptr<IRGenCtx> ctx = nullptr) : IRGen(std::move(ctx))
+    {
+    }
 
 protected:
     Expr visit(Sym) override;
@@ -36,9 +23,7 @@ protected:
     Expr visit(Op&) override;
     Expr visit(Element&) override;
     Expr visit(Lookup&) override;
-    Expr visit(Locate&) override;
-    Expr visit(Length&) override;
-    Expr visit(NotNull&) override;
+    Expr visit(In&) override;
     Expr visit(Reduce&) override;
     Expr visit(Call&) override;
     Expr visit(Stmts&) override;
@@ -52,16 +37,21 @@ protected:
     Expr visit(BlockDim&) override;
     Expr visit(GridDim&) override;
     Expr visit(Loop&) override;
-    Expr visit(IsValid&) override;
-    Expr visit(SetValid&) override;
     Expr visit(FetchDataPtr&) override;
     Expr visit(NoOp&) override;
-    void visit(Func&) override;
+    Expr visit(Define&) override;
+    Expr visit(InitVal&) override;
+    Expr visit(ReadRunEnd&) override;
+    Expr visit(ReadData&) override;
+    Expr visit(WriteData&) override;
+    Expr visit(ReadBit&) override;
+    Expr visit(WriteBit&) override;
+    Expr visit(Length&) override;
+    Expr visit(SubVector&) override;
+    Expr visit(Func&) override;
 
 private:
     shared_ptr<Op> visit_op(Op&);
-
-    IRCloneCtx& _irclonectx;
 };
 
 }  // namespace reffine

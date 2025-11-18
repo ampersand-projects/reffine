@@ -19,19 +19,45 @@ public:
     {
     }
 
+    IRPassBaseCtx(const SymTable& in_sym_tbl,
+                  unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr =
+                      make_unique<map<Sym, ValTy>>())
+        : in_sym_tbl(in_sym_tbl),
+          out_sym_tbl(*out_sym_tbl_ptr),
+          out_sym_tbl_ptr(std::move(out_sym_tbl_ptr))
+    {
+    }
+
+    IRPassBaseCtx(unique_ptr<SymTable> in_sym_tbl_ptr = make_unique<SymTable>(),
+                  unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr =
+                      make_unique<map<Sym, ValTy>>())
+        : in_sym_tbl(*in_sym_tbl_ptr),
+          out_sym_tbl(*out_sym_tbl_ptr),
+          in_sym_tbl_ptr(std::move(in_sym_tbl_ptr)),
+          out_sym_tbl_ptr(std::move(out_sym_tbl_ptr))
+    {
+    }
+
     const SymTable& in_sym_tbl;
     map<Sym, ValTy>& out_sym_tbl;
+
+private:
+    unique_ptr<SymTable> in_sym_tbl_ptr;
+    unique_ptr<map<Sym, ValTy>> out_sym_tbl_ptr;
 };
 
-template <typename ValTy>
+template <typename CtxTy, typename ValTy>
 class IRPassBase : public Visitor {
 public:
-    explicit IRPassBase(IRPassBaseCtx<ValTy>& ctx) : _ctx(ctx) {}
+    explicit IRPassBase(unique_ptr<CtxTy> ctx) : _ctx(std::move(ctx)) {}
+
+    CtxTy& ctx() { return *this->_ctx; }
 
 protected:
-    IRPassBaseCtx<ValTy>& ctx() { return _ctx; }
-
-    void assign(Sym sym, ValTy val) { ctx().out_sym_tbl[sym] = val; }
+    virtual void assign(Sym sym, ValTy val)
+    {
+        this->ctx().out_sym_tbl[sym] = val;
+    }
 
     Sym tmp_sym(SymNode& symbol)
     {
@@ -46,23 +72,19 @@ protected:
         return tmp_expr;
     }
 
-private:
-    IRPassBaseCtx<ValTy>& _ctx;
+    void switch_ctx(unique_ptr<CtxTy>& octx) { std::swap(octx, this->_ctx); }
+
+    unique_ptr<CtxTy> _ctx;
 };
 
-class IRPassCtx : public IRPassBaseCtx<Sym> {
+using IRPassCtx = IRPassBaseCtx<Sym>;
+
+class IRPass : public IRPassBase<IRPassCtx, Sym> {
 public:
-    IRPassCtx(const SymTable& in_sym_tbl, map<Sym, Sym> m = {})
-        : IRPassBaseCtx<Sym>(in_sym_tbl, m)
+    explicit IRPass(unique_ptr<IRPassCtx> ctx)
+        : IRPassBase<IRPassCtx, Sym>(std::move(ctx))
     {
     }
-};
-
-class IRPass : public IRPassBase<Sym> {
-public:
-    explicit IRPass(IRPassCtx& ctx) : IRPassBase(ctx) {}
-
-    void Visit(StmtExprNode& expr) override { expr.stmt->Accept(*this); }
 
     void Visit(Select& expr) override
     {
@@ -96,7 +118,7 @@ public:
 
     void Visit(Op& expr) override
     {
-        for (auto& iter : expr.iters) { this->assign(iter); }
+        for (auto& iter : expr.iters) { this->assign(iter, iter); }
         expr.pred->Accept(*this);
         for (auto& output : expr.outputs) { output->Accept(*this); }
     }
@@ -104,12 +126,22 @@ public:
     void Visit(Element& expr) override
     {
         expr.vec->Accept(*this);
-        for (auto& iter : expr.iters) { iter->Accept(*this); }
+        expr.iter->Accept(*this);
     }
 
-    void Visit(NotNull& expr) override { expr.elem->Accept(*this); }
+    void Visit(Lookup& expr) override
+    {
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
+    }
 
-    void Visit(Reduce& expr) override { expr.op.Accept(*this); }
+    void Visit(In& expr) override
+    {
+        expr.iter->Accept(*this);
+        expr.vec->Accept(*this);
+    }
+
+    void Visit(Reduce& expr) override { expr.vec->Accept(*this); }
 
     void Visit(Call& expr) override
     {
@@ -123,19 +155,24 @@ public:
 
     void Visit(Func& stmt) override
     {
-        for (auto& input : stmt.inputs) { this->assign(input); }
+        for (auto& input : stmt.inputs) { this->assign(input, input); }
 
         stmt.output->Accept(*this);
     }
 
     void Visit(Alloc& expr) override { expr.size->Accept(*this); }
 
-    void Visit(Load& expr) override { expr.addr->Accept(*this); }
+    void Visit(Load& expr) override
+    {
+        expr.addr->Accept(*this);
+        expr.offset->Accept(*this);
+    }
 
     void Visit(Store& expr) override
     {
         expr.addr->Accept(*this);
         expr.val->Accept(*this);
+        expr.offset->Accept(*this);
     }
 
     void Visit(AtomicOp& stmt) override
@@ -162,40 +199,62 @@ public:
         expr.output->Accept(*this);
     }
 
-    void Visit(IsValid& expr) override
+    void Visit(FetchDataPtr& expr) override { expr.vec->Accept(*this); }
+
+    void Visit(NoOp& stmt) override {}
+
+    void Visit(Define& define) override
+    {
+        define.sym->Accept(*this);
+        define.val->Accept(*this);
+    }
+
+    void Visit(InitVal& initval) override
+    {
+        initval.val->Accept(*this);
+        for (auto init : initval.inits) { init->Accept(*this); }
+    }
+
+    void Visit(ReadRunEnd& expr) override
     {
         expr.vec->Accept(*this);
         expr.idx->Accept(*this);
     }
 
-    void Visit(SetValid& expr) override
-    {
-        expr.vec->Accept(*this);
-        expr.idx->Accept(*this);
-        expr.validity->Accept(*this);
-    }
-
-    void Visit(Lookup& expr) override
+    void Visit(ReadData& expr) override
     {
         expr.vec->Accept(*this);
         expr.idx->Accept(*this);
     }
 
-    void Visit(Locate& expr) override
+    void Visit(WriteData& expr) override
     {
         expr.vec->Accept(*this);
-        expr.iter->Accept(*this);
+        expr.idx->Accept(*this);
+        expr.val->Accept(*this);
+    }
+
+    void Visit(ReadBit& expr) override
+    {
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
+    }
+
+    void Visit(WriteBit& expr) override
+    {
+        expr.vec->Accept(*this);
+        expr.idx->Accept(*this);
+        expr.val->Accept(*this);
     }
 
     void Visit(Length& expr) override { expr.vec->Accept(*this); }
 
-    void Visit(FetchDataPtr& expr) override
+    void Visit(SubVector& expr) override
     {
         expr.vec->Accept(*this);
-        expr.idx->Accept(*this);
+        expr.start->Accept(*this);
+        expr.end->Accept(*this);
     }
-
-    void Visit(NoOp& stmt) override {}
 
 protected:
     void Visit(SymNode& symbol) override
@@ -204,11 +263,9 @@ protected:
 
         if (ctx().out_sym_tbl.find(tmp) == ctx().out_sym_tbl.end()) {
             ctx().in_sym_tbl.at(tmp)->Accept(*this);
-            this->assign(tmp);
+            this->assign(tmp, tmp);
         }
     }
-
-    void assign(Sym sym) { IRPassBase<Sym>::assign(sym, sym); }
 };
 
 }  // namespace reffine

@@ -20,32 +20,28 @@
 
 using namespace std;
 
-extern const char* vinstr_str;
+extern unsigned char vinstr_ll[];
+extern unsigned int vinstr_ll_len;
 
 namespace reffine {
 
-class LLVMGenCtx : public IRPassBaseCtx<llvm::Value*> {
-public:
-    LLVMGenCtx(shared_ptr<Func> func, map<Sym, llvm::Value*> m = {})
-        : IRPassBaseCtx<llvm::Value*>(func->tbl, m)
-    {
-    }
-};
+using LLVMGenCtx = IRPassBaseCtx<llvm::Value*>;
 
-class LLVMGen : public IRGenBase<llvm::Value*> {
+class LLVMGen : public IRGenBase<LLVMGenCtx, llvm::Value*> {
 public:
-    explicit LLVMGen(LLVMGenCtx& ctx, llvm::Module& llmod)
-        : IRGenBase(ctx),
+    explicit LLVMGen(llvm::Module& llmod, unique_ptr<LLVMGenCtx> ctx = nullptr)
+        : IRGenBase(std::move(ctx)),
           _llmod(llmod),
           _builder(make_unique<llvm::IRBuilder<>>(llmod.getContext()))
     {
-        register_vinstrs();
+        std::string vinstr(reinterpret_cast<char*>(vinstr_ll), vinstr_ll_len);
+        register_code(vinstr);
     }
 
-    static void Build(shared_ptr<Func>, llvm::Module&);
+    void parse(const string&);
 
 private:
-    void register_vinstrs();
+    void register_code(const string&);
 
     llvm::Value* visit(Sym) final;
     llvm::Value* visit(Call&) final;
@@ -67,12 +63,8 @@ private:
     llvm::Value* visit(BlockDim&) final;
     llvm::Value* visit(GridDim&) final;
     llvm::Value* visit(Loop&) final;
-    llvm::Value* visit(IsValid&) final;
-    llvm::Value* visit(SetValid&) final;
-    llvm::Value* visit(Length&) final;
-    llvm::Value* visit(Locate&) final;
     llvm::Value* visit(FetchDataPtr&) final;
-    void visit(Func&) final;
+    llvm::Value* visit(Func&) final;
 
     llvm::Function* llfunc(const string, llvm::Type*, vector<llvm::Type*>);
     llvm::Value* llcall(const string, llvm::Type*, vector<llvm::Value*>);

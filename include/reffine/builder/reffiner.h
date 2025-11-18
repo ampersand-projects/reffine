@@ -5,14 +5,10 @@
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/op_to_loop.h"
+#include "reffine/ir/pred.h"
 #include "reffine/ir/stmt.h"
 
 namespace reffine::reffiner {
-
-template <typename T>
-struct _stmt : public shared_ptr<T> {
-    explicit _stmt(shared_ptr<T>&& ptr) : shared_ptr<T>(std::move(ptr)) {}
-};
 
 template <typename T>
 struct _expr;
@@ -28,12 +24,12 @@ _expr<LessThanEqual> _expr_lte(Expr, Expr);
 _expr<GreaterThan> _expr_gt(Expr, Expr);
 _expr<GreaterThanEqual> _expr_gte(Expr, Expr);
 _expr<Equals> _expr_eq(Expr, Expr);
+_expr<Not> _expr_neq(Expr, Expr);
 _expr<Not> _expr_not(Expr);
 _expr<And> _expr_and(Expr, Expr);
 _expr<Or> _expr_or(Expr, Expr);
 _expr<Get> _expr_get(Expr, size_t);
-_expr<Element> _expr_elem(Expr, vector<Expr>);
-_expr<NotNull> _expr_notnull(Expr);
+_expr<Element> _expr_elem(Expr, Expr);
 
 template <typename T>
 struct _expr : public shared_ptr<T> {
@@ -56,15 +52,18 @@ struct _expr : public shared_ptr<T> {
         return _expr_gte(*this, o);
     }
     _expr<Equals> operator==(Expr o) const { return _expr_eq(*this, o); }
+    _expr<Not> operator!=(Expr o) const
+    {
+        return _expr_not(_expr_eq(*this, o));
+    }
     _expr<Not> operator!() const { return _expr_not(*this); }
     _expr<And> operator&(Expr o) const { return _expr_and(*this, o); }
     _expr<Or> operator|(Expr o) const { return _expr_or(*this, o); }
     _expr<Get> operator[](size_t n) const { return _expr_get(*this, n); }
-    _expr<Element> operator[](std::initializer_list<Expr> iters) const
+    _expr<Element> operator[](Expr iter) const
     {
-        return _expr_elem(*this, iters);
+        return _expr_elem(*this, iter);
     }
-    _expr<NotNull> operator~() const { return _expr_notnull(*this); }
 };
 
 #define REGISTER_EXPR(NAME, EXPR)                                            \
@@ -103,14 +102,13 @@ REGISTER_EXPR(_and, And)
 REGISTER_EXPR(_or, Or)
 REGISTER_EXPR(_forall, ForAll)
 REGISTER_EXPR(_implies, Implies)
+REGISTER_EXPR(_iff, Iff)
 REGISTER_EXPR(_exists, Exists)
 
 // Constant expressions
 REGISTER_EXPR(_const, Const)
 
 // Loop expressions
-REGISTER_EXPR(_isval, IsValid)
-REGISTER_EXPR(_setval, SetValid)
 REGISTER_EXPR(_fetch, FetchDataPtr)
 REGISTER_EXPR(_alloc, Alloc)
 REGISTER_EXPR(_load, Load)
@@ -118,14 +116,30 @@ REGISTER_EXPR(_loop, reffine::Loop)
 
 // Ops
 REGISTER_EXPR(_elem, Element)
+REGISTER_EXPR(_lookup, Lookup)
 REGISTER_EXPR(_op, Op)
 REGISTER_EXPR(_red, Reduce)
-REGISTER_EXPR(_notnull, NotNull)
+REGISTER_EXPR(_in, In)
 
 // Op to Loop
-REGISTER_EXPR(_lookup, Lookup)
+REGISTER_EXPR(_readrunend, ReadRunEnd)
+REGISTER_EXPR(_readdata, ReadData)
+REGISTER_EXPR(_writedata, WriteData)
+REGISTER_EXPR(_readbit, ReadBit)
+REGISTER_EXPR(_writebit, WriteBit)
 REGISTER_EXPR(_locate, Locate)
 REGISTER_EXPR(_len, Length)
+REGISTER_EXPR(_subvec, SubVector)
+REGISTER_EXPR(_setlen, SetLength)
+REGISTER_EXPR(_isval, IsValid)
+REGISTER_EXPR(_setval, SetValid)
+REGISTER_EXPR(_make, MakeVector)
+REGISTER_EXPR(_finalize, FinalizeVector)
+REGISTER_EXPR(_vecarr, GetVectorArray)
+REGISTER_EXPR(_arrchild, GetArrayChild)
+REGISTER_EXPR(_arrbuf, GetArrayBuf)
+REGISTER_EXPR(_arrlen, GetArrayLength)
+REGISTER_EXPR(_readrunendbuf, ReadRunEndBuf)
 
 // CUDA
 REGISTER_EXPR(_tidx, ThreadIdx)
@@ -143,28 +157,18 @@ REGISTER_EXPR(_nary, NaryExpr)
 REGISTER_EXPR(_unary, UnaryExpr)
 REGISTER_EXPR(_binary, BinaryExpr)
 REGISTER_EXPR(_sym, SymNode)
-REGISTER_EXPR(_stmtexpr, StmtExprNode)
 REGISTER_EXPR(_structgep, StructGEP)
-#undef REGISTER_EXPR
-
-#define REGISTER_STMT(NAME, STMT)                                            \
-    template <typename... Args>                                              \
-    struct NAME : public _stmt<STMT> {                                       \
-        explicit NAME(Args... args)                                          \
-            : _stmt<STMT>(                                                   \
-                  std::move(make_shared<STMT>(std::forward<Args>(args)...))) \
-        {                                                                    \
-        }                                                                    \
-    };
 
 // Statements
-REGISTER_STMT(_func, Func)
-REGISTER_STMT(_stmts, Stmts)
-REGISTER_STMT(_ifelse, IfElse)
-REGISTER_STMT(_noop, NoOp)
-REGISTER_STMT(_store, Store)
-REGISTER_STMT(_atomic_op, AtomicOp)
-#undef REGISTER_STMT
+REGISTER_EXPR(_func, Func)
+REGISTER_EXPR(_stmts, Stmts)
+REGISTER_EXPR(_ifelse, IfElse)
+REGISTER_EXPR(_noop, NoOp)
+REGISTER_EXPR(_define, Define)
+REGISTER_EXPR(_initval, InitVal)
+REGISTER_EXPR(_store, Store)
+REGISTER_EXPR(_atomic_op, AtomicOp)
+#undef REGISTER_EXPR
 
 _expr<Const> _i8(int8_t);
 _expr<Const> _i16(int16_t);

@@ -14,8 +14,8 @@ namespace reffine {
 
 #define INF 1 << 22
 
-enum class BaseType {
-    UNKNOWN,  // never use this type
+enum BaseType {
+    UNKNOWN = -1,  // never use this type
     VOID,
     BOOL,
     INT8,
@@ -30,20 +30,27 @@ enum class BaseType {
     FLOAT64,
     STRUCT,
     PTR,
+    STR,
 
     // Reffine IR types
     IDX,
     VECTOR,
 };
 
+enum EncodeType {
+    FLAT,
+    RUNEND,
+};
+
 struct DataType {
     const BaseType btype;
     const vector<DataType> dtypes;
     const size_t dim;
+    const vector<EncodeType> encodings;
 
     explicit DataType(BaseType btype, vector<DataType> dtypes = {},
-                      size_t dim = 0)
-        : btype(btype), dtypes(dtypes), dim(dim)
+                      size_t dim = 0, vector<EncodeType> encodings = {})
+        : btype(btype), dtypes(dtypes), dim(dim), encodings(encodings)
     {
         switch (btype) {
             case BaseType::STRUCT:
@@ -55,7 +62,9 @@ struct DataType {
                 ASSERT(dtypes.size() == 1);
                 break;
             case BaseType::VECTOR:
+                ASSERT(dim > 0);
                 ASSERT(dtypes.size() >= dim);
+                ASSERT(dtypes.size() == encodings.size());
                 break;
             default:
                 ASSERT(dtypes.size() == 0);
@@ -123,22 +132,19 @@ struct DataType {
     DataType valty() const
     {
         ASSERT(this->is_vector());
-        return DataType(BaseType::STRUCT,
-                        std::vector<DataType>(this->dtypes.begin() + this->dim,
-                                              this->dtypes.end()));
+
+        return DataType(
+            (this->dim == 1) ? BaseType::STRUCT : BaseType::VECTOR,
+            std::vector<DataType>(this->dtypes.begin() + 1, this->dtypes.end()),
+            this->dim - 1,
+            std::vector<EncodeType>(this->encodings.begin() + 1,
+                                    this->encodings.end()));
     }
 
     DataType iterty() const
     {
         ASSERT(this->is_vector());
-        if (this->dim == 1) {
-            return this->dtypes[0];
-        } else {
-            return DataType(
-                BaseType::STRUCT,
-                std::vector<DataType>(this->dtypes.begin(),
-                                      this->dtypes.begin() + this->dim));
-        }
+        return this->dtypes[0];
     }
 
     DataType rowty() const
@@ -176,6 +182,8 @@ struct DataType {
                 return "f64";
             case BaseType::PTR:
                 return "*" + dtypes[0].str();
+            case BaseType::STR:
+                return "str";
             case BaseType::STRUCT: {
                 string res = "";
                 for (const auto& dtype : dtypes) { res += dtype.str() + ", "; }
@@ -198,6 +206,45 @@ struct DataType {
             }
             default:
                 throw std::runtime_error("Invalid type");
+        }
+    }
+
+    string cppstr() const
+    {
+        switch (btype) {
+            case BaseType::VOID:
+                return "void";
+            case BaseType::BOOL:
+                return "bool";
+            case BaseType::INT8:
+                return "int8_t";
+            case BaseType::UINT8:
+                return "uint8_t";
+            case BaseType::INT16:
+                return "int16_t";
+            case BaseType::UINT16:
+                return "uint16_t";
+            case BaseType::INT32:
+                return "int32_t";
+            case BaseType::UINT32:
+                return "uint32_t";
+            case BaseType::INT64:
+            case BaseType::IDX:
+                return "int64_t";
+            case BaseType::UINT64:
+                return "uint64_t";
+            case BaseType::FLOAT32:
+                return "float";
+            case BaseType::FLOAT64:
+                return "double";
+            case BaseType::PTR:
+                return dtypes[0].cppstr() + "*";
+            case BaseType::STR:
+                return "char*";
+            case BaseType::VECTOR:
+                return "ArrowTable*";
+            default:
+                throw std::runtime_error("Invalid type " + this->str());
         }
     }
 };
@@ -225,6 +272,7 @@ enum class MathOp {
     AND,
     OR,
     IMPLIES,
+    IFF,
     FORALL,
     EXISTS,
 };
@@ -246,6 +294,7 @@ static const DataType UINT32(BaseType::UINT32);
 static const DataType UINT64(BaseType::UINT64);
 static const DataType FLOAT32(BaseType::FLOAT32);
 static const DataType FLOAT64(BaseType::FLOAT64);
+static const DataType STR(BaseType::STR);
 static const DataType CHAR_PTR(BaseType::PTR, {types::INT8});
 static const DataType IDX(BaseType::IDX);
 
@@ -343,5 +392,12 @@ DataType VEC()
 }
 
 }  // namespace reffine::types
+
+namespace std {
+template <>
+struct hash<reffine::DataType> {
+    size_t operator()(const reffine::DataType&) const noexcept;
+};
+}  // namespace std
 
 #endif  // INCLUDE_REFFINE_BASE_TYPE_H_

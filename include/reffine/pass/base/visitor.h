@@ -5,6 +5,7 @@
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/ir/op_to_loop.h"
+#include "reffine/ir/pred.h"
 #include "reffine/ir/stmt.h"
 
 namespace reffine {
@@ -17,10 +18,6 @@ public:
     virtual void Visit(SymNode&)
     {
         throw runtime_error("SymNode operation not supported");
-    }
-    virtual void Visit(StmtExprNode&)
-    {
-        throw runtime_error("StmtExprNode operation not supported");
     }
     virtual void Visit(Func&)
     {
@@ -62,38 +59,58 @@ public:
     {
         throw runtime_error("Element operation not supported");
     }
-    virtual void Visit(NotNull&)
+    virtual void Visit(Lookup&)
     {
-        throw runtime_error("NotNull operation not supported");
+        throw runtime_error("Lookup operation not supported");
+    }
+    virtual void Visit(In&)
+    {
+        throw runtime_error("In operation not supported");
     }
     virtual void Visit(Reduce&)
     {
         throw runtime_error("Reduce operation not supported");
     }
-
-    /**
-     * Loop IR
-     */
-    virtual void Visit(IsValid&)
+    virtual void Visit(Define&)
     {
-        throw runtime_error("IsValid operation not supported");
+        throw runtime_error("Define operation not supported");
     }
-    virtual void Visit(SetValid&)
+    virtual void Visit(InitVal&)
     {
-        throw runtime_error("SetValid operation not supported");
+        throw runtime_error("InitVal operation not supported");
     }
-    virtual void Visit(Lookup&)
+    virtual void Visit(ReadRunEnd&)
     {
-        throw runtime_error("Lookup operation not supported");
+        throw runtime_error("ReadRunEnd operation not supported");
     }
-    virtual void Visit(Locate&)
+    virtual void Visit(ReadData&)
     {
-        throw runtime_error("Locate operation not supported");
+        throw runtime_error("ReadData operation not supported");
+    }
+    virtual void Visit(WriteData&)
+    {
+        throw runtime_error("WriteData operation not supported");
+    }
+    virtual void Visit(ReadBit&)
+    {
+        throw runtime_error("ReadBit operation not supported");
+    }
+    virtual void Visit(WriteBit&)
+    {
+        throw runtime_error("WriteBit operation not supported");
     }
     virtual void Visit(Length&)
     {
         throw runtime_error("Length operation not supported");
     }
+    virtual void Visit(SubVector&)
+    {
+        throw runtime_error("SubVector operation not supported");
+    }
+
+    /**
+     * Loop IR
+     */
     virtual void Visit(FetchDataPtr&)
     {
         throw runtime_error("FetchDataPtr operation not supported");

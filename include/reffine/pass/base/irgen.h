@@ -12,14 +12,26 @@ using namespace std;
 
 namespace reffine {
 
-template <typename ValTy>
-class IRGenBase : public IRPassBase<ValTy> {
+template <typename CtxTy, typename ValTy>
+class IRGenBase : public IRPassBase<CtxTy, ValTy> {
 public:
-    IRGenBase(IRPassBaseCtx<ValTy>& ctx) : IRPassBase<ValTy>(ctx) {}
+    IRGenBase(unique_ptr<CtxTy> ctx) : IRPassBase<CtxTy, ValTy>(std::move(ctx))
+    {
+    }
+
+    ValTy eval(Expr expr)
+    {
+        ValTy new_val;
+
+        swap(new_val, val());
+        expr->Accept(*this);
+        swap(val(), new_val);
+
+        return new_val;
+    }
 
 protected:
     virtual ValTy visit(Sym) { throw runtime_error("Sym visit not supported"); }
-    virtual ValTy visit(StmtExprNode& expr) { return eval(expr.stmt); }
     virtual ValTy visit(Select&)
     {
         throw runtime_error("Select visit not supported");
@@ -57,18 +69,7 @@ protected:
     {
         throw runtime_error("Lookup visit not supported");
     }
-    virtual ValTy visit(Locate&)
-    {
-        throw runtime_error("Locate visit not supported");
-    }
-    virtual ValTy visit(Length&)
-    {
-        throw runtime_error("Length visit not supported");
-    }
-    virtual ValTy visit(NotNull&)
-    {
-        throw runtime_error("NotNull visit not supported");
-    }
+    virtual ValTy visit(In&) { throw runtime_error("In visit not supported"); }
     virtual ValTy visit(Reduce&)
     {
         throw runtime_error("Reduce visit not supported");
@@ -81,7 +82,7 @@ protected:
     {
         throw runtime_error("Stmts visit not supported");
     }
-    virtual void visit(Func&)
+    virtual ValTy visit(Func&)
     {
         throw runtime_error("Func visit not supported");
     }
@@ -125,14 +126,6 @@ protected:
     {
         throw runtime_error("Loop visit not supported");
     }
-    virtual ValTy visit(IsValid&)
-    {
-        throw runtime_error("IsValid visit not supported");
-    }
-    virtual ValTy visit(SetValid&)
-    {
-        throw runtime_error("SetValid visit not supported");
-    }
     virtual ValTy visit(FetchDataPtr&)
     {
         throw runtime_error("FetchDataPtr visit not supported");
@@ -141,8 +134,43 @@ protected:
     {
         throw runtime_error("NoOp visit not supported");
     }
+    virtual ValTy visit(Define&)
+    {
+        throw runtime_error("Define visit not supported");
+    }
+    virtual ValTy visit(InitVal&)
+    {
+        throw runtime_error("InitVal visit not supported");
+    }
+    virtual ValTy visit(ReadRunEnd&)
+    {
+        throw runtime_error("ReadRunEnd visit not supported");
+    }
+    virtual ValTy visit(ReadData&)
+    {
+        throw runtime_error("ReadData visit not supported");
+    }
+    virtual ValTy visit(WriteData&)
+    {
+        throw runtime_error("WriteData visit not supported");
+    }
+    virtual ValTy visit(ReadBit&)
+    {
+        throw runtime_error("ReadBit visit not supported");
+    }
+    virtual ValTy visit(WriteBit&)
+    {
+        throw runtime_error("WriteBit visit not supported");
+    }
+    virtual ValTy visit(Length&)
+    {
+        throw runtime_error("Length visit not supported");
+    }
+    virtual ValTy visit(SubVector&)
+    {
+        throw runtime_error("SubVector visit not supported");
+    }
 
-    void Visit(StmtExprNode& expr) final { val() = visit(expr); }
     void Visit(Select& expr) final { val() = visit(expr); }
     void Visit(IfElse& stmt) final { val() = visit(stmt); }
     void Visit(Const& expr) final { val() = visit(expr); }
@@ -153,9 +181,7 @@ protected:
     void Visit(Op& expr) final { val() = visit(expr); }
     void Visit(Element& expr) final { val() = visit(expr); }
     void Visit(Lookup& expr) final { val() = visit(expr); }
-    void Visit(Locate& expr) final { val() = visit(expr); }
-    void Visit(Length& expr) final { val() = visit(expr); }
-    void Visit(NotNull& expr) final { val() = visit(expr); }
+    void Visit(In& expr) final { val() = visit(expr); }
     void Visit(Reduce& expr) final { val() = visit(expr); }
     void Visit(Call& expr) final { val() = visit(expr); }
     void Visit(Stmts& stmt) final { val() = visit(stmt); }
@@ -169,11 +195,18 @@ protected:
     void Visit(BlockDim& expr) final { val() = visit(expr); }
     void Visit(GridDim& expr) final { val() = visit(expr); }
     void Visit(Loop& expr) final { val() = visit(expr); }
-    void Visit(IsValid& expr) final { val() = visit(expr); }
-    void Visit(SetValid& expr) final { val() = visit(expr); }
     void Visit(FetchDataPtr& expr) final { val() = visit(expr); }
     void Visit(NoOp& stmt) final { val() = visit(stmt); }
-    void Visit(Func& stmt) final { visit(stmt); }
+    void Visit(Define& expr) final { val() = visit(expr); }
+    void Visit(InitVal& expr) final { val() = visit(expr); }
+    void Visit(ReadRunEnd& expr) final { val() = visit(expr); }
+    void Visit(ReadData& expr) final { val() = visit(expr); }
+    void Visit(WriteData& expr) final { val() = visit(expr); }
+    void Visit(ReadBit& expr) final { val() = visit(expr); }
+    void Visit(WriteBit& expr) final { val() = visit(expr); }
+    void Visit(Length& expr) final { val() = visit(expr); }
+    void Visit(SubVector& expr) final { val() = visit(expr); }
+    void Visit(Func& stmt) final { val() = visit(stmt); }
     void Visit(SymNode& symbol) override
     {
         auto sym = this->tmp_sym(symbol);
@@ -186,17 +219,6 @@ protected:
         val() = this->ctx().out_sym_tbl.at(sym);
     }
 
-    ValTy eval(Stmt stmt)
-    {
-        ValTy new_val;
-
-        swap(new_val, val());
-        stmt->Accept(*this);
-        swap(val(), new_val);
-
-        return new_val;
-    }
-
 protected:
     ValTy& val() { return _val; }
 
@@ -205,18 +227,15 @@ private:
 };
 
 template <typename ValTy>
-class ValGenCtx : public IRPassBaseCtx<ValTy> {
-public:
-    ValGenCtx(SymTable tmp1 = {}, map<Sym, ValTy> tmp2 = {})
-        : IRPassBaseCtx<ValTy>(tmp1, tmp2)
-    {
-    }
-};
+using ValGenCtx = IRPassBaseCtx<ValTy>;
 
 template <typename ValTy>
-class ValGen : public IRGenBase<ValTy> {
+class ValGen : public IRGenBase<ValGenCtx<ValTy>, ValTy> {
 public:
-    ValGen(ValGenCtx<ValTy>& ctx) : IRGenBase<ValTy>(ctx) {}
+    ValGen(unique_ptr<ValGenCtx<ValTy>> ctx)
+        : IRGenBase<ValGenCtx<ValTy>, ValTy>(std::move(ctx))
+    {
+    }
 
 protected:
     void Visit(SymNode& symbol) final
@@ -228,42 +247,42 @@ protected:
 
 class IRGenCtx : public IRPassBaseCtx<Expr> {
 public:
-    IRGenCtx(const SymTable& in_sym_tbl, map<Sym, Expr>& out_sym_tbl)
-        : IRPassBaseCtx<Expr>(in_sym_tbl, out_sym_tbl)
+    IRGenCtx(const Func& in_func, shared_ptr<Func> out_func)
+        : IRPassBaseCtx<Expr>(in_func.tbl, out_func->tbl), out_func(out_func)
     {
     }
 
     map<Sym, Sym> sym_sym_map;  // mapping from old sym to new sym
+    shared_ptr<Func> out_func;
 };
 
-class IRGen : public IRGenBase<Expr> {
+class IRGen : public IRGenBase<IRGenCtx, Expr> {
 public:
-    IRGen(IRGenCtx& ctx) : IRGenBase<Expr>(ctx), _irgenctx(ctx) {}
+    IRGen(unique_ptr<IRGenCtx> ctx) : IRGenBase<IRGenCtx, Expr>(std::move(ctx))
+    {
+    }
 
 protected:
     void Visit(SymNode& symbol) final
     {
         auto old_sym = this->tmp_sym(symbol);
 
-        if (_irgenctx.sym_sym_map.find(old_sym) ==
-            _irgenctx.sym_sym_map.end()) {
-            auto new_val = eval(_irgenctx.in_sym_tbl.at(old_sym));
+        if (this->ctx().sym_sym_map.find(old_sym) ==
+            this->ctx().sym_sym_map.end()) {
+            auto new_val = eval(this->ctx().in_sym_tbl.at(old_sym));
             auto new_sym = static_pointer_cast<SymNode>(visit(old_sym));
             this->assign(new_sym, new_val);
             this->map_sym(old_sym, new_sym);
         }
 
-        val() = _irgenctx.sym_sym_map.at(old_sym);
+        val() = this->ctx().sym_sym_map.at(old_sym);
     }
 
     virtual void map_sym(Sym old_sym, Sym new_sym)
     {
-        _irgenctx.sym_sym_map[old_sym] = new_sym;
-        _irgenctx.sym_sym_map[new_sym] = new_sym;
+        this->ctx().sym_sym_map[old_sym] = new_sym;
+        this->ctx().sym_sym_map[new_sym] = new_sym;
     }
-
-private:
-    IRGenCtx _irgenctx;
 };
 
 }  // namespace reffine

@@ -1,5 +1,11 @@
 #include "reffine/pass/llvmgen.h"
 
+#include <unistd.h>
+
+#include <cstdio>
+#include <filesystem>
+#include <iostream>
+
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
@@ -68,11 +74,9 @@ llvm::Type* LLVMGen::lltype(const DataType& type)
             return StructType::get(llctx(), lltypes);
         }
         case BaseType::PTR:
-            return PointerType::get(lltype(type.dtypes[0]), 0);
+            return PointerType::get(llctx(), 0);
         case BaseType::VECTOR:
-            return PointerType::get(
-                llvm::StructType::getTypeByName(llctx(), "struct.ArrowArray"),
-                0);
+            return PointerType::get(llctx(), 0);
         case BaseType::UNKNOWN:
         default:
             throw std::runtime_error("Invalid type");
@@ -113,6 +117,7 @@ Value* LLVMGen::visit(Cast& e)
 
 Value* LLVMGen::visit(Get& e)
 {
+    ASSERT(e.val->type.is_struct());
     LOG(WARNING) << "Failed to eliminate Get expression before LLVMGen"
                  << std::endl;
     auto val = eval(e.val);
@@ -324,49 +329,11 @@ Value* LLVMGen::visit(IfElse& ifelse)
 
 Value* LLVMGen::visit(NoOp&) { return nullptr; }
 
-Value* LLVMGen::visit(IsValid& is_valid)
+Value* LLVMGen::visit(FetchDataPtr& e)
 {
-    auto vec_val = eval(is_valid.vec);
-    auto idx_val = eval(is_valid.idx);
-    auto col_val = ConstantInt::get(lltype(types::UINT32), is_valid.col);
-
-    return llcall("get_vector_null_bit", lltype(is_valid),
-                  {vec_val, idx_val, col_val});
-}
-
-Value* LLVMGen::visit(SetValid& set_valid)
-{
-    auto vec_val = eval(set_valid.vec);
-    auto idx_val = eval(set_valid.idx);
-    auto validity_val = eval(set_valid.validity);
-    auto col_val = ConstantInt::get(lltype(types::UINT32), set_valid.col);
-
-    return llcall("set_vector_null_bit", lltype(set_valid),
-                  {vec_val, idx_val, validity_val, col_val});
-}
-
-Value* LLVMGen::visit(Length& len)
-{
-    return llcall("get_vector_len", lltype(len), {len.vec});
-}
-
-Value* LLVMGen::visit(Locate& locate)
-{
-    return llcall("vector_locate", lltype(locate), {locate.vec, locate.iter});
-}
-
-Value* LLVMGen::visit(FetchDataPtr& fetch_data_ptr)
-{
-    auto vec_val = eval(fetch_data_ptr.vec);
-    auto idx_val = eval(fetch_data_ptr.idx);
-    auto col_val = ConstantInt::get(lltype(types::UINT32), fetch_data_ptr.col);
-
-    auto buf_addr = llcall("get_vector_data_buf", lltype(fetch_data_ptr),
-                           {vec_val, col_val});
-    auto data_addr = builder()->CreateGEP(lltype(fetch_data_ptr.type.deref()),
-                                          buf_addr, idx_val);
-
-    return data_addr;
+    auto col_val = make_shared<Const>(types::UINT32, e.col);
+    return eval(make_shared<Call>("get_vector_data_buf", e.type,
+                                  vector<Expr>{e.vec, col_val}));
 }
 
 Value* LLVMGen::visit(Call& call)
@@ -388,14 +355,16 @@ Value* LLVMGen::visit(Alloc& alloc)
 
 Value* LLVMGen::visit(Load& load)
 {
-    auto addr = eval(load.addr);
-    auto addr_type = lltype(load.addr->type.deref());
-    return CreateLoad(addr_type, addr);
+    auto type = lltype(load.addr->type.deref());
+    auto addr = builder()->CreateGEP(type, eval(load.addr), eval(load.offset));
+    return CreateLoad(type, addr);
 }
 
 Value* LLVMGen::visit(Store& store)
 {
-    auto addr = eval(store.addr);
+    auto type = lltype(store.addr->type.deref());
+    auto addr =
+        builder()->CreateGEP(type, eval(store.addr), eval(store.offset));
     auto val = eval(store.val);
     return CreateStore(val, addr);
 }
@@ -564,9 +533,12 @@ Value* LLVMGen::visit(Loop& loop)
     return eval(loop.output);
 }
 
-void LLVMGen::visit(Func& func)
+Value* LLVMGen::visit(Func& func)
 {
     ASSERT(func.output->type.is_void());
+
+    auto new_ctx = make_unique<LLVMGenCtx>(func.tbl);
+    this->switch_ctx(new_ctx);
 
     // Define function signature
     vector<llvm::Type*> args_type;
@@ -612,39 +584,8 @@ void LLVMGen::visit(Func& func)
     }
 
     builder()->CreateRetVoid();
-}
 
-void LLVMGen::register_vinstrs()
-{
-    const auto buffer =
-        llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(vinstr_str));
-
-    llvm::SMDiagnostic error;
-    std::unique_ptr<llvm::Module> vinstr_mod =
-        llvm::parseIR(*buffer, error, llctx());
-    if (!vinstr_mod) {
-        throw std::runtime_error("Failed to parse vinstr bitcode");
-    }
-    if (llvm::verifyModule(*vinstr_mod)) {
-        throw std::runtime_error("Failed to verify vinstr module");
-    }
-
-    // For some reason if we try to set internal linkage before we link
-    // modules, then the JIT will be unable to find the symbols.
-    // Instead we collect the function names first, then add internal
-    // linkage to them after linking the modules
-    std::vector<string> vinstr_names;
-    for (const auto& function : vinstr_mod->functions()) {
-        if (function.isDeclaration()) { continue; }
-        vinstr_names.push_back(function.getName().str());
-    }
-
-    llvm::Linker::linkModules(*llmod(), std::move(vinstr_mod));
-    for (const auto& name : vinstr_names) {
-        llmod()
-            ->getFunction(name.c_str())
-            ->setLinkage(llvm::Function::InternalLinkage);
-    }
+    return fn;
 }
 
 llvm::Value* LLVMGen::visit(Sym old_sym)
@@ -659,13 +600,6 @@ llvm::Value* LLVMGen::visit(Sym old_sym)
     var->setName(old_sym->name);
 
     return var;
-}
-
-void LLVMGen::Build(shared_ptr<Func> func, llvm::Module& llmod)
-{
-    LLVMGenCtx ctx(func);
-    LLVMGen llgen(ctx, llmod);
-    func->Accept(llgen);
 }
 
 // Helpers
@@ -698,4 +632,65 @@ llvm::AllocaInst* LLVMGen::CreateAlloca(llvm::Type* type, llvm::Value* size)
     // 5 for local address space
     // see https://llvm.org/docs/NVPTXUsage.html#address-spaces
     return builder()->CreateAlloca(type, 5U, size);
+}
+
+void LLVMGen::register_code(const string& llir)
+{
+    const auto buffer =
+        llvm::MemoryBuffer::getMemBuffer(llvm::StringRef(llir.c_str()));
+
+    llvm::SMDiagnostic error;
+    std::unique_ptr<llvm::Module> mod = llvm::parseIR(*buffer, error, llctx());
+    if (!mod) { throw std::runtime_error("Failed to parse bitcode"); }
+    if (llvm::verifyModule(*mod)) {
+        throw std::runtime_error("Failed to verify module");
+    }
+
+    llvm::Linker::linkModules(*llmod(), std::move(mod),
+                              llvm::Linker::Flags::OverrideFromSrc);
+}
+
+void LLVMGen::parse(const string& code)
+{
+    char in_file[] = "/tmp/reffine-llvmgen-XXXXXX.cpp";
+    int fd = mkstemps(in_file, /*suffixlen=*/4);
+    if (fd == -1) {
+        throw runtime_error("Error creating temporary file: " +
+                            string(in_file));
+    }
+    auto out_file_str = string(in_file) + ".ll";
+    auto* out_file = out_file_str.c_str();
+
+    // Write code to a temporary file
+    write(fd, code.c_str(), code.size());
+    close(fd);
+
+    std::filesystem::path currentDir = std::filesystem::current_path();
+
+    // Generate LLVM IR
+    std::string command =
+        "clang++ -S -O3 -emit-llvm "
+        "-Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize"
+        " -I " +
+        string(REFFINE_HEADER_DIR) + " -I " + string(REFFINE_SRC_DIR) + " -o " +
+        string(out_file) + " " + string(in_file);
+    if (std::system(command.c_str())) {
+        throw runtime_error("Error running the command: " + command);
+    }
+
+    // Read LLVM IR to a string
+    std::ifstream llfile(out_file);
+    if (!llfile.is_open()) {
+        throw runtime_error("Error opening file " + string(out_file));
+    }
+    std::string llir((std::istreambuf_iterator<char>(llfile)),
+                     std::istreambuf_iterator<char>());
+    llfile.close();
+
+    // Register generated LLVM IR to the module
+    register_code(llir);
+
+    // Remove temporary files
+    std::remove(in_file);
+    std::remove(out_file);
 }

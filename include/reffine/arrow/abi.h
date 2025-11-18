@@ -1,13 +1,16 @@
-#ifndef ARROW_C_DATA_INTERFACE
-#define ARROW_C_DATA_INTERFACE
+#ifndef INCLUDE_REFFINE_ARROW_ABI_H_
+#define INCLUDE_REFFINE_ARROW_ABI_H_
 
 #include <cstdint>
+
+extern "C" {
+
+#ifndef ARROW_C_DATA_INTERFACE
+#define ARROW_C_DATA_INTERFACE
 
 #define ARROW_FLAG_DICTIONARY_ORDERED 1
 #define ARROW_FLAG_NULLABLE 2
 #define ARROW_FLAG_MAP_KEYS_SORTED 4
-
-extern "C" {
 
 struct ArrowSchema {
     // Array type description
@@ -41,6 +44,26 @@ struct ArrowArray {
     // Opaque producer-specific data
     void* private_data;
 };
-}
 
 #endif  // ARROW_C_DATA_INTERFACE
+
+void arrow_print_schema(ArrowSchema*);
+void arrow_print_array(ArrowArray*);
+
+struct ArrowTable {
+    int64_t dim;
+    ArrowSchema* schema;
+    ArrowArray* array;
+
+    ArrowTable(int64_t dim, ArrowSchema* schema = nullptr,
+               ArrowArray* array = nullptr)
+        : dim(dim), schema(schema), array(array)
+    {
+    }
+
+    virtual ~ArrowTable() {}
+};
+
+}  // extern "C"
+
+#endif  // INCLUDE_REFFINE_ARROW_ABI_H_

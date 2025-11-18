@@ -13,6 +13,31 @@ using namespace std;
 
 namespace reffine {
 
+struct InitVal : public ExprNode {
+    vector<Sym> inits;
+    Expr val;
+
+    InitVal(vector<Sym> inits, Expr val)
+        : ExprNode(val->type), inits(std::move(inits)), val(val)
+    {
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct Define : public ExprNode {
+    Sym sym;
+    Expr val;
+
+    Define(Sym sym, Expr val) : ExprNode(sym->type), sym(sym), val(val)
+    {
+        ASSERT(sym->type == val->type);
+        ASSERT(!sym->type.is_void());
+    }
+
+    void Accept(Visitor&) final;
+};
+
 struct Call : public ExprNode {
     string name;
     vector<Expr> args;
@@ -75,12 +100,23 @@ struct Get : public ExprNode {
     size_t col;
 
     Get(Expr val, size_t col)
-        : ExprNode(val->type.dtypes[col]), val(val), col(col)
+        : ExprNode(extract_type(val, col)), val(val), col(col)
     {
-        ASSERT(val->type.is_struct());
     }
 
     void Accept(Visitor&) final;
+
+private:
+    static DataType extract_type(Expr val, size_t col)
+    {
+        if (val->type.is_struct()) {
+            return val->type.dtypes[col];
+        } else {
+            ASSERT(val->type.is_primitive());
+            ASSERT(col == 0);
+            return val->type;
+        }
+    }
 };
 
 struct New : public ExprNode {
@@ -182,30 +218,6 @@ struct Or : public BinaryExpr {
     Or(Expr a, Expr b) : BinaryExpr(types::BOOL, MathOp::OR, a, b)
     {
         ASSERT(a->type == types::BOOL);
-    }
-};
-
-struct Implies : public BinaryExpr {
-    Implies(Expr a, Expr b) : BinaryExpr(types::BOOL, MathOp::IMPLIES, a, b)
-    {
-        ASSERT(a->type == types::BOOL);
-        ASSERT(b->type == types::BOOL);
-    }
-};
-
-struct ForAll : public NaryExpr {
-    ForAll(Sym a, Expr b)
-        : NaryExpr(types::BOOL, MathOp::FORALL, vector<Expr>{a, b})
-    {
-        ASSERT(b->type == types::BOOL);
-    }
-};
-
-struct Exists : public NaryExpr {
-    Exists(Sym a, Expr b)
-        : NaryExpr(types::BOOL, MathOp::EXISTS, vector<Expr>{a, b})
-    {
-        ASSERT(b->type == types::BOOL);
     }
 };
 

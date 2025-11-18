@@ -1,26 +1,52 @@
 #include "test_utils.h"
 
-arrow::Result<reffine::ArrowTable> get_input_vector()
+#include "reffine/builder/reffiner.h"
+
+using namespace reffine;
+using namespace reffine::reffiner;
+
+arrow::Result<std::shared_ptr<ArrowTable2>> get_input_vector(
+    std::string filename, int64_t dim)
 {
     ARROW_ASSIGN_OR_RAISE(
-        auto infile, arrow::io::ReadableFile::Open(
-                         "../../students.arrow", arrow::default_memory_pool()));
+        auto infile,
+        arrow::io::ReadableFile::Open(filename, arrow::default_memory_pool()));
     ARROW_ASSIGN_OR_RAISE(auto ipc_reader,
                           arrow::ipc::RecordBatchFileReader::Open(infile));
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
 
-    ArrowSchema schema;
-    ArrowArray array;
-    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &array, &schema));
+    auto table = std::make_shared<ArrowTable2>(dim);
+    ARROW_RETURN_NOT_OK(
+        arrow::ExportRecordBatch(*rbatch, table->array, table->schema));
+    table->build_index();
 
-    return reffine::ArrowTable(schema, array);
+    return table;
 }
 
-std::string print_arrow_table(reffine::ArrowTable& tbl)
+std::string print_arrow_table(ArrowTable* tbl)
 {
-    auto& schema = tbl.schema;
-    auto& array = tbl.array;
-    auto res = *arrow::ImportRecordBatch(&array, &schema);
-
+    auto res = arrow::ImportRecordBatch(tbl->array, tbl->schema).ValueOrDie();
     return res->ToString();
+}
+
+static shared_ptr<Func> gen_table_op()
+{
+    auto t_sym = _sym("t", _i64_t);
+    auto lb_sym = _sym("lb", _i64_t);
+    auto ub_sym = _sym("ub", _i64_t);
+
+    auto op =
+        _op(vector<Sym>{t_sym}, (_gte(t_sym, lb_sym) & _lt(t_sym, ub_sym)),
+            vector<Expr>{t_sym});
+    auto op_sym = _sym("op", op);
+
+    auto fn = _func("gen_table", op_sym, vector<Sym>{lb_sym, ub_sym});
+    fn->tbl[op_sym] = op;
+
+    return fn;
+}
+
+gen_table_ty gen_fake_table()
+{
+    return compile_op<void (*)(void*, int64_t, int64_t)>(gen_table_op());
 }

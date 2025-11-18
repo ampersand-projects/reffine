@@ -1,33 +1,21 @@
+#include "reffine/builder/reffiner.h"
 #include "reffine/pass/z3solver.h"
 #include "test_base.h"
 #include "test_utils.h"
-#include "z3++.h"
 
 using namespace reffine;
-
-tuple<Expr, Expr> lower_bound_expr(int lb)
-{
-    auto t = make_shared<SymNode>("t", types::INT64);
-    auto zero = make_shared<Const>(types::INT64, lb);
-    auto pred = make_shared<GreaterThanEqual>(t, zero);
-
-    auto p = make_shared<SymNode>("p", t);
-    auto forall = make_shared<ForAll>(
-        t, make_shared<And>(
-               make_shared<Implies>(make_shared<GreaterThanEqual>(t, p), pred),
-               make_shared<Implies>(make_shared<LessThan>(t, p),
-                                    make_shared<Not>(pred))));
-    return {forall, p};
-}
+using namespace reffine::reffiner;
 
 void run_lower_bound_check(int lb)
 {
-    Z3Solver z3s;
+    auto t = _sym("t", types::INT64);
+    auto pred = _gte(t, _i64(lb));
+    auto bnd = _sym("bnd", t);
+    auto prop = _forall(t, _iff(_gte(t, bnd), pred));
 
-    auto [conj, val] = lower_bound_expr(lb);
-    auto s = z3s.solve(conj, val).as_int64();
-
-    ASSERT_EQ(s, lb);
+    Z3Solver solver;
+    ASSERT_TRUE(solver.check(prop));
+    ASSERT_EQ(solver.get(bnd)->val, lb);
 }
 
 void z3solver_test()

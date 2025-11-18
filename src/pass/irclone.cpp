@@ -27,18 +27,14 @@ shared_ptr<Op> IRClone::visit_op(Op& op)
 
 Expr IRClone::visit(Reduce& red)
 {
-    auto new_op = IRClone::visit_op(red.op);
-    return _red(*new_op, red.init, red.acc);
+    return _red(eval(red.vec), red.init, red.acc);
 }
 
 Expr IRClone::visit(Op& op) { return IRClone::visit_op(op); }
 
 Expr IRClone::visit(Element& elem)
 {
-    vector<Expr> new_iters;
-    for (auto& old_iter : elem.iters) { new_iters.push_back(eval(old_iter)); }
-
-    return _elem(eval(elem.vec), new_iters);
+    return _elem(eval(elem.vec), eval(elem.iter));
 }
 
 Expr IRClone::visit(Lookup& lookup)
@@ -46,14 +42,7 @@ Expr IRClone::visit(Lookup& lookup)
     return _lookup(eval(lookup.vec), eval(lookup.idx));
 }
 
-Expr IRClone::visit(Locate& locate)
-{
-    return _locate(eval(locate.vec), eval(locate.iter));
-}
-
-Expr IRClone::visit(Length& len) { return _len(eval(len.vec)); }
-
-Expr IRClone::visit(NotNull& not_null) { return _notnull(eval(not_null.elem)); }
+Expr IRClone::visit(In& in) { return _in(eval(in.iter), eval(in.vec)); }
 
 Expr IRClone::visit(NaryExpr& nexpr)
 {
@@ -93,21 +82,30 @@ Expr IRClone::visit(Call& call)
 
 Expr IRClone::visit(FetchDataPtr& fetch)
 {
-    return _fetch(eval(fetch.vec), eval(fetch.idx), fetch.col);
+    return _fetch(eval(fetch.vec), fetch.col);
 }
 
-Expr IRClone::visit(Load& load) { return _load(eval(load.addr)); }
-
-void IRClone::visit(Func& func)
+Expr IRClone::visit(Load& load)
 {
+    return _load(eval(load.addr), eval(load.offset));
+}
+
+Expr IRClone::visit(Func& func)
+{
+    auto new_func = _func(func.name, nullptr, vector<Sym>{});
+    auto new_ctx = make_unique<IRGenCtx>(func, new_func);
+    this->switch_ctx(new_ctx);
+
     // Populate loop function inputs
     for (auto& old_input : func.inputs) {
         auto new_input = _sym(old_input->name, old_input);
-        _irclonectx.new_func->inputs.push_back(new_input);
+        new_func->inputs.push_back(new_input);
         this->map_sym(old_input, new_input);
     }
 
-    _irclonectx.new_func->output = eval(func.output);
+    new_func->output = eval(func.output);
+
+    return new_func;
 }
 
 Expr IRClone::visit(Sym old_sym) { return _sym(old_sym->name, old_sym); }
@@ -120,16 +118,91 @@ Expr IRClone::visit(BlockDim&) { return _bdim(); }
 
 Expr IRClone::visit(GridDim&) { return _gdim(); }
 
-Expr IRClone::visit(NoOp&) { return _stmtexpr(_noop()); }
+Expr IRClone::visit(NoOp&) { return _noop(); }
+
+Expr IRClone::visit(Define& define)
+{
+    if (this->ctx().sym_sym_map.find(define.sym) ==
+        this->ctx().sym_sym_map.end()) {
+        auto new_sym = _sym(define.sym->name, define.sym);
+        this->map_sym(define.sym, new_sym);
+        return _define(new_sym, eval(define.val));
+    } else {
+        throw runtime_error("Multiple Definition on same symbol found. " +
+                            define.sym->name);
+    }
+}
+
+Expr IRClone::visit(InitVal& init_val)
+{
+    auto val = eval(init_val.val);
+
+    vector<Sym> inits;
+    for (auto init : init_val.inits) {
+        eval(init);
+        inits.push_back(this->ctx().sym_sym_map.at(init));
+    }
+
+    return _initval(inits, val);
+}
+
+Expr IRClone::visit(ReadRunEnd& expr)
+{
+    auto vec = eval(expr.vec);
+    auto idx = eval(expr.idx);
+
+    return _readrunend(vec, idx, expr.col);
+}
+
+Expr IRClone::visit(ReadData& expr)
+{
+    auto vec = eval(expr.vec);
+    auto idx = eval(expr.idx);
+
+    return _readdata(vec, idx, expr.col);
+}
+
+Expr IRClone::visit(WriteData& expr)
+{
+    auto vec = eval(expr.vec);
+    auto idx = eval(expr.idx);
+    auto val = eval(expr.val);
+
+    return _writedata(vec, idx, expr.col, val);
+}
+
+Expr IRClone::visit(ReadBit& expr)
+{
+    auto vec = eval(expr.vec);
+    auto idx = eval(expr.idx);
+
+    return _readbit(vec, idx, expr.col);
+}
+
+Expr IRClone::visit(WriteBit& expr)
+{
+    auto vec = eval(expr.vec);
+    auto idx = eval(expr.idx);
+    auto val = eval(expr.val);
+
+    return _writebit(vec, idx, expr.col, val);
+}
+
+Expr IRClone::visit(Length& expr) { return _len(eval(expr.vec), expr.col); }
+
+Expr IRClone::visit(SubVector& expr)
+{
+    return _subvec(eval(expr.vec), eval(expr.start), eval(expr.end));
+}
 
 Expr IRClone::visit(Store& store)
 {
-    return _stmtexpr(_store(eval(store.addr), eval(store.val)));
+    return _store(eval(store.addr), eval(store.val), eval(store.offset));
 }
 
 Expr IRClone::visit(AtomicOp& op)
 {
-    return _stmtexpr(_atomic_op(op.op, eval(op.addr), eval(op.val)));
+    return _atomic_op(op.op, eval(op.addr), eval(op.val));
 }
 
 Expr IRClone::visit(StructGEP& gep)
@@ -139,16 +212,11 @@ Expr IRClone::visit(StructGEP& gep)
 
 Expr IRClone::visit(Stmts& stmts)
 {
-    vector<Stmt> stmt_list;
+    vector<Expr> stmt_list;
 
     for (auto& stmt : stmts.stmts) { stmt_list.push_back(eval(stmt)); }
 
-    return _stmtexpr(_stmts(stmt_list));
-}
-
-Expr IRClone::visit(IsValid& is_valid)
-{
-    return _isval(eval(is_valid.vec), eval(is_valid.idx), is_valid.col);
+    return _stmts(stmt_list);
 }
 
 Expr IRClone::visit(Alloc& alloc)
@@ -158,14 +226,8 @@ Expr IRClone::visit(Alloc& alloc)
 
 Expr IRClone::visit(IfElse& ifelse)
 {
-    return _stmtexpr(_ifelse(eval(ifelse.cond), eval(ifelse.true_body),
-                             eval(ifelse.false_body)));
-}
-
-Expr IRClone::visit(SetValid& set_valid)
-{
-    return _setval(eval(set_valid.vec), eval(set_valid.idx),
-                   eval(set_valid.validity), set_valid.col);
+    return _ifelse(eval(ifelse.cond), eval(ifelse.true_body),
+                   eval(ifelse.false_body));
 }
 
 Expr IRClone::visit(Loop& loop)
@@ -180,15 +242,4 @@ Expr IRClone::visit(Loop& loop)
     new_loop->post = loop.post ? eval(loop.post) : nullptr;
 
     return new_loop;
-}
-
-shared_ptr<Func> IRClone::Build(shared_ptr<Func> func)
-{
-    auto new_func = _func(func->name, nullptr, vector<Sym>{});
-
-    IRCloneCtx ctx(func, new_func);
-    IRClone irclone(ctx);
-    func->Accept(irclone);
-
-    return new_func;
 }

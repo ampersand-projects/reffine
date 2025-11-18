@@ -6,12 +6,9 @@ using namespace std;
 using namespace reffine;
 using namespace reffine::reffiner;
 
-shared_ptr<Func> vector_loop()
+shared_ptr<Func> vector_loop(shared_ptr<ArrowTable2> tbl)
 {
-    auto vec_sym = make_shared<SymNode>(
-        "vec", types::VECTOR<1>(vector<DataType>{
-                   types::INT64, types::INT64, types::INT64, types::INT64,
-                   types::INT64, types::INT8, types::INT64}));
+    auto vec_sym = make_shared<SymNode>("vec", tbl->get_data_type());
 
     auto len =
         make_shared<Call>("get_vector_len", types::IDX, vector<Expr>{vec_sym});
@@ -24,17 +21,17 @@ shared_ptr<Func> vector_loop()
     auto sum_addr = make_shared<SymNode>("sum_addr", sum_alloc);
     auto sum = make_shared<Load>(sum_addr);
 
-    auto val_ptr = make_shared<FetchDataPtr>(vec_sym, idx, 1);
-    auto val = make_shared<Load>(val_ptr);
+    auto val_ptr = make_shared<FetchDataPtr>(vec_sym, 1);
+    auto val = make_shared<Load>(val_ptr, idx);
 
     auto loop = _loop(make_shared<Load>(sum_addr));
     auto loop_sym = make_shared<SymNode>("loop", loop);
-    loop->init = make_shared<Stmts>(vector<Stmt>{
+    loop->init = make_shared<Stmts>(vector<Expr>{
         make_shared<Store>(idx_addr, make_shared<Const>(types::IDX, 0)),
         make_shared<Store>(sum_addr, make_shared<Const>(types::INT64, 0)),
     });
     loop->exit_cond = make_shared<GreaterThanEqual>(idx, len_sym);
-    loop->body = make_shared<Stmts>(vector<Stmt>{
+    loop->body = make_shared<Stmts>(vector<Expr>{
         make_shared<Store>(sum_addr, make_shared<Add>(sum, val)),
         make_shared<Store>(
             idx_addr, make_shared<Add>(idx, make_shared<Const>(types::IDX, 1))),
@@ -51,26 +48,24 @@ shared_ptr<Func> vector_loop()
 
 void aggregate_loop_test()
 {
-    auto loop = vector_loop();
+    auto tbl = get_input_vector(STUDENTS_ARROW_FILE, 1).ValueOrDie();
+    auto loop = vector_loop(tbl);
     long output = 0;
     auto query_fn = compile_loop<void (*)(long*, void*)>(loop);
 
-    auto tbl = get_input_vector();
-    query_fn(&output, &tbl->array);
+    query_fn(&output, tbl.get());
 
     ASSERT_EQ(output, 131977);
 }
 
-shared_ptr<Func> vector_op()
+shared_ptr<Func> vector_op(shared_ptr<ArrowTable2> tbl)
 {
     auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym =
-        _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
-                              int8_t, int64_t>());
-    Op op(
-        {t_sym},
-        ~(vec_in_sym[{t_sym}]) & _lte(t_sym, _i64(48)) & _gte(t_sym, _i64(10)),
-        {
+    auto vec_in_sym = _sym("vec_in", tbl->get_data_type());
+    auto op = _op(
+        vector<Sym>{t_sym},
+        _in(t_sym, vec_in_sym) & _lte(t_sym, _i64(48)) & _gte(t_sym, _i64(10)),
+        vector<Expr>{
             vec_in_sym[{t_sym}][2],
             _new(vector<Expr>{
                 vec_in_sym[{t_sym}][1],
@@ -90,10 +85,10 @@ shared_ptr<Func> vector_op()
             });
         },
         [](Expr s, Expr v) {
-            auto v0 = _get(_get(v, 1), 0);
-            auto v1 = _get(_get(v, 1), 1);
-            auto v2 = _get(_get(v, 1), 2);
-            auto v3 = _get(_get(v, 1), 3);
+            auto v0 = _get(_get(v, 2), 0);
+            auto v1 = _get(_get(v, 2), 1);
+            auto v2 = _get(_get(v, 2), 2);
+            auto v3 = _get(_get(v, 2), 3);
             auto s0 = _get(_get(s, 0), 0);
             auto s1 = _get(_get(s, 0), 1);
             auto s2 = _get(_get(s, 1), 0);
@@ -114,14 +109,14 @@ shared_ptr<Func> vector_op()
     return foo_fn;
 }
 
-void aggregate_op_test()
+void aggregate_op_test(bool vectorize)
 {
-    auto op = vector_op();
+    auto tbl = get_input_vector(STUDENTS_ARROW_FILE, 1).ValueOrDie();
+    auto op = vector_op(tbl);
     long output = 0;
-    auto query_fn = compile_op<void (*)(long*, void*)>(op);
+    auto query_fn = compile_op<void (*)(long*, void*)>(op, vectorize);
 
-    auto tbl = get_input_vector();
-    query_fn(&output, &tbl->array);
+    query_fn(&output, tbl.get());
 
     ASSERT_EQ(output, 696);
 }

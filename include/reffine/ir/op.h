@@ -35,49 +35,58 @@ private:
                                  const vector<Expr>& outputs)
     {
         vector<DataType> dtypes;
+        vector<EncodeType> etypes;
 
         for (const auto& iter : iters) {
-            ASSERT(iter->type.is_val());
+            ASSERT(iter->type.is_primitive());
             dtypes.push_back(iter->type);
+            etypes.push_back(EncodeType::FLAT);
         }
         for (const auto& output : outputs) {
             ASSERT(output->type.is_val());
             dtypes.push_back(output->type);
+            etypes.push_back(EncodeType::FLAT);
         }
 
-        return DataType(BaseType::VECTOR, std::move(dtypes), iters.size());
+        return DataType(BaseType::VECTOR, dtypes, iters.size(), etypes);
     }
 };
 
 struct Element : public ExprNode {
     Expr vec;
-    vector<Expr> iters;
+    Expr iter;
 
-    Element(Expr vec, vector<Expr> iters)
-        : ExprNode(vec->type.valty()), vec(vec), iters(std::move(iters))
+    Element(Expr vec, Expr iter)
+        : ExprNode(vec->type.valty()), vec(vec), iter(iter)
     {
-        const auto& vtype = vec->type;
-
-        for (const auto& iter : iters) { ASSERT(iter->type.is_val()); }
-        ASSERT(vtype.is_vector());
-
-        ASSERT(vtype.dim >= this->iters.size());
-        for (size_t i = 0; i < this->iters.size(); i++) {
-            ASSERT(vtype.dtypes[i] == this->iters[i]->type);
-        }
-    }
-    Element(Expr vec, std::initializer_list<Expr> iters)
-        : Element(vec, vector<Expr>(iters))
-    {
+        ASSERT(this->vec->type.is_vector());
+        ASSERT(this->iter->type == this->vec->type.iterty());
     }
 
     void Accept(Visitor&) final;
 };
 
-struct NotNull : public ExprNode {
-    Expr elem;
+struct Lookup : public ExprNode {
+    Expr vec;
+    Expr idx;
 
-    NotNull(Expr elem) : ExprNode(types::BOOL), elem(elem) {}
+    Lookup(Expr vec, Expr idx) : ExprNode(vec->type.rowty()), vec(vec), idx(idx)
+    {
+        ASSERT(vec->type.is_vector());
+        ASSERT(idx->type.is_idx());
+    }
+
+    void Accept(Visitor&) final;
+};
+
+struct In : public ExprNode {
+    Expr iter;
+    Expr vec;
+
+    In(Expr iter, Expr vec) : ExprNode(types::BOOL), iter(iter), vec(vec)
+    {
+        ASSERT(this->iter->type == this->vec->type.iterty());
+    }
 
     void Accept(Visitor&) final;
 };
@@ -86,15 +95,16 @@ typedef function<Expr()> InitFnTy;           // () -> state
 typedef function<Expr(Expr, Expr)> AccFnTy;  // (state, val) -> state
 
 struct Reduce : public ExprNode {
-    Op op;
+    Expr vec;
     InitFnTy init;
     AccFnTy acc;
 
-    Reduce(Op op, InitFnTy init, AccFnTy acc)
-        : ExprNode(init()->type), op(std::move(op)), init(init), acc(acc)
+    Reduce(Expr vec, InitFnTy init, AccFnTy acc)
+        : ExprNode(init()->type), vec(vec), init(init), acc(acc)
     {
+        ASSERT(vec->type.is_vector());
         auto tmp_state = init();
-        auto tmp_val = make_shared<SymNode>("tmp_val", op.type.valty());
+        auto tmp_val = make_shared<SymNode>("tmp_val", vec->type.rowty());
         auto tmp_state2 = acc(tmp_state, tmp_val);
 
         ASSERT(tmp_state2->type == tmp_state->type);

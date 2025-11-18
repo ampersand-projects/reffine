@@ -15,14 +15,12 @@ namespace reffine {
 
 struct FetchDataPtr : public ExprNode {
     Expr vec;
-    Expr idx;
     size_t col;
 
-    FetchDataPtr(Expr vec, Expr idx, size_t col)
-        : ExprNode(vec->type.dtypes[col].ptr()), vec(vec), idx(idx), col(col)
+    FetchDataPtr(Expr vec, size_t col)
+        : ExprNode(vec->type.dtypes[col].ptr()), vec(vec), col(col)
     {
         ASSERT(vec->type.is_vector());
-        ASSERT(idx->type.is_idx());
         ASSERT(col < vec->type.dtypes.size());
     }
 
@@ -32,10 +30,10 @@ struct FetchDataPtr : public ExprNode {
 struct Alloc : public ExprNode {
     Expr size;
 
-    Alloc(DataType type, Expr size = make_shared<Const>(types::UINT32, 1))
+    Alloc(DataType type, Expr size = make_shared<Const>(types::IDX, 1))
         : ExprNode(type.ptr()), size(size)
     {
-        ASSERT(size->type.is_int() && !size->type.is_signed());
+        ASSERT(size->type.is_idx());
     }
 
     void Accept(Visitor&) final;
@@ -43,10 +41,13 @@ struct Alloc : public ExprNode {
 
 struct Load : public ExprNode {
     Expr addr;
+    Expr offset;
 
-    Load(Expr addr) : ExprNode(addr->type.deref()), addr(addr)
+    Load(Expr addr, Expr offset = make_shared<Const>(types::IDX, 0))
+        : ExprNode(addr->type.deref()), addr(addr), offset(offset)
     {
         ASSERT(addr->type.is_ptr());
+        ASSERT(offset->type.is_idx());
     }
 
     void Accept(Visitor&) final;
@@ -55,11 +56,14 @@ struct Load : public ExprNode {
 struct Store : public StmtNode {
     Expr addr;
     Expr val;
+    Expr offset;
 
-    Store(Expr addr, Expr val) : StmtNode(), addr(addr), val(val)
+    Store(Expr addr, Expr val, Expr offset = make_shared<Const>(types::IDX, 0))
+        : StmtNode(), addr(addr), val(val), offset(offset)
     {
         ASSERT(addr->type.is_ptr());
         ASSERT(addr->type == val->type.ptr());
+        ASSERT(offset->type.is_idx());
     }
 
     void Accept(Visitor&) final;
@@ -127,10 +131,10 @@ private:
 
 struct Loop : public ExprNode {
     // Loop initialization
-    Stmt init = nullptr;
+    Expr init = nullptr;
 
     // Loop increment
-    Stmt incr = nullptr;
+    Expr incr = nullptr;
 
     // Exit condition
     Expr exit_cond = nullptr;
@@ -139,10 +143,10 @@ struct Loop : public ExprNode {
     Expr body_cond = nullptr;
 
     // Lopp body
-    Stmt body = nullptr;
+    Expr body = nullptr;
 
     // Loop post
-    Stmt post = nullptr;
+    Expr post = nullptr;
 
     // Loop output
     Expr output;

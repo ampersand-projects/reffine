@@ -1,6 +1,9 @@
 #include "reffine/pass/z3solver.h"
 
+#include "reffine/builder/reffiner.h"
+
 using namespace reffine;
+using namespace reffine::reffiner;
 
 void Z3Solver::Visit(SymNode& s)
 {
@@ -111,9 +114,20 @@ void Z3Solver::Visit(NaryExpr& e)
         case MathOp::IMPLIES:
             assign(z3::implies(eval(e.arg(0)), eval(e.arg(1))));
             break;
-        case MathOp::FORALL:
-            assign(z3::forall(eval(e.arg(0)), eval(e.arg(1))));
+        case MathOp::IFF: {
+            auto a = e.arg(0);
+            auto b = e.arg(1);
+            assign(eval(_and(_implies(a, b), _implies(b, a))));
             break;
+        }
+        case MathOp::FORALL: {
+            z3::expr_vector iters(ctx());
+            for (size_t i = 0; i < e.args.size() - 1; i++) {
+                iters.push_back(eval(e.arg(i)));
+            }
+            assign(z3::forall(iters, eval(e.args.back())));
+            break;
+        }
         case MathOp::EXISTS:
             assign(z3::exists(eval(e.arg(0)), eval(e.arg(1))));
             break;
@@ -133,16 +147,14 @@ z3::expr Z3Solver::eval(Expr expr)
     return new_val;
 }
 
-z3::check_result Z3Solver::check(Expr conj)
+bool Z3Solver::check(Expr conj)
 {
     s().add(eval(conj));
-    return s().check();
+    return s().check() == z3::sat;
 }
 
-z3::expr Z3Solver::get(Expr val) { return s().get_model().eval(eval(val)); }
-
-z3::expr Z3Solver::solve(Expr conj, Expr val)
+shared_ptr<Const> Z3Solver::get(Expr val)
 {
-    check(conj);
-    return get(val);
+    auto z3val = s().get_model().eval(eval(val));
+    return _const(val->type, z3val.as_double());
 }

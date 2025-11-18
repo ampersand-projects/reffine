@@ -2,15 +2,8 @@
 #include <memory>
 #include <fstream>
 #include <iomanip>
+#include <chrono>
 #include <sys/resource.h>
-
-#include <arrow/api.h>
-#include <arrow/csv/api.h>
-#include <arrow/io/api.h>
-#include <arrow/ipc/api.h>
-#include <arrow/result.h>
-#include <arrow/status.h>
-#include <arrow/c/bridge.h>
 
 #include <z3++.h>
 
@@ -25,7 +18,8 @@
 #include "reffine/ir/loop.h"
 #include "reffine/ir/op.h"
 #include "reffine/base/type.h"
-#include "reffine/pass/printer.h"
+#include "reffine/pass/printer2.h"
+#include "reffine/pass/cemitter.h"
 #include "reffine/pass/canonpass.h"
 #include "reffine/pass/scalarpass.h"
 #include "reffine/pass/symanalysis.h"
@@ -35,14 +29,25 @@
 #include "reffine/pass/llvmgen.h"
 #include "reffine/engine/engine.h"
 #include "reffine/engine/cuda_engine.h"
-#include "reffine/arrow/defs.h"
+#include "reffine/arrow/table.h"
 #include "reffine/builder/reffiner.h"
-#include "reffine/pass/vinstr.h"
 #include "reffine/utils/utils.h"
+
+#include <arrow/api.h>
+#include <arrow/csv/api.h>
+#include <arrow/io/api.h>
+#include <arrow/ipc/api.h>
+#include <arrow/result.h>
+#include <arrow/status.h>
+#include <arrow/c/bridge.h>
 
 using namespace reffine;
 using namespace std;
 using namespace reffine::reffiner;
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::duration;
+using std::chrono::microseconds;
 
 arrow::Status csv_to_arrow()
 {
@@ -65,7 +70,7 @@ arrow::Status csv_to_arrow()
     return arrow::Status::OK();
 }
 
-arrow::Result<ArrowTable> load_arrow_file(string filename)
+arrow::Result<shared_ptr<ArrowTable2>> load_arrow_file(string filename, int64_t dim)
 {
     ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(
                 filename, arrow::default_memory_pool()));
@@ -73,158 +78,44 @@ arrow::Result<ArrowTable> load_arrow_file(string filename)
     ARROW_ASSIGN_OR_RAISE(auto ipc_reader, arrow::ipc::RecordBatchFileReader::Open(file));
 
     ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
+    cout << "Input: " << endl << rbatch->ToString() << endl;
 
-    ArrowSchema schema;
-    ArrowArray array;
-    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, &array, &schema));
+    auto tbl = make_shared<ArrowTable2>(dim);
+    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, tbl->array, tbl->schema));
 
-    return ArrowTable(std::move(schema), std::move(array));
+    return tbl;
 }
 
-arrow::Status query_arrow_file(ArrowTable& in_table, void (*query_fn)(long*, void*))
+
+arrow::Status query_arrow_file(shared_ptr<ArrowTable> in_table, void (*query_fn)(void*, void*))
 {
-    auto& in_array = in_table.array;
-
-    VectorSchema out_schema("output");
-    VectorArray out_array(in_array.length);
-    out_schema.add_child<Int64Schema>("id");
-    out_schema.add_child<Int64Schema>("minutes_studied");
-    out_schema.add_child<BooleanSchema>("slept_enough");
-    out_array.add_child<Int64Array>(in_array.length);
-    out_array.add_child<Int64Array>(in_array.length);
-    out_array.add_child<BooleanArray>(in_array.length);
-
     long sum;
-    query_fn(&sum, &in_array);
+    auto t1 = high_resolution_clock::now();
+    query_fn(&sum, in_table.get());
+    auto t2 = high_resolution_clock::now();
     cout << "SUM: " << sum << endl;
 
-    //ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(&out_array, &out_schema));
-    //cout << "Output: " << endl << res->ToString() << endl;
+    auto us_int = duration_cast<microseconds>(t2 - t1);
+    std::cout << "Time: " << us_int.count() << "us\n";
 
     return arrow::Status::OK();
 }
 
-shared_ptr<Func> vector_fn()
+arrow::Status query_arrow_file2(shared_ptr<ArrowTable> in_table, void (*query_fn)(void*, void*))
 {
-    auto vec_sym = _sym("vec", types::VECTOR<1>(vector<DataType>{
-        _i64_t, _i64_t, _i64_t, _i64_t, _i64_t, _i8_t, _i64_t }));
+    ArrowTable* out_table;
 
-    auto len = _call("get_vector_len", _idx_t, vector<Expr>{vec_sym});
-    auto len_sym = _sym("len", len);
+    auto t1 = high_resolution_clock::now();
+    query_fn(&out_table, in_table.get());
+    auto t2 = high_resolution_clock::now();
 
-    auto idx_alloc = _alloc(_idx_t);
-    auto idx_addr = _sym("idx_addr", idx_alloc);
-    auto idx = _load(idx_addr);
-    auto sum_alloc = _alloc(_i64_t);
-    auto sum_addr = _sym("sum_addr", sum_alloc);
-    auto sum = _load(sum_addr);
+    ARROW_ASSIGN_OR_RAISE(auto res, arrow::ImportRecordBatch(out_table->array, out_table->schema));
+    cout << "Output: " << endl << res->ToString() << endl;
 
-    auto val_ptr = _fetch(vec_sym, idx, 1);
-    auto val = _load(val_ptr);
+    auto us_int = duration_cast<microseconds>(t2 - t1);
+    std::cout << "Time: " << us_int.count() << "us\n";
 
-    auto loop = _loop(_load(sum_addr));
-    auto loop_sym = _sym("loop", loop);
-    loop->init = _stmts(vector<Stmt>{
-        _store(idx_addr, _idx(0)),
-        _store(sum_addr, _i64(0)),
-    });
-    loop->exit_cond = _gte(idx, len_sym);
-    loop->body = _stmts(vector<Stmt>{
-        _store(sum_addr, sum + val),
-        _store(idx_addr, idx + _idx(1)),
-    });
-
-    auto foo_fn = _func("foo", loop_sym, vector<Sym>{vec_sym});
-    foo_fn->tbl[len_sym] = len;
-    foo_fn->tbl[idx_addr] = idx_alloc;
-    foo_fn->tbl[sum_addr] = sum_alloc;
-    foo_fn->tbl[loop_sym] = loop;
-
-    return foo_fn;
-}
-
-shared_ptr<Func> transform_fn()
-{
-    auto vec_in_sym = make_shared<SymNode>("vec_in", types::VECTOR<1>(vector<DataType>{
-        types::INT64, types::INT64, types::INT64, types::INT64, types::INT64, types::INT8, types::INT64 }));
-    auto vec_out_sym = make_shared<SymNode>("vec_out", types::VECTOR<1>(vector<DataType>{
-        types::INT64, types::INT64, types::INT8 }));
-
-    auto len = make_shared<Call>("get_vector_len", types::IDX, vector<Expr>{vec_in_sym});
-    auto len_sym = make_shared<SymNode>("len", len);
-
-    auto zero = make_shared<Const>(types::IDX, 0);
-    auto one = make_shared<Const>(types::IDX, 1);
-    auto eight = make_shared<Const>(types::INT64, 8);
-    auto sixty = make_shared<Const>(types::INT64, 60);
-    auto twenty = make_shared<Const>(types::INT64, 20);
-    auto _true = make_shared<Const>(types::BOOL, 1);
-    auto _false = make_shared<Const>(types::BOOL, 0);
-
-    auto idx_alloc = make_shared<Alloc>(types::IDX);
-    auto idx_addr = make_shared<SymNode>("idx_addr", idx_alloc);
-    auto idx = make_shared<Load>(idx_addr);
-
-    auto id_valid = make_shared<IsValid>(vec_in_sym, idx, 0);
-    auto id_data_ptr = make_shared<FetchDataPtr>(vec_in_sym, idx, 0);
-    auto id_data = make_shared<Load>(id_data_ptr);
-    auto hours_valid = make_shared<IsValid>(vec_in_sym, idx, 1);
-    auto hours_data_ptr = make_shared<FetchDataPtr>(vec_in_sym, idx, 1);
-    auto hours_data = make_shared<Load>(hours_data_ptr);
-    auto hours_slept_data_ptr = make_shared<FetchDataPtr>(vec_in_sym, idx, 3);
-    auto hours_slept_data = make_shared<Load>(hours_slept_data_ptr);
-
-    auto out_id_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 0);
-    auto out_minutes_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 1);
-    auto out_sleep_data_ptr = make_shared<FetchDataPtr>(vec_out_sym, idx, 2);
-    auto out_minutes = make_shared<Mul>(hours_data, sixty);
-
-    auto loop = _loop(vec_out_sym);
-    auto loop_sym = make_shared<SymNode>("loop", loop);
-    loop->init = make_shared<Stmts>(vector<Stmt>{
-        make_shared<Store>(idx_addr, zero),
-    });
-    loop->incr = make_shared<Stmts>(vector<Stmt>{
-        make_shared<Store>(idx_addr, make_shared<Add>(make_shared<Load>(idx_addr), one)),
-    });
-    loop->exit_cond = make_shared<GreaterThanEqual>(make_shared<Load>(idx_addr), len_sym);
-    loop->body = make_shared<Stmts>(vector<Stmt>{
-        make_shared<IfElse>(
-            make_shared<And>(
-                make_shared<And>(id_valid, hours_valid),
-                make_shared<GreaterThanEqual>(hours_data, twenty)
-            ),
-            make_shared<Stmts>(vector<Stmt>{
-                make_shared<Store>(out_id_data_ptr, make_shared<Load>(id_data_ptr)),
-                make_shared<Store>(out_minutes_data_ptr, out_minutes),
-                make_shared<SetValid>(vec_out_sym, idx, _true, 0),
-                make_shared<SetValid>(vec_out_sym, idx, _true, 1),
-            }),
-            make_shared<Stmts>(vector<Stmt>{
-                make_shared<SetValid>(vec_out_sym, idx, _false, 0),
-                make_shared<SetValid>(vec_out_sym, idx, _false, 1),
-            })
-        ),
-        make_shared<Store>(
-            out_sleep_data_ptr,
-            make_shared<Select>(
-                make_shared<LessThan>(hours_slept_data, eight),
-		make_shared<Const>(types::INT8, 0),
-		make_shared<Const>(types::INT8, 1)
-	    )
-        ),
-        make_shared<SetValid>(vec_out_sym, idx, _true, 2)
-    });
-    loop->post = make_shared<Call>("set_vector_len", types::INT64, vector<Expr>{
-        vec_out_sym, make_shared<Load>(idx_addr)
-    });
-
-    auto foo_fn = make_shared<Func>("foo", loop_sym, vector<Sym>{vec_in_sym, vec_out_sym});
-    foo_fn->tbl[len_sym] = len;
-    foo_fn->tbl[idx_addr] = idx_alloc;
-    foo_fn->tbl[loop_sym] = loop;
-
-    return foo_fn;
+    return arrow::Status::OK();
 }
 
 shared_ptr<ExprNode> get_start_idx(Expr tid, Expr bid, Expr bdim, Expr gdim, Expr len) {
@@ -283,11 +174,11 @@ shared_ptr<Func> basic_transform_kernel()
 
     auto loop = _loop(_load(vec_out_sym));
 
-    loop->init = _stmts(vector<Stmt>{
+    loop->init = _stmts(vector<Expr>{
         idx_alloc,
         _store(idx_addr, idx_start),
     });
-    loop->body = _stmts(vector<Stmt>{
+    loop->body = _stmts(vector<Expr>{
         _store(out_ptr, _add(_i64(1), val)),
         _store(idx_addr, idx + _idx(1)),
     });
@@ -303,7 +194,7 @@ shared_ptr<Func> basic_transform_kernel()
 shared_ptr<Func> test_op_fn()
 {
     auto t_sym = make_shared<SymNode>("t", types::INT32);
-    Op op(
+    auto op = _op(
         vector<Sym>{t_sym},
         make_shared<And>(
             make_shared<GreaterThan>(t_sym, make_shared<Const>(types::INT32, 0)),
@@ -323,140 +214,6 @@ shared_ptr<Func> test_op_fn()
     auto sum_sym = make_shared<SymNode>("sum", sum);
 
     auto foo_fn = make_shared<Func>("foo", sum_sym, vector<Sym>{});
-    foo_fn->tbl[sum_sym] = sum;
-
-    return foo_fn;
-}
-
-void demorgan_test()
-{
-    auto t = make_shared<SymNode>("t", types::INT64);
-    auto lb = make_shared<Const>(types::INT64, 10);
-    auto pred = make_shared<GreaterThanEqual>(t, lb);
-
-    auto p = make_shared<SymNode>("p", t);
-    auto forall = make_shared<ForAll>(t,
-        make_shared<And>(
-            make_shared<Implies>(make_shared<GreaterThanEqual>(t, p), pred),
-            make_shared<Implies>(make_shared<LessThan>(t, p), make_shared<Not>(pred))
-        )
-    );
-
-    Z3Solver z3s;
-    int res = z3s.solve(forall, p).as_int64();
-    cout << "p = " << res << endl;
-}
-
-shared_ptr<Func> reduce_op_fn()
-{
-    auto idx_sym = _sym("i", _idx_t);
-    auto vec_in_sym = _sym("vec_in", _vec_t<0, int64_t, int64_t, int64_t, int64_t, int64_t, int8_t, int64_t>());
-
-    Op op(
-        { idx_sym },
-        _gte(idx_sym, _idx(0)) & _lt(idx_sym, _idx(2880404)),
-        { _get(make_shared<Lookup>(vec_in_sym, idx_sym), 1) }
-    );
-    auto sum = _red(
-        op,
-        [] () { return _new(vector<Expr>{_i64(0), _i64(0)}); },
-        [] (Expr s, Expr v) {
-            auto e = _get(v, 0);
-            auto s0 = _get(s, 0);
-            auto s1 = _get(s, 1);
-            return _new(vector<Expr>{_add(s0, e), s1});
-        }
-    );
-    auto sum_sym = _sym("sum", sum);
-
-    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
-    foo_fn->tbl[sum_sym] = sum;
-
-    return foo_fn;
-}
-
-shared_ptr<Func> tpcds_query9(ArrowTable& table)
-{
-    auto idx_sym = _sym("i", _idx_t);
-    auto vec_in_sym = _sym("vec_in", table.get_data_type(0));
-
-    auto ss_quant = _get(make_shared<Lookup>(vec_in_sym, idx_sym), 10);
-    auto ss_quant_sym = _sym("ss_quant", ss_quant);
-    auto ss_ext_tax = _get(make_shared<Lookup>(vec_in_sym, idx_sym), 18);
-    auto ss_ext_tax_sym = _sym("ss_ext_tax", ss_ext_tax);
-    auto ss_inc_tax = _get(make_shared<Lookup>(vec_in_sym, idx_sym), 21);
-    auto ss_inc_tax_sym = _sym("ss_inc_tax", ss_inc_tax);
-
-    Op op(
-        { idx_sym },
-        _gte(idx_sym, _idx(0)) & _lt(idx_sym, _idx(2880404)),
-        { ss_quant_sym, ss_ext_tax_sym, ss_inc_tax_sym }
-    );
-    auto sum = _red(
-            op,
-            [] () {
-            return _new(
-                    vector<Expr>{
-                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
-                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
-                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
-                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
-                    _new(vector<Expr>{_i32(0), _f32(0), _f32(0)}),
-                    }
-                    );
-            },
-            [] (Expr s, Expr v) {
-            auto _0 = _i32(0);
-            auto _20 = _i32(20);
-            auto _40 = _i32(40);
-            auto _60 = _i32(60);
-            auto _80 = _i32(80);
-            auto _100 = _i32(100);
-
-
-            auto ss_quant = _get(v, 0);
-            auto ext_tax = _get(v, 1);
-            auto inc_tax = _get(v, 2);
-            auto s1 = _get(s, 0);
-            auto s2 = _get(s, 1);
-            auto s3 = _get(s, 2);
-            auto s4 = _get(s, 3);
-            auto s5 = _get(s, 4);
-            auto update_state = [](Expr s, Expr ext, Expr inc) {
-                auto count = _get(s, 0) + _i32(1);
-                auto ext_sum = _add(_get(s, 1), ext);
-                auto inc_sum = _add(_get(s, 2), inc);
-                return _new(vector<Expr>{count, ext_sum, inc_sum});
-            };
-            return _sel(
-                    _gt(ss_quant, _0) & _lte(ss_quant, _20),
-                    _new(vector<Expr>{update_state(s1, ext_tax, inc_tax), s2, s3, s4, s5}),
-                    _sel(
-                        _gt(ss_quant, _20) & _lte(ss_quant, _40),
-                        _new(vector<Expr>{s1, update_state(s2, ext_tax, inc_tax), s3, s4, s5}),
-                        _sel(
-                            _gt(ss_quant, _40) & _lte(ss_quant, _60),
-                            _new(vector<Expr>{s1, s2, update_state(s3, ext_tax, inc_tax), s4, s5}),
-                            _sel(
-                                _gt(ss_quant, _60) & _lte(ss_quant, _80),
-                                _new(vector<Expr>{s1, s2, s3, update_state(s4, ext_tax, inc_tax), s5}),
-                                _sel(
-                                    _gt(ss_quant, _80) & _lte(ss_quant, _100),
-                                    _new(vector<Expr>{s1, s2, s3, s4, update_state(s5, ext_tax, inc_tax)}),
-                                    s
-                                    )
-                                )
-                            )
-                        )
-                    );
-            }
-    );
-    auto sum_sym = _sym("sum", sum);
-
-    auto foo_fn = _func("foo", _get(_get(sum_sym, 0), 0), vector<Sym>{vec_in_sym});
-    foo_fn->tbl[ss_quant_sym] = ss_quant;
-    foo_fn->tbl[ss_ext_tax_sym] = ss_ext_tax;
-    foo_fn->tbl[ss_inc_tax_sym] = ss_inc_tax;
     foo_fn->tbl[sum_sym] = sum;
 
     return foo_fn;
@@ -501,13 +258,13 @@ void execute_kernel(string kernel_name, CUfunction kernel, void *arg, int len)
 
 void test_kernel() {
     /* Test kernel generation and execution*/
-    auto fn = basic_transform_kernel();
-    cout << "Loop IR: " << endl << IRPrinter::Build(fn) << endl;
-    CanonPass::Build(fn);
+    auto loop = basic_transform_kernel();
+    cout << "Loop IR: " << endl << loop->str() << endl;
+    auto fn = CanonPass().eval(loop);
 
     auto jit = ExecEngine::Get();
     auto llmod = make_unique<llvm::Module>("foo", jit->GetCtx());
-    LLVMGen::Build(fn, *llmod);
+    LLVMGen(*llmod).eval(fn);
     jit->Optimize(*llmod);
 
     auto cuda_engine = CudaEngine::Get();
@@ -526,97 +283,119 @@ void test_kernel() {
 }
 #endif
 
-shared_ptr<Func> vector_op()
+shared_ptr<Func> transform_op(shared_ptr<ArrowTable2> tbl)
 {
     auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym =
-        _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
-                              int8_t, int64_t>());
+    auto vec_in_sym = _sym("vec_in", tbl->get_data_type());
     auto elem_expr = vec_in_sym[{t_sym}];
     auto elem = _sym("elem", elem_expr);
-    Op op({t_sym},
-          ~(elem) & _lte(t_sym, _i64(48)) &
-              _gte(t_sym, _i64(10)),
-          {
-              elem[0],
-              elem[1],
-              elem[2],
-              elem[3]
-          }
+    auto ten = _sym("ten", _i64_t);
+    auto out_expr = _add(elem[0], ten);
+    auto out = _sym("out", out_expr);
+    auto op = _op(vector<Sym>{t_sym}, (_in(t_sym, vec_in_sym) & _gt(t_sym, ten)) & _lt(t_sym, _i64(64)), vector<Expr>{ out });
+    auto op_sym = _sym("op", op);
+
+    auto foo_fn = _func("foo", op_sym, vector<Sym>{vec_in_sym});
+    foo_fn->tbl[elem] = elem_expr;
+    foo_fn->tbl[out] = out_expr;
+    foo_fn->tbl[op_sym] = op;
+    foo_fn->tbl[ten] = _i64(10);
+
+    return foo_fn;
+}
+
+shared_ptr<Func> nested_transform_op()
+{
+    auto a_sym = _sym("a", _i64_t);
+    auto b_sym = _sym("b", _i64_t);
+
+    auto op = _op(
+        vector<Sym>{a_sym, b_sym},
+        (_gte(a_sym, _i64(0)) & _lt(a_sym, _i64(3)) & _gte(b_sym, _i64(0)) & _lt(b_sym, _i64(3))),
+        vector<Expr>{ a_sym + b_sym }
     );
 
-    auto sum = _red(
-        op, []() { return _new(vector<Expr>{_i64(0), _i64(0), _i64(0), _i64(0)}); },
+    auto op_sym = _sym("op", op);
+
+    auto foo_fn = _func("foo", op_sym, vector<Sym>{});
+    foo_fn->tbl[op_sym] = op;
+
+    return foo_fn;
+}
+
+shared_ptr<Func> gen_fake_table()
+{
+    auto t_sym = _sym("t", _i64_t);
+    auto lb_sym = _sym("lb", _i64_t);
+    auto ub_sym = _sym("ub", _i64_t);
+
+    auto op = _op(
+        vector<Sym>{t_sym},
+        (_gte(t_sym, lb_sym) & _lt(t_sym, ub_sym)),
+        vector<Expr>{ _add(t_sym, _i64(10)) }
+    );
+    auto op_sym = _sym("op", op);
+
+    auto fn = _func("first", op_sym, vector<Sym>{lb_sym, ub_sym});
+    fn->tbl[op_sym] = op;
+
+    return fn;
+}
+
+shared_ptr<Func> join_op(ArrowTable2* left, ArrowTable2* right, ArrowTable2* another)
+{
+    auto lvec_sym = _sym("left", left->get_data_type());
+    auto rvec_sym = _sym("right", right->get_data_type());
+    auto avec_sym = _sym("another", another->get_data_type());
+    auto t_sym = _sym("t", _i64_t);
+
+    auto lelem = lvec_sym[{t_sym}][0];
+    auto relem = rvec_sym[{t_sym}][0];
+    auto aelem = avec_sym[{t_sym}][0];
+    auto lelem_sym = _sym("l", lelem);
+    auto relem_sym = _sym("r", relem);
+    auto aelem_sym = _sym("a", aelem);
+
+    auto op = _op(
+        vector<Sym>{t_sym},
+        (_in(t_sym, lvec_sym) & _in(t_sym, rvec_sym) & _in(t_sym, avec_sym)),
+        vector<Expr>{ lelem_sym, relem_sym, aelem_sym, _add(_add(lelem_sym, relem_sym), aelem_sym) }
+    );
+    auto op_sym = _sym("op", op);
+
+    auto fn = _func("join", op_sym, vector<Sym>{lvec_sym, rvec_sym, avec_sym});
+    fn->tbl[lelem_sym] = lelem;
+    fn->tbl[relem_sym] = relem;
+    fn->tbl[aelem_sym] = aelem;
+    fn->tbl[op_sym] = op;
+
+    return fn;
+}
+
+shared_ptr<Func> red_op(shared_ptr<ArrowTable2> tbl)
+{
+    auto vec_sym = _sym("vec_in", tbl->get_data_type());
+    auto t_sym = _sym("t_sym", _i64_t);
+
+    auto red = _red(vec_sym[t_sym],
+        []() { return _i64(0); },
         [](Expr s, Expr v) {
-            auto v0 = _get(v, 0);
             auto v1 = _get(v, 1);
-            auto v2 = _get(v, 2);
-            auto v3 = _get(v, 3);
-            auto s0 = _get(s, 0);
-            auto s1 = _get(s, 1);
-            auto s2 = _get(s, 2);
-            auto s3 = _get(s, 3);
-            return _new(vector<Expr>{
-                _add(s0, v0), _add(s1, v1), _add(s2, v2), _add(s3, v3)});
-        });
-    auto sum_sym = _sym("sum", sum);
-    auto res = _get(sum_sym, 0);
-    auto res_sym = _sym("res", res);
+            return _add(s, v1);
+        }
+    );
+    auto red_sym = _sym("sum", red);
+    auto op = _op(vector<Sym>{t_sym},
+        _in(t_sym, vec_sym),
+        vector<Expr>{red_sym}
+    );
+    auto op_sym = _sym("op", op);
 
-    auto foo_fn = _func("foo", res_sym, vector<Sym>{vec_in_sym});
-    foo_fn->tbl[elem] = elem_expr;
-    foo_fn->tbl[sum_sym] = sum;
-    foo_fn->tbl[res_sym] = res;
+    auto fn = _func("red", op_sym, vector<Sym>{vec_sym});
+    fn->tbl[op_sym] = op;
+    fn->tbl[red_sym] = red;
 
-    return foo_fn;
-}
-
-shared_ptr<Func> vector_op2()
-{
-    auto t_sym = _sym("t", _i64_t);
-    auto vec_in_sym =
-        _sym("vec_in", _vec_t<1, int64_t, int64_t, int64_t, int64_t, int64_t,
-                              int8_t, int64_t>());
-    auto elem_expr = vec_in_sym[{t_sym}];
-    auto elem = _sym("elem", elem_expr);
-    Op op({t_sym}, ~(elem), {
-        _call("_print", types::INT64, vector<Expr>{elem[0]})
-    });
-
-    auto sum = _red(
-        op, []() { return _i64(0); },
-        [](Expr s, Expr v) {
-            auto v0 = _get(v, 0);
-            return _add(s, _get(v, 0));
-        });
-    auto sum_sym = _sym("sum", sum);
-
-    auto foo_fn = _func("foo", sum_sym, vector<Sym>{vec_in_sym});
-    foo_fn->tbl[elem] = elem_expr;
-    foo_fn->tbl[sum_sym] = sum;
-
-    return foo_fn;
-}
-
-shared_ptr<Func> vector_op3()
-{
-    auto t_sym = _sym("t", _i64_t);
-    Op op({t_sym}, _lt(t_sym, _i64(10)) & _gte(t_sym, _i64(0)), {
-        t_sym
-    });
-
-    auto sum = _red(
-        op, []() { return _i64(0); },
-        [](Expr s, Expr v) {
-            auto v0 = _get(v, 0);
-            return _add(s, _get(v, 0));
-        });
-    auto sum_sym = _sym("sum", sum);
-
-    auto foo_fn = _func("foo", sum_sym, vector<Sym>{});
-    foo_fn->tbl[sum_sym] = sum;
-
-    return foo_fn;
+    return fn;
 }
 
 int main()
@@ -641,12 +420,19 @@ int main()
         }
     }
 
-    auto fn = vector_op();
-    auto query_fn = compile_op<void (*)(long*, void*)>(fn);
-    auto table = load_arrow_file("../students.arrow");
-    auto status = query_arrow_file(*table, query_fn);
-    if (!status.ok()) {
-        cerr << status.ToString() << endl;
-    }
+    auto tbl = load_arrow_file("../benchmark/runend.arrow", 2).ValueOrDie();
+    tbl->build_index();
+    auto red = red_op(tbl);
+    auto red_fn = compile_op<void (*)(void*, void*)>(red, true);
+
+    ArrowTable2* out;
+    red_fn(&out, tbl.get());
+
+    auto in_res = arrow::ImportRecordBatch(tbl->array, tbl->schema).ValueOrDie();
+    cout << "Input: " << endl << in_res->ToString() << endl;
+
+    auto out_res = arrow::ImportRecordBatch(out->array, out->schema).ValueOrDie();
+    cout << "Output: " << endl << out_res->ToString() << endl;
+
     return 0;
 }

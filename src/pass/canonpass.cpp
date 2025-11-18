@@ -5,38 +5,59 @@
 using namespace reffine;
 using namespace reffine::reffiner;
 
-void CanonPass::Visit(Loop& loop)
+Expr CanonPass::visit(Define& define)
 {
-    IRPass::Visit(loop);
-
-    if (loop.incr) {
-        loop.body = _stmts(vector<Stmt>{loop.body, loop.incr});
-
-        loop.incr = nullptr;
+    if (this->ctx().sym_sym_map.find(define.sym) ==
+        this->ctx().sym_sym_map.end()) {
+        auto new_sym = _sym(define.sym->name, define.sym);
+        this->map_sym(define.sym, new_sym);
+        this->assign(new_sym, eval(define.val));
+        this->map_sym(new_sym, new_sym);
+        return new_sym;
+    } else {
+        return eval(define.sym);
     }
+}
+
+Expr CanonPass::visit(Get& get)
+{
+    if (get.val->type.is_primitive()) {
+        return eval(get.val);
+    } else {
+        return IRClone::visit(get);
+    }
+}
+
+Expr CanonPass::visit(Loop& loop)
+{
+    auto new_loop = _loop(eval(loop.output));
+
+    new_loop->init = loop.init ? eval(loop.init) : nullptr;
+    new_loop->exit_cond = loop.exit_cond ? eval(loop.exit_cond) : nullptr;
+    new_loop->body = loop.body ? eval(loop.body) : nullptr;
+    new_loop->post = loop.post ? eval(loop.post) : nullptr;
 
     if (loop.body_cond) {
-        loop.body = _ifelse(loop.body_cond, loop.body, _noop());
-
-        loop.body_cond = nullptr;
+        new_loop->body = _ifelse(eval(loop.body_cond), new_loop->body, _noop());
     }
+    if (loop.incr) {
+        new_loop->body = _stmts(vector<Expr>{new_loop->body, eval(loop.incr)});
+    }
+
+    return new_loop;
 }
 
-void CanonPass::Visit(Func& func)
+Expr CanonPass::visit(Func& func)
 {
-    IRPass::Visit(func);
+    IRClone::visit(func);
+    auto new_func = this->ctx().out_func;
 
-    if (!func.output->type.is_void()) {
-        auto output_addr = _sym("output_addr", func.output->type.ptr());
-        func.inputs.insert(func.inputs.begin(), output_addr);
+    if (!new_func->output->type.is_void()) {
+        auto output_addr = _sym("output_addr", new_func->output->type.ptr());
+        new_func->inputs.insert(new_func->inputs.begin(), output_addr);
 
-        func.output = _stmtexpr(_store(output_addr, func.output));
+        new_func->output = _store(output_addr, new_func->output);
     }
-}
 
-void CanonPass::Build(shared_ptr<Func> func)
-{
-    IRPassCtx ctx(func->tbl);
-    CanonPass pass(ctx);
-    func->Accept(pass);
+    return new_func;
 }

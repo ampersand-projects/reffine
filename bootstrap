@@ -12,7 +12,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
       -DLLVM_TARGETS_TO_BUILD="X86;NVPTX" \
       -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD="NVPTX" \
       -DLLVM_ENABLE_BINDINGS=OFF \
-      -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libc" \
+      -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra" \
       -DLLVM_ENABLE_RUNTIMES="libc;libcxx;libcxxabi;libunwind" \
       -DLLVM_ENABLE_ZLIB=OFF \
       -DLLVM_ENABLE_ZSTD=OFF \
@@ -63,6 +63,30 @@ PYBIND_SRC_DIR="third_party/pybind11/"
 PYBIND_BUILD_DIR="${PYBIND_SRC_DIR}/build"
 mkdir -p ${PYBIND_BUILD_DIR}
 pushd ${PYBIND_BUILD_DIR}
+cmake -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+      ..
+make -j $(nproc)
+make install
+popd
+
+# Build Boost
+BOOST_SRC_DIR="third_party/boost/"
+BOOST_BUILD_DIR="${BOOST_SRC_DIR}/build"
+mkdir -p ${BOOST_BUILD_DIR}
+pushd ${BOOST_BUILD_DIR}
+cmake -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+      ..
+make -j $(nproc)
+make install
+popd
+
+# Build ankerl::unordered_dense
+ANKERL_SRC_DIR="third_party/unordered_dense"
+ANKERL_BUILD_DIR="${ANKERL_SRC_DIR}/build"
+mkdir -p ${ANKERL_BUILD_DIR}
+pushd ${ANKERL_BUILD_DIR}
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
       ..
