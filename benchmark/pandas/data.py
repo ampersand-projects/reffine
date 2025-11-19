@@ -190,9 +190,28 @@ class TPCHQuery3:
         )
 
         return result
+
+    def query2(self, segment, date):
+        joined = self.lineitem.merge(self.orders, left_on="L_ORDERKEY", right_on="O_ORDERKEY", how="inner")
+        cust_joined = joined.merge(self.customer, left_on="O_CUSTKEY", right_on="C_CUSTKEY", how="inner")
+        filtered = cust_joined[
+            (cust_joined["C_MKTSEGMENT"] == segment) &
+            (cust_joined["O_ORDERKEY"] < date) &
+            (cust_joined["L_SHIPDATE"] > date)
+        ]
+
+        result = (
+            filtered
+            .assign(REVENUE=lambda df: df["L_EXTENDEDPRICE"] * (1 - df["L_DISCOUNT"]))
+            .groupby("L_ORDERKEY", as_index=False)["REVENUE"]
+            .sum()
+        )
+
+        return result
+
         
     def run(self):
-        return self.query(1, 795484800)
+        return self.query2(1, 795484800)
 
 
 #TPCHLineItem.store()
