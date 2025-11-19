@@ -1,17 +1,16 @@
-#include <iostream>
-
-#include "bench.h"
-#include "reffine/base/type.h"
-#include "reffine/builder/reffiner.h"
-
 #include <arrow/api.h>
+#include <arrow/c/bridge.h>
 #include <arrow/csv/api.h>
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
 #include <arrow/result.h>
 #include <arrow/status.h>
-#include <arrow/c/bridge.h>
 
+#include <iostream>
+
+#include "bench.h"
+#include "reffine/base/type.h"
+#include "reffine/builder/reffiner.h"
 
 using namespace std;
 using namespace reffine;
@@ -27,6 +26,7 @@ int main()
         std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     cout << "Time: " << duration.count() << endl;
 
-    auto out_res = arrow::ImportRecordBatch(out->array, out->schema).ValueOrDie();
+    auto out_res =
+        arrow::ImportRecordBatch(out->array, out->schema).ValueOrDie();
     cout << "Output: " << endl << out_res->ToString() << endl;
 }
