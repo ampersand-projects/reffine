@@ -196,7 +196,7 @@ class TPCHQuery3:
         cust_joined = joined.merge(self.customer, left_on="O_CUSTKEY", right_on="C_CUSTKEY", how="inner")
         filtered = cust_joined[
             (cust_joined["C_MKTSEGMENT"] == segment) &
-            (cust_joined["O_ORDERKEY"] < date) &
+            (cust_joined["O_ORDERDATE"] < date) &
             (cust_joined["L_SHIPDATE"] > date)
         ]
 

@@ -31,15 +31,6 @@ struct TPCHQuery3 {
         auto customer = _sym("customer", this->customer->get_data_type());
         auto orderkey = _sym("orderkey", _i64_t);
 
-        auto c_idx = _locate(customer, _get(orders[orderkey], 0));
-        auto c_idx_sym = _sym("c_idx", c_idx);
-        auto filter =  _gte(c_idx_sym, _idx(0)) &
-            _lt(_get(orders[orderkey], 3), _i64(date)) &
-            _eq(_readdata(customer, c_idx_sym, 6), _i8(segment));
-
-        auto filter_sym = _sym("filter", filter);
-        auto pred = _in(orderkey, lineitem) & _in(orderkey, orders) & filter_sym;
-
         auto red = _red(lineitem[orderkey],
             []() { return _f64(0); },
             [date](Expr s, Expr v) {
@@ -52,6 +43,16 @@ struct TPCHQuery3 {
             }
         );
         auto red_sym = _sym("red", red);
+
+        auto c_idx = _locate(customer, _get(orders[orderkey], 0));
+        auto c_idx_sym = _sym("c_idx", c_idx);
+        auto filter =  _gte(c_idx_sym, _idx(0)) &
+            _lt(_get(orders[orderkey], 3), _i64(date)) &
+            _eq(_readdata(customer, c_idx_sym, 6), _i8(segment)) &
+            _gt(red_sym, _f64(0));
+        auto filter_sym = _sym("filter", filter);
+        auto pred = _in(orderkey, lineitem) & _in(orderkey, orders) & filter_sym;
+
         auto op = _op(vector<Sym>{orderkey}, pred, vector<Expr>{red_sym});
         auto op_sym = _sym("op", op);
 
