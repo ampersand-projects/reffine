@@ -146,6 +146,20 @@ protected:
     SymExprs _extra_syms() final;
 };
 
+struct FilteredSpace : public SuperSpace {
+    Expr cond;
+
+    FilteredSpace(ISpace ispace, Expr cond) : SuperSpace(ispace), cond(cond)
+    {
+        ASSERT(this->cond->type == types::BOOL);
+    }
+
+    ISpace intersect(ISpace) final;
+
+private:
+    Expr _iter_cond(Expr) final;
+};
+
 struct BoundSpace : public SuperSpace {
     ISpace bound;
 
