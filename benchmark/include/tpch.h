@@ -31,8 +31,12 @@ struct TPCHQuery3 {
         auto customer = _sym("customer", this->customer->get_data_type());
         auto orderkey = _sym("orderkey", _i64_t);
 
-        auto filter =  _gte(_locate(customer, _get(orders[orderkey], 0)), _idx(0)) &
-            _lt(_get(orders[orderkey], 3), _i64(date));
+        auto c_idx = _locate(customer, _get(orders[orderkey], 0));
+        auto c_idx_sym = _sym("c_idx", c_idx);
+        auto filter =  _gte(c_idx_sym, _idx(0)) &
+            _lt(_get(orders[orderkey], 3), _i64(date)) &
+            _eq(_readdata(customer, c_idx_sym, 6), _i8(segment));
+
         auto filter_sym = _sym("filter", filter);
         auto pred = _in(orderkey, lineitem) & _in(orderkey, orders) & filter_sym;
 
@@ -52,6 +56,7 @@ struct TPCHQuery3 {
         auto op_sym = _sym("op", op);
 
         auto fn = _func("tpchquery3", op_sym, vector<Sym>{lineitem, orders, customer});
+        fn->tbl[c_idx_sym] = c_idx;
         fn->tbl[filter_sym] = filter;
         fn->tbl[op_sym] = op;
         fn->tbl[red_sym] = red;
