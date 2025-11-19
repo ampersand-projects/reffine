@@ -70,23 +70,6 @@ arrow::Status csv_to_arrow()
     return arrow::Status::OK();
 }
 
-arrow::Result<shared_ptr<ArrowTable2>> load_arrow_file(string filename, int64_t dim)
-{
-    ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(
-                filename, arrow::default_memory_pool()));
-
-    ARROW_ASSIGN_OR_RAISE(auto ipc_reader, arrow::ipc::RecordBatchFileReader::Open(file));
-
-    ARROW_ASSIGN_OR_RAISE(auto rbatch, ipc_reader->ReadRecordBatch(0));
-    cout << "Input: " << endl << rbatch->ToString() << endl;
-
-    auto tbl = make_shared<ArrowTable2>(dim);
-    ARROW_RETURN_NOT_OK(arrow::ExportRecordBatch(*rbatch, tbl->array, tbl->schema));
-
-    return tbl;
-}
-
-
 arrow::Status query_arrow_file(shared_ptr<ArrowTable> in_table, void (*query_fn)(void*, void*))
 {
     long sum;
@@ -420,7 +403,7 @@ int main()
         }
     }
 
-    auto tbl = load_arrow_file("../benchmark/runend.arrow", 2).ValueOrDie();
+    auto tbl = load_arrow_file("../benchmark/lib/runend.arrow", 2);
     tbl->build_index();
     auto red = red_op(tbl);
     auto red_fn = compile_op<void (*)(void*, void*)>(red, true);

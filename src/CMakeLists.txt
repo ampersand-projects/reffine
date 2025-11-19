@@ -49,6 +49,7 @@ set(SRC_FILES
     engine/cuda_engine.cpp
     engine/memory.cpp
     builder/reffiner.cpp
+    utils/utils.cpp
 )
 
 find_package(LLVM 21.1.0 REQUIRED CONFIG)

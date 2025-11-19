@@ -14,7 +14,7 @@ struct SubVector : public ExprNode {
     Expr end;
 
     SubVector(Expr vec, Expr start, Expr end)
-        : ExprNode(vec->type), vec(vec), start(start), end(end)
+        : ExprNode(vec->type.valty()), vec(vec), start(start), end(end)
     {
         ASSERT(vec->type.is_vector());
         ASSERT(start->type.is_idx());
