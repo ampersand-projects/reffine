@@ -53,7 +53,7 @@ class TPCHLineItem:
             engine="pyarrow",
             usecols = [0, 3, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
             names=list(cls.dtypes.keys()),
-        ).astype(cls.dtypes)
+        ).astype(cls.dtypes).set_index(["L_ORDERKEY", "L_LINENUMBER"])
         df["L_SHIPDATE"] = df["L_SHIPDATE"].astype("int64")
         df["L_COMMITDATE"] = df["L_COMMITDATE"].astype("int64")
         df["L_RECEIPTDATE"] = df["L_RECEIPTDATE"].astype("int64")
@@ -62,7 +62,7 @@ class TPCHLineItem:
 
     @classmethod
     def store(cls):
-        df = cls.load()
+        df = cls.load().reset_index(drop=False)
         cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
         cols["L_ORDERKEY"] = pc.run_end_encode(cols["L_ORDERKEY"])
         write_table(OUTPUT_DIR + "/lineitem.arrow", pa.table(cols))
@@ -95,13 +95,13 @@ class TPCHCustomer:
             delimiter="|",
             names=list(cls.dtypes.keys()),
             converters={"C_MKTSEGMENT": lambda val : cls.mktseg_enum[val]},
-        ).astype(cls.dtypes)
+        ).astype(cls.dtypes).set_index(["C_CUSTKEY"])
 
         return df
 
     @classmethod
     def store(cls):
-        df = cls.load()
+        df = cls.load().reset_index(drop=False)
         cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
         write_table(OUTPUT_DIR + "/customer.arrow", pa.table(cols))
 
@@ -112,7 +112,7 @@ class TPCHOrders:
         "O_CUSTKEY": np.int64,
         "O_ORDERSTATUS": np.str_,
         "O_TOTALPRICE": np.float64,
-        "O_ORDERDATE": np.str_,
+        "O_ORDERDATE": np.dtype('datetime64[s]'),
         "O_ORDERPRIORITY": np.str_,
         "O_CLERK": np.str_,
         "O_SHIPPRIORITY": np.int32,
@@ -125,13 +125,14 @@ class TPCHOrders:
             "lib/tpch-v3.0.1/dbgen/orders.tbl",
             delimiter="|",
             names=list(cls.dtypes.keys()),
-        ).astype(cls.dtypes)
+        ).astype(cls.dtypes).set_index(["O_ORDERKEY"])
+        df["O_ORDERDATE"] = df["O_ORDERDATE"].astype("int64")
 
         return df
 
     @classmethod
     def store(cls):
-        df = cls.load()
+        df = cls.load().reset_index(drop=False)
         cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
         write_table(OUTPUT_DIR + "/orders.arrow", pa.table(cols))
 
@@ -140,9 +141,8 @@ class TPCHQuery6:
     def __init__(self):
         self.lineitem = TPCHLineItem.load()
 
-    @classmethod
-    def tpch_query6(cls, lineitem, start_date, end_date, discount, quantity):
-        filtered = lineitem[
+    def query(self, start_date, end_date, discount, quantity):
+        filtered = self.lineitem[
             (lineitem["L_SHIPDATE"] >= start_date) &
             (lineitem["L_SHIPDATE"] < end_date) &
             (lineitem["L_DISCOUNT"].between(discount - 0.01, discount + 0.01)) &
@@ -153,14 +153,59 @@ class TPCHQuery6:
         return revenue;
 
     def run(self):
-        return self.tpch_query6(self.lineitem, 820454400, 852076800, 0.05, 24.5)
+        return self.query(820454400, 852076800, 0.05, 24.5)
 
 
 class TPCHQuery3:
     def __init__(self):
-        self.lineitem = TPCHLineItem.load()
-        self.customer = TPCHCustomer.load()
+        self.lineitem = TPCHLineItem.load().reset_index(drop=False)
+        self.customer = TPCHCustomer.load().reset_index(drop=False)
+        self.orders = TPCHOrders.load().reset_index(drop=False)
 
-TPCHLineItem.store()
-TPCHCustomer.store()
-TPCHOrders.store()
+    def query(self, segment, date):
+        cust_f = self.customer[self.customer["C_MKTSEGMENT"] == segment]
+
+        cust_orders = cust_f.merge(
+            self.orders,
+            left_on="C_CUSTKEY",
+            right_on="O_CUSTKEY",
+            how="inner",
+        )
+        cust_orders = cust_orders[cust_orders["O_ORDERDATE"] < date]
+
+        joined = cust_orders.merge(
+            self.lineitem,
+            left_on="O_ORDERKEY",
+            right_on="L_ORDERKEY",
+            how="inner",
+        )
+        
+        joined = joined[joined["L_SHIPDATE"] > date]
+        
+        result = (
+            joined
+            .assign(REVENUE=lambda df: df["L_EXTENDEDPRICE"] * (1 - df["L_DISCOUNT"]))
+            .groupby("L_ORDERKEY", as_index=False)["REVENUE"]
+            .sum()
+        )
+
+        return result
+        
+    def run(self):
+        return self.query(1, 795484800)
+
+
+#TPCHLineItem.store()
+#TPCHCustomer.store()
+#TPCHOrders.store()
+
+import time
+
+q3 = TPCHQuery3()
+start = time.time()
+res = q3.run()
+end = time.time()
+
+print(end- start)
+print(res)
+
