@@ -113,10 +113,18 @@ class TPCHOrders:
         "O_ORDERSTATUS": np.str_,
         "O_TOTALPRICE": np.float64,
         "O_ORDERDATE": np.dtype('datetime64[s]'),
-        "O_ORDERPRIORITY": np.str_,
+        "O_ORDERPRIORITY": np.int8,
         "O_CLERK": np.str_,
         "O_SHIPPRIORITY": np.int32,
         "O_COMMENT": np.str_,
+    }
+
+    orderpriority = {
+        "1-URGENT": 1,
+        "2-HIGH": 2,
+        "3-MEDIUM": 3,
+        "4-NOT SPECIFIED": 4,
+        "5-LOW": 5,
     }
 
     @classmethod
@@ -125,6 +133,7 @@ class TPCHOrders:
             "lib/tpch-v3.0.1/dbgen/orders.tbl",
             delimiter="|",
             names=list(cls.dtypes.keys()),
+            converters={"O_ORDERPRIORITY": lambda val : cls.orderpriority[val]},
         ).astype(cls.dtypes).set_index(["O_ORDERKEY"])
         df["O_ORDERDATE"] = df["O_ORDERDATE"].astype("int64")
 
