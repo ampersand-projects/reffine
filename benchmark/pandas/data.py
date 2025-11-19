@@ -120,11 +120,11 @@ class TPCHOrders:
     }
 
     orderpriority = {
-        "1-URGENT": 1,
-        "2-HIGH": 2,
-        "3-MEDIUM": 3,
-        "4-NOT SPECIFIED": 4,
-        "5-LOW": 5,
+        "1-URGENT": 0,
+        "2-HIGH": 1,
+        "3-MEDIUM": 2,
+        "4-NOT SPECIFIED": 3,
+        "5-LOW": 4,
     }
 
     @classmethod
@@ -223,17 +223,46 @@ class TPCHQuery3:
         return self.query2(1, 795484800)
 
 
+class TPCHQuery4:
+    def __init__(self):
+        self.lineitem = TPCHLineItem.load().reset_index(drop=False)
+        self.orders = TPCHOrders.load().reset_index(drop=False)
+
+    def query(self, start_date, end_date):
+        orders_f = self.orders[
+            (self.orders["O_ORDERDATE"] >= start_date) &
+            (self.orders["O_ORDERDATE"] < end_date)
+        ]
+
+        lineitem_f = self.lineitem[
+            self.lineitem["L_COMMITDATE"] < self.lineitem["L_RECEIPTDATE"]
+        ]
+
+        valid_orderkeys = set(lineitem_f["L_ORDERKEY"].unique())
+
+        orders_exists = orders_f[
+            orders_f["O_ORDERKEY"].isin(valid_orderkeys)
+        ]
+
+        result = (
+            orders_exists
+            .groupby("O_ORDERPRIORITY")
+            .count()
+        )
+
+        return result
+
+    def run(self):
+        return self.query(700000000, 900000000)
+
 #TPCHLineItem.store()
 #TPCHCustomer.store()
 #TPCHOrders.store()
 
 import time
-
-q3 = TPCHQuery3()
+q4 = TPCHQuery4()
 start = time.time()
-res = q3.run()
+res = q4.run()
 end = time.time()
-
-print(end- start)
 print(res)
-
+print("Time: ", end - start)
