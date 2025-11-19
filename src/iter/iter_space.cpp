@@ -117,6 +117,21 @@ VecIterIdxs SuperSpace::_vec_iter_idxs(Expr idx)
 
 SymExprs SuperSpace::_extra_syms() { return this->ispace->extra_syms(); }
 
+Expr FilteredSpace::_iter_cond(Expr idx)
+{
+    return _and(this->cond, this->ispace->iter_cond(idx));
+}
+
+ISpace FilteredSpace::intersect(ISpace ispace)
+{
+    auto applied = this->ispace->intersect(ispace);
+    if (applied) {
+        return make_shared<FilteredSpace>(applied, this->cond);
+    } else {
+        return nullptr;
+    }
+}
+
 Expr LBoundSpace::_lower_bound()
 {
     auto lb = this->ispace->lower_bound();

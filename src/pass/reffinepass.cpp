@@ -71,12 +71,13 @@ ISpace Reffine::visit(NaryExpr& e)
 
 ISpace Reffine::visit(Sym sym)
 {
+    auto uni = make_shared<UniversalSpace>(this->iter());
     if (sym == this->iter()) {
         // return universal space for operator iterator
-        return make_shared<UniversalSpace>(this->iter());
+        return uni;
     } else if (this->ctx().in_sym_tbl.find(sym) !=
                this->ctx().in_sym_tbl.end()) {
-        return eval(this->ctx().in_sym_tbl.at(sym));
+        return make_shared<FilteredSpace>(uni, sym);
     } else {
         throw runtime_error("Unable to reffine symbol");
     }
