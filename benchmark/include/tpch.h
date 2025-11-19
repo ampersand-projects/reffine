@@ -6,20 +6,20 @@ using namespace reffine;
 using namespace reffine::reffiner;
 
 struct TPCHQuery3 {
-    shared_ptr<ArrowTable2> tbl;
+    shared_ptr<ArrowTable2> lineitem;
+    shared_ptr<ArrowTable2> orders;
+    shared_ptr<ArrowTable2> customer;
     void (*query3_fn)(double*, ArrowTable*);
 
     TPCHQuery3(int64_t start, int64_t end, double disc, double quant)
     {
-        this->tbl = load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 2);
-        this->query3_fn = compile_op<void (*)(double*, ArrowTable*)>(
-            this->build_op(tbl, start, end, disc, quant));
+        this->lineitem = load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 2);
+        this->query3_fn = compile_op<void (*)(double*, ArrowTable*)>(this->build_op(start, end, disc, quant));
     }
 
-    shared_ptr<Func> build_op(shared_ptr<ArrowTable2> tbl, int64_t start,
-                              int64_t end, double disc, double quant)
+    shared_ptr<Func> build_op(int64_t start, int64_t end, double disc, double quant)
     {
-        auto vec_in_sym = _sym("vec_in", tbl->get_data_type());
+        auto vec_in_sym = _sym("vec_in", this->lineitem->get_data_type());
         auto red = _red(
             _subvec(vec_in_sym, _idx(0), _len(vec_in_sym, 1)),
             []() { return _f64(0); },
@@ -55,26 +55,24 @@ struct TPCHQuery3 {
     double run()
     {
         double out;
-        this->query3_fn(&out, this->tbl.get());
+        this->query3_fn(&out, this->lineitem.get());
         return out;
     }
 };
 
 struct TPCHQuery6 {
-    shared_ptr<ArrowTable2> tbl;
-    void (*query6_fn)(double*, ArrowTable*);
+    shared_ptr<ArrowTable2> lineitem;
+    void (*query_fn)(double*, ArrowTable*);
 
     TPCHQuery6(int64_t start, int64_t end, double disc, double quant)
     {
-        this->tbl = load_arrow_file("../benchmark/lib/lineitem.arrow", 2);
-        this->query6_fn = compile_op<void (*)(double*, ArrowTable*)>(
-            this->build_op(tbl, start, end, disc, quant));
+        this->lineitem = load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 2);
+        this->query_fn = compile_op<void (*)(double*, ArrowTable*)>(this->build_op(start, end, disc, quant));
     }
 
-    shared_ptr<Func> build_op(shared_ptr<ArrowTable2> tbl, int64_t start,
-                              int64_t end, double disc, double quant)
+    shared_ptr<Func> build_op(int64_t start, int64_t end, double disc, double quant)
     {
-        auto vec_in_sym = _sym("vec_in", tbl->get_data_type());
+        auto vec_in_sym = _sym("vec_in", this->lineitem->get_data_type());
         auto red = _red(
             _subvec(vec_in_sym, _idx(0), _len(vec_in_sym, 1)),
             []() { return _f64(0); },
@@ -110,7 +108,7 @@ struct TPCHQuery6 {
     double run()
     {
         double out;
-        this->query6_fn(&out, this->tbl.get());
+        this->query_fn(&out, this->lineitem.get());
         return out;
     }
 };
