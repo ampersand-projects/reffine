@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include "bench.h"
-
 #include "reffine/base/type.h"
 #include "reffine/builder/reffiner.h"
 
@@ -15,7 +14,8 @@ int main()
     auto start = std::chrono::high_resolution_clock::now();
     auto out = tpchq6.run();
     auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    auto duration =
+        std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     cout << "Out: " << out << endl;
     cout << "Time: " << duration.count() << endl;
 }
