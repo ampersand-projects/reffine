@@ -6,73 +6,82 @@ using namespace reffine;
 using namespace reffine::reffiner;
 
 struct TPCHQuery3 {
+    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*, ArrowTable*);
+
     shared_ptr<ArrowTable2> lineitem;
     shared_ptr<ArrowTable2> orders;
     shared_ptr<ArrowTable2> customer;
-    void (*query3_fn)(double*, ArrowTable*);
+    QueryFnTy query_fn;
 
-    TPCHQuery3(int64_t start, int64_t end, double disc, double quant)
+    TPCHQuery3()
     {
         this->lineitem = load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 2);
-        this->query3_fn = compile_op<void (*)(double*, ArrowTable*)>(this->build_op(start, end, disc, quant));
+        this->orders = load_arrow_file("../benchmark/arrow_data/orders.arrow", 1);
+        this->customer = load_arrow_file("../benchmark/arrow_data/customer.arrow", 1);
+        this->lineitem->build_index();
+        this->orders->build_index();
+        this->customer->build_index();
+        this->query_fn = compile_op<QueryFnTy>(this->build_op(1, 795484800));
     }
 
-    shared_ptr<Func> build_op(int64_t start, int64_t end, double disc, double quant)
+    shared_ptr<Func> build_op(int8_t segment, int64_t date)
     {
-        auto vec_in_sym = _sym("vec_in", this->lineitem->get_data_type());
-        auto red = _red(
-            _subvec(vec_in_sym, _idx(0), _len(vec_in_sym, 1)),
-            []() { return _f64(0); },
-            [start, end, disc, quant](Expr s, Expr v) {
-                auto start_date = _i64(start);
-                auto end_date = _i64(end);
-                auto discount = _f64(disc);
-                auto quantity = _f64(quant);
+        auto lineitem = _sym("lineitem", this->lineitem->get_data_type());
+        auto orders = _sym("orders", this->orders->get_data_type());
+        auto customer = _sym("customer", this->customer->get_data_type());
+        auto orderkey = _sym("orderkey", _i64_t);
 
-                auto l_quantity = _get(v, 3);
+        auto filter =  _gte(_locate(customer, _get(orders[orderkey], 0)), _idx(0)) &
+            _lt(_get(orders[orderkey], 3), _i64(date));
+        auto filter_sym = _sym("filter", filter);
+        auto pred = _in(orderkey, lineitem) & _in(orderkey, orders) & filter_sym;
+
+        auto red = _red(lineitem[orderkey],
+            []() { return _f64(0); },
+            [date](Expr s, Expr v) {
                 auto l_extendedprice = _get(v, 4);
                 auto l_discount = _get(v, 5);
                 auto l_shipdate = _get(v, 9);
 
-                auto date_pred =
-                    _gte(l_shipdate, start_date) & _lt(l_shipdate, end_date);
-                auto discount_pred =
-                    _gte(l_discount, _sub(discount, _f64(0.01))) &
-                    _lte(l_discount, _add(discount, _f64(0.01)));
-                auto quantity_pred = _lt(l_quantity, quantity);
-                auto pred = date_pred & discount_pred & quantity_pred;
-                auto new_s = _add(s, _mul(l_extendedprice, l_discount));
-                return _sel(pred, new_s, s);
-            });
+                auto new_s = _add(s, _mul(l_extendedprice, _sub(_f64(1), l_discount)));
+                return _sel(_gt(l_shipdate, _i64(date)), new_s, s);
+            }
+        );
         auto red_sym = _sym("red", red);
+        auto op = _op(vector<Sym>{orderkey}, pred, vector<Expr>{red_sym});
+        auto op_sym = _sym("op", op);
 
-        auto fn = _func("tpchquery3", red_sym, vector<Sym>{vec_in_sym});
+        auto fn = _func("tpchquery3", op_sym, vector<Sym>{lineitem, orders, customer});
+        fn->tbl[filter_sym] = filter;
+        fn->tbl[op_sym] = op;
         fn->tbl[red_sym] = red;
 
         return fn;
     }
 
-    double run()
+    ArrowTable* run()
     {
-        double out;
-        this->query3_fn(&out, this->lineitem.get());
+        ArrowTable* out;
+        this->query_fn(&out, this->lineitem.get(), this->orders.get(), this->customer.get());
         return out;
     }
 };
 
 struct TPCHQuery6 {
-    shared_ptr<ArrowTable2> lineitem;
-    void (*query_fn)(double*, ArrowTable*);
+    using QueryFnTy = void(*)(double*, ArrowTable*);
 
-    TPCHQuery6(int64_t start, int64_t end, double disc, double quant)
+    shared_ptr<ArrowTable2> lineitem;
+    QueryFnTy query_fn;
+
+    TPCHQuery6()
     {
         this->lineitem = load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 2);
-        this->query_fn = compile_op<void (*)(double*, ArrowTable*)>(this->build_op(start, end, disc, quant));
+        this->query_fn = compile_op<QueryFnTy>(this->build_op(820454400, 852076800, 0.05f, 24.5f));
     }
 
     shared_ptr<Func> build_op(int64_t start, int64_t end, double disc, double quant)
     {
-        auto vec_in_sym = _sym("vec_in", this->lineitem->get_data_type());
+        auto vec_in_sym = _sym("lineitem", this->lineitem->get_data_type());
         auto red = _red(
             _subvec(vec_in_sym, _idx(0), _len(vec_in_sym, 1)),
             []() { return _f64(0); },
