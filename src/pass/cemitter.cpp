@@ -230,7 +230,7 @@ CodeSeg CEmitter::visit(Func& fn)
     emit("extern \"C\" ", fn.output->type.cppstr(), " ", fn.name, "(");
     for (size_t i = 0; i < fn.inputs.size(); i++) {
         auto input = fn.inputs[i];
-        emit(input->type.cppstr(), " ", input->name);
+        emit(this->get_type_str(input->type), " ", input->name);
         if (i < fn.inputs.size() - 1) { emit(", "); }
     }
     emit(") {");

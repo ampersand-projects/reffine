@@ -208,7 +208,7 @@ Expr LoopGen::visit(Reduce& red)
 
     // State allocation and initialization
     auto state_alloc = _alloc(red.type);
-    auto state_addr = _sym("state_addr", state_alloc);
+    auto state_addr = state_alloc->symify("state_addr");
     this->assign(state_addr, state_alloc);
 
     // Build reduction loop
@@ -222,7 +222,7 @@ Expr LoopGen::visit(Reduce& red)
         auto red_end = subvec_ptr->end;
 
         auto red_idx_alloc = _alloc(red_start->type);
-        auto red_idx_addr = _sym("red_idx_addr", red_idx_alloc);
+        auto red_idx_addr = red_idx_alloc->symify("red_idx_addr");
         this->assign(red_idx_addr, red_idx_alloc);
         this->map_sym(red_idx_addr, red_idx_addr);
 
