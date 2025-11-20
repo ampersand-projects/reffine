@@ -119,7 +119,7 @@ struct TPCHQuery4 {
             ;
         auto filter_sym = _sym("filter", filter);
 
-        auto pred = _in(orderkey, orders) & filter_sym;
+        auto pred = _in(orderkey, orders) & _in(orderkey, lineitem) & filter_sym;
         auto red = _red(_op(vector<Sym>{orderkey}, pred, vector<Expr>{ _get(orders[orderkey], 4) }),
             []() { return _new(vector<Expr>{_i32(0), _i32(0), _i32(0), _i32(0), _i32(0)}); },
             [](Expr s, Expr val) {
