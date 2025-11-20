@@ -146,6 +146,111 @@ class TPCHOrders:
         write_table(OUTPUT_DIR + "/orders.arrow", pa.table(cols))
 
 
+class TPCHPart:
+    dtypes = {
+        "P_PARTKEY": np.int64,
+        "P_NAME": np.str_,
+        "P_MFGR": np.str_,
+        "P_BRAND": np.int32,
+        "P_TYPE": np.str_,
+        "P_SIZE": np.int32,
+        "P_CONTAINER": np.int32,
+        "P_RETAILPRICE": np.float64,
+        "P_COMMENT": np.str_,
+    }
+
+    brands = {
+        "Brand#13": 0,
+        "Brand#42": 1,
+        "Brand#34": 2,
+        "Brand#32": 3,
+        "Brand#24": 4,
+        "Brand#11": 5,
+        "Brand#44": 6,
+        "Brand#43": 7,
+        "Brand#54": 8,
+        "Brand#25": 9,
+        "Brand#33": 10,
+        "Brand#55": 11,
+        "Brand#15": 12,
+        "Brand#23": 13,
+        "Brand#12": 14,
+        "Brand#35": 15,
+        "Brand#52": 16,
+        "Brand#14": 17,
+        "Brand#53": 18,
+        "Brand#22": 19,
+        "Brand#45": 20,
+        "Brand#21": 21,
+        "Brand#41": 22,
+        "Brand#51": 23,
+        "Brand#31": 24,
+    }
+
+    containers = {
+        "JUMBO PKG": 0,
+        "LG CASE": 1,
+        "WRAP CASE": 2,
+        "MED DRUM": 3,
+        "SM PKG": 4,
+        "MED BAG": 5,
+        "SM BAG": 6,
+        "LG DRUM": 7,
+        "LG CAN": 8,
+        "WRAP BOX": 9,
+        "JUMBO CASE": 10,
+        "JUMBO PACK": 11,
+        "JUMBO BOX": 12,
+        "MED PACK": 13,
+        "LG BOX": 14,
+        "JUMBO JAR": 15,
+        "MED CASE": 16,
+        "JUMBO BAG": 17,
+        "SM CASE": 18,
+        "MED PKG": 19,
+        "LG BAG": 20,
+        "LG PKG": 21,
+        "JUMBO CAN": 22,
+        "SM JAR": 23,
+        "WRAP JAR": 24,
+        "SM PACK": 25,
+        "WRAP BAG": 26,
+        "WRAP PKG": 27,
+        "WRAP DRUM": 28,
+        "LG PACK": 29,
+        "MED CAN": 30,
+        "SM BOX": 31,
+        "LG JAR": 32,
+        "SM CAN": 33,
+        "WRAP PACK": 34,
+        "MED JAR": 35,
+        "WRAP CAN": 36,
+        "SM DRUM": 37,
+        "MED BOX": 38,
+        "JUMBO DRUM": 39,
+    }
+
+    @classmethod
+    def load(cls):
+        df = pd.read_csv(
+            "lib/tpch-v3.0.1/dbgen/part.tbl",
+            delimiter="|",
+            names=list(cls.dtypes.keys()),
+            converters={
+                "P_BRAND": lambda val : cls.brands[val],
+                "P_CONTAINER": lambda val : cls.containers[val],
+            },
+        ).astype(cls.dtypes).set_index(["P_PARTKEY"])
+
+        return df
+
+    @classmethod
+    def store(cls):
+        df = cls.load().reset_index(drop=False)
+        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
+        write_table(OUTPUT_DIR + "/part.arrow", pa.table(cols))
+
+
 class TPCHQuery6:
     def __init__(self):
         self.lineitem = TPCHLineItem.load()
@@ -255,9 +360,23 @@ class TPCHQuery4:
     def run(self):
         return self.query(700000000, 900000000)
 
+
+class TPCHQuery17:
+    def __init__(self):
+        self.lineitem = TPCHLineItem.load().reset_index(drop=False)
+        self.part = TPCHPart.load().reset_index(drop=False)
+
+    def query(self):
+        pass
+
+    def run(self):
+        return self.query(0, 0.0001)
+
+
 #TPCHLineItem.store()
 #TPCHCustomer.store()
 #TPCHOrders.store()
+#TPCHPart.store()
 
 import time
 q4 = TPCHQuery4()
