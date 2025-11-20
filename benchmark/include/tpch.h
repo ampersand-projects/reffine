@@ -80,8 +80,79 @@ struct TPCHQuery3 {
     }
 };
 
+struct TPCHQuery4 {
+    using QueryFnTy = void (*)(int*, ArrowTable*, ArrowTable*);
+
+    shared_ptr<ArrowTable2> lineitem;
+    shared_ptr<ArrowTable2> orders;
+    QueryFnTy query_fn;
+
+    TPCHQuery4()
+    {
+        this->lineitem =
+            load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 2);
+        this->orders =
+            load_arrow_file("../benchmark/arrow_data/orders.arrow", 1);
+        this->lineitem->build_index();
+        this->orders->build_index();
+        this->query_fn = compile_op<QueryFnTy>(this->build_op(700000000, 900000000));
+    }
+
+    shared_ptr<Func> build_op(int64_t start_date, int64_t end_date)
+    {
+        auto lineitem = _sym("lineitem", this->lineitem->get_data_type());
+        auto orders = _sym("orders", this->orders->get_data_type());
+        auto orderkey = _sym("orderkey", _i64_t);
+
+        auto exists = _red(lineitem[orderkey], []() { return _false(); },
+            [](Expr s, Expr v) {
+                auto l_commitdate = _get(v, 10);
+                auto l_receiptdate = _get(v, 11);
+
+                return _or(_lt(l_commitdate, l_receiptdate), s);
+            });
+        auto exists_sym = _sym("exists", exists);
+
+        auto filter = _gte(_get(orders[orderkey], 3), _i64(start_date)) &
+            _lt(_get(orders[orderkey], 3), _i64(end_date)) &
+            exists_sym
+            ;
+        auto filter_sym = _sym("filter", filter);
+
+        auto pred = _in(orderkey, orders) & filter_sym;
+        auto red = _red(_op(vector<Sym>{orderkey}, pred, vector<Expr>{ _get(orders[orderkey], 4) }),
+            []() { return _new(vector<Expr>{_i32(0), _i32(0), _i32(0), _i32(0), _i32(0)}); },
+            [](Expr s, Expr val) {
+                auto v = _get(val, 1);
+                return _new(vector<Expr>{
+                    _sel(_eq(v, _i8(0)), _add(_get(s, 0), _i32(1)), _get(s, 0)),
+                    _sel(_eq(v, _i8(1)), _add(_get(s, 1), _i32(1)), _get(s, 1)),
+                    _sel(_eq(v, _i8(2)), _add(_get(s, 2), _i32(1)), _get(s, 2)),
+                    _sel(_eq(v, _i8(3)), _add(_get(s, 3), _i32(1)), _get(s, 3)),
+                    _sel(_eq(v, _i8(4)), _add(_get(s, 4), _i32(1)), _get(s, 4)),
+                });
+            }
+        );
+        auto red_sym = _sym("red", red);
+
+        auto fn = _func("tpchquery4", red_sym, vector<Sym>{lineitem, orders});
+        fn->tbl[exists_sym] = exists;
+        fn->tbl[filter_sym] = filter;
+        fn->tbl[red_sym] = red;
+
+        return fn;
+    }
+
+    vector<int> run()
+    {
+        vector<int> out(5);
+        this->query_fn(out.data(), this->lineitem.get(), this->orders.get());
+        return std::move(out);
+    }
+};
+
 struct TPCHQuery6 {
-    using QueryFnTy = void (*)(double*, ArrowTable*);
+    using QueryFnTy = void (*)(void*, ArrowTable*);
 
     shared_ptr<ArrowTable2> lineitem;
     QueryFnTy query_fn;
@@ -130,10 +201,16 @@ struct TPCHQuery6 {
         return fn;
     }
 
-    double run()
+    void run()
     {
-        double out;
+        struct Out {
+            int a;
+            int b;
+            int c;
+            int d;
+            int e;
+        };
+        Out out;
         this->query_fn(&out, this->lineitem.get());
-        return out;
     }
 };
