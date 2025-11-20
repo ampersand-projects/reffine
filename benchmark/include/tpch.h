@@ -214,3 +214,101 @@ struct TPCHQuery6 {
         return out;
     }
 };
+
+struct TPCDSQuery9 {
+    using QueryFnTy = void (*)(void*, ArrowTable*);
+
+    shared_ptr<ArrowTable2> store_sales;
+    QueryFnTy query_fn;
+
+    TPCDSQuery9()
+    {
+        this->store_sales =
+            load_arrow_file("../benchmark/arrow_data/store_sales.arrow", 2);
+        this->query_fn = compile_op<QueryFnTy>(this->build_op());
+    }
+
+    shared_ptr<Func> build_op()
+    {
+        auto vec_in_sym =
+            _sym("store_sales", this->store_sales->get_data_type());
+        auto red = _red(
+            _subvec(vec_in_sym, _idx(0), _len(vec_in_sym, 1)),
+            []() {
+                return _new(vector<Expr>{
+                    _new(vector<Expr>{_i32(0), _f64(0), _f64(0)}),
+                    _new(vector<Expr>{_i32(0), _f64(0), _f64(0)}),
+                    _new(vector<Expr>{_i32(0), _f64(0), _f64(0)}),
+                    _new(vector<Expr>{_i32(0), _f64(0), _f64(0)}),
+                    _new(vector<Expr>{_i32(0), _f64(0), _f64(0)}),
+                });
+            },
+            [](Expr s, Expr v) {
+                auto ss_quantity = _get(v, 9);
+                auto ss_ext_tax = _get(v, 17);
+                auto ss_net_paid_inc_tax = _get(v, 20);
+
+                auto bucket1 = _get(s, 0);
+                auto bucket2 = _get(s, 1);
+                auto bucket3 = _get(s, 2);
+                auto bucket4 = _get(s, 3);
+                auto bucket5 = _get(s, 4);
+
+                return _new(vector<Expr>{
+                    _sel(_gte(ss_quantity, _i32(1)) &
+                             _lte(ss_quantity, _i32(20)),
+                         _new(vector<Expr>{
+                             _add(_get(bucket1, 0), _i32(1)),
+                             _add(_get(bucket1, 1), ss_ext_tax),
+                             _add(_get(bucket1, 2), ss_net_paid_inc_tax),
+                         }),
+                         bucket1),
+                    _sel(_gte(ss_quantity, _i32(21)) &
+                             _lte(ss_quantity, _i32(40)),
+                         _new(vector<Expr>{
+                             _add(_get(bucket2, 0), _i32(1)),
+                             _add(_get(bucket2, 1), ss_ext_tax),
+                             _add(_get(bucket2, 2), ss_net_paid_inc_tax),
+                         }),
+                         bucket2),
+                    _sel(_gte(ss_quantity, _i32(41)) &
+                             _lte(ss_quantity, _i32(60)),
+                         _new(vector<Expr>{
+                             _add(_get(bucket3, 0), _i32(1)),
+                             _add(_get(bucket3, 1), ss_ext_tax),
+                             _add(_get(bucket3, 2), ss_net_paid_inc_tax),
+                         }),
+                         bucket3),
+                    _sel(_gte(ss_quantity, _i32(61)) &
+                             _lte(ss_quantity, _i32(80)),
+                         _new(vector<Expr>{
+                             _add(_get(bucket4, 0), _i32(1)),
+                             _add(_get(bucket4, 1), ss_ext_tax),
+                             _add(_get(bucket4, 2), ss_net_paid_inc_tax),
+                         }),
+                         bucket4),
+                    _sel(_gte(ss_quantity, _i32(81)) &
+                             _lte(ss_quantity, _i32(100)),
+                         _new(vector<Expr>{
+                             _add(_get(bucket5, 0), _i32(1)),
+                             _add(_get(bucket5, 1), ss_ext_tax),
+                             _add(_get(bucket5, 2), ss_net_paid_inc_tax),
+                         }),
+                         bucket5),
+                });
+            });
+        auto red_sym = _sym("red", red);
+
+        auto fn = _func("tpcdsquery9", red_sym, vector<Sym>{vec_in_sym});
+        fn->tbl[red_sym] = red;
+
+        return fn;
+    }
+
+    vector<int> run()
+    {
+        vector<int> out(100);
+        this->query_fn(out.data(), this->store_sales.get());
+        return out;
+    }
+};
