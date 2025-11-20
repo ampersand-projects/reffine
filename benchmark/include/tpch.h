@@ -207,9 +207,10 @@ struct TPCHQuery6 {
         return fn;
     }
 
-    void run()
+    double run()
     {
         double out;
         this->query_fn(&out, this->lineitem.get());
+        return out;
     }
 };
