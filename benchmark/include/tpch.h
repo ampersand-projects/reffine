@@ -215,7 +215,6 @@ struct TPCHQuery6 {
     }
 };
 
-
 struct TPCDSQuery9 {
     using QueryFnTy = void (*)(void*, ArrowTable*);
 
@@ -231,7 +230,8 @@ struct TPCDSQuery9 {
 
     shared_ptr<Func> build_op()
     {
-        auto vec_in_sym = _sym("store_sales", this->store_sales->get_data_type());
+        auto vec_in_sym =
+            _sym("store_sales", this->store_sales->get_data_type());
         auto red = _red(
             _subvec(vec_in_sym, _idx(0), _len(vec_in_sym, 1)),
             []() {
@@ -255,46 +255,46 @@ struct TPCDSQuery9 {
                 auto bucket5 = _get(s, 4);
 
                 return _new(vector<Expr>{
-                    _sel(_gte(ss_quantity, _i32(1)) & _lte(ss_quantity, _i32(20)),
-                        _new(vector<Expr>{
-                            _add(_get(bucket1, 0), _i32(1)),
-                            _add(_get(bucket1, 1), ss_ext_tax),
-                            _add(_get(bucket1, 2), ss_net_paid_inc_tax),
-                        }),
-                        bucket1
-                    ),
-                    _sel(_gte(ss_quantity, _i32(21)) & _lte(ss_quantity, _i32(40)),
-                        _new(vector<Expr>{
-                            _add(_get(bucket2, 0), _i32(1)),
-                            _add(_get(bucket2, 1), ss_ext_tax),
-                            _add(_get(bucket2, 2), ss_net_paid_inc_tax),
-                        }),
-                        bucket2
-                    ),
-                    _sel(_gte(ss_quantity, _i32(41)) & _lte(ss_quantity, _i32(60)),
-                        _new(vector<Expr>{
-                            _add(_get(bucket3, 0), _i32(1)),
-                            _add(_get(bucket3, 1), ss_ext_tax),
-                            _add(_get(bucket3, 2), ss_net_paid_inc_tax),
-                        }),
-                        bucket3
-                    ),
-                    _sel(_gte(ss_quantity, _i32(61)) & _lte(ss_quantity, _i32(80)),
-                        _new(vector<Expr>{
-                            _add(_get(bucket4, 0), _i32(1)),
-                            _add(_get(bucket4, 1), ss_ext_tax),
-                            _add(_get(bucket4, 2), ss_net_paid_inc_tax),
-                        }),
-                        bucket4
-                    ),
-                    _sel(_gte(ss_quantity, _i32(81)) & _lte(ss_quantity, _i32(100)),
-                        _new(vector<Expr>{
-                            _add(_get(bucket5, 0), _i32(1)),
-                            _add(_get(bucket5, 1), ss_ext_tax),
-                            _add(_get(bucket5, 2), ss_net_paid_inc_tax),
-                        }),
-                        bucket5
-                    ),
+                    _sel(_gte(ss_quantity, _i32(1)) &
+                             _lte(ss_quantity, _i32(20)),
+                         _new(vector<Expr>{
+                             _add(_get(bucket1, 0), _i32(1)),
+                             _add(_get(bucket1, 1), ss_ext_tax),
+                             _add(_get(bucket1, 2), ss_net_paid_inc_tax),
+                         }),
+                         bucket1),
+                    _sel(_gte(ss_quantity, _i32(21)) &
+                             _lte(ss_quantity, _i32(40)),
+                         _new(vector<Expr>{
+                             _add(_get(bucket2, 0), _i32(1)),
+                             _add(_get(bucket2, 1), ss_ext_tax),
+                             _add(_get(bucket2, 2), ss_net_paid_inc_tax),
+                         }),
+                         bucket2),
+                    _sel(_gte(ss_quantity, _i32(41)) &
+                             _lte(ss_quantity, _i32(60)),
+                         _new(vector<Expr>{
+                             _add(_get(bucket3, 0), _i32(1)),
+                             _add(_get(bucket3, 1), ss_ext_tax),
+                             _add(_get(bucket3, 2), ss_net_paid_inc_tax),
+                         }),
+                         bucket3),
+                    _sel(_gte(ss_quantity, _i32(61)) &
+                             _lte(ss_quantity, _i32(80)),
+                         _new(vector<Expr>{
+                             _add(_get(bucket4, 0), _i32(1)),
+                             _add(_get(bucket4, 1), ss_ext_tax),
+                             _add(_get(bucket4, 2), ss_net_paid_inc_tax),
+                         }),
+                         bucket4),
+                    _sel(_gte(ss_quantity, _i32(81)) &
+                             _lte(ss_quantity, _i32(100)),
+                         _new(vector<Expr>{
+                             _add(_get(bucket5, 0), _i32(1)),
+                             _add(_get(bucket5, 1), ss_ext_tax),
+                             _add(_get(bucket5, 2), ss_net_paid_inc_tax),
+                         }),
+                         bucket5),
                 });
             });
         auto red_sym = _sym("red", red);
