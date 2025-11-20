@@ -209,6 +209,7 @@ class StockPrice:
             "ts": timestamps,
             "val": values,
         }).astype(cls.dtypes)
+
         return df
 
     @classmethod
@@ -216,6 +217,61 @@ class StockPrice:
         df = cls.load().reset_index(drop=False)
         cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
         write_table(OUTPUT_DIR + "/stock_price.arrow", pa.table(cols))
+
+
+class TPCHPartSupp:
+    dtypes = {
+        "PS_PARTKEY": np.int64,
+        "PS_SUPPKEY": np.int64,
+        "PS_AVAILQTY": np.int32,
+        "PS_SUPPLYCOST": np.float64,
+        "PS_COMMENT": np.str_,
+    }
+
+    @classmethod
+    def load(cls):
+        df = pd.read_csv(
+            "lib/tpch-v3.0.1/dbgen/partsupp.tbl",
+            delimiter="|",
+            names=list(cls.dtypes.keys()),
+        ).astype(cls.dtypes).set_index(["PS_PARTKEY", "PS_SUPPKEY"])
+
+        return df
+
+    @classmethod
+    def store(cls):
+        df = cls.load().reset_index(drop=False)
+        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
+        cols["PS_PARTKEY"] = pc.run_end_encode(cols["PS_PARTKEY"])
+        write_table(OUTPUT_DIR + "/partsupp.arrow", pa.table(cols))
+
+
+class TPCHSupplier:
+    dtypes = {
+        "S_SUPPKEY": np.int64,
+        "S_NAME": np.str_,
+        "S_ADDRESS": np.str_,
+        "S_NATIONKEY": np.int64,
+        "S_PHONE": np.str_,
+        "S_ACCTBAL": np.float64,
+        "S_COMMENT": np.str_,
+    }
+
+    @classmethod
+    def load(cls):
+        df = pd.read_csv(
+            "lib/tpch-v3.0.1/dbgen/supplier.tbl",
+            delimiter="|",
+            names=list(cls.dtypes.keys()),
+        ).astype(cls.dtypes).set_index(["S_SUPPKEY"])
+
+        return df
+
+    @classmethod
+    def store(cls):
+        df = cls.load().reset_index(drop=False)
+        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
+        write_table(OUTPUT_DIR + "/supplier.arrow", pa.table(cols))
 
 
 class TPCHQuery6:
@@ -584,6 +640,42 @@ class PageRank:
         return self.query(self.edges, self.pr, self.N)
         #return self.google_matrix(self.G)
 
+
+class TPCHQuery11:
+    def __init__(self):
+        self.supplier = TPCHSupplier.load().reset_index(drop=False)
+        self.partsupp = TPCHPartSupp.load().reset_index(drop=False)
+
+    def query(self, nation_key, fraction):
+        supp_nat = self.supplier[self.supplier["S_NATIONKEY"] == 0]
+
+        ps = self.partsupp.merge(
+            supp_nat,
+            left_on="PS_SUPPKEY",
+            right_on="S_SUPPKEY",
+            how="inner"
+        )
+
+        ps["VALUE"] = ps["PS_SUPPLYCOST"] * ps["PS_AVAILQTY"]
+
+        per_part = (
+            ps.groupby("PS_PARTKEY", as_index=False)["VALUE"]
+              .sum()
+              .rename(columns={"VALUE": "VALUE"})
+        )
+
+        total_value = ps["VALUE"].sum()
+
+        threshold = total_value * fraction
+
+        result = per_part[per_part["VALUE"] > threshold]
+
+        return result
+
+    def run(self):
+        return self.query(0, 0.0001)
+
+
 if __name__ == '__main__':
     q = TPCHQuery4()
     import time
@@ -592,3 +684,5 @@ if __name__ == '__main__':
     end = time.time()
     print(out)
     print("Time: ", (end - start)*1000)
+
+
