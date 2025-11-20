@@ -366,11 +366,42 @@ class TPCHQuery17:
         self.lineitem = TPCHLineItem.load().reset_index(drop=False)
         self.part = TPCHPart.load().reset_index(drop=False)
 
-    def query(self):
-        pass
+    def query(self, brand, container):
+        part_f = self.part[
+            (self.part["P_BRAND"] == brand) &
+            (self.part["P_CONTAINER"] == container)
+        ]
+
+        lp = self.lineitem.merge(
+            part_f,
+            left_on="L_PARTKEY",
+            right_on="P_PARTKEY",
+            how="inner"
+        )
+
+        avg_qty = (
+            self.lineitem
+            .groupby("L_PARTKEY")["L_QUANTITY"]
+            .mean()
+            .mul(0.2)
+            .rename("THRESH")
+        )
+
+        lp2 = lp.merge(
+            avg_qty,
+            left_on="L_PARTKEY",
+            right_index=True,
+            how="left"
+        )
+
+        lp_f = lp2[lp2["L_QUANTITY"] < lp2["THRESH"]]
+
+        avg_yearly = lp_f["L_EXTENDEDPRICE"].sum() / 7.0
+
+        return avg_yearly
 
     def run(self):
-        return self.query(0, 0.0001)
+        return self.query(0, 0)
 
 
 #TPCHLineItem.store()
@@ -379,9 +410,9 @@ class TPCHQuery17:
 #TPCHPart.store()
 
 import time
-q4 = TPCHQuery4()
+q = TPCHQuery17()
 start = time.time()
-res = q4.run()
+res = q.run()
 end = time.time()
 print(res)
 print("Time: ", end - start)
