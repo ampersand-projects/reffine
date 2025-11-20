@@ -18,15 +18,13 @@ using namespace reffine::reffiner;
 
 int main()
 {
-    TPCHQuery3 bench;
+    TPCHQuery4 bench;
     auto start = std::chrono::high_resolution_clock::now();
     auto out = bench.run();
     auto end = std::chrono::high_resolution_clock::now();
     auto duration =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    cout << "Out: " << out[0] << " " << out[1] << " " << out[2] << " " << out[3]
+         << " " << out[4] << endl;
     cout << "Time: " << duration.count() << endl;
-
-    auto out_res =
-        arrow::ImportRecordBatch(out->array, out->schema).ValueOrDie();
-    cout << "Output: " << endl << out_res->ToString() << endl;
 }

@@ -113,10 +113,18 @@ class TPCHOrders:
         "O_ORDERSTATUS": np.str_,
         "O_TOTALPRICE": np.float64,
         "O_ORDERDATE": np.dtype('datetime64[s]'),
-        "O_ORDERPRIORITY": np.str_,
+        "O_ORDERPRIORITY": np.int8,
         "O_CLERK": np.str_,
         "O_SHIPPRIORITY": np.int32,
         "O_COMMENT": np.str_,
+    }
+
+    orderpriority = {
+        "1-URGENT": 0,
+        "2-HIGH": 1,
+        "3-MEDIUM": 2,
+        "4-NOT SPECIFIED": 3,
+        "5-LOW": 4,
     }
 
     @classmethod
@@ -125,6 +133,7 @@ class TPCHOrders:
             "lib/tpch-v3.0.1/dbgen/orders.tbl",
             delimiter="|",
             names=list(cls.dtypes.keys()),
+            converters={"O_ORDERPRIORITY": lambda val : cls.orderpriority[val]},
         ).astype(cls.dtypes).set_index(["O_ORDERKEY"])
         df["O_ORDERDATE"] = df["O_ORDERDATE"].astype("int64")
 
@@ -214,17 +223,46 @@ class TPCHQuery3:
         return self.query2(1, 795484800)
 
 
+class TPCHQuery4:
+    def __init__(self):
+        self.lineitem = TPCHLineItem.load().reset_index(drop=False)
+        self.orders = TPCHOrders.load().reset_index(drop=False)
+
+    def query(self, start_date, end_date):
+        orders_f = self.orders[
+            (self.orders["O_ORDERDATE"] >= start_date) &
+            (self.orders["O_ORDERDATE"] < end_date)
+        ]
+
+        lineitem_f = self.lineitem[
+            self.lineitem["L_COMMITDATE"] < self.lineitem["L_RECEIPTDATE"]
+        ]
+
+        valid_orderkeys = set(lineitem_f["L_ORDERKEY"].unique())
+
+        orders_exists = orders_f[
+            orders_f["O_ORDERKEY"].isin(valid_orderkeys)
+        ]
+
+        result = (
+            orders_exists
+            .groupby("O_ORDERPRIORITY")
+            .count()
+        )
+
+        return result
+
+    def run(self):
+        return self.query(700000000, 900000000)
+
 #TPCHLineItem.store()
 #TPCHCustomer.store()
 #TPCHOrders.store()
 
 import time
-
-q3 = TPCHQuery3()
+q4 = TPCHQuery4()
 start = time.time()
-res = q3.run()
+res = q4.run()
 end = time.time()
-
-print(end- start)
 print(res)
-
+print("Time: ", end - start)
