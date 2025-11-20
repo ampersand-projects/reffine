@@ -95,7 +95,8 @@ struct TPCHQuery4 {
             load_arrow_file("../benchmark/arrow_data/orders.arrow", 1);
         this->lineitem->build_index();
         this->orders->build_index();
-        this->query_fn = compile_op<QueryFnTy>(this->build_op(700000000, 900000000));
+        this->query_fn =
+            compile_op<QueryFnTy>(this->build_op(700000000, 900000000));
     }
 
     shared_ptr<Func> build_op(int64_t start_date, int64_t end_date)
@@ -104,7 +105,8 @@ struct TPCHQuery4 {
         auto orders = _sym("orders", this->orders->get_data_type());
         auto orderkey = _sym("orderkey", _i64_t);
 
-        auto exists = _red(lineitem[orderkey], []() { return _false(); },
+        auto exists = _red(
+            lineitem[orderkey], []() { return _false(); },
             [](Expr s, Expr v) {
                 auto l_commitdate = _get(v, 10);
                 auto l_receiptdate = _get(v, 11);
@@ -114,14 +116,19 @@ struct TPCHQuery4 {
         auto exists_sym = _sym("exists", exists);
 
         auto filter = _gte(_get(orders[orderkey], 3), _i64(start_date)) &
-            _lt(_get(orders[orderkey], 3), _i64(end_date)) &
-            exists_sym
-            ;
+                      _lt(_get(orders[orderkey], 3), _i64(end_date)) &
+                      exists_sym;
         auto filter_sym = _sym("filter", filter);
 
-        auto pred = _in(orderkey, orders) & _in(orderkey, lineitem) & filter_sym;
-        auto red = _red(_op(vector<Sym>{orderkey}, pred, vector<Expr>{ _get(orders[orderkey], 4) }),
-            []() { return _new(vector<Expr>{_i32(0), _i32(0), _i32(0), _i32(0), _i32(0)}); },
+        auto pred =
+            _in(orderkey, orders) & _in(orderkey, lineitem) & filter_sym;
+        auto red = _red(
+            _op(vector<Sym>{orderkey}, pred,
+                vector<Expr>{_get(orders[orderkey], 4)}),
+            []() {
+                return _new(
+                    vector<Expr>{_i32(0), _i32(0), _i32(0), _i32(0), _i32(0)});
+            },
             [](Expr s, Expr val) {
                 auto v = _get(val, 1);
                 return _new(vector<Expr>{
@@ -131,8 +138,7 @@ struct TPCHQuery4 {
                     _sel(_eq(v, _i8(3)), _add(_get(s, 3), _i32(1)), _get(s, 3)),
                     _sel(_eq(v, _i8(4)), _add(_get(s, 4), _i32(1)), _get(s, 4)),
                 });
-            }
-        );
+            });
         auto red_sym = _sym("red", red);
 
         auto fn = _func("tpchquery4", red_sym, vector<Sym>{lineitem, orders});

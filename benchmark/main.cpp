@@ -24,6 +24,7 @@ int main()
     auto end = std::chrono::high_resolution_clock::now();
     auto duration =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    cout << "Out: " << out[0] << " " << out[1] << " " << out[2] << " " << out[3] << " " << out[4] << endl;
+    cout << "Out: " << out[0] << " " << out[1] << " " << out[2] << " " << out[3]
+         << " " << out[4] << endl;
     cout << "Time: " << duration.count() << endl;
 }
