@@ -146,6 +146,52 @@ class TPCHOrders:
         write_table(OUTPUT_DIR + "/orders.arrow", pa.table(cols))
 
 
+class TPCDSStoreSales:
+    dtypes = {
+        "ss_item_sk": np.int64,
+        "ss_ticket_number": np.int64,
+        "ss_sold_date_sk": np.int64,
+        "ss_sold_time_sk": np.int64,
+        "ss_customer_sk": np.int64,
+        "ss_cdemo_sk": np.int64,
+        "ss_hdemo_sk": np.int64,
+        "ss_addr_sk": np.int64,
+        "ss_store_sk": np.int64,
+        "ss_promo_sk": np.int64,
+        "ss_quantity": np.int32,
+        "ss_wholesale_cost": np.float64,
+        "ss_list_price": np.float64,
+        "ss_sales_price": np.float64,
+        "ss_ext_discount_amt": np.float64,
+        "ss_ext_sales_price": np.float64,
+        "ss_ext_wholesale_cost": np.float64,
+        "ss_ext_list_price": np.float64,
+        "ss_ext_tax": np.float64,
+        "ss_coupon_amt": np.float64,
+        "ss_net_paid": np.float64,
+        "ss_net_paid_inc_tax": np.float64,
+        "ss_net_profit": np.float64,
+    }
+
+    @classmethod
+    def load(cls):
+        df = pd.read_csv(
+            "lib/tpcds-v3.2.0rc2/tools/store_sales.tbl",
+            delimiter="|",
+            usecols = [2, 9, 0, 1, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+            names=list(cls.dtypes.keys()),
+        ).fillna(value=0).astype(cls.dtypes).set_index(["ss_item_sk", "ss_ticket_number"])
+
+        return df
+
+    @classmethod
+    def store(cls):
+        df = cls.load().reset_index(drop=False)
+        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
+        cols["ss_item_sk"] = pc.run_end_encode(cols["ss_item_sk"])
+        write_table(OUTPUT_DIR + "/store_sales.arrow", pa.table(cols))
+
+
 class TPCHQuery6:
     def __init__(self):
         self.lineitem = TPCHLineItem.load()
@@ -255,14 +301,47 @@ class TPCHQuery4:
     def run(self):
         return self.query(700000000, 900000000)
 
+
+class TPCDSQuery9:
+    def __init__(self):
+        self.store_sales = TPCDSStoreSales.load()
+
+    def query(self):
+        def bucket(df, low, high, threshold):
+            f = df[(df['ss_quantity'] >= low) & (df['ss_quantity'] <= high)]
+            if len(f) > threshold:
+                return f['ss_ext_tax'].mean()
+            else:
+                return f['ss_net_paid_inc_tax'].mean()
+        
+        bucket1 = bucket(self.store_sales, 1, 20, 1071)
+        bucket2 = bucket(self.store_sales, 21, 40, 39161)
+        bucket3 = bucket(self.store_sales, 41, 60, 29434)
+        bucket4 = bucket(self.store_sales, 61, 80, 6568)
+        bucket5 = bucket(self.store_sales, 81, 100, 21216)
+        
+        result = pd.DataFrame([{
+            'bucket1': bucket1,
+            'bucket2': bucket2,
+            'bucket3': bucket3,
+            'bucket4': bucket4,
+            'bucket5': bucket5
+        }])
+
+        return result
+
+    def run(self):
+        return self.query()
+
 #TPCHLineItem.store()
 #TPCHCustomer.store()
 #TPCHOrders.store()
+#TPCHOrders.store()
 
 import time
-q4 = TPCHQuery4()
+q = TPCDSQuery9()
 start = time.time()
-res = q4.run()
+res = q.run()
 end = time.time()
 print(res)
 print("Time: ", end - start)
