@@ -158,7 +158,7 @@ struct TPCHQuery4 {
 };
 
 struct TPCHQuery6 {
-    using QueryFnTy = void (*)(void*, ArrowTable*);
+    using QueryFnTy = void (*)(double*, ArrowTable*);
 
     shared_ptr<ArrowTable2> lineitem;
     QueryFnTy query_fn;
@@ -209,14 +209,7 @@ struct TPCHQuery6 {
 
     void run()
     {
-        struct Out {
-            int a;
-            int b;
-            int c;
-            int d;
-            int e;
-        };
-        Out out;
+        double out;
         this->query_fn(&out, this->lineitem.get());
     }
 };
