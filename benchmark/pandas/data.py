@@ -199,7 +199,7 @@ class StockPrice:
     }
 
     @classmethod
-    def load(cls, size = 10000000):
+    def load(cls, size = 1000000):
         timestamps = np.arange(size, dtype=np.int64)
         values = np.random.randn(size) * 10 + 100
 
@@ -363,7 +363,7 @@ class AlgoTrading:
         self.stock_price = StockPrice.load()
 
     def query(self):
-
+        pass
 
     def run(self):
         return self.query()
@@ -374,4 +374,5 @@ class AlgoTrading:
 #TPCHCustomer.store()
 #TPCHOrders.store()
 #TPCHOrders.store()
-print(StockPrice.load())
+#print(StockPrice.load())
+StockPrice.store()
