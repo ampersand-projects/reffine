@@ -357,8 +357,21 @@ class TPCDSQuery9:
     def run(self):
         return self.query()
 
+
+class AlgoTrading:
+    def __init__(self):
+        self.stock_price = StockPrice.load()
+
+    def query(self):
+
+
+    def run(self):
+        return self.query()
+
+
+
 #TPCHLineItem.store()
 #TPCHCustomer.store()
 #TPCHOrders.store()
 #TPCHOrders.store()
-StockPrice.store()
+print(StockPrice.load())
