@@ -192,6 +192,30 @@ class TPCDSStoreSales:
         write_table(OUTPUT_DIR + "/store_sales.arrow", pa.table(cols))
 
 
+class StockPrice:
+    dtypes = {
+        "ts": np.int64,
+        "val": np.float32,
+    }
+
+    @classmethod
+    def load(cls, size = 10000000):
+        timestamps = np.arange(size, dtype=np.int64)
+        values = np.random.randn(size) * 10 + 100
+
+        df = pd.DataFrame({
+            "ts": timestamps,
+            "val": values,
+        }).astype(cls.dtypes).set_index(["ts"])
+        return df
+
+    @classmethod
+    def store(cls):
+        df = cls.load().reset_index(drop=False)
+        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
+        write_table(OUTPUT_DIR + "/stock_price.arrow", pa.table(cols))
+
+
 class TPCHQuery6:
     def __init__(self):
         self.lineitem = TPCHLineItem.load()
@@ -337,11 +361,4 @@ class TPCDSQuery9:
 #TPCHCustomer.store()
 #TPCHOrders.store()
 #TPCHOrders.store()
-
-import time
-q = TPCDSQuery9()
-start = time.time()
-res = q.run()
-end = time.time()
-print(res)
-print("Time: ", end - start)
+StockPrice.store()
