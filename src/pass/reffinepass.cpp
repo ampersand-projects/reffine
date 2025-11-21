@@ -83,7 +83,11 @@ ISpace Reffine::visit(Sym sym)
         return uni;
     } else if (this->ctx().in_sym_tbl.find(sym) !=
                this->ctx().in_sym_tbl.end()) {
-        return make_shared<FilteredSpace>(uni, sym);
+        if (sym->type == types::BOOL) {
+            return make_shared<FilteredSpace>(uni, sym);
+        } else {
+            return eval(this->ctx().in_sym_tbl.at(sym));
+        }
     } else {
         throw runtime_error("Unable to reffine symbol");
     }
