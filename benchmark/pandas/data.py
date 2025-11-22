@@ -449,7 +449,7 @@ class NBody:
 class PageRank:
     def __init__(self):
         self.edges = pd.read_csv(
-            "./lib/snap/email-Eu-core.txt",
+            "./lib/snap/twitter_combined.tbl",
             sep=" ",
             comment="#",
             header=None,
@@ -464,8 +464,12 @@ class PageRank:
         tbl = pa.table({"src": src, "dst": dst})
         write_table(OUTPUT_DIR + "/edges.arrow", tbl)
 
-    def query(self, pr, alpha=0.85):
+    def query(self, alpha=0.85):
         edges = self.edges
+
+        nodes = pd.Index(sorted(set(edges["src"]).union(edges["dst"])))
+        N = len(nodes)
+        pr = pd.Series(1.0 / N, index=nodes)
 
         # Compute outdegree
         outdeg = edges.groupby("src").size().rename("outdeg")
@@ -490,15 +494,7 @@ class PageRank:
         return new_pr
 
     def run(self):
-        edges = self.edges
-
-        nodes = pd.Index(sorted(set(edges["src"]).union(edges["dst"])))
-        N = len(nodes)
-        pr = pd.Series(1.0 / N, index=nodes)
-        for _ in range(100):
-            pr = self.query(pr)
-
-        return pr
+        return self.query()
 
 
 #TPCHLineItem.store()
