@@ -227,8 +227,9 @@ CodeSeg IRPrinter2::visit(Load& e)
 
 CodeSeg IRPrinter2::visit(Store& s)
 {
-    emit(nl(), "*(", eval(s.addr), " + ", eval(s.offset), ") = ", eval(s.val));
-    return code("");
+    auto addr = eval(s.addr);
+    emit(nl(), "*(", addr, " + ", eval(s.offset), ") = ", eval(s.val));
+    return addr;
 }
 
 CodeSeg IRPrinter2::visit(AtomicOp& e)

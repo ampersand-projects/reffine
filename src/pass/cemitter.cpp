@@ -174,7 +174,9 @@ CodeSeg CEmitter::visit(Load& e)
 
 CodeSeg CEmitter::visit(Store& s)
 {
-    return code("(", eval(s.addr), ")[", eval(s.offset), "] = ", eval(s.val));
+    auto addr = eval(s.addr);
+    emit(nl(), "(", addr, ")[", eval(s.offset), "] = ", eval(s.val), ";");
+    return addr;
 }
 
 CodeSeg CEmitter::visit(Loop& e)

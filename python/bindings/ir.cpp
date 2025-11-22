@@ -94,7 +94,7 @@ PYBIND11_MODULE(ir, m)
     REGISTER_CLASS(Stmts, StmtNode, m, "_stmts", vector<Expr>)
     REGISTER_CLASS(IfElse, StmtNode, m, "_ifelse", Expr, Expr, Expr)
     REGISTER_CLASS(NoOp, StmtNode, m, "_noop")
-    REGISTER_CLASS(Store, StmtNode, m, "_store", Expr, Expr, Expr)
+    REGISTER_CLASS(Store, ExprNode, m, "_store", Expr, Expr, Expr)
     py::class_<Func, shared_ptr<Func>, StmtNode>(m, "_func")
         .def(py::init<string, Expr, vector<Sym>, SymTable, bool>(),
              py::arg("name"), py::arg("output"), py::arg("inputs"),
