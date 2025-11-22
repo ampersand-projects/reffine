@@ -53,13 +53,13 @@ struct Load : public ExprNode {
     void Accept(Visitor&) final;
 };
 
-struct Store : public StmtNode {
+struct Store : public ExprNode {
     Expr addr;
     Expr val;
     Expr offset;
 
     Store(Expr addr, Expr val, Expr offset = make_shared<Const>(types::IDX, 0))
-        : StmtNode(), addr(addr), val(val), offset(offset)
+        : ExprNode(addr->type), addr(addr), val(val), offset(offset)
     {
         ASSERT(addr->type.is_ptr());
         ASSERT(addr->type == val->type.ptr());

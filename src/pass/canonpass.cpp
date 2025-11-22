@@ -56,7 +56,8 @@ Expr CanonPass::visit(Func& func)
         auto output_addr = _sym("output_addr", new_func->output->type.ptr());
         new_func->inputs.insert(new_func->inputs.begin(), output_addr);
 
-        new_func->output = _store(output_addr, new_func->output);
+        auto output = _store(output_addr, new_func->output);
+        new_func->output = _stmts(vector<Expr>{output});
     }
 
     return new_func;
