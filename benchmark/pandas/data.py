@@ -395,7 +395,8 @@ class NBody:
         # 2. Compute displacements and distances
         pairs["dx"] = pairs["X_B"] - pairs["X_A"]
         pairs["dy"] = pairs["Y_B"] - pairs["Y_A"]
-        pairs["dist2"] = pairs["dx"]**2 + pairs["dy"]**2
+        pairs["dz"] = pairs["Z_B"] - pairs["Z_A"]
+        pairs["dist2"] = pairs["dx"]**2 + pairs["dy"]**2 + pairs["dx"]**2
         pairs["dist"] = np.sqrt(pairs["dist2"])
 
         # 3. Newtonian gravitational force magnitude
@@ -404,17 +405,20 @@ class NBody:
         # 4. Force components (normalize direction)
         pairs["Fx"] = pairs["F"] * pairs["dx"] / pairs["dist"]
         pairs["Fy"] = pairs["F"] * pairs["dy"] / pairs["dist"]
+        pairs["Fz"] = pairs["F"] * pairs["dz"] / pairs["dist"]
 
         # 5. Total force on each body
-        forces = pairs.groupby("ID_A")[["Fx", "Fy"]].sum()
+        forces = pairs.groupby("ID_A")[["Fx", "Fy", "Fz"]].sum()
 
         # 6. Update velocities and positions
         df = df.set_index("ID").copy()
         df["VX"] += (forces["Fx"] / df["M"]) * dt
         df["VY"] += (forces["Fy"] / df["M"]) * dt
+        df["VZ"] += (forces["Fz"] / df["M"]) * dt
 
         df["X"] += df["VX"] * dt
         df["Y"] += df["VY"] * dt
+        df["Z"] += df["VZ"] * dt
 
         return df.reset_index()
 
@@ -437,9 +441,15 @@ class NBody:
 #TPCHOrders.store()
 #print(StockPrice.load())
 #StockPrice.store()
-q = NBody(3)
-q.store()
+q = NBody(2048)
+#q.store()
 
-print(q.run())
+import time
+start = time.time()
+res = q.run()
+end = time.time()
+
+print(res)
+print("Time: ", end - start)
 
 
