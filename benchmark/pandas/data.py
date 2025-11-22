@@ -450,11 +450,16 @@ class PageRank:
     def __init__(self):
         self.edges = pd.read_csv(
             "./lib/snap/twitter_combined.tbl",
+            #"./lib/snap/email-Eu-core.txt",
             sep=" ",
             comment="#",
             header=None,
             names=["src", "dst"],
         )
+
+        nodes = pd.Index(sorted(set(self.edges["src"]).union(self.edges["dst"])))
+        self.N = len(nodes)
+        self.pr = pd.Series(1.0 / self.N , index=nodes).to_frame(name="pr")
 
     def store(self):
         table = pa.Table.from_pandas(self.edges)
@@ -464,13 +469,10 @@ class PageRank:
         tbl = pa.table({"src": src, "dst": dst})
         write_table(OUTPUT_DIR + "/edges.arrow", tbl)
 
-    def query(self, alpha=0.85):
-        edges = self.edges
+        tbl_pr = pa.Table.from_pandas(self.pr)
+        write_table(OUTPUT_DIR + "/pr.arrow", tbl_pr)
 
-        nodes = pd.Index(sorted(set(edges["src"]).union(edges["dst"])))
-        N = len(nodes)
-        pr = pd.Series(1.0 / N, index=nodes)
-
+    def query(self, edges, pr, N, alpha=0.85):
         # Compute outdegree
         outdeg = edges.groupby("src").size().rename("outdeg")
 
@@ -478,7 +480,7 @@ class PageRank:
         e = edges.join(outdeg, on="src")
 
         # Contribution of each edge = PR(src) / outdeg(src)
-        e["contrib"] = pr[e["src"]].values / e["outdeg"].values
+        e["contrib"] = pr["pr"][e["src"]].values / e["outdeg"].values
 
         # Sum contributions for each destination node
         new_pr = e.groupby("dst")["contrib"].sum()
@@ -494,7 +496,7 @@ class PageRank:
         return new_pr
 
     def run(self):
-        return self.query()
+        return self.query(self.edges, self.pr, self.N)
 
 
 #TPCHLineItem.store()
