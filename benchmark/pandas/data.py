@@ -363,7 +363,19 @@ class AlgoTrading:
         self.stock_price = StockPrice.load()
 
     def query(self):
-        pass
+        df = self.stock_price
+
+        df['price_10'] = df['val'].shift(10)
+        df['price_20'] = df['val'].shift(20)
+    
+        # Basic differences
+        df['diff_10'] = df['val'] - df['price_10']
+        df['diff_20'] = df['val'] - df['price_20']
+    
+        # Your requirement: subtract 10-step value from 20-step value
+        df['past_diff'] = df['price_20'] - df['price_10']
+    
+        return df[["val", "past_diff"]]
 
     def run(self):
         return self.query()
@@ -441,8 +453,10 @@ class NBody:
 #TPCHOrders.store()
 #print(StockPrice.load())
 #StockPrice.store()
-q = NBody(2048)
+#q = NBody(2048)
 #q.store()
+
+q = AlgoTrading()
 
 import time
 start = time.time()
