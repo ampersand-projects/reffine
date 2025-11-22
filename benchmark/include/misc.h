@@ -197,7 +197,6 @@ struct Nbody {
         fn->tbl[fz_sym] = fz;
         fn->tbl[op_sym] = op;
         fn->tbl[op2_sym] = op2_2;
-        fn->tbl[cond_sym] = cond;
         fn->tbl[sfx_sym] = sfx;
         fn->tbl[sfy_sym] = sfy;
         fn->tbl[sfz_sym] = sfz;

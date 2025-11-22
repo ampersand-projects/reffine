@@ -396,7 +396,7 @@ class NBody:
         pairs["dx"] = pairs["X_B"] - pairs["X_A"]
         pairs["dy"] = pairs["Y_B"] - pairs["Y_A"]
         pairs["dz"] = pairs["Z_B"] - pairs["Z_A"]
-        pairs["dist2"] = pairs["dx"]**2 + pairs["dy"]**2 + pairs["dx"]**2
+        pairs["dist2"] = pairs["dx"]**2 + pairs["dy"]**2 + pairs["dz"]**2
         pairs["dist"] = np.sqrt(pairs["dist2"])
 
         # 3. Newtonian gravitational force magnitude
