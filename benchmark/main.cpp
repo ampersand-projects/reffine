@@ -18,7 +18,7 @@ using namespace reffine::reffiner;
 
 int main()
 {
-    AlgoTrading bench;
+    Nbody bench;
     auto start = std::chrono::high_resolution_clock::now();
     auto out = bench.run();
     auto end = std::chrono::high_resolution_clock::now();

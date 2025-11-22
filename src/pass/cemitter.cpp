@@ -131,7 +131,7 @@ CodeSeg CEmitter::visit(NaryExpr& e)
         case MathOp::NEG:
             return code("-", eval(e.arg(0)));
         case MathOp::SQRT:
-            return code_func("sqrt", {e.arg(0)});
+            return code_func("std::sqrt", {e.arg(0)});
         case MathOp::POW:
             return code_binary(e.arg(0), "^", e.arg(1));
         case MathOp::CEIL:
