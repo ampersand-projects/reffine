@@ -446,6 +446,24 @@ class NBody:
         return df
 
 
+class PageRank:
+    def __init__(self):
+        self.edges = pd.read_csv(
+            "./lib/snap/email-Eu-core.txt",
+            sep=" ",
+            comment="#",
+            header=None,
+            names=["src", "dst"],
+        )
+
+    def store(self):
+        table = pa.Table.from_pandas(self.edges)
+        src = table.column(table.column_names[0])
+        dst = table.column(table.column_names[1])
+        src = pc.run_end_encode(src)
+        tbl = pa.table({"src": src, "dst": dst})
+        write_table(OUTPUT_DIR + "/edges.arrow", tbl)
+
 
 #TPCHLineItem.store()
 #TPCHCustomer.store()
@@ -456,7 +474,9 @@ class NBody:
 #q = NBody(2048)
 #q.store()
 
-q = AlgoTrading()
+p = PageRank()
+p.store()
+exit(0)
 
 import time
 start = time.time()
