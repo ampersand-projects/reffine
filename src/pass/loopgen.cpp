@@ -133,7 +133,7 @@ Expr LoopGen::visit(Op& op)
                                         out_dtypes);
     });
     auto out_vec = _make(op.type, len, mem_id);
-    auto out_vec_sym = _sym("out_vec", out_vec);
+    auto out_vec_sym = out_vec->symify("_out_vec");
     this->assign(out_vec_sym, out_vec);
 
     // Build loop
@@ -141,23 +141,23 @@ Expr LoopGen::visit(Op& op)
 
     // Output vector index
     auto out_vec_idx_alloc = _alloc(_idx_t);
-    auto out_vec_idx_addr = _sym("out_vec_idx_addr", out_vec_idx_alloc);
+    auto out_vec_idx_addr = out_vec_idx_alloc->symify("_out_vec_idx_addr");
     this->assign(out_vec_idx_addr, out_vec_idx_alloc);
 
     // Counter for the number of nulls in the output
     auto null_count_alloc = _alloc(_idx_t);
-    auto null_count_addr = _sym("null_count", null_count_alloc);
+    auto null_count_addr = null_count_alloc->symify("_null_count");
     this->assign(null_count_addr, null_count_alloc);
 
     // Loop body condition
-    auto body_cond_sym = _sym("body_cond", loop->body_cond);
+    auto body_cond_sym = loop->body_cond->symify("_body_cond");
     this->assign(body_cond_sym, loop->body_cond);
     loop->body_cond = body_cond_sym;
 
     // Temporary boolean array for storing bitmap
     // Used only for vectorization
     auto bytemap = _alloc(types::BOOL, len);
-    auto bytemap_sym = _sym("bytemap", bytemap);
+    auto bytemap_sym = bytemap->symify("_bytemap");
     this->assign(bytemap_sym, bytemap);
 
     // Write the output to the out_vec
@@ -195,7 +195,7 @@ Expr LoopGen::visit(Op& op)
     loop->post = _finalize(out_vec_sym, bytemap_sym, _load(out_vec_idx_addr),
                            _load(null_count_addr));
     loop->output = out_vec_sym;
-    auto loop_sym = _sym("loop", loop);
+    auto loop_sym = loop->symify("_loop");
     this->assign(loop_sym, loop);
 
     return loop_sym;
@@ -259,7 +259,7 @@ Expr LoopGen::visit(Reduce& red)
     }
 
     loop->output = state_addr;
-    auto loop_sym = _sym("red_loop", loop);
+    auto loop_sym = loop->symify("_red_loop");
     this->assign(loop_sym, loop);
 
     return _load(loop_sym);

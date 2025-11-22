@@ -41,7 +41,7 @@ struct ArrowTable2 : public ArrowTable {
             } else if (dtype == types::INT32) {
                 this->_schema->add_child(new Int32Schema(col));
                 this->_array->add_child(new Int32Array(len));
-            } else if (dtype == types::INT64) {
+            } else if (dtype == types::INT64 || dtype == types::IDX) {
                 this->_schema->add_child(new Int64Schema(col));
                 this->_array->add_child(new Int64Array(len));
             } else if (dtype == types::FLOAT32) {

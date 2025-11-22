@@ -192,6 +192,30 @@ class TPCDSStoreSales:
         write_table(OUTPUT_DIR + "/store_sales.arrow", pa.table(cols))
 
 
+class StockPrice:
+    dtypes = {
+        "ts": np.int64,
+        "val": np.float32,
+    }
+
+    @classmethod
+    def load(cls, size = 1000000):
+        timestamps = np.arange(size, dtype=np.int64)
+        values = np.random.randn(size) * 10 + 100
+
+        df = pd.DataFrame({
+            "ts": timestamps,
+            "val": values,
+        }).astype(cls.dtypes).set_index(["ts"])
+        return df
+
+    @classmethod
+    def store(cls):
+        df = cls.load().reset_index(drop=False)
+        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
+        write_table(OUTPUT_DIR + "/stock_price.arrow", pa.table(cols))
+
+
 class TPCHQuery6:
     def __init__(self):
         self.lineitem = TPCHLineItem.load()
@@ -333,15 +357,99 @@ class TPCDSQuery9:
     def run(self):
         return self.query()
 
+
+class AlgoTrading:
+    def __init__(self):
+        self.stock_price = StockPrice.load()
+
+    def query(self):
+        pass
+
+    def run(self):
+        return self.query()
+
+
+class NBody:
+    def __init__(self, n):
+        self.bodies = self.make_nbody_df(n)
+
+    def make_nbody_df(self, n):
+        df = pd.DataFrame({
+            "ID": np.arange(n, dtype=np.int64),
+            "M": np.random.uniform(1.0, 10.0, size=n),
+            "X": np.random.uniform(-1, 1, size=n),
+            "Y": np.random.uniform(-1, 1, size=n),
+            "Z": np.random.uniform(-1, 1, size=n),
+            "VX": np.random.uniform(-0.1, 0.1, size=n),
+            "VY": np.random.uniform(-0.1, 0.1, size=n),
+            "VZ": np.random.uniform(-0.1, 0.1, size=n),
+        })
+
+        return df
+
+    def query(self, df, G=1.0, dt=0.01):
+        # 1. Cartesian product (each body interacts with every other)
+        pairs = df.merge(df, how="cross", suffixes=("_A", "_B"))
+        pairs = pairs[pairs["ID_A"] != pairs["ID_B"]]
+
+        # 2. Compute displacements and distances
+        pairs["dx"] = pairs["X_B"] - pairs["X_A"]
+        pairs["dy"] = pairs["Y_B"] - pairs["Y_A"]
+        pairs["dz"] = pairs["Z_B"] - pairs["Z_A"]
+        pairs["dist2"] = pairs["dx"]**2 + pairs["dy"]**2 + pairs["dz"]**2
+        pairs["dist"] = np.sqrt(pairs["dist2"])
+
+        # 3. Newtonian gravitational force magnitude
+        pairs["F"] = G * (pairs["M_A"] * pairs["M_B"]) / pairs["dist2"]
+
+        # 4. Force components (normalize direction)
+        pairs["Fx"] = pairs["F"] * pairs["dx"] / pairs["dist"]
+        pairs["Fy"] = pairs["F"] * pairs["dy"] / pairs["dist"]
+        pairs["Fz"] = pairs["F"] * pairs["dz"] / pairs["dist"]
+
+        # 5. Total force on each body
+        forces = pairs.groupby("ID_A")[["Fx", "Fy", "Fz"]].sum()
+
+        # 6. Update velocities and positions
+        df = df.set_index("ID").copy()
+        df["VX"] += (forces["Fx"] / df["M"]) * dt
+        df["VY"] += (forces["Fy"] / df["M"]) * dt
+        df["VZ"] += (forces["Fz"] / df["M"]) * dt
+
+        df["X"] += df["VX"] * dt
+        df["Y"] += df["VY"] * dt
+        df["Z"] += df["VZ"] * dt
+
+        return df.reset_index()
+
+    def store(self):
+        df = self.bodies
+        write_table(OUTPUT_DIR + "/bodies.arrow", pa.Table.from_pandas(self.bodies))
+
+    def run(self):
+        df = self.bodies
+        return self.query(df)
+        for i in range(100):
+            df = self.query(df)
+        return df
+
+
+
 #TPCHLineItem.store()
 #TPCHCustomer.store()
 #TPCHOrders.store()
 #TPCHOrders.store()
+#print(StockPrice.load())
+#StockPrice.store()
+q = NBody(2048)
+#q.store()
 
 import time
-q = TPCDSQuery9()
 start = time.time()
 res = q.run()
 end = time.time()
+
 print(res)
 print("Time: ", end - start)
+
+
