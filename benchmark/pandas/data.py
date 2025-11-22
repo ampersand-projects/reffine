@@ -464,6 +464,42 @@ class PageRank:
         tbl = pa.table({"src": src, "dst": dst})
         write_table(OUTPUT_DIR + "/edges.arrow", tbl)
 
+    def query(self, pr, alpha=0.85):
+        edges = self.edges
+
+        # Compute outdegree
+        outdeg = edges.groupby("src").size().rename("outdeg")
+
+        # Join outdegree onto edges
+        e = edges.join(outdeg, on="src")
+
+        # Contribution of each edge = PR(src) / outdeg(src)
+        e["contrib"] = pr[e["src"]].values / e["outdeg"].values
+
+        # Sum contributions for each destination node
+        new_pr = e.groupby("dst")["contrib"].sum()
+
+        # Teleportation + damping
+        N = len(pr)
+        new_pr = alpha * new_pr
+        new_pr += (1 - alpha) / N
+
+        # Ensure all nodes appear in PR (fill nodes with no incoming edges)
+        new_pr = new_pr.reindex(pr.index, fill_value=(1 - alpha) / N)
+
+        return new_pr
+
+    def run(self):
+        edges = self.edges
+
+        nodes = pd.Index(sorted(set(edges["src"]).union(edges["dst"])))
+        N = len(nodes)
+        pr = pd.Series(1.0 / N, index=nodes)
+        for _ in range(100):
+            pr = self.query(pr)
+
+        return pr
+
 
 #TPCHLineItem.store()
 #TPCHCustomer.store()
@@ -475,12 +511,10 @@ class PageRank:
 #q.store()
 
 p = PageRank()
-p.store()
-exit(0)
 
 import time
 start = time.time()
-res = q.run()
+res = p.run()
 end = time.time()
 
 print(res)
