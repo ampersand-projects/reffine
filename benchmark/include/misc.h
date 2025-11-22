@@ -214,31 +214,54 @@ struct Nbody {
 };
 
 struct PageRank {
-    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*);
+    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*, int64_t);
 
     shared_ptr<ArrowTable2> edges;
+    shared_ptr<ArrowTable2> pr;
+    int64_t N;
     QueryFnTy query_fn;
 
     PageRank()
     {
         this->edges =
             load_arrow_file("../benchmark/arrow_data/edges.arrow", 2);
+        this->pr =
+            load_arrow_file("../benchmark/arrow_data/pr.arrow", 1);
+        this->N = 81306;
         this->edges->build_index();
+        this->pr->build_index();
         this->query_fn = compile_op<QueryFnTy>(this->build_op());
     }
 
     shared_ptr<Func> build_op()
     {
         auto edges = _sym("edges", this->edges->get_data_type());
+        auto pr = _sym("pr", this->pr->get_data_type());
+        auto N = _sym("N", _i64_t);
 
-        return nullptr;
+        auto n = _sym("src", _i64_t);
 
+        auto deg = _red(edges[n],
+            []() { return _i64(0); },
+            [](Expr s, Expr v) { return _add(s, _get(v, 1)); }
+        );
+        auto deg_sym = _sym("deg", deg);
+        auto outdeg = _op(vector<Sym>{n}, _in(n, edges),
+            vector<Expr>{deg_sym}
+        );
+        auto outdeg_sym = _sym("outdeg", outdeg);
+
+        auto fn = _func("pagerank", outdeg_sym, vector<Sym>{edges, pr, N});
+        fn->tbl[outdeg_sym] = outdeg;
+        fn->tbl[deg_sym] = deg;
+
+        return fn;
     }
 
     ArrowTable* run()
     {
         ArrowTable* out;
-        this->query_fn(&out, this->edges.get());
+        this->query_fn(&out, this->edges.get(), this->pr.get(), this->N);
         return out;
     }
 };

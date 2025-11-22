@@ -456,17 +456,20 @@ class PageRank:
             header=None,
             names=["src", "dst"],
         )
+        self.edges = self.edges.groupby(["src", "dst"]).size().reset_index(name="count").sort_values(["src", "dst"])
 
         nodes = pd.Index(sorted(set(self.edges["src"]).union(self.edges["dst"])))
         self.N = len(nodes)
-        self.pr = pd.Series(1.0 / self.N , index=nodes).to_frame(name="pr")
+        self.pr = pd.Series(1.0 / self.N, index=nodes).reset_index(drop=False)
+        self.pr.columns = ["node", "pr"]
 
     def store(self):
         table = pa.Table.from_pandas(self.edges)
         src = table.column(table.column_names[0])
         dst = table.column(table.column_names[1])
+        count = table.column(table.column_names[2])
         src = pc.run_end_encode(src)
-        tbl = pa.table({"src": src, "dst": dst})
+        tbl = pa.table({"src": src, "dst": dst, "count": count})
         write_table(OUTPUT_DIR + "/edges.arrow", tbl)
 
         tbl_pr = pa.Table.from_pandas(self.pr)
@@ -509,6 +512,8 @@ class PageRank:
 #q.store()
 
 p = PageRank()
+p.store()
+exit(0)
 
 import time
 start = time.time()
