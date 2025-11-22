@@ -212,3 +212,34 @@ struct Nbody {
         return out;
     }
 };
+
+struct PageRank {
+    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*);
+
+    shared_ptr<ArrowTable2> edges;
+    QueryFnTy query_fn;
+
+    PageRank()
+    {
+        this->edges =
+            load_arrow_file("../benchmark/arrow_data/edges.arrow", 2);
+        this->edges->build_index();
+        this->query_fn = compile_op<QueryFnTy>(this->build_op());
+    }
+
+    shared_ptr<Func> build_op()
+    {
+        auto edges = _sym("edges", this->edges->get_data_type());
+
+        return nullptr;
+
+    }
+
+    ArrowTable* run()
+    {
+        ArrowTable* out;
+        this->query_fn(&out, this->edges.get());
+        return out;
+    }
+};
+
