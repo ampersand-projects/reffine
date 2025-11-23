@@ -146,6 +146,25 @@ protected:
     SymExprs _extra_syms() final;
 };
 
+struct ShiftedSpace : public SuperSpace {
+    ISpace offset;
+
+    ShiftedSpace(ISpace ispace, ISpace offset)
+        : SuperSpace(ispace), offset(offset)
+    {
+        ASSERT(offset->is_const());
+        ASSERT(offset->iter->type == ispace->iter->type);
+    }
+
+    ISpace intersect(ISpace) final;
+
+private:
+    Expr _lower_bound() final;
+    Expr _upper_bound() final;
+    Expr _iter_to_idx(Expr) final;
+    Expr _idx_to_iter(Expr) final;
+};
+
 struct FilteredSpace : public SuperSpace {
     Expr cond;
 
@@ -198,7 +217,7 @@ struct JointSpace : public IterSpace {
     JointSpace(ISpace left, ISpace right)
         : IterSpace(left->iter), left(left), right(right)
     {
-        ASSERT(left->iter == right->iter);
+        // ASSERT(left->iter == right->iter);
     }
 
 protected:

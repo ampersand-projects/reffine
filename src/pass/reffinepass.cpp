@@ -64,6 +64,13 @@ ISpace Reffine::visit(NaryExpr& e)
         case MathOp::GT:
         case MathOp::GTE:
             return extract_bound(e);
+        case MathOp::ADD:
+            if (e.arg(0) == this->iter()) {
+                return make_shared<ShiftedSpace>(eval(e.arg(0)),
+                                                 eval(e.arg(1)));
+            } else {
+                throw runtime_error("Wrongly formatted ADD");
+            }
         default:
             throw runtime_error("Operator not supported by Reffine");
     }
@@ -77,7 +84,11 @@ ISpace Reffine::visit(Sym sym)
         return uni;
     } else if (this->ctx().in_sym_tbl.find(sym) !=
                this->ctx().in_sym_tbl.end()) {
-        return make_shared<FilteredSpace>(uni, sym);
+        if (sym->type == types::BOOL) {
+            return make_shared<FilteredSpace>(uni, sym);
+        } else {
+            return eval(this->ctx().in_sym_tbl.at(sym));
+        }
     } else {
         throw runtime_error("Unable to reffine symbol");
     }
@@ -90,8 +101,7 @@ ISpace Reffine::visit(Const& cnst)
 
 ISpace Reffine::visit(In& in)
 {
-    ASSERT(in.iter == iter());
-    return make_shared<VecSpace>(iter(), in.vec);
+    return eval(in.iter) & make_shared<VecSpace>(in.iter, in.vec);
 }
 
 ISpace Reffine::visit(Op& op)

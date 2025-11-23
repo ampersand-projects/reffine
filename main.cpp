@@ -315,7 +315,7 @@ shared_ptr<Func> gen_fake_table()
     auto op = _op(
         vector<Sym>{t_sym},
         (_gte(t_sym, lb_sym) & _lt(t_sym, ub_sym)),
-        vector<Expr>{ _add(t_sym, _i64(10)) }
+        vector<Expr>{ t_sym }
     );
     auto op_sym = _sym("op", op);
 
@@ -381,6 +381,24 @@ shared_ptr<Func> red_op(shared_ptr<ArrowTable2> tbl)
     return fn;
 }
 
+shared_ptr<Func> shift_op(ArrowTable2* tbl)
+{
+    auto vec1_sym = _sym("vec1_in", tbl->get_data_type());
+    auto vec2_sym = _sym("vec2_in", tbl->get_data_type());
+    auto t_sym = _sym("t", _i64_t);
+
+    auto op = _op(vector<Sym>{t_sym},
+        _in(t_sym, vec1_sym) | _in(t_sym, vec2_sym),
+        vector<Expr>{_get(vec1_sym[t_sym], 0), _get(vec2_sym[t_sym], 0)}
+    );
+    auto op_sym = _sym("op", op);
+
+    auto fn = _func("red", op_sym, vector<Sym>{vec1_sym, vec2_sym});
+    fn->tbl[op_sym] = op;
+
+    return fn;
+}
+
 int main()
 {   
     /*
@@ -403,15 +421,23 @@ int main()
         }
     }
 
-    auto tbl = load_arrow_file("../benchmark/lib/runend.arrow", 2);
-    tbl->build_index();
-    auto red = red_op(tbl);
-    auto red_fn = compile_op<void (*)(void*, void*)>(red, true);
+    auto tbl_op = gen_fake_table();
+    auto tbl_fn = compile_op<void (*)(void*, int64_t, int64_t)>(tbl_op);
+    ArrowTable2* tbl1;
+    ArrowTable2* tbl2;
+    tbl_fn(&tbl1, 0, 50);
+    tbl_fn(&tbl2, 50, 100);
+
+    tbl1->build_index();
+    tbl2->build_index();
+
+    auto red = shift_op(tbl1);
+    auto red_fn = compile_op<void (*)(void*, void*, void*)>(red);
 
     ArrowTable2* out;
-    red_fn(&out, tbl.get());
+    red_fn(&out, tbl1, tbl2);
 
-    auto in_res = arrow::ImportRecordBatch(tbl->array, tbl->schema).ValueOrDie();
+    auto in_res = arrow::ImportRecordBatch(tbl1->array, tbl1->schema).ValueOrDie();
     cout << "Input: " << endl << in_res->ToString() << endl;
 
     auto out_res = arrow::ImportRecordBatch(out->array, out->schema).ValueOrDie();

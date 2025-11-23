@@ -117,6 +117,38 @@ VecIterIdxs SuperSpace::_vec_iter_idxs(Expr idx)
 
 SymExprs SuperSpace::_extra_syms() { return this->ispace->extra_syms(); }
 
+Expr ShiftedSpace::_lower_bound()
+{
+    return _add(this->ispace->lower_bound(), this->offset->iter);
+}
+
+Expr ShiftedSpace::_upper_bound()
+{
+    return _add(this->ispace->upper_bound(), this->offset->iter);
+}
+
+Expr ShiftedSpace::_iter_to_idx(Expr iter)
+{
+    auto base_iter = _sub(iter, this->offset->iter);
+    return this->ispace->iter_to_idx(base_iter);
+}
+
+Expr ShiftedSpace::_idx_to_iter(Expr idx)
+{
+    auto base_iter = this->ispace->idx_to_iter(idx);
+    return _add(base_iter, this->offset->iter);
+}
+
+ISpace ShiftedSpace::intersect(ISpace ispace)
+{
+    auto applied = this->ispace->intersect(ispace);
+    if (applied) {
+        return make_shared<ShiftedSpace>(applied, this->offset);
+    } else {
+        return nullptr;
+    }
+}
+
 Expr FilteredSpace::_iter_cond(Expr idx)
 {
     return _and(this->cond, this->ispace->iter_cond(idx));
