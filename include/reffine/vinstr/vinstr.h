@@ -134,12 +134,21 @@ void finalize_vector(ArrowTable* tbl, bool* bytemap, int64_t len,
     arr->length = len;
 }
 
+REFFINE_VINSTR_ATTR
+int64_t vector_locate(ArrowTable* tbl, int64_t val)
+{
+    auto it = tbl->index->find(val);
+    if (it != tbl->index->end()) {
+        return it->second;
+    } else {
+        return -1;
+    }
+}
+
 /**
  * External
  */
 ArrowTable* make_vector(int64_t, uint32_t);
-
-int64_t vector_locate(ArrowTable*, int64_t);
 
 ArrowTable* build_vector_index(ArrowTable*);
 

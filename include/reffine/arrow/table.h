@@ -120,29 +120,29 @@ struct ArrowTable2 : public ArrowTable {
                 throw runtime_error("Unknown encode type in indexing");
             }
             auto size = get_array_len(arr);
-            this->index() = make_shared<IndexTy>(size);
+            this->_index = make_shared<IndexTy>(size);
 
             auto* bit_buf = (uint16_t*)get_array_buf(arr, 0);
             auto* data_buf = (int64_t*)get_array_buf(arr, 1);
 
             for (int64_t i = 0; i < size; i++) {
                 if (get_null_bit(bit_buf, i)) {
-                    this->index()->emplace(data_buf[i], i);
+                    this->_index->emplace(data_buf[i], i);
                 }
             }
         } else {
             throw runtime_error("Data type not supported for indexing: " +
                                 dtype.str());
         }
+        init();
     }
-
-    shared_ptr<IndexTy>& index() { return this->_index; }
 
 private:
     void init()
     {
         this->schema = this->_schema.get();
         this->array = this->_array.get();
+        this->index = this->_index.get();
     }
 
     shared_ptr<ArrowSchema2> _schema;
