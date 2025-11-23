@@ -485,9 +485,9 @@ class PageRank:
         write_table(OUTPUT_DIR + "/edges.arrow", tbl)
 
         table2 = pa.Table.from_pandas(self.rev_edges)
-        dst2 = table.column(table.column_names[0])
-        src2 = table.column(table.column_names[1])
-        count2 = table.column(table.column_names[2])
+        dst2 = table2.column(table2.column_names[0])
+        src2 = table2.column(table2.column_names[1])
+        count2 = table2.column(table2.column_names[2])
         dst2 = pc.run_end_encode(dst2)
         tbl2 = pa.table({"dst": dst2, "src": src2, "count": count2})
         write_table(OUTPUT_DIR + "/rev_edges.arrow", tbl2)
@@ -515,6 +515,7 @@ class PageRank:
         new_pr = alpha * new_pr
         new_pr += (1 - alpha) / N
 
+        new_pr = new_pr.reindex(pr.index, fill_value=(1 - alpha) / N)
         return new_pr
 
     def google_matrix(self,
@@ -580,8 +581,8 @@ class PageRank:
         x = (alpha * (x @ A)) + (1 - alpha) * p
 
     def run(self):
-        #return self.query(self.edges, self.pr, self.N)
-        return self.google_matrix(self.G)
+        return self.query(self.edges, self.pr, self.N)
+        #return self.google_matrix(self.G)
 
 
 #TPCHLineItem.store()

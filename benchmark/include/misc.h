@@ -254,7 +254,7 @@ struct PageRank {
             edges[src], []() { return _i64(0); },
             [](Expr s, Expr v) { return _add(s, _get(v, 1)); });
         auto deg_sym = _sym("deg", deg);
-        auto contrib = _div(_get(pr[src], 0), _cast(_f64_t, deg_sym));
+        auto contrib = _div(_cast(_f32_t, _get(pr[src], 0)), _cast(_f32_t, deg_sym));
         auto contrib_sym = _sym("contrib", contrib);
         auto outdeg = _op(vector<Sym>{src}, _in(src, edges) & _in(src, pr),
                           vector<Expr>{contrib_sym});
@@ -264,16 +264,16 @@ struct PageRank {
 
         auto dst = _sym("dst", _i64_t);
         auto dst_pr = _red(
-            rev_edges[dst], []() { return _f64(0); },
+            rev_edges[dst], []() { return _f32(0); },
             [outdeg2_sym](Expr s, Expr v) {
                 auto src = _get(v, 0);
                 auto count = _get(v, 1);
                 return _add(
-                    s, _mul(_cast(_f64_t, count), _get(outdeg2_sym[src], 0)));
+                    s, _mul(_cast(_f32_t, count), _get(outdeg2_sym[src], 0)));
             });
         auto dst_pr_sym = _sym("dst_pr", dst_pr);
         auto new_pr_val =
-            _add(_mul(_f64(alpha), dst_pr_sym), _f64((1 - alpha) / N));
+            _add(_mul(_f32(alpha), dst_pr_sym), _f32((1 - alpha) / N));
         auto new_pr_val_sym = _sym("new_pr_val", new_pr_val);
         auto new_pr_op = _op(vector<Sym>{dst}, _in(dst, rev_edges),
                              vector<Expr>{new_pr_val_sym});
