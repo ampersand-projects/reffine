@@ -448,7 +448,7 @@ class NBody:
 
 class PageRank:
     def __init__(self):
-        self.edges = pd.read_csv(
+        edges = pd.read_csv(
             "./lib/snap/twitter_combined.tbl",
             #"./lib/snap/email-Eu-core.txt",
             sep=" ",
@@ -456,8 +456,8 @@ class PageRank:
             header=None,
             names=["src", "dst"],
         )
-        self.edges = self.edges.groupby(["src", "dst"]).size().reset_index(name="count").sort_values(["src", "dst"])
-
+        self.edges = edges.groupby(["src", "dst"]).size().reset_index(drop=False, name="count").sort_values(["src", "dst"])
+        self.rev_edges = edges.groupby(["dst", "src"]).size().reset_index(drop=False, name="count").sort_values(["dst", "src"])
         nodes = pd.Index(sorted(set(self.edges["src"]).union(self.edges["dst"])))
         self.N = len(nodes)
         self.pr = pd.Series(1.0 / self.N, index=nodes).reset_index(drop=False)
@@ -472,10 +472,20 @@ class PageRank:
         tbl = pa.table({"src": src, "dst": dst, "count": count})
         write_table(OUTPUT_DIR + "/edges.arrow", tbl)
 
+        table2 = pa.Table.from_pandas(self.rev_edges)
+        dst2 = table.column(table.column_names[0])
+        src2 = table.column(table.column_names[1])
+        count2 = table.column(table.column_names[2])
+        dst2 = pc.run_end_encode(dst2)
+        tbl2 = pa.table({"dst": dst2, "src": src2, "count": count2})
+        write_table(OUTPUT_DIR + "/rev_edges.arrow", tbl2)
+
         tbl_pr = pa.Table.from_pandas(self.pr)
         write_table(OUTPUT_DIR + "/pr.arrow", tbl_pr)
 
     def query(self, edges, pr, N, alpha=0.85):
+        pr = pr.set_index("node")
+
         # Compute outdegree
         outdeg = edges.groupby("src").size().rename("outdeg")
 

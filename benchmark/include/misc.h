@@ -1,6 +1,16 @@
 #include "reffine/builder/reffiner.h"
 #include "reffine/utils/utils.h"
 
+#include "arrow/acero/exec_plan.h"
+#include "arrow/acero/options.h"
+
+#include "arrow/compute/api_aggregate.h"
+#include "arrow/result.h"
+#include "arrow/table.h"
+#include "arrow/util/bit_util.h"
+#include "arrow/util/string.h"
+
+
 using namespace std;
 using namespace reffine;
 using namespace reffine::reffiner;
@@ -217,6 +227,7 @@ struct PageRank {
     using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*, int64_t);
 
     shared_ptr<ArrowTable2> edges;
+    shared_ptr<ArrowTable2> rev_edges;
     shared_ptr<ArrowTable2> pr;
     int64_t N;
     QueryFnTy query_fn;
@@ -225,6 +236,8 @@ struct PageRank {
     {
         this->edges =
             load_arrow_file("../benchmark/arrow_data/edges.arrow", 2);
+        this->rev_edges =
+            load_arrow_file("../benchmark/arrow_data/rev_edges.arrow", 2);
         this->pr =
             load_arrow_file("../benchmark/arrow_data/pr.arrow", 1);
         this->N = 81306;
@@ -246,23 +259,27 @@ struct PageRank {
             [](Expr s, Expr v) { return _add(s, _get(v, 1)); }
         );
         auto deg_sym = _sym("deg", deg);
-        auto outdeg = _op(vector<Sym>{n}, _in(n, edges),
-            vector<Expr>{deg_sym}
+        auto contrib = _div(_get(pr[n], 0), _cast(_f64_t, deg_sym));
+        auto contrib_sym = _sym("contrib", contrib);
+        auto outdeg = _op(vector<Sym>{n}, _in(n, edges) & _in(n, pr),
+            vector<Expr>{contrib_sym}
         );
         auto outdeg_sym = _sym("outdeg", outdeg);
 
-        auto fn = _func("pagerank", outdeg_sym, vector<Sym>{edges, pr, N});
+        auto fn = _func("pagerank", _buildidx(outdeg_sym), vector<Sym>{edges, pr, N});
         fn->tbl[outdeg_sym] = outdeg;
         fn->tbl[deg_sym] = deg;
+        fn->tbl[contrib_sym] = contrib;
 
         return fn;
     }
 
     ArrowTable* run()
     {
-        ArrowTable* out;
-        this->query_fn(&out, this->edges.get(), this->pr.get(), this->N);
-        return out;
+
+        ArrowTable* contrib;
+        this->query_fn(&contrib, this->edges.get(), this->pr.get(), this->N);
+        return contrib;
     }
 };
 

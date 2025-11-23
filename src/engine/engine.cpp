@@ -86,6 +86,8 @@ void ExecEngine::register_symbols()
     cantFail(jd.define(absoluteSymbols(SymbolMap(
         {{mangler("make_vector"),
           {ExecutorAddr::fromPtr(&make_vector), JITSymbolFlags::Callable}},
+         {mangler("build_vector_index"),
+          {ExecutorAddr::fromPtr(&build_vector_index), JITSymbolFlags::Callable}},
          {mangler("vector_locate"),
           {ExecutorAddr::fromPtr(&vector_locate),
            JITSymbolFlags::Callable}}}))));

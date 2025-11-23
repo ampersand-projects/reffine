@@ -181,6 +181,13 @@ struct FinalizeVector : public Call {
     }
 };
 
+struct BuildIndex : public Call {
+    BuildIndex(Expr vec) : Call("build_vector_index", vec->type, vector<Expr>{vec})
+    {
+        ASSERT(vec->type.is_vector());
+    }
+};
+
 struct GetVectorArray : public Call {
     GetVectorArray(Expr vec)
         : Call("get_vector_array", types::VOID.ptr(), vector<Expr>{vec})

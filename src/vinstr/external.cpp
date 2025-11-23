@@ -18,3 +18,10 @@ int64_t vector_locate(ArrowTable* tbl, int64_t val)
         return -1;
     }
 }
+
+ArrowTable* build_vector_index(ArrowTable* tbl)
+{
+    auto tbl2 = reinterpret_cast<ArrowTable2*>(tbl);
+    tbl2->build_index();
+    return tbl;
+}
