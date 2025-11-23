@@ -254,7 +254,8 @@ struct PageRank {
             edges[src], []() { return _i64(0); },
             [](Expr s, Expr v) { return _add(s, _get(v, 1)); });
         auto deg_sym = _sym("deg", deg);
-        auto contrib = _div(_cast(_f32_t, _get(pr[src], 0)), _cast(_f32_t, deg_sym));
+        auto contrib =
+            _div(_cast(_f32_t, _get(pr[src], 0)), _cast(_f32_t, deg_sym));
         auto contrib_sym = _sym("contrib", contrib);
         auto outdeg = _op(vector<Sym>{src}, _in(src, edges) & _in(src, pr),
                           vector<Expr>{contrib_sym});

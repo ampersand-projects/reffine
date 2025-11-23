@@ -88,8 +88,7 @@ void ExecEngine::register_symbols()
           {ExecutorAddr::fromPtr(&make_vector), JITSymbolFlags::Callable}},
          {mangler("build_vector_index"),
           {ExecutorAddr::fromPtr(&build_vector_index),
-           JITSymbolFlags::Callable}}
-         }))));
+           JITSymbolFlags::Callable}}}))));
 }
 
 void ExecEngine::add_opt_passes()
