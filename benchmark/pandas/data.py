@@ -1,3 +1,5 @@
+import scipy as sp
+import networkx as nx
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -463,6 +465,16 @@ class PageRank:
         self.pr = pd.Series(1.0 / self.N, index=nodes).reset_index(drop=False)
         self.pr.columns = ["node", "pr"]
 
+        self.G = nx.read_edgelist(
+            "lib/snap/twitter_combined.tbl",
+            create_using=nx.DiGraph(),   # PageRank requires directed graph
+            nodetype=int                 # nodes are integers in the SNAP dataset
+        )
+        N = len(self.G)
+        nodelist = list(self.G)
+        self.A = nx.to_scipy_sparse_array(self.G, nodelist=nodelist, weight="weight", dtype=float)
+
+
     def store(self):
         table = pa.Table.from_pandas(self.edges)
         src = table.column(table.column_names[0])
@@ -505,8 +517,71 @@ class PageRank:
 
         return new_pr
 
+    def google_matrix(self,
+        G, alpha=0.85, personalization=None, nodelist=None, weight="weight", dangling=None
+    ):
+        if nodelist is None:
+            nodelist = list(G)
+    
+        A = nx.to_numpy_array(G, nodelist=nodelist, weight=weight)
+        N = len(G)
+        if N == 0:
+            return A
+    
+        # Personalization vector
+        if personalization is None:
+            p = np.repeat(1.0 / N, N)
+        else:
+            p = np.array([personalization.get(n, 0) for n in nodelist], dtype=float)
+            if p.sum() == 0:
+                raise ZeroDivisionError
+            p /= p.sum()
+    
+        # Dangling nodes
+        if dangling is None:
+            dangling_weights = p
+        else:
+            # Convert the dangling dictionary into an array in nodelist order
+            dangling_weights = np.array([dangling.get(n, 0) for n in nodelist], dtype=float)
+            dangling_weights /= dangling_weights.sum()
+        dangling_nodes = np.where(A.sum(axis=1) == 0)[0]
+    
+        # Assign dangling_weights to any dangling nodes (nodes with no out links)
+        A[dangling_nodes] = dangling_weights
+    
+        A /= A.sum(axis=1)[:, np.newaxis]  # Normalize rows to sum to 1
+    
+        return alpha * A + (1 - alpha) * p
+
+    def _pagerank_scipy(
+        self,
+        G,
+        alpha=0.85,
+        personalization=None,
+        max_iter=100,
+        tol=1.0e-6,
+        nstart=None,
+        weight="weight",
+        dangling=None,
+    ):
+        N = len(G)
+        '''
+        nodelist = list(G)
+        A = nx.to_scipy_sparse_array(G, nodelist=nodelist, weight=weight, dtype=float)
+        '''
+        A = self.A
+        S = A.sum(axis=1)
+        S[S != 0] = 1.0 / S[S != 0]
+        Q = sp.sparse.dia_array((S.T, 0), shape=A.shape).tocsr()
+        A = Q @ A
+    
+        x = np.repeat(1.0 / N, N)
+        p = np.repeat(1.0 / N, N)
+        x = (alpha * (x @ A)) + (1 - alpha) * p
+
     def run(self):
-        return self.query(self.edges, self.pr, self.N)
+        #return self.query(self.edges, self.pr, self.N)
+        return self.google_matrix(self.G)
 
 
 #TPCHLineItem.store()
@@ -518,14 +593,12 @@ class PageRank:
 #q = NBody(2048)
 #q.store()
 
+
 p = PageRank()
 
 import time
 start = time.time()
-res = p.run()
+pagerank = p.run()
 end = time.time()
-
-print(res)
+print(pagerank)
 print("Time: ", end - start)
-
-
