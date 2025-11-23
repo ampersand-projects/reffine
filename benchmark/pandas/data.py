@@ -503,9 +503,6 @@ class PageRank:
         new_pr = alpha * new_pr
         new_pr += (1 - alpha) / N
 
-        # Ensure all nodes appear in PR (fill nodes with no incoming edges)
-        new_pr = new_pr.reindex(pr.index, fill_value=(1 - alpha) / N)
-
         return new_pr
 
     def run(self):
@@ -522,8 +519,6 @@ class PageRank:
 #q.store()
 
 p = PageRank()
-p.store()
-exit(0)
 
 import time
 start = time.time()
