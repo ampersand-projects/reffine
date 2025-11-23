@@ -250,13 +250,13 @@ Expr LoopGen::visit(Reduce& red)
 
     if (this->_vectorize) {
         loop->body = _stmts(vector<Expr>{_store(
-            state_addr,
-            _sel(loop->body_cond, eval(red.acc(_load(state_addr), loop->output)),
-                 _load(state_addr)))});
+            state_addr, _sel(loop->body_cond,
+                             eval(red.acc(_load(state_addr), loop->output)),
+                             _load(state_addr)))});
         loop->body_cond = nullptr;
     } else {
-        loop->body = _stmts(vector<Expr>{
-            _store(state_addr, eval(red.acc(_load(state_addr), loop->output)))});
+        loop->body = _stmts(vector<Expr>{_store(
+            state_addr, eval(red.acc(_load(state_addr), loop->output)))});
     }
 
     loop->output = state_addr;

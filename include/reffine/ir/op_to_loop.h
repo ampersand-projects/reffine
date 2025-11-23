@@ -182,7 +182,8 @@ struct FinalizeVector : public Call {
 };
 
 struct BuildIndex : public Call {
-    BuildIndex(Expr vec) : Call("build_vector_index", vec->type, vector<Expr>{vec})
+    BuildIndex(Expr vec)
+        : Call("build_vector_index", vec->type, vector<Expr>{vec})
     {
         ASSERT(vec->type.is_vector());
     }
