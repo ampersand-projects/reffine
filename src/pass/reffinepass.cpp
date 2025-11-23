@@ -66,7 +66,8 @@ ISpace Reffine::visit(NaryExpr& e)
             return extract_bound(e);
         case MathOp::ADD:
             if (e.arg(0) == this->iter()) {
-                return make_shared<ShiftedSpace>(eval(e.arg(0)), eval(e.arg(1)));
+                return make_shared<ShiftedSpace>(eval(e.arg(0)),
+                                                 eval(e.arg(1)));
             } else {
                 throw runtime_error("Wrongly formatted ADD");
             }

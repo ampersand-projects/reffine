@@ -25,8 +25,9 @@ int main()
     auto duration =
         std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 
-    auto out_res = arrow::ImportRecordBatch(out->array, out->schema).ValueOrDie();
+    auto out_res =
+        arrow::ImportRecordBatch(out->array, out->schema).ValueOrDie();
     cout << "Output: " << endl << out_res->ToString() << endl;
 
-    cout << "Time: " << duration.count()/1000.0 << endl;
+    cout << "Time: " << duration.count() / 1000.0 << endl;
 }

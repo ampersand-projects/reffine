@@ -28,8 +28,10 @@ struct AlgoTrading {
 
     shared_ptr<Func> build_op()
     {
-        auto stock_price1 = _sym("stock_price1", this->stock_price->get_data_type());
-        auto stock_price2 = _sym("stock_price2", this->stock_price->get_data_type());
+        auto stock_price1 =
+            _sym("stock_price1", this->stock_price->get_data_type());
+        auto stock_price2 =
+            _sym("stock_price2", this->stock_price->get_data_type());
         auto t_sym = _sym("t", _i64_t);
         auto t50 = _add(t_sym, _i64(-50));
         auto t50_sym = _sym("t50", t50);
@@ -39,12 +41,12 @@ struct AlgoTrading {
         auto diff = _sub(cur_val, tail_val);
         auto diff_sym = _sym("diff", diff);
         auto op = _op(vector<Sym>{t_sym},
-                _in(t_sym, stock_price1) | _in(t50_sym, stock_price2),
-                vector<Expr>{diff_sym}
-        );
+                      _in(t_sym, stock_price1) | _in(t50_sym, stock_price2),
+                      vector<Expr>{diff_sym});
         auto op_sym = _sym("op", op);
 
-        auto fn = _func("algotrading", op_sym, vector<Sym>{stock_price1, stock_price2});
+        auto fn = _func("algotrading", op_sym,
+                        vector<Sym>{stock_price1, stock_price2});
         fn->tbl[op_sym] = op;
         fn->tbl[t50_sym] = t50;
         fn->tbl[diff_sym] = diff;

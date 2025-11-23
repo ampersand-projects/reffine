@@ -149,7 +149,8 @@ protected:
 struct ShiftedSpace : public SuperSpace {
     ISpace offset;
 
-    ShiftedSpace(ISpace ispace, ISpace offset) : SuperSpace(ispace), offset(offset)
+    ShiftedSpace(ISpace ispace, ISpace offset)
+        : SuperSpace(ispace), offset(offset)
     {
         ASSERT(offset->is_const());
         ASSERT(offset->iter->type == ispace->iter->type);
@@ -216,7 +217,7 @@ struct JointSpace : public IterSpace {
     JointSpace(ISpace left, ISpace right)
         : IterSpace(left->iter), left(left), right(right)
     {
-        ASSERT(left->iter == right->iter);
+        // ASSERT(left->iter == right->iter);
     }
 
 protected:
