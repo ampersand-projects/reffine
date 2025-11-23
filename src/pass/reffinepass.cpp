@@ -100,7 +100,7 @@ ISpace Reffine::visit(Const& cnst)
 
 ISpace Reffine::visit(In& in)
 {
-    return eval(in.iter) & make_shared<VecSpace>(iter(), in.vec);
+    return eval(in.iter) & make_shared<VecSpace>(in.iter, in.vec);
 }
 
 ISpace Reffine::visit(Op& op)
