@@ -210,6 +210,7 @@ Expr LoopGen::visit(Reduce& red)
     auto state_alloc = _alloc(red.type);
     auto state_addr = state_alloc->symify("state_addr");
     this->assign(state_addr, state_alloc);
+    this->map_sym(state_addr, state_addr);
 
     // Build reduction loop
     shared_ptr<Loop> loop;
@@ -244,18 +245,18 @@ Expr LoopGen::visit(Reduce& red)
     // Build reduce loop
     loop->init = _stmts(vector<Expr>{
         loop->init,
-        _store(state_addr, red.init()),
+        _store(state_addr, eval(red.init())),
     });
 
     if (this->_vectorize) {
         loop->body = _stmts(vector<Expr>{_store(
-            state_addr,
-            _sel(loop->body_cond, red.acc(_load(state_addr), loop->output),
-                 _load(state_addr)))});
+            state_addr, _sel(loop->body_cond,
+                             eval(red.acc(_load(state_addr), loop->output)),
+                             _load(state_addr)))});
         loop->body_cond = nullptr;
     } else {
-        loop->body = _stmts(vector<Expr>{
-            _store(state_addr, red.acc(_load(state_addr), loop->output))});
+        loop->body = _stmts(vector<Expr>{_store(
+            state_addr, eval(red.acc(_load(state_addr), loop->output)))});
     }
 
     loop->output = state_addr;

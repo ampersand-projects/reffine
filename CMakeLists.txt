@@ -15,6 +15,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Arrow REQUIRED)
+find_package(Parquet REQUIRED)
+find_package(ArrowAcero REQUIRED)
 
 add_subdirectory(src)
 
@@ -35,4 +37,4 @@ endif()
 
 add_executable(bench benchmark/main.cpp)
 target_include_directories(bench PRIVATE benchmark/include)
-target_link_libraries(bench reffine Arrow::arrow_shared)
+target_link_libraries(bench reffine Arrow::arrow_shared ArrowAcero::arrow_acero_shared)

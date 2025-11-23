@@ -1,3 +1,10 @@
+#include "arrow/acero/exec_plan.h"
+#include "arrow/acero/options.h"
+#include "arrow/compute/api_aggregate.h"
+#include "arrow/result.h"
+#include "arrow/table.h"
+#include "arrow/util/bit_util.h"
+#include "arrow/util/string.h"
 #include "reffine/builder/reffiner.h"
 #include "reffine/utils/utils.h"
 
@@ -210,5 +217,87 @@ struct Nbody {
         ArrowTable* out;
         this->query_fn(&out, this->bodies.get());
         return out;
+    }
+};
+
+struct PageRank {
+    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*,
+                               ArrowTable*);
+
+    shared_ptr<ArrowTable2> edges;
+    shared_ptr<ArrowTable2> rev_edges;
+    shared_ptr<ArrowTable2> pr;
+    int64_t N;
+    QueryFnTy query_fn;
+
+    PageRank()
+    {
+        this->edges = load_arrow_file("../benchmark/arrow_data/edges.arrow", 2);
+        this->rev_edges =
+            load_arrow_file("../benchmark/arrow_data/rev_edges.arrow", 2);
+        this->pr = load_arrow_file("../benchmark/arrow_data/pr.arrow", 1);
+        this->N = 81306;
+        this->edges->build_index();
+        this->rev_edges->build_index();
+        this->pr->build_index();
+        this->query_fn = compile_op<QueryFnTy>(this->build_op(this->N, 0.85));
+    }
+
+    shared_ptr<Func> build_op(int64_t N, double alpha)
+    {
+        auto edges = _sym("edges", this->edges->get_data_type());
+        auto rev_edges = _sym("rev_edges", this->rev_edges->get_data_type());
+        auto pr = _sym("pr", this->pr->get_data_type());
+
+        auto src = _sym("src", _i64_t);
+        auto deg = _red(
+            edges[src], []() { return _i64(0); },
+            [](Expr s, Expr v) { return _add(s, _get(v, 1)); });
+        auto deg_sym = _sym("deg", deg);
+        auto contrib = _div(_cast(_f32_t, _get(pr[src], 0)), _cast(_f32_t, deg_sym));
+        auto contrib_sym = _sym("contrib", contrib);
+        auto outdeg = _op(vector<Sym>{src}, _in(src, edges) & _in(src, pr),
+                          vector<Expr>{contrib_sym});
+        auto outdeg_sym = _sym("outdeg", outdeg);
+        auto outdeg2 = _buildidx(outdeg_sym);
+        auto outdeg2_sym = _sym("outdeg2", outdeg2);
+
+        auto dst = _sym("dst", _i64_t);
+        auto dst_pr = _red(
+            rev_edges[dst], []() { return _f32(0); },
+            [outdeg2_sym](Expr s, Expr v) {
+                auto src = _get(v, 0);
+                auto count = _get(v, 1);
+                return _add(
+                    s, _mul(_cast(_f32_t, count), _get(outdeg2_sym[src], 0)));
+            });
+        auto dst_pr_sym = _sym("dst_pr", dst_pr);
+        auto new_pr_val =
+            _add(_mul(_f32(alpha), dst_pr_sym), _f32((1 - alpha) / N));
+        auto new_pr_val_sym = _sym("new_pr_val", new_pr_val);
+        auto new_pr_op = _op(vector<Sym>{dst}, _in(dst, rev_edges),
+                             vector<Expr>{new_pr_val_sym});
+        auto new_pr = _initval(vector<Sym>{outdeg2_sym}, new_pr_op);
+        auto new_pr_sym = _sym("new_pr", new_pr);
+
+        auto fn =
+            _func("pagerank", new_pr_sym, vector<Sym>{edges, rev_edges, pr});
+        fn->tbl[outdeg_sym] = outdeg;
+        fn->tbl[outdeg2_sym] = outdeg2;
+        fn->tbl[deg_sym] = deg;
+        fn->tbl[contrib_sym] = contrib;
+        fn->tbl[new_pr_sym] = new_pr;
+        fn->tbl[dst_pr_sym] = dst_pr;
+        fn->tbl[new_pr_val_sym] = new_pr_val;
+
+        return fn;
+    }
+
+    ArrowTable* run()
+    {
+        ArrowTable* contrib;
+        this->query_fn(&contrib, this->edges.get(), this->rev_edges.get(),
+                       this->pr.get());
+        return contrib;
     }
 };

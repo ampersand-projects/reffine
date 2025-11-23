@@ -141,6 +141,8 @@ ArrowTable* make_vector(int64_t, uint32_t);
 
 int64_t vector_locate(ArrowTable*, int64_t);
 
+ArrowTable* build_vector_index(ArrowTable*);
+
 }  // extern "C"
 
 #endif  // INCLUDE_REFFINE_VINSTR_H_
