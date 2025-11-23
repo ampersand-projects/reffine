@@ -55,7 +55,7 @@ class TPCHLineItem:
             engine="pyarrow",
             usecols = [0, 3, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
             names=list(cls.dtypes.keys()),
-        ).astype(cls.dtypes).set_index(["L_ORDERKEY", "L_LINENUMBER"])
+        ).astype(cls.dtypes)
         df["L_SHIPDATE"] = df["L_SHIPDATE"].astype("int64")
         df["L_COMMITDATE"] = df["L_COMMITDATE"].astype("int64")
         df["L_RECEIPTDATE"] = df["L_RECEIPTDATE"].astype("int64")
@@ -97,7 +97,7 @@ class TPCHCustomer:
             delimiter="|",
             names=list(cls.dtypes.keys()),
             converters={"C_MKTSEGMENT": lambda val : cls.mktseg_enum[val]},
-        ).astype(cls.dtypes).set_index(["C_CUSTKEY"])
+        ).astype(cls.dtypes)
 
         return df
 
@@ -136,7 +136,7 @@ class TPCHOrders:
             delimiter="|",
             names=list(cls.dtypes.keys()),
             converters={"O_ORDERPRIORITY": lambda val : cls.orderpriority[val]},
-        ).astype(cls.dtypes).set_index(["O_ORDERKEY"])
+        ).astype(cls.dtypes)
         df["O_ORDERDATE"] = df["O_ORDERDATE"].astype("int64")
 
         return df
@@ -182,7 +182,7 @@ class TPCDSStoreSales:
             delimiter="|",
             usecols = [2, 9, 0, 1, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
             names=list(cls.dtypes.keys()),
-        ).fillna(value=0).astype(cls.dtypes).set_index(["ss_item_sk", "ss_ticket_number"])
+        ).fillna(value=0).astype(cls.dtypes)
 
         return df
 
@@ -208,7 +208,7 @@ class StockPrice:
         df = pd.DataFrame({
             "ts": timestamps,
             "val": values,
-        }).astype(cls.dtypes).set_index(["ts"])
+        }).astype(cls.dtypes)
         return df
 
     @classmethod
@@ -224,10 +224,10 @@ class TPCHQuery6:
 
     def query(self, start_date, end_date, discount, quantity):
         filtered = self.lineitem[
-            (lineitem["L_SHIPDATE"] >= start_date) &
-            (lineitem["L_SHIPDATE"] < end_date) &
-            (lineitem["L_DISCOUNT"].between(discount - 0.01, discount + 0.01)) &
-            (lineitem["L_QUANTITY"] < quantity)
+            (self.lineitem["L_SHIPDATE"] >= start_date) &
+            (self.lineitem["L_SHIPDATE"] < end_date) &
+            (self.lineitem["L_DISCOUNT"].between(discount - 0.01, discount + 0.01)) &
+            (self.lineitem["L_QUANTITY"] < quantity)
         ]
         revenue = (filtered["L_EXTENDEDPRICE"] * filtered["L_DISCOUNT"]).sum()
 
@@ -584,22 +584,11 @@ class PageRank:
         return self.query(self.edges, self.pr, self.N)
         #return self.google_matrix(self.G)
 
-
-#TPCHLineItem.store()
-#TPCHCustomer.store()
-#TPCHOrders.store()
-#TPCHOrders.store()
-#print(StockPrice.load())
-#StockPrice.store()
-#q = NBody(2048)
-#q.store()
-
-
-p = PageRank()
-
-import time
-start = time.time()
-pagerank = p.run()
-end = time.time()
-print(pagerank)
-print("Time: ", end - start)
+if __name__ == '__main__':
+    q = TPCHQuery4()
+    import time
+    start = time.time()
+    out = q.run()
+    end = time.time()
+    print(out)
+    print("Time: ", (end - start)*1000)
