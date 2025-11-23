@@ -168,7 +168,7 @@ struct TPCHQuery6 {
         this->lineitem =
             load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 2);
         this->query_fn = compile_op<QueryFnTy>(
-            this->build_op(820454400, 852076800, 0.05f, 24.5f));
+            this->build_op(820454400, 852076800, 0.05f, 24.5f), true);
     }
 
     shared_ptr<Func> build_op(int64_t start, int64_t end, double disc,

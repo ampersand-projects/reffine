@@ -1,3 +1,7 @@
 pyarrow
 numpy
 pandas
+polars
+scipy
+duckdb
+networkx
