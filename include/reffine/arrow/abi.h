@@ -2,6 +2,9 @@
 #define INCLUDE_REFFINE_ARROW_ABI_H_
 
 #include <cstdint>
+#include <unordered_map>
+
+using IndexTy = std::unordered_map<int64_t, int64_t>;
 
 extern "C" {
 
@@ -54,6 +57,7 @@ struct ArrowTable {
     int64_t dim;
     ArrowSchema* schema;
     ArrowArray* array;
+    IndexTy* index;
 
     ArrowTable(int64_t dim, ArrowSchema* schema = nullptr,
                ArrowArray* array = nullptr)
