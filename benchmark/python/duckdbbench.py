@@ -126,6 +126,43 @@ class Query11:
         return duckdb.sql(self.query_str).show()
 
 
+class Query9:
+    def __init__(self, nation_key=0, fraction=0.0001):
+        partsupp = TPCHPartSupp.load()
+        supplier = TPCHSupplier.load()
+        duckdb.sql("CREATE TABLE PartSupp AS SELECT * FROM partsupp")
+        duckdb.sql("ALTER TABLE PartSupp ADD PRIMARY KEY (PS_PARTKEY, PS_SUPPKEY);")
+        duckdb.sql("CREATE TABLE Supplier AS SELECT * FROM supplier")
+        duckdb.sql("ALTER TABLE Supplier ADD PRIMARY KEY (S_SUPPKEY);")
+        self.query_str = f"""
+            select
+                PS_PARTKEY,
+                sum(PS_SUPPLYCOST * PS_AVAILQTY) as value
+            from
+                PartSupp,
+                Supplier
+            where
+                PS_SUPPKEY = s_suppkey
+                and S_NATIONKEY = {nation_key}
+            group by
+                PS_PARTKEY having
+                        sum(PS_SUPPLYCOST * PS_AVAILQTY) > (
+                    select
+                        sum(PS_SUPPLYCOST * PS_AVAILQTY) * {fraction}
+                    from
+                        PartSupp,
+                        Supplier
+                    where
+                        ps_suppkey = s_suppkey
+                        and s_nationkey = {nation_key}
+                    )
+        """
+
+
+    def run(self):
+        return duckdb.sql(self.query_str).show()
+
+
 if __name__ == "__main__":
     q = Query11()
     import time
