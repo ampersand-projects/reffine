@@ -55,8 +55,42 @@ class Query4:
         return duckdb.sql(self.query_str).fetchall()
 
 
+class Query3:
+    def __init__(self, segment = 1, date = 795484800):
+        lineitem = TPCHLineItem.load()
+        orders = TPCHOrders.load()
+        customer = TPCHCustomer.load()
+        duckdb.sql("CREATE TABLE LineItem AS SELECT * FROM lineitem")
+        duckdb.sql("ALTER TABLE LineItem ADD PRIMARY KEY (L_ORDERKEY, L_LINENUMBER);")
+        duckdb.sql("CREATE TABLE Orders AS SELECT * FROM orders")
+        duckdb.sql("ALTER TABLE Orders ADD PRIMARY KEY (O_ORDERKEY);")
+        duckdb.sql("CREATE TABLE Customer AS SELECT * FROM customer")
+        duckdb.sql("ALTER TABLE Customer ADD PRIMARY KEY (C_CUSTKEY);")
+        self.query_str = f"""
+            select
+                L_ORDERKEY,
+                sum(L_EXTENDEDPRICE * (1 - L_DISCOUNT)) as revenue,
+            from
+                Customer,
+                Orders,
+                LineItem
+            where
+                C_MKTSEGMENT = {segment}
+                and C_CUSTKEY = O_CUSTKEY
+                and L_ORDERKEY = O_ORDERKEY
+                and O_ORDERDATE < {date}
+                and L_SHIPDATE > {date}
+            group by
+                L_ORDERKEY
+            limit 10
+        """
+
+    def run(self):
+        return duckdb.sql(self.query_str).fetchall()
+
+
 if __name__ == "__main__":
-    q = Query4()
+    q = Query3()
     import time
     start = time.time()
     out = q.run()
