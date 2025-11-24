@@ -404,19 +404,83 @@ struct TPCHQuery1 {
     TPCHQuery1()
     {
         this->lineitem =
-            load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 1);
+            load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 2);
         this->lineitem->build_index();
         this->query_fn = compile_op<QueryFnTy>(this->build_op());
     }
 
     shared_ptr<Func> build_op()
     {
-        return nullptr;
+        auto lineitem = _sym("lineitem", this->lineitem->get_data_type());
+
+        auto red = _red(_subvec(lineitem, _idx(0), _len(lineitem, 0)),
+            []() {
+                return _new(vector<Expr>{
+                        _f64(0), _f64(0), _f64(0),
+                        _f64(0), _f64(0),
+                        _f64(0), _f64(0), _f64(0),
+                        _f64(0), _f64(0),
+                        _f64(0), _f64(0), _f64(0),
+                        _f64(0), _f64(0)
+                });
+            },
+            [](Expr s, Expr v) {
+                auto rf = _get(v, 7);
+                auto qty = _get(v, 3);
+                auto eprice = _get(v, 4);
+                auto disc = _get(v, 5);
+                auto tax = _get(v, 6);
+
+                auto s1_qty = _get(s, 0);
+                auto s1_base = _get(s, 1);
+                auto s1_disc = _get(s, 2);
+                auto s1_charge = _get(s, 3);
+                auto s1_cnt = _get(s, 4);
+
+                auto s2_qty = _get(s, 5);
+                auto s2_base = _get(s, 6);
+                auto s2_disc = _get(s, 7);
+                auto s2_charge = _get(s, 8);
+                auto s2_cnt = _get(s, 9);
+
+                auto s3_qty = _get(s, 10);
+                auto s3_base = _get(s, 11);
+                auto s3_disc = _get(s, 12);
+                auto s3_charge = _get(s, 13);
+                auto s3_cnt = _get(s, 14);
+
+                return _new(vector<Expr>{
+                        _sel(_eq(rf, _i32(0)), _add(s1_qty, qty), s1_qty),
+                        _sel(_eq(rf, _i32(0)), _add(s1_base, eprice), s1_base),
+                        _sel(_eq(rf, _i32(0)), _add(s1_disc, disc), s1_disc),
+                        _sel(_eq(rf, _i32(0)), _add(s1_charge, tax), s1_charge),
+                        _sel(_eq(rf, _i32(0)), _add(s1_cnt, _f64(1)), s1_cnt),
+
+                        _sel(_eq(rf, _i32(1)), _add(s2_qty, qty), s2_qty),
+                        _sel(_eq(rf, _i32(1)), _add(s2_base, eprice), s2_base),
+                        _sel(_eq(rf, _i32(1)), _add(s2_disc, disc), s2_disc),
+                        _sel(_eq(rf, _i32(1)), _add(s2_charge, tax), s2_charge),
+                        _sel(_eq(rf, _i32(1)), _add(s2_cnt, _f64(1)), s2_cnt),
+
+                        _sel(_eq(rf, _i32(2)), _add(s3_qty, qty), s3_qty),
+                        _sel(_eq(rf, _i32(2)), _add(s3_base, eprice), s3_base),
+                        _sel(_eq(rf, _i32(2)), _add(s3_disc, disc), s3_disc),
+                        _sel(_eq(rf, _i32(2)), _add(s3_charge, tax), s3_charge),
+                        _sel(_eq(rf, _i32(2)), _add(s3_cnt, _f64(1)), s3_cnt)
+                });
+            }
+        );
+        auto red_sym = _sym("red", red);
+
+        auto fn = _func("tpchquery1", red_sym, vector<Sym>{lineitem});
+        fn->tbl[red_sym] = red;
+
+        return fn;
     }
 
-    ArrowTable* run()
+    double* run()
     {
-        ArrowTable* out;
+        double out[1000];
         this->query_fn(&out, this->lineitem.get());
         return out;
     }

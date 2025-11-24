@@ -37,7 +37,7 @@ class TPCHLineItem:
         "L_EXTENDEDPRICE": np.float64,
         "L_DISCOUNT": np.float64,
         "L_TAX": np.float64,
-        "L_RETURNFLAG": np.str_,
+        "L_RETURNFLAG": np.int32,
         "L_LINESTATUS": np.str_,
         "L_SHIPDATE": np.dtype('datetime64[s]'),
         "L_COMMITDATE": np.dtype('datetime64[s]'),
@@ -47,14 +47,20 @@ class TPCHLineItem:
         "L_COMMENT": np.str_,
     }
 
+    ret_flag = {
+        "A": 0,
+        "N": 1,
+        "R": 2,
+    }
+
     @classmethod
     def load(cls):
         df = pd.read_csv(
             "lib/tpch-v3.0.1/dbgen/lineitem.tbl",
             delimiter="|",
-            engine="pyarrow",
             usecols = [0, 3, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
             names=list(cls.dtypes.keys()),
+            converters={"L_RETURNFLAG": lambda val : cls.ret_flag[val]},
         ).astype(cls.dtypes)
         df["L_SHIPDATE"] = df["L_SHIPDATE"].astype("int64")
         df["L_COMMITDATE"] = df["L_COMMITDATE"].astype("int64")
@@ -744,6 +750,41 @@ class TPCHQuery11:
         return self.query(0, 0.0001)
 
 
+class TPCHQuery1:
+    def __init__(self):
+        self.lineitem = TPCHLineItem.load().reset_index(drop=False)
+
+    def query(self):
+        var1 = 904694400
+
+        filt = self.lineitem[self.lineitem["L_SHIPDATE"] <= var1]
+
+        # This is lenient towards pandas as normally an optimizer should decide
+        # that this could be computed before the groupby aggregation.
+        # Other implementations don't enjoy this benefit.
+        filt["disc_price"] = filt.L_EXTENDEDPRICE * (1.0 - filt.L_DISCOUNT)
+        filt["charge"] = (
+            filt.L_EXTENDEDPRICE * (1.0 - filt.L_DISCOUNT) * (1.0 + filt.L_TAX)
+        )
+
+        gb = filt.groupby(["L_RETURNFLAG"], as_index=False)
+        agg = gb.agg(
+            sum_qty=pd.NamedAgg(column="L_QUANTITY", aggfunc="sum"),
+            sum_base_price=pd.NamedAgg(column="L_EXTENDEDPRICE", aggfunc="sum"),
+            sum_disc_price=pd.NamedAgg(column="disc_price", aggfunc="sum"),
+            sum_charge=pd.NamedAgg(column="charge", aggfunc="sum"),
+            avg_qty=pd.NamedAgg(column="L_QUANTITY", aggfunc="mean"),
+            avg_price=pd.NamedAgg(column="L_EXTENDEDPRICE", aggfunc="mean"),
+            avg_disc=pd.NamedAgg(column="L_DISCOUNT", aggfunc="mean"),
+            count_order=pd.NamedAgg(column="L_ORDERKEY", aggfunc="size"),
+        )
+
+        return agg
+
+    def run(self):
+        return self.query()
+
+
 class TPCHQuery2:
     def __init__(self):
         self.supplier = TPCHSupplier.load().reset_index(drop=False)
@@ -779,10 +820,14 @@ class TPCHQuery2:
     def run(self):
         return self.query(0, 0.0001)
 
+
+
+
+
 if __name__ == '__main__':
-    TPCHPart.store()
+    TPCHLineItem.store()
     exit(0)
-    q = TPCDSQuery9()
+    q = TPCHQuery1()
     import time
     start = time.time()
     out = q.run()

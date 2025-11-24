@@ -163,8 +163,36 @@ class Query9:
         return duckdb.sql(self.query_str).show()
 
 
+class Query1:
+    def __init__(self, date=904694400):
+        lineitem = TPCHLineItem.load()
+        duckdb.sql("CREATE TABLE LineItem AS SELECT * FROM lineitem")
+        duckdb.sql("ALTER TABLE LineItem ADD PRIMARY KEY (L_ORDERKEY, L_LINENUMBER);")
+        self.query_str = f"""
+            select
+                L_RETURNFLAG,
+                sum(L_QUANTITY) as sum_qty,
+                sum(L_EXTENDEDPRICE) as sum_base_price,
+                sum(L_EXTENDEDPRICE * (1 - L_DISCOUNT)) as sum_disc_price,
+                sum(L_EXTENDEDPRICE * (1 - L_DISCOUNT) * (1 + L_TAX)) as sum_charge,
+                avg(L_QUANTITY) as avg_qty,
+                avg(L_EXTENDEDPRICE) as avg_price,
+                avg(L_DISCOUNT) as avg_disc,
+                count(*) as count_order
+            from
+                LineItem
+            where
+                L_SHIPDATE <= {date}
+            group by
+                l_returnflag,
+        """
+
+    def run(self):
+        return duckdb.sql(self.query_str).show()
+
+
 if __name__ == "__main__":
-    q = Query11()
+    q = Query1()
     import time
     start = time.time()
     out = q.run()
