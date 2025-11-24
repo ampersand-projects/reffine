@@ -143,9 +143,36 @@ class Query9:
         
         return result
 
+class Query1:
+    def __init__(self):
+        self.lineitem = pl.from_pandas(TPCHLineItem.load())
+
+    def run(self):
+        var1 = 904694400
+
+        return (
+            self.lineitem.filter(pl.col("L_SHIPDATE") <= var1)
+            .group_by("L_RETURNFLAG")
+            .agg(
+                pl.sum("L_QUANTITY").alias("sum_qty"),
+                pl.sum("L_EXTENDEDPRICE").alias("sum_base_price"),
+                (pl.col("L_EXTENDEDPRICE") * (1.0 - pl.col("L_DISCOUNT")))
+                .sum()
+                .alias("sum_disc_price"),
+                (
+                    pl.col("L_EXTENDEDPRICE")
+                    * (1.0 - pl.col("L_DISCOUNT"))
+                    * (1.0 + pl.col("L_TAX"))
+                )
+                .sum()
+                .alias("sum_charge"),
+                pl.len().alias("count_order"),
+            )
+        )
+
 
 if __name__ == '__main__':
-    q = Query9()
+    q = Query1()
     import time
     start = time.time()
     out = q.run()

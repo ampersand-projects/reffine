@@ -30,14 +30,14 @@ def read_table(filename):
 class TPCHLineItem:
     dtypes = {
         "L_ORDERKEY": np.int64,
-        "L_LINENUMBER": np.int64,
         "L_PARTKEY": np.int64,
         "L_SUPPKEY": np.int64,
+        "L_LINENUMBER": np.int64,
         "L_QUANTITY": np.float64,
         "L_EXTENDEDPRICE": np.float64,
         "L_DISCOUNT": np.float64,
         "L_TAX": np.float64,
-        "L_RETURNFLAG": np.str_,
+        "L_RETURNFLAG": np.int32,
         "L_LINESTATUS": np.str_,
         "L_SHIPDATE": np.dtype('datetime64[s]'),
         "L_COMMITDATE": np.dtype('datetime64[s]'),
@@ -47,14 +47,38 @@ class TPCHLineItem:
         "L_COMMENT": np.str_,
     }
 
+    arrow_dtypes = {
+        "L_ORDERKEY": np.int64,
+        "L_LINENUMBER": np.int64,
+        "L_PARTKEY": np.int64,
+        "L_SUPPKEY": np.int64,
+        "L_QUANTITY": np.float64,
+        "L_EXTENDEDPRICE": np.float64,
+        "L_DISCOUNT": np.float64,
+        "L_TAX": np.float64,
+        "L_RETURNFLAG": np.int32,
+        "L_LINESTATUS": np.str_,
+        "L_SHIPDATE": np.dtype('datetime64[s]'),
+        "L_COMMITDATE": np.dtype('datetime64[s]'),
+        "L_RECEIPTDATE": np.dtype('datetime64[s]'),
+        "L_SHIPINSTRUCT": np.str_,
+        "L_SHIPMODE": np.str_,
+        "L_COMMENT": np.str_,
+    }
+
+    ret_flag = {
+        "A": 0,
+        "N": 1,
+        "R": 2,
+    }
+
     @classmethod
     def load(cls):
         df = pd.read_csv(
             "lib/tpch-v3.0.1/dbgen/lineitem.tbl",
             delimiter="|",
-            engine="pyarrow",
-            usecols = [0, 3, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
             names=list(cls.dtypes.keys()),
+            converters={"L_RETURNFLAG": lambda val : cls.ret_flag[val]},
         ).astype(cls.dtypes)
         df["L_SHIPDATE"] = df["L_SHIPDATE"].astype("int64")
         df["L_COMMITDATE"] = df["L_COMMITDATE"].astype("int64")
@@ -65,7 +89,7 @@ class TPCHLineItem:
     @classmethod
     def store(cls):
         df = cls.load().reset_index(drop=False)
-        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
+        cols = {key: pa.array(df[key]) for key in list(cls.arrow_dtypes.keys())}
         cols["L_ORDERKEY"] = pc.run_end_encode(cols["L_ORDERKEY"])
         write_table(OUTPUT_DIR + "/lineitem.arrow", pa.table(cols))
 
@@ -295,6 +319,36 @@ class TPCHSupplier:
         df = cls.load().reset_index(drop=False)
         cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
         write_table(OUTPUT_DIR + "/supplier.arrow", pa.table(cols))
+
+
+class TPCHPart:
+    dtypes = {
+        "P_PARTKEY": np.int64,
+        "P_NAME": np.str_,
+        "P_MFGR": np.str_,
+        "P_BRAND": np.str_,
+        "P_TYPE": np.str_,
+        "P_SIZE": np.int32,
+        "P_CONTAINER": np.str_,
+        "P_RETAILPRICE": np.float64,
+        "P_COMMENT": np.str_,
+    }
+
+    @classmethod
+    def load(cls):
+        df = pd.read_csv(
+            "lib/tpch-v3.0.1/dbgen/part.tbl",
+            delimiter="|",
+            names=list(cls.dtypes.keys()),
+        ).astype(cls.dtypes)
+
+        return df
+
+    @classmethod
+    def store(cls):
+        df = cls.load().reset_index(drop=False)
+        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
+        write_table(OUTPUT_DIR + "/part.arrow", pa.table(cols))
 
 
 class TPCHQuery6:
@@ -714,6 +768,38 @@ class TPCHQuery11:
         return self.query(0, 0.0001)
 
 
+class TPCHQuery1:
+    def __init__(self):
+        self.lineitem = TPCHLineItem.load().reset_index(drop=False)
+
+    def query(self):
+        var1 = 904694400
+
+        filt = self.lineitem[self.lineitem["L_SHIPDATE"] <= var1]
+
+        # This is lenient towards pandas as normally an optimizer should decide
+        # that this could be computed before the groupby aggregation.
+        # Other implementations don't enjoy this benefit.
+        filt["disc_price"] = filt.L_EXTENDEDPRICE * (1.0 - filt.L_DISCOUNT)
+        filt["charge"] = (
+            filt.L_EXTENDEDPRICE * (1.0 - filt.L_DISCOUNT) * (1.0 + filt.L_TAX)
+        )
+
+        gb = filt.groupby(["L_RETURNFLAG"], as_index=False)
+        agg = gb.agg(
+            sum_qty=pd.NamedAgg(column="L_QUANTITY", aggfunc="sum"),
+            sum_base_price=pd.NamedAgg(column="L_EXTENDEDPRICE", aggfunc="sum"),
+            sum_disc_price=pd.NamedAgg(column="disc_price", aggfunc="sum"),
+            sum_charge=pd.NamedAgg(column="charge", aggfunc="sum"),
+            count_order=pd.NamedAgg(column="L_ORDERKEY", aggfunc="size"),
+        )
+
+        return agg
+
+    def run(self):
+        return self.query()
+
+
 class TPCHQuery2:
     def __init__(self):
         self.supplier = TPCHSupplier.load().reset_index(drop=False)
@@ -750,7 +836,7 @@ class TPCHQuery2:
         return self.query(0, 0.0001)
 
 if __name__ == '__main__':
-    q = TPCDSQuery9()
+    q = TPCHQuery1()
     import time
     start = time.time()
     out = q.run()

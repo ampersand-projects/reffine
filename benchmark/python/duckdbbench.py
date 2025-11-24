@@ -163,8 +163,75 @@ class Query9:
         return duckdb.sql(self.query_str).show()
 
 
+class Query1:
+    def __init__(self, date=904694400):
+        lineitem = TPCHLineItem.load()
+        duckdb.sql("CREATE TABLE LineItem AS SELECT * FROM lineitem")
+        duckdb.sql("ALTER TABLE LineItem ADD PRIMARY KEY (L_ORDERKEY, L_LINENUMBER);")
+        self.query_str = f"""
+            select
+                L_RETURNFLAG,
+                sum(L_QUANTITY) as sum_qty,
+                sum(L_EXTENDEDPRICE) as sum_base_price,
+                sum(L_EXTENDEDPRICE * (1 - L_DISCOUNT)) as sum_disc_price,
+                sum(L_EXTENDEDPRICE * (1 - L_DISCOUNT) * (1 + L_TAX)) as sum_charge,
+                count(*) as count_order
+            from
+                LineItem
+            where
+                L_SHIPDATE <= {date}
+            group by
+                l_returnflag,
+        """
+
+    def run(self):
+        return duckdb.sql(self.query_str).show()
+
+
+class Query2:
+    def __init__(self, nation_key=0, size=15):
+        part = TPCHPart.load()
+        supplier = TPCHSupplier.load()
+        partsupp = TPCHPartSupp.load()
+        duckdb.sql("CREATE TABLE Part AS SELECT * FROM part")
+        duckdb.sql("ALTER TABLE Part ADD PRIMARY KEY (P_PARTKEY);")
+        duckdb.sql("CREATE TABLE Supplier AS SELECT * FROM supplier")
+        duckdb.sql("ALTER TABLE Supplier ADD PRIMARY KEY (S_SUPPKEY);")
+        duckdb.sql("CREATE TABLE PartSupp AS SELECT * FROM partsupp")
+        duckdb.sql("ALTER TABLE PartSupp ADD PRIMARY KEY (PS_PARTKEY, PS_SUPPKEY);")
+        self.query_str = f"""
+            select
+                P_PARTKEY,
+                S_SUPPKEY,
+                S_ACCTBAL,
+            from
+                Part,
+                Supplier,
+                PartSupp
+            where
+                P_PARTKEY = PS_PARTKEY
+                and S_SUPPKEY = PS_SUPPKEY
+                and P_SIZE = {size}
+                and S_NATIONKEY = {nation_key}
+                and PS_SUPPLYCOST = (
+                    select
+                        min(PS_SUPPLYCOST)
+                    from
+                        PartSupp,
+                        Supplier
+                    where
+                        P_PARTKEY = PS_PARTKEY
+                        and S_SUPPKEY = PS_SUPPKEY
+                        and S_NATIONKEY = {nation_key}
+                )
+        """
+
+    def run(self):
+        return duckdb.sql(self.query_str).show()
+
+
 if __name__ == "__main__":
-    q = Query11()
+    q = Query2()
     import time
     start = time.time()
     out = q.run()
