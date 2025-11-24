@@ -431,6 +431,10 @@ struct TPCHQuery1 {
                 auto disc = _get(v, 5);
                 auto tax = _get(v, 6);
 
+                auto base = eprice;
+                auto disc_price = _mul(eprice, _sub(_f64(1), disc));
+                auto charge = _mul(disc_price, _add(_f64(1), tax));
+
                 auto s1_qty = _get(s, 0);
                 auto s1_base = _get(s, 1);
                 auto s1_disc = _get(s, 2);
@@ -451,21 +455,21 @@ struct TPCHQuery1 {
 
                 return _new(vector<Expr>{
                         _sel(_eq(rf, _i32(0)), _add(s1_qty, qty), s1_qty),
-                        _sel(_eq(rf, _i32(0)), _add(s1_base, eprice), s1_base),
-                        _sel(_eq(rf, _i32(0)), _add(s1_disc, disc), s1_disc),
-                        _sel(_eq(rf, _i32(0)), _add(s1_charge, tax), s1_charge),
+                        _sel(_eq(rf, _i32(0)), _add(s1_base, base), s1_base),
+                        _sel(_eq(rf, _i32(0)), _add(s1_disc, disc_price), s1_disc),
+                        _sel(_eq(rf, _i32(0)), _add(s1_charge, charge), s1_charge),
                         _sel(_eq(rf, _i32(0)), _add(s1_cnt, _f64(1)), s1_cnt),
 
                         _sel(_eq(rf, _i32(1)), _add(s2_qty, qty), s2_qty),
-                        _sel(_eq(rf, _i32(1)), _add(s2_base, eprice), s2_base),
-                        _sel(_eq(rf, _i32(1)), _add(s2_disc, disc), s2_disc),
-                        _sel(_eq(rf, _i32(1)), _add(s2_charge, tax), s2_charge),
+                        _sel(_eq(rf, _i32(1)), _add(s2_base, base), s2_base),
+                        _sel(_eq(rf, _i32(1)), _add(s2_disc, disc_price), s2_disc),
+                        _sel(_eq(rf, _i32(1)), _add(s2_charge, charge), s2_charge),
                         _sel(_eq(rf, _i32(1)), _add(s2_cnt, _f64(1)), s2_cnt),
 
                         _sel(_eq(rf, _i32(2)), _add(s3_qty, qty), s3_qty),
-                        _sel(_eq(rf, _i32(2)), _add(s3_base, eprice), s3_base),
-                        _sel(_eq(rf, _i32(2)), _add(s3_disc, disc), s3_disc),
-                        _sel(_eq(rf, _i32(2)), _add(s3_charge, tax), s3_charge),
+                        _sel(_eq(rf, _i32(2)), _add(s3_base, base), s3_base),
+                        _sel(_eq(rf, _i32(2)), _add(s3_disc, disc_price), s3_disc),
+                        _sel(_eq(rf, _i32(2)), _add(s3_charge, charge), s3_charge),
                         _sel(_eq(rf, _i32(2)), _add(s3_cnt, _f64(1)), s3_cnt)
                 });
             }

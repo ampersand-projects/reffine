@@ -30,6 +30,25 @@ def read_table(filename):
 class TPCHLineItem:
     dtypes = {
         "L_ORDERKEY": np.int64,
+        "L_PARTKEY": np.int64,
+        "L_SUPPKEY": np.int64,
+        "L_LINENUMBER": np.int64,
+        "L_QUANTITY": np.float64,
+        "L_EXTENDEDPRICE": np.float64,
+        "L_DISCOUNT": np.float64,
+        "L_TAX": np.float64,
+        "L_RETURNFLAG": np.int32,
+        "L_LINESTATUS": np.str_,
+        "L_SHIPDATE": np.dtype('datetime64[s]'),
+        "L_COMMITDATE": np.dtype('datetime64[s]'),
+        "L_RECEIPTDATE": np.dtype('datetime64[s]'),
+        "L_SHIPINSTRUCT": np.str_,
+        "L_SHIPMODE": np.str_,
+        "L_COMMENT": np.str_,
+    }
+
+    arrow_dtypes = {
+        "L_ORDERKEY": np.int64,
         "L_LINENUMBER": np.int64,
         "L_PARTKEY": np.int64,
         "L_SUPPKEY": np.int64,
@@ -58,7 +77,6 @@ class TPCHLineItem:
         df = pd.read_csv(
             "lib/tpch-v3.0.1/dbgen/lineitem.tbl",
             delimiter="|",
-            usecols = [0, 3, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
             names=list(cls.dtypes.keys()),
             converters={"L_RETURNFLAG": lambda val : cls.ret_flag[val]},
         ).astype(cls.dtypes)
@@ -71,7 +89,7 @@ class TPCHLineItem:
     @classmethod
     def store(cls):
         df = cls.load().reset_index(drop=False)
-        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
+        cols = {key: pa.array(df[key]) for key in list(cls.arrow_dtypes.keys())}
         cols["L_ORDERKEY"] = pc.run_end_encode(cols["L_ORDERKEY"])
         write_table(OUTPUT_DIR + "/lineitem.arrow", pa.table(cols))
 
@@ -773,9 +791,6 @@ class TPCHQuery1:
             sum_base_price=pd.NamedAgg(column="L_EXTENDEDPRICE", aggfunc="sum"),
             sum_disc_price=pd.NamedAgg(column="disc_price", aggfunc="sum"),
             sum_charge=pd.NamedAgg(column="charge", aggfunc="sum"),
-            avg_qty=pd.NamedAgg(column="L_QUANTITY", aggfunc="mean"),
-            avg_price=pd.NamedAgg(column="L_EXTENDEDPRICE", aggfunc="mean"),
-            avg_disc=pd.NamedAgg(column="L_DISCOUNT", aggfunc="mean"),
             count_order=pd.NamedAgg(column="L_ORDERKEY", aggfunc="size"),
         )
 
@@ -820,13 +835,7 @@ class TPCHQuery2:
     def run(self):
         return self.query(0, 0.0001)
 
-
-
-
-
 if __name__ == '__main__':
-    TPCHLineItem.store()
-    exit(0)
     q = TPCHQuery1()
     import time
     start = time.time()

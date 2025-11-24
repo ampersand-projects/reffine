@@ -166,9 +166,6 @@ class Query1:
                 )
                 .sum()
                 .alias("sum_charge"),
-                pl.mean("L_QUANTITY").alias("avg_qty"),
-                pl.mean("L_EXTENDEDPRICE").alias("avg_price"),
-                pl.mean("L_DISCOUNT").alias("avg_disc"),
                 pl.len().alias("count_order"),
             )
         )
