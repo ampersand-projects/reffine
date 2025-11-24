@@ -340,29 +340,28 @@ struct TPCHQuery11 {
         auto partkey = _sym("partkey", _i64_t);
         auto suppkey = _sym("suppkey", _i64_t);
 
-        auto value = _red(partsupp[partkey],
-            []() { return _f64(0); },
+        auto value = _red(
+            partsupp[partkey], []() { return _f64(0); },
             [nation_key, supplier](Expr s, Expr v) {
                 auto skey = _get(v, 0);
                 auto nkey = _get(supplier[skey], 2);
                 auto cost = _get(v, 2);
                 auto qty = _cast(_f64_t, _get(v, 1));
-                return _sel(_eq(nkey, _i64(nation_key)), _add(s, _mul(qty, cost)), s);
-            }
-        );
+                return _sel(_eq(nkey, _i64(nation_key)),
+                            _add(s, _mul(qty, cost)), s);
+            });
         auto value_sym = _sym("value", value);
         auto filter = _gt(value_sym, _f64(0));
         auto filter_sym = _sym("filter", filter);
-        auto op = _op(vector<Sym>{partkey},
-            _in(partkey, partsupp) & filter_sym,
-            vector<Expr>{value_sym}
-        );
+        auto op = _op(vector<Sym>{partkey}, _in(partkey, partsupp) & filter_sym,
+                      vector<Expr>{value_sym});
         auto op_sym = _sym("op", op);
 
-        auto threshold = _initval(vector<Sym>{op_sym}, _red(op_sym,
-            []() { return _f64(0); },
-            [](Expr s, Expr v) { return _add(s, _get(v, 1)); }
-        ));
+        auto threshold =
+            _initval(vector<Sym>{op_sym},
+                     _red(
+                         op_sym, []() { return _f64(0); },
+                         [](Expr s, Expr v) { return _add(s, _get(v, 1)); }));
         auto threshold_sym = _sym("threshold", threshold);
 
         auto partkey2 = _sym("partkey2", _i64_t);
@@ -370,10 +369,10 @@ struct TPCHQuery11 {
         auto val_sym = _sym("val", val);
         auto filter2 = _gt(val_sym, threshold_sym);
         auto filter2_sym = _sym("filter2", filter2);
-        auto op2 = _initval(vector<Sym>{threshold_sym}, _op(vector<Sym>{partkey2},
-            _in(partkey2, op_sym) & filter2_sym,
-            vector<Expr>{val_sym}
-        ));
+        auto op2 = _initval(
+            vector<Sym>{threshold_sym},
+            _op(vector<Sym>{partkey2}, _in(partkey2, op_sym) & filter2_sym,
+                vector<Expr>{val_sym}));
         auto op2_sym = _sym("op2", op2);
 
         auto fn = _func("tpchquery11", op_sym, vector<Sym>{supplier, partsupp});
