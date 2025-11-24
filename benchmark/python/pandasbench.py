@@ -242,7 +242,7 @@ class TPCHPartSupp:
             "lib/tpch-v3.0.1/dbgen/partsupp.tbl",
             delimiter="|",
             names=list(cls.dtypes.keys()),
-        ).astype(cls.dtypes).set_index(["PS_PARTKEY", "PS_SUPPKEY"])
+        ).astype(cls.dtypes)
 
         return df
 
@@ -286,7 +286,7 @@ class TPCHSupplier:
             "lib/tpch-v3.0.1/dbgen/supplier.tbl",
             delimiter="|",
             names=list(cls.dtypes.keys()),
-        ).astype(cls.dtypes).set_index(["S_SUPPKEY"])
+        ).astype(cls.dtypes)
 
         return df
 

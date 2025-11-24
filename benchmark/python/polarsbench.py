@@ -75,8 +75,39 @@ class Query3:
         )
 
 
+class Query11:
+    def __init__(self):
+        self.partsupp = pl.from_pandas(TPCHPartSupp.load())
+        self.supplier = pl.from_pandas(TPCHSupplier.load())
+
+    def run(self, nation_key=0, fraction=0.0001):
+        var1 = nation_key
+        var2 = fraction
+    
+        q1 = (
+            self.partsupp.join(self.supplier, left_on="PS_SUPPKEY", right_on="S_SUPPKEY")
+            .filter(pl.col("S_NATIONKEY") == var1)
+        )
+        q2 = q1.select(
+            (pl.col("PS_SUPPLYCOST") * pl.col("PS_AVAILQTY")).sum().round(2).alias("tmp")
+            * var2
+        )
+    
+        return (
+            q1.group_by("PS_PARTKEY")
+            .agg(
+                (pl.col("PS_SUPPLYCOST") * pl.col("PS_AVAILQTY"))
+                .sum()
+                .alias("value")
+            )
+            .join(q2, how="cross")
+            .filter(pl.col("value") > pl.col("tmp"))
+            .select("PS_PARTKEY", "value")
+        )
+
+
 if __name__ == '__main__':
-    q = Query3()
+    q = Query11()
     import time
     start = time.time()
     out = q.run()
