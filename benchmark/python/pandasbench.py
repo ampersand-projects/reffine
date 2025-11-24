@@ -702,14 +702,6 @@ class TPCHQuery11:
 
 if __name__ == '__main__':
     q = TPCHQuery11()
-    print(q.run())
-    exit(0)
-
-    q = TPCHQuery11()
-    print(q.run())
-    print(q.supppart)
-    exit(0)
-    q = TPCHQuery4()
     import time
     start = time.time()
     out = q.run()
