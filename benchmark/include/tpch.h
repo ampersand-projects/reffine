@@ -359,10 +359,31 @@ struct TPCHQuery11 {
         );
         auto op_sym = _sym("op", op);
 
+        auto threshold = _initval(vector<Sym>{op_sym}, _red(op_sym,
+            []() { return _f64(0); },
+            [](Expr s, Expr v) { return _add(s, _get(v, 1)); }
+        ));
+        auto threshold_sym = _sym("threshold", threshold);
+
+        auto partkey2 = _sym("partkey2", _i64_t);
+        auto val = _get(op_sym[partkey2], 0);
+        auto val_sym = _sym("val", val);
+        auto filter2 = _gt(val_sym, threshold_sym);
+        auto filter2_sym = _sym("filter2", filter2);
+        auto op2 = _initval(vector<Sym>{threshold_sym}, _op(vector<Sym>{partkey2},
+            _in(partkey2, op_sym) & filter2_sym,
+            vector<Expr>{val_sym}
+        ));
+        auto op2_sym = _sym("op2", op2);
+
         auto fn = _func("tpchquery11", op_sym, vector<Sym>{supplier, partsupp});
         fn->tbl[op_sym] = op;
         fn->tbl[value_sym] = value;
         fn->tbl[filter_sym] = filter;
+        fn->tbl[threshold_sym] = threshold;
+        fn->tbl[op2_sym] = op2;
+        fn->tbl[filter2_sym] = filter2;
+        fn->tbl[val_sym] = val;
 
         return fn;
     }
