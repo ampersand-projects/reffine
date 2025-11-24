@@ -176,7 +176,8 @@ Expr LoopGen::visit(Op& op)
         bytemap_sym,
     });
     loop->body = _stmts(body_stmts);
-    //loop->exit_cond = _or(_gt(_load(out_vec_idx_addr), _idx(100)), loop->exit_cond);
+    // loop->exit_cond = _or(_gt(_load(out_vec_idx_addr), _idx(100)),
+    // loop->exit_cond);
 
     if (this->_vectorize) {
         loop->body = _stmts(vector<Expr>{
