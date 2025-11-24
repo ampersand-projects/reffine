@@ -252,7 +252,7 @@ class TPCHPartSupp:
         cs = df2.columns.tolist()
         cs[0], cs[1] = cs[1], cs[0]
         df2 = df2[cs]
-        df2.sort_values(by=[cs[0], cs[1]])
+        df2 = df2.sort_values(by=[cs[0], cs[1]])
 
         return df2
 
