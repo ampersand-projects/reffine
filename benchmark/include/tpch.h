@@ -507,7 +507,14 @@ struct TPCHQuery2 {
         this->query_fn = compile_op<QueryFnTy>(this->build_op());
     }
 
-    shared_ptr<Func> build_op() { return nullptr; }
+    shared_ptr<Func> build_op()
+    {
+        auto part = _sym("part", this->part->get_data_type());
+        auto supplier = _sym("supplier", this->supplier->get_data_type());
+        auto partsupp = _sym("partsupp", this->partsupp->get_data_type());
+        
+        return nullptr;
+    }
 
     ArrowTable* run()
     {
