@@ -228,6 +228,14 @@ class TPCHPartSupp:
         "PS_COMMENT": np.str_,
     }
 
+    dtypes2 = {
+        "PS_SUPPKEY": np.int64,
+        "PS_PARTKEY": np.int64,
+        "PS_AVAILQTY": np.int32,
+        "PS_SUPPLYCOST": np.float64,
+        "PS_COMMENT": np.str_,
+    }
+
     @classmethod
     def load(cls):
         df = pd.read_csv(
@@ -244,6 +252,15 @@ class TPCHPartSupp:
         cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
         cols["PS_PARTKEY"] = pc.run_end_encode(cols["PS_PARTKEY"])
         write_table(OUTPUT_DIR + "/partsupp.arrow", pa.table(cols))
+
+        df2 = df.copy()
+        cs = df2.columns.tolist()
+        cs[0], cs[1] = cs[1], cs[0]
+        df2 = df2[cs]
+        df2.sort_values(by=[cs[0], cs[1]])
+        cols2 = {key: pa.array(df2[key]) for key in list(cls.dtypes2.keys())}
+        cols2["PS_SUPPKEY"] = pc.run_end_encode(cols2["PS_SUPPKEY"])
+        write_table(OUTPUT_DIR + "/supppart.arrow", pa.table(cols))
 
 
 class TPCHSupplier:
@@ -646,6 +663,8 @@ class TPCHQuery11:
         self.supplier = TPCHSupplier.load().reset_index(drop=False)
         self.partsupp = TPCHPartSupp.load().reset_index(drop=False)
 
+
+
     def query(self, nation_key, fraction):
         supp_nat = self.supplier[self.supplier["S_NATIONKEY"] == 0]
 
@@ -677,6 +696,13 @@ class TPCHQuery11:
 
 
 if __name__ == '__main__':
+    TPCHPartSupp.store()
+    exit(0)
+
+    q = TPCHQuery11()
+    print(q.run())
+    print(q.supppart)
+    exit(0)
     q = TPCHQuery4()
     import time
     start = time.time()
