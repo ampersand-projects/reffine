@@ -46,9 +46,37 @@ class Query4:
             .agg(pl.len().alias("order_count"))
         )
 
+class Query3:
+    def __init__(self):
+        self.customer = pl.from_pandas(TPCHCustomer.load())
+        self.lineitem = pl.from_pandas(TPCHLineItem.load())
+        self.orders = pl.from_pandas(TPCHOrders.load())
+
+    def run(self):
+        var1 = 1
+        var2 = 795484800
+
+        return (
+            self.customer.filter(pl.col("C_MKTSEGMENT") == var1)
+            .join(self.orders, left_on="C_CUSTKEY", right_on="O_CUSTKEY")
+            .join(self.lineitem, left_on="O_ORDERKEY", right_on="L_ORDERKEY")
+            .filter(pl.col("O_ORDERDATE") < var2)
+            .filter(pl.col("L_SHIPDATE") > var2)
+            .with_columns(
+                (pl.col("L_EXTENDEDPRICE") * (1 - pl.col("L_DISCOUNT"))).alias("revenue")
+            )
+            .group_by("O_ORDERKEY")
+            .agg(pl.sum("revenue"))
+            .select(
+                pl.col("O_ORDERKEY").alias("L_ORDERKEY"),
+                "revenue",
+            )
+            .head(100)
+        )
+
 
 if __name__ == '__main__':
-    q = Query4()
+    q = Query3()
     import time
     start = time.time()
     out = q.run()
