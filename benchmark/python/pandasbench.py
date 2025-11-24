@@ -429,9 +429,9 @@ class TPCDSQuery9:
         def bucket(df, low, high, threshold):
             f = df[(df['ss_quantity'] >= low) & (df['ss_quantity'] <= high)]
             if len(f) > threshold:
-                return f['ss_ext_tax'].mean()
+                return f['ss_ext_tax'].sum()
             else:
-                return f['ss_net_paid_inc_tax'].mean()
+                return f['ss_net_paid_inc_tax'].sum()
         
         bucket1 = bucket(self.store_sales, 1, 20, 1071)
         bucket2 = bucket(self.store_sales, 21, 40, 39161)
@@ -750,7 +750,7 @@ class TPCHQuery2:
         return self.query(0, 0.0001)
 
 if __name__ == '__main__':
-    q = TPCHQuery4()
+    q = TPCDSQuery9()
     import time
     start = time.time()
     out = q.run()

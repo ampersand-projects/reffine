@@ -106,8 +106,46 @@ class Query11:
         )
 
 
+class Query9:
+    def __init__(self):
+        self.store_sales = pl.from_pandas(TPCDSStoreSales.load())
+
+    def run(self):
+        store_sales = self.store_sales
+
+        def bucket(df: pl.DataFrame, low: int, high: int, threshold: int) -> float:
+            f = df.filter(
+                (pl.col("ss_quantity") >= low) & (pl.col("ss_quantity") <= high)
+            )
+            count = f.count()["ss_quantity"].item()
+        
+            if count > threshold:
+                return f.select(pl.col("ss_ext_tax").sum()).item()
+            else:
+                return f.select(pl.col("ss_net_paid_inc_tax").sum()).item()
+        
+        
+        # Compute buckets
+        bucket1 = bucket(store_sales, 1, 20, 1071)
+        bucket2 = bucket(store_sales, 21, 40, 39161)
+        bucket3 = bucket(store_sales, 41, 60, 29434)
+        bucket4 = bucket(store_sales, 61, 80, 6568)
+        bucket5 = bucket(store_sales, 81, 100, 21216)
+        
+        # Final result as Polars DataFrame
+        result = pl.DataFrame({
+            "bucket1": [bucket1],
+            "bucket2": [bucket2],
+            "bucket3": [bucket3],
+            "bucket4": [bucket4],
+            "bucket5": [bucket5],
+        })
+        
+        return result
+
+
 if __name__ == '__main__':
-    q = Query11()
+    q = Query9()
     import time
     start = time.time()
     out = q.run()
