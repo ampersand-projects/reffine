@@ -512,7 +512,7 @@ struct TPCHQuery2 {
         auto part = _sym("part", this->part->get_data_type());
         auto supplier = _sym("supplier", this->supplier->get_data_type());
         auto partsupp = _sym("partsupp", this->partsupp->get_data_type());
-        
+
         return nullptr;
     }
 
