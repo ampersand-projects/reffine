@@ -247,17 +247,23 @@ class TPCHPartSupp:
         return df
 
     @classmethod
+    def load2(cls):
+        df2 = cls.load()
+        cs = df2.columns.tolist()
+        cs[0], cs[1] = cs[1], cs[0]
+        df2 = df2[cs]
+        df2.sort_values(by=[cs[0], cs[1]])
+
+        return df2
+
+    @classmethod
     def store(cls):
         df = cls.load().reset_index(drop=False)
         cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
         cols["PS_PARTKEY"] = pc.run_end_encode(cols["PS_PARTKEY"])
         write_table(OUTPUT_DIR + "/partsupp.arrow", pa.table(cols))
 
-        df2 = df.copy()
-        cs = df2.columns.tolist()
-        cs[0], cs[1] = cs[1], cs[0]
-        df2 = df2[cs]
-        df2.sort_values(by=[cs[0], cs[1]])
+        df2 = cls.load2().reset_index(drop=False)
         cols2 = {key: pa.array(df2[key]) for key in list(cls.dtypes2.keys())}
         cols2["PS_SUPPKEY"] = pc.run_end_encode(cols2["PS_SUPPKEY"])
         write_table(OUTPUT_DIR + "/supppart.arrow", pa.table(cols))
@@ -662,8 +668,7 @@ class TPCHQuery11:
     def __init__(self):
         self.supplier = TPCHSupplier.load().reset_index(drop=False)
         self.partsupp = TPCHPartSupp.load().reset_index(drop=False)
-
-
+        self.supppart = TPCHPartSupp.load2().reset_index(drop=False)
 
     def query(self, nation_key, fraction):
         supp_nat = self.supplier[self.supplier["S_NATIONKEY"] == 0]
@@ -696,7 +701,8 @@ class TPCHQuery11:
 
 
 if __name__ == '__main__':
-    TPCHPartSupp.store()
+    q = TPCHQuery11()
+    print(q.run())
     exit(0)
 
     q = TPCHQuery11()
