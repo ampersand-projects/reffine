@@ -367,7 +367,7 @@ struct TPCHQuery11 {
         auto partkey2 = _sym("partkey2", _i64_t);
         auto val = _get(op_sym[partkey2], 0);
         auto val_sym = _sym("val", val);
-        auto filter2 = _gt(val_sym, threshold_sym);
+        auto filter2 = _gt(val_sym, _mul(threshold_sym, _f64(fraction)));
         auto filter2_sym = _sym("filter2", filter2);
         auto op2 = _initval(
             vector<Sym>{threshold_sym},
