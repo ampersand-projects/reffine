@@ -413,16 +413,13 @@ struct TPCHQuery1 {
     {
         auto lineitem = _sym("lineitem", this->lineitem->get_data_type());
 
-        auto red = _red(_subvec(lineitem, _idx(0), _len(lineitem, 0)),
+        auto red = _red(
+            _subvec(lineitem, _idx(0), _len(lineitem, 0)),
             []() {
-                return _new(vector<Expr>{
-                        _f64(0), _f64(0), _f64(0),
-                        _f64(0), _f64(0),
-                        _f64(0), _f64(0), _f64(0),
-                        _f64(0), _f64(0),
-                        _f64(0), _f64(0), _f64(0),
-                        _f64(0), _f64(0)
-                });
+                return _new(vector<Expr>{_f64(0), _f64(0), _f64(0), _f64(0),
+                                         _f64(0), _f64(0), _f64(0), _f64(0),
+                                         _f64(0), _f64(0), _f64(0), _f64(0),
+                                         _f64(0), _f64(0), _f64(0)});
             },
             [](Expr s, Expr v) {
                 auto rf = _get(v, 7);
@@ -454,26 +451,24 @@ struct TPCHQuery1 {
                 auto s3_cnt = _get(s, 14);
 
                 return _new(vector<Expr>{
-                        _sel(_eq(rf, _i32(0)), _add(s1_qty, qty), s1_qty),
-                        _sel(_eq(rf, _i32(0)), _add(s1_base, base), s1_base),
-                        _sel(_eq(rf, _i32(0)), _add(s1_disc, disc_price), s1_disc),
-                        _sel(_eq(rf, _i32(0)), _add(s1_charge, charge), s1_charge),
-                        _sel(_eq(rf, _i32(0)), _add(s1_cnt, _f64(1)), s1_cnt),
+                    _sel(_eq(rf, _i32(0)), _add(s1_qty, qty), s1_qty),
+                    _sel(_eq(rf, _i32(0)), _add(s1_base, base), s1_base),
+                    _sel(_eq(rf, _i32(0)), _add(s1_disc, disc_price), s1_disc),
+                    _sel(_eq(rf, _i32(0)), _add(s1_charge, charge), s1_charge),
+                    _sel(_eq(rf, _i32(0)), _add(s1_cnt, _f64(1)), s1_cnt),
 
-                        _sel(_eq(rf, _i32(1)), _add(s2_qty, qty), s2_qty),
-                        _sel(_eq(rf, _i32(1)), _add(s2_base, base), s2_base),
-                        _sel(_eq(rf, _i32(1)), _add(s2_disc, disc_price), s2_disc),
-                        _sel(_eq(rf, _i32(1)), _add(s2_charge, charge), s2_charge),
-                        _sel(_eq(rf, _i32(1)), _add(s2_cnt, _f64(1)), s2_cnt),
+                    _sel(_eq(rf, _i32(1)), _add(s2_qty, qty), s2_qty),
+                    _sel(_eq(rf, _i32(1)), _add(s2_base, base), s2_base),
+                    _sel(_eq(rf, _i32(1)), _add(s2_disc, disc_price), s2_disc),
+                    _sel(_eq(rf, _i32(1)), _add(s2_charge, charge), s2_charge),
+                    _sel(_eq(rf, _i32(1)), _add(s2_cnt, _f64(1)), s2_cnt),
 
-                        _sel(_eq(rf, _i32(2)), _add(s3_qty, qty), s3_qty),
-                        _sel(_eq(rf, _i32(2)), _add(s3_base, base), s3_base),
-                        _sel(_eq(rf, _i32(2)), _add(s3_disc, disc_price), s3_disc),
-                        _sel(_eq(rf, _i32(2)), _add(s3_charge, charge), s3_charge),
-                        _sel(_eq(rf, _i32(2)), _add(s3_cnt, _f64(1)), s3_cnt)
-                });
-            }
-        );
+                    _sel(_eq(rf, _i32(2)), _add(s3_qty, qty), s3_qty),
+                    _sel(_eq(rf, _i32(2)), _add(s3_base, base), s3_base),
+                    _sel(_eq(rf, _i32(2)), _add(s3_disc, disc_price), s3_disc),
+                    _sel(_eq(rf, _i32(2)), _add(s3_charge, charge), s3_charge),
+                    _sel(_eq(rf, _i32(2)), _add(s3_cnt, _f64(1)), s3_cnt)});
+            });
         auto red_sym = _sym("red", red);
 
         auto fn = _func("tpchquery1", red_sym, vector<Sym>{lineitem});
@@ -490,9 +485,9 @@ struct TPCHQuery1 {
     }
 };
 
-
 struct TPCHQuery2 {
-    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*, ArrowTable*);
+    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*,
+                               ArrowTable*);
 
     shared_ptr<ArrowTable2> part;
     shared_ptr<ArrowTable2> supplier;
@@ -501,8 +496,7 @@ struct TPCHQuery2 {
 
     TPCHQuery2()
     {
-        this->part =
-            load_arrow_file("../benchmark/arrow_data/part.arrow", 1);
+        this->part = load_arrow_file("../benchmark/arrow_data/part.arrow", 1);
         this->supplier =
             load_arrow_file("../benchmark/arrow_data/supplier.arrow", 1);
         this->partsupp =
@@ -513,15 +507,13 @@ struct TPCHQuery2 {
         this->query_fn = compile_op<QueryFnTy>(this->build_op());
     }
 
-    shared_ptr<Func> build_op()
-    {
-        return nullptr;
-    }
+    shared_ptr<Func> build_op() { return nullptr; }
 
     ArrowTable* run()
     {
         ArrowTable* out;
-        this->query_fn(&out, this->part.get(), this->supplier.get(), this->partsupp.get());
+        this->query_fn(&out, this->part.get(), this->supplier.get(),
+                       this->partsupp.get());
         return out;
     }
 };
