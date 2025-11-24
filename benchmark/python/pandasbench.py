@@ -242,7 +242,7 @@ class TPCHPartSupp:
             "lib/tpch-v3.0.1/dbgen/partsupp.tbl",
             delimiter="|",
             names=list(cls.dtypes.keys()),
-        ).astype(cls.dtypes).set_index(["PS_PARTKEY", "PS_SUPPKEY"])
+        ).astype(cls.dtypes)
 
         return df
 
@@ -286,7 +286,7 @@ class TPCHSupplier:
             "lib/tpch-v3.0.1/dbgen/supplier.tbl",
             delimiter="|",
             names=list(cls.dtypes.keys()),
-        ).astype(cls.dtypes).set_index(["S_SUPPKEY"])
+        ).astype(cls.dtypes)
 
         return df
 
@@ -349,7 +349,7 @@ class TPCHQuery3:
             .sum()
         )
 
-        return result
+        return result[:100]
 
     def query2(self, segment, date):
         joined = self.lineitem.merge(self.orders, left_on="L_ORDERKEY", right_on="O_ORDERKEY", how="inner")
@@ -367,11 +367,11 @@ class TPCHQuery3:
             .sum()
         )
 
-        return result
+        return result[:100]
 
         
     def run(self):
-        return self.query2(1, 795484800)
+        return self.query(1, 795484800)
 
 
 class TPCHQuery4:
@@ -403,6 +403,20 @@ class TPCHQuery4:
 
         return result
 
+    def query2(self, start_date, end_date):
+        jn = self.lineitem.merge(self.orders, left_on="L_ORDERKEY", right_on="O_ORDERKEY")
+
+        jn = jn[(jn["O_ORDERDATE"] >= start_date) & (jn["O_ORDERDATE"] < end_date)]
+        jn = jn[jn["L_COMMITDATE"] < jn["L_RECEIPTDATE"]]
+
+        jn = jn.drop_duplicates(subset=["O_ORDERPRIORITY", "L_ORDERKEY"])
+
+        gb = jn.groupby("O_ORDERPRIORITY", as_index=False)
+        agg = gb.agg(order_count=pd.NamedAgg(column="O_ORDERKEY", aggfunc="count"))
+
+        return agg
+
+
     def run(self):
         return self.query(700000000, 900000000)
 
@@ -415,9 +429,9 @@ class TPCDSQuery9:
         def bucket(df, low, high, threshold):
             f = df[(df['ss_quantity'] >= low) & (df['ss_quantity'] <= high)]
             if len(f) > threshold:
-                return f['ss_ext_tax'].mean()
+                return f['ss_ext_tax'].sum()
             else:
-                return f['ss_net_paid_inc_tax'].mean()
+                return f['ss_net_paid_inc_tax'].sum()
         
         bucket1 = bucket(self.store_sales, 1, 20, 1071)
         bucket2 = bucket(self.store_sales, 21, 40, 39161)
@@ -700,8 +714,43 @@ class TPCHQuery11:
         return self.query(0, 0.0001)
 
 
+class TPCHQuery2:
+    def __init__(self):
+        self.supplier = TPCHSupplier.load().reset_index(drop=False)
+        self.partsupp = TPCHPartSupp.load().reset_index(drop=False)
+        self.supppart = TPCHPartSupp.load2().reset_index(drop=False)
+
+    def query(self, nation_key, fraction):
+        supp_nat = self.supplier[self.supplier["S_NATIONKEY"] == nation_key]
+
+        ps = self.partsupp.merge(
+            supp_nat,
+            left_on="PS_SUPPKEY",
+            right_on="S_SUPPKEY",
+            how="inner"
+        )
+
+        ps["VALUE"] = ps["PS_SUPPLYCOST"] * ps["PS_AVAILQTY"]
+
+        per_part = (
+            ps.groupby("PS_PARTKEY", as_index=False)["VALUE"]
+              .sum()
+              .rename(columns={"VALUE": "VALUE"})
+        )
+
+        total_value = ps["VALUE"].sum()
+
+        threshold = total_value * fraction
+
+        result = per_part[per_part["VALUE"] > threshold]
+
+        return result
+
+    def run(self):
+        return self.query(0, 0.0001)
+
 if __name__ == '__main__':
-    q = TPCHQuery11()
+    q = TPCDSQuery9()
     import time
     start = time.time()
     out = q.run()
