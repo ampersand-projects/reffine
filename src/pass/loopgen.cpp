@@ -112,7 +112,7 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op, shared_ptr<Loop> loop)
 
 Expr LoopGen::visit(Op& op)
 {
-    auto len = _idx(1000000);
+    auto len = _idx(10000000);
 
     // Output vector builder
     auto mem_id = memman.add_builder([op](int64_t len) {
@@ -176,6 +176,7 @@ Expr LoopGen::visit(Op& op)
         bytemap_sym,
     });
     loop->body = _stmts(body_stmts);
+    //loop->exit_cond = _or(_gt(_load(out_vec_idx_addr), _idx(100)), loop->exit_cond);
 
     if (this->_vectorize) {
         loop->body = _stmts(vector<Expr>{

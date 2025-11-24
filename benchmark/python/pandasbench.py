@@ -349,7 +349,7 @@ class TPCHQuery3:
             .sum()
         )
 
-        return result
+        return result[:100]
 
     def query2(self, segment, date):
         joined = self.lineitem.merge(self.orders, left_on="L_ORDERKEY", right_on="O_ORDERKEY", how="inner")
@@ -367,11 +367,11 @@ class TPCHQuery3:
             .sum()
         )
 
-        return result
+        return result[:100]
 
         
     def run(self):
-        return self.query2(1, 795484800)
+        return self.query(1, 795484800)
 
 
 class TPCHQuery4:

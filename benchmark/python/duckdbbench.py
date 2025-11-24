@@ -82,11 +82,11 @@ class Query3:
                 and L_SHIPDATE > {date}
             group by
                 L_ORDERKEY
-            limit 10
+            limit 100
         """
 
     def run(self):
-        return duckdb.sql(self.query_str).fetchall()
+        return duckdb.sql(self.query_str).show()
 
 
 if __name__ == "__main__":
