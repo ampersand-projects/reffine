@@ -266,7 +266,7 @@ class TPCHPartSupp:
         df2 = cls.load2().reset_index(drop=False)
         cols2 = {key: pa.array(df2[key]) for key in list(cls.dtypes2.keys())}
         cols2["PS_SUPPKEY"] = pc.run_end_encode(cols2["PS_SUPPKEY"])
-        write_table(OUTPUT_DIR + "/supppart.arrow", pa.table(cols))
+        write_table(OUTPUT_DIR + "/supppart.arrow", pa.table(cols2))
 
 
 class TPCHSupplier:
