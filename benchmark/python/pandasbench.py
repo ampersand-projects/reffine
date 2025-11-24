@@ -403,6 +403,20 @@ class TPCHQuery4:
 
         return result
 
+    def query2(self, start_date, end_date):
+        jn = self.lineitem.merge(self.orders, left_on="L_ORDERKEY", right_on="O_ORDERKEY")
+
+        jn = jn[(jn["O_ORDERDATE"] >= start_date) & (jn["O_ORDERDATE"] < end_date)]
+        jn = jn[jn["L_COMMITDATE"] < jn["L_RECEIPTDATE"]]
+
+        jn = jn.drop_duplicates(subset=["O_ORDERPRIORITY", "L_ORDERKEY"])
+
+        gb = jn.groupby("O_ORDERPRIORITY", as_index=False)
+        agg = gb.agg(order_count=pd.NamedAgg(column="O_ORDERKEY", aggfunc="count"))
+
+        return agg
+
+
     def run(self):
         return self.query(700000000, 900000000)
 
@@ -736,7 +750,7 @@ class TPCHQuery2:
         return self.query(0, 0.0001)
 
 if __name__ == '__main__':
-    q = TPCHQuery3()
+    q = TPCHQuery4()
     import time
     start = time.time()
     out = q.run()
