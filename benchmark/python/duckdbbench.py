@@ -230,8 +230,65 @@ class Query2:
         return duckdb.sql(self.query_str).show()
 
 
+class Query9:
+    def __init__(self):
+        ss = TPCDSStoreSales.load()
+        duckdb.sql("CREATE TABLE store_sales AS SELECT * FROM ss")
+        self.query_str = f"""
+            select case when (select count(*) 
+                              from store_sales 
+                              where ss_quantity between 1 and 20) > 1071
+                        then (select sum(ss_ext_tax) 
+                              from store_sales 
+                              where ss_quantity between 1 and 20) 
+                        else (select sum(ss_net_paid_inc_tax)
+                              from store_sales
+                              where ss_quantity between 1 and 20) end bucket1 ,
+                   case when (select count(*)
+                              from store_sales
+                              where ss_quantity between 21 and 40) > 39161
+                        then (select sum(ss_ext_tax)
+                              from store_sales
+                              where ss_quantity between 21 and 40) 
+                        else (select sum(ss_net_paid_inc_tax)
+                              from store_sales
+                              where ss_quantity between 21 and 40) end bucket2,
+                   case when (select count(*)
+                              from store_sales
+                              where ss_quantity between 41 and 60) > 29434
+                        then (select sum(ss_ext_tax)
+                              from store_sales
+                              where ss_quantity between 41 and 60)
+                        else (select sum(ss_net_paid_inc_tax)
+                              from store_sales
+                              where ss_quantity between 41 and 60) end bucket3,
+                   case when (select count(*)
+                              from store_sales
+                              where ss_quantity between 61 and 80) > 6568
+                        then (select sum(ss_ext_tax)
+                              from store_sales
+                              where ss_quantity between 61 and 80)
+                        else (select sum(ss_net_paid_inc_tax)
+                              from store_sales
+                              where ss_quantity between 61 and 80) end bucket4,
+                   case when (select count(*)
+                              from store_sales
+                              where ss_quantity between 81 and 100) > 21216
+                        then (select sum(ss_ext_tax)
+                              from store_sales
+                              where ss_quantity between 81 and 100)
+                        else (select sum(ss_net_paid_inc_tax)
+                              from store_sales
+                              where ss_quantity between 81 and 100) end bucket5
+        """
+
+    def run(self):
+        return duckdb.sql(self.query_str).show()
+
+
+
 if __name__ == "__main__":
-    q = Query2()
+    q = Query9()
     import time
     start = time.time()
     out = q.run()
