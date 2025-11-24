@@ -317,6 +317,7 @@ struct TPCHQuery11 {
 
     shared_ptr<ArrowTable2> supplier;
     shared_ptr<ArrowTable2> partsupp;
+    shared_ptr<ArrowTable2> supppart;
     QueryFnTy query_fn;
 
     TPCHQuery11()
@@ -325,6 +326,10 @@ struct TPCHQuery11 {
             load_arrow_file("../benchmark/arrow_data/supplier.arrow", 1);
         this->partsupp =
             load_arrow_file("../benchmark/arrow_data/partsupp.arrow", 2);
+        this->supppart =
+            load_arrow_file("../benchmark/arrow_data/supppart.arrow", 2);
+        this->supplier->build_index();
+        this->partsupp->build_index();
         this->query_fn = compile_op<QueryFnTy>(this->build_op(0, 0.0001));
     }
 
@@ -335,30 +340,28 @@ struct TPCHQuery11 {
         auto partkey = _sym("partkey", _i64_t);
         auto suppkey = _sym("suppkey", _i64_t);
 
-        auto filter = _eq(_get(supplier[suppkey], 2), _i64(nation_key));
-        auto filter_sym = _sym("filter", filter);
-        auto ps_supplycost = _get(partsupp[partkey][suppkey], 1);
-        auto ps_availqty = _get(partsupp[partkey][suppkey], 0);
-        auto mul = _mul(_cast(_f64_t, ps_availqty), ps_supplycost);
-        auto mul_sym = _sym("mul", mul);
-        auto val_red_op = _op(vector<Sym>{suppkey},
-            _in(suppkey, supplier) & _in(suppkey, partsupp[partkey]) & filter_sym,
-            vector<Expr>{mul_sym}
-        );
-        auto val_red = _red(val_red_op,
+        auto value = _red(partsupp[partkey],
             []() { return _f64(0); },
-            [](Expr s, Expr v) {
-                return _add(s, _get(v, 1));
+            [nation_key, supplier](Expr s, Expr v) {
+                auto skey = _get(v, 0);
+                auto nkey = _get(supplier[skey], 2);
+                auto cost = _get(v, 2);
+                auto qty = _cast(_f64_t, _get(v, 1));
+                return _sel(_eq(nkey, _i64(nation_key)), _add(s, _mul(qty, cost)), s);
             }
         );
-        auto val_red_sym = _sym("value", val_red);
-        auto op = _op(vector<Sym>{partkey}, _in(partkey, partsupp), vector<Expr>{val_red_sym});
+        auto value_sym = _sym("value", value);
+        auto filter = _gt(value_sym, _f64(0));
+        auto filter_sym = _sym("filter", filter);
+        auto op = _op(vector<Sym>{partkey},
+            _in(partkey, partsupp) & filter_sym,
+            vector<Expr>{value_sym}
+        );
         auto op_sym = _sym("op", op);
 
         auto fn = _func("tpchquery11", op_sym, vector<Sym>{supplier, partsupp});
         fn->tbl[op_sym] = op;
-        fn->tbl[val_red_sym] = val_red;
-        fn->tbl[mul_sym] = mul;
+        fn->tbl[value_sym] = value;
         fn->tbl[filter_sym] = filter;
 
         return fn;
