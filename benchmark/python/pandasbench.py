@@ -671,7 +671,7 @@ class TPCHQuery11:
         self.supppart = TPCHPartSupp.load2().reset_index(drop=False)
 
     def query(self, nation_key, fraction):
-        supp_nat = self.supplier[self.supplier["S_NATIONKEY"] == 0]
+        supp_nat = self.supplier[self.supplier["S_NATIONKEY"] == nation_key]
 
         ps = self.partsupp.merge(
             supp_nat,
