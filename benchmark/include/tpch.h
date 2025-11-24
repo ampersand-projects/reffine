@@ -25,7 +25,7 @@ struct TPCHQuery3 {
         this->lineitem->build_index();
         this->orders->build_index();
         this->customer->build_index();
-        this->query_fn = compile_op<QueryFnTy>(this->build_op(1, 795484800));
+        this->query_fn = compile_op<QueryFnTy>(this->build_op(1, 795484800), true);
     }
 
     shared_ptr<Func> build_op(int8_t segment, int64_t date)

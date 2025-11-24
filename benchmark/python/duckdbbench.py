@@ -3,15 +3,14 @@ import duckdb
 
 class Query6:
     def __init__(self):
-        self.lineitem = TPCHLineItem.load()
-        lineitem = self.lineitem
+        lineitem = TPCHLineItem.load()
         duckdb.sql("CREATE TABLE LineItem AS SELECT * FROM lineitem")
         duckdb.sql("ALTER TABLE LineItem ADD PRIMARY KEY (L_ORDERKEY, L_LINENUMBER);")
         self.query_str = f"""
             select
                 sum(L_EXTENDEDPRICE * L_DISCOUNT) as revenue
             from
-                lineitem
+                LineItem
             where
                 L_SHIPDATE >= 820454400
                 and L_SHIPDATE < 852076800
@@ -20,18 +19,22 @@ class Query6:
             """
 
     def run(self):
-        return duckdb.sql(self.query_str)
+        return duckdb.sql(self.query_str).fetchall()
 
 class Query4:
     def __init__(self):
-        self.lineitem = TPCHLineItem.load()
-        self.orders = TPCHOrders.load()
+        lineitem = TPCHLineItem.load()
+        orders = TPCHOrders.load()
+        duckdb.sql("CREATE TABLE LineItem AS SELECT * FROM lineitem")
+        duckdb.sql("ALTER TABLE LineItem ADD PRIMARY KEY (L_ORDERKEY, L_LINENUMBER);")
+        duckdb.sql("CREATE TABLE Orders AS SELECT * FROM orders")
+        duckdb.sql("ALTER TABLE Orders ADD PRIMARY KEY (O_ORDERKEY);")
         self.query_str = f"""
             select
                 O_ORDERPRIORITY,
                 count(*) as ORDER_COUNT
             from
-                orders
+                Orders
             where
                 O_ORDERDATE >= 700000000
                 and O_ORDERDATE < 900000000
@@ -39,7 +42,7 @@ class Query4:
                     select
                         *
                     from
-                        lineitem
+                        LineItem
                     where
                         L_ORDERKEY = O_ORDERKEY
                         and L_COMMITDATE < L_RECEIPTDATE
@@ -49,15 +52,14 @@ class Query4:
         """
 
     def run(self):
-        lineitem = self.lineitem
-        orders = self.orders
-        return duckdb.sql(self.query_str)
+        return duckdb.sql(self.query_str).fetchall()
+
 
 if __name__ == "__main__":
     q = Query4()
     import time
     start = time.time()
     out = q.run()
-    print(out)
     end = time.time()
+    print(out)
     print("Time: ", (end - start) * 1000)

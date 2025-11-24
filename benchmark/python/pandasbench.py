@@ -700,8 +700,43 @@ class TPCHQuery11:
         return self.query(0, 0.0001)
 
 
+class TPCHQuery2:
+    def __init__(self):
+        self.supplier = TPCHSupplier.load().reset_index(drop=False)
+        self.partsupp = TPCHPartSupp.load().reset_index(drop=False)
+        self.supppart = TPCHPartSupp.load2().reset_index(drop=False)
+
+    def query(self, nation_key, fraction):
+        supp_nat = self.supplier[self.supplier["S_NATIONKEY"] == nation_key]
+
+        ps = self.partsupp.merge(
+            supp_nat,
+            left_on="PS_SUPPKEY",
+            right_on="S_SUPPKEY",
+            how="inner"
+        )
+
+        ps["VALUE"] = ps["PS_SUPPLYCOST"] * ps["PS_AVAILQTY"]
+
+        per_part = (
+            ps.groupby("PS_PARTKEY", as_index=False)["VALUE"]
+              .sum()
+              .rename(columns={"VALUE": "VALUE"})
+        )
+
+        total_value = ps["VALUE"].sum()
+
+        threshold = total_value * fraction
+
+        result = per_part[per_part["VALUE"] > threshold]
+
+        return result
+
+    def run(self):
+        return self.query(0, 0.0001)
+
 if __name__ == '__main__':
-    q = TPCHQuery11()
+    q = TPCHQuery3()
     import time
     start = time.time()
     out = q.run()
