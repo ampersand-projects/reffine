@@ -394,3 +394,66 @@ struct TPCHQuery11 {
         return out;
     }
 };
+
+struct TPCHQuery1 {
+    using QueryFnTy = void (*)(void*, ArrowTable*);
+
+    shared_ptr<ArrowTable2> lineitem;
+    QueryFnTy query_fn;
+
+    TPCHQuery1()
+    {
+        this->lineitem =
+            load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 1);
+        this->lineitem->build_index();
+        this->query_fn = compile_op<QueryFnTy>(this->build_op());
+    }
+
+    shared_ptr<Func> build_op()
+    {
+        return nullptr;
+    }
+
+    ArrowTable* run()
+    {
+        ArrowTable* out;
+        this->query_fn(&out, this->lineitem.get());
+        return out;
+    }
+};
+
+
+struct TPCHQuery2 {
+    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*, ArrowTable*);
+
+    shared_ptr<ArrowTable2> part;
+    shared_ptr<ArrowTable2> supplier;
+    shared_ptr<ArrowTable2> partsupp;
+    QueryFnTy query_fn;
+
+    TPCHQuery2()
+    {
+        this->part =
+            load_arrow_file("../benchmark/arrow_data/part.arrow", 1);
+        this->supplier =
+            load_arrow_file("../benchmark/arrow_data/supplier.arrow", 1);
+        this->partsupp =
+            load_arrow_file("../benchmark/arrow_data/partsupp.arrow", 2);
+        this->supplier->build_index();
+        this->partsupp->build_index();
+        this->part->build_index();
+        this->query_fn = compile_op<QueryFnTy>(this->build_op());
+    }
+
+    shared_ptr<Func> build_op()
+    {
+        return nullptr;
+    }
+
+    ArrowTable* run()
+    {
+        ArrowTable* out;
+        this->query_fn(&out, this->part.get(), this->supplier.get(), this->partsupp.get());
+        return out;
+    }
+};

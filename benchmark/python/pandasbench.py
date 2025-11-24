@@ -297,6 +297,36 @@ class TPCHSupplier:
         write_table(OUTPUT_DIR + "/supplier.arrow", pa.table(cols))
 
 
+class TPCHPart:
+    dtypes = {
+        "P_PARTKEY": np.int64,
+        "P_NAME": np.str_,
+        "P_MFGR": np.str_,
+        "P_BRAND": np.str_,
+        "P_TYPE": np.str_,
+        "P_SIZE": np.int32,
+        "P_CONTAINER": np.str_,
+        "P_RETAILPRICE": np.float64,
+        "P_COMMENT": np.str_,
+    }
+
+    @classmethod
+    def load(cls):
+        df = pd.read_csv(
+            "lib/tpch-v3.0.1/dbgen/part.tbl",
+            delimiter="|",
+            names=list(cls.dtypes.keys()),
+        ).astype(cls.dtypes)
+
+        return df
+
+    @classmethod
+    def store(cls):
+        df = cls.load().reset_index(drop=False)
+        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
+        write_table(OUTPUT_DIR + "/part.arrow", pa.table(cols))
+
+
 class TPCHQuery6:
     def __init__(self):
         self.lineitem = TPCHLineItem.load()
@@ -750,6 +780,8 @@ class TPCHQuery2:
         return self.query(0, 0.0001)
 
 if __name__ == '__main__':
+    TPCHPart.store()
+    exit(0)
     q = TPCDSQuery9()
     import time
     start = time.time()
