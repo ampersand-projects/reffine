@@ -462,8 +462,45 @@ class QueryExample:
         return duckdb.sql(self.query_str).show()
 
 
+class Query18:
+    def __init__(self):
+        lineitem = TPCHLineItem.load()
+        orders = TPCHOrders.load()
+        duckdb.sql("CREATE TABLE LineItem AS SELECT * FROM lineitem")
+        duckdb.sql("ALTER TABLE LineItem ADD PRIMARY KEY (L_ORDERKEY, L_LINENUMBER);")
+        duckdb.sql("CREATE TABLE Orders AS SELECT * FROM orders")
+        duckdb.sql("ALTER TABLE Orders ADD PRIMARY KEY (O_ORDERKEY);")
+        self.query_str = f"""
+        select
+            o_orderkey,
+            sum(l_quantity)
+        from
+            Orders,
+            LineItem
+        where
+            o_orderkey in (
+                select
+                    l_orderkey
+                from
+                    LineItem
+                group by
+                    l_orderkey having
+                        sum(l_quantity) > 300
+            )
+            and o_orderkey = l_orderkey
+        group by
+            o_orderkey
+        order by
+            o_orderkey
+        """
+
+    def run(self):
+        return duckdb.sql(self.query_str).show()
+
+
+
 if __name__ == "__main__":
-    q = QueryExample()
+    q = Query18()
     import time
     start = time.time()
     out = q.run()

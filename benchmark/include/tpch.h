@@ -665,4 +665,61 @@ struct TPCHQueryExample {
     }
 };
 
+struct TPCHQuery18 {
+    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*);
+
+    shared_ptr<ArrowTable2> lineitem;
+    shared_ptr<ArrowTable2> orders;
+    QueryFnTy query_fn;
+
+    TPCHQuery18()
+    {
+        this->lineitem =
+            load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 2);
+        this->orders =
+            load_arrow_file("../benchmark/arrow_data/orders.arrow", 1);
+        this->lineitem->build_index();
+        this->orders->build_index();
+        this->query_fn = compile_op<QueryFnTy>(this->build_op(300));
+    }
+
+    shared_ptr<Func> build_op(int64_t quantity)
+    {
+        auto lineitem = _sym("lineitem", this->lineitem->get_data_type());
+        auto orders = _sym("orders", this->orders->get_data_type());
+        auto orderkey = _sym("orderkey", _i64_t);
+
+        auto red = _red(
+            lineitem[orderkey], []() { return _f64(0); },
+            [](Expr s, Expr v) {
+                auto l_qty = _get(v, 3);
+                return _add(s, l_qty);
+            });
+        auto red_sym = _sym("red", red);
+
+        auto filter = _gt(red_sym, _f64(quantity));
+        auto filter_sym = _sym("filter", filter);
+        auto pred =
+            _in(orderkey, lineitem) & _in(orderkey, orders) & filter_sym;
+
+        auto op = _op(vector<Sym>{orderkey}, pred, vector<Expr>{red_sym});
+        auto op_sym = _sym("op", op);
+
+        auto fn = _func("tpchquery18", op_sym,
+                        vector<Sym>{lineitem, orders});
+        fn->tbl[filter_sym] = filter;
+        fn->tbl[op_sym] = op;
+        fn->tbl[red_sym] = red;
+
+        return fn;
+    }
+
+    ArrowTable* run()
+    {
+        ArrowTable* out;
+        this->query_fn(&out, this->lineitem.get(), this->orders.get());
+        return out;
+    }
+};
+
 
