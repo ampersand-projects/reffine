@@ -525,7 +525,6 @@ struct TPCHQuery2 {
     }
 };
 
-
 struct TPCHQuery12 {
     using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*);
 
@@ -561,7 +560,8 @@ struct TPCHQuery12 {
         auto hc_sym = _sym("hc", high_line_count);
         auto lc_sym = _sym("lc", low_line_count);
 
-        auto red = _red(lineitem[orderkey],
+        auto red = _red(
+            lineitem[orderkey],
             []() { return _new(vector<Expr>{_i32(0), _i32(0)}); },
             [hc_sym, lc_sym](Expr s, Expr v) {
                 auto hc = _get(s, 0);
@@ -572,15 +572,15 @@ struct TPCHQuery12 {
                 auto rec = _get(v, 11);
                 auto filter = _lt(comm, rec) & _lt(ship, comm);
 
-                return _sel(filter, _new(vector<Expr>{_add(hc_sym, hc), _add(lc_sym, lc)}), s);
-            }
-        );
+                return _sel(
+                    filter,
+                    _new(vector<Expr>{_add(hc_sym, hc), _add(lc_sym, lc)}), s);
+            });
         auto red_sym = _sym("red", red);
 
         auto op = _op(vector<Sym>{orderkey},
-            _in(orderkey, lineitem) & _in(orderkey, orders),
-            vector<Expr>{_get(red_sym, 0), _get(red_sym, 1)}
-        );
+                      _in(orderkey, lineitem) & _in(orderkey, orders),
+                      vector<Expr>{_get(red_sym, 0), _get(red_sym, 1)});
         auto op_sym = _sym("op", op);
 
         auto fn = _func("tpchquery12", op_sym, vector<Sym>{lineitem, orders});
@@ -648,7 +648,8 @@ struct TPCHQueryExample {
                       vector<Expr>{value_sym});
         auto op_sym = _sym("op", op);
 
-        auto fn = _func("tpchexample", op_sym, vector<Sym>{part, supplier, partsupp});
+        auto fn =
+            _func("tpchexample", op_sym, vector<Sym>{part, supplier, partsupp});
         fn->tbl[op_sym] = op;
         fn->tbl[value_sym] = value;
         fn->tbl[filter_sym] = filter;
@@ -705,8 +706,7 @@ struct TPCHQuery18 {
         auto op = _op(vector<Sym>{orderkey}, pred, vector<Expr>{red_sym});
         auto op_sym = _sym("op", op);
 
-        auto fn = _func("tpchquery18", op_sym,
-                        vector<Sym>{lineitem, orders});
+        auto fn = _func("tpchquery18", op_sym, vector<Sym>{lineitem, orders});
         fn->tbl[filter_sym] = filter;
         fn->tbl[op_sym] = op;
         fn->tbl[red_sym] = red;
@@ -721,5 +721,3 @@ struct TPCHQuery18 {
         return out;
     }
 };
-
-
