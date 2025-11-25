@@ -19,7 +19,7 @@ class Query6:
             """
 
     def run(self):
-        return duckdb.sql(self.query_str).fetchall()
+        return duckdb.sql(self.query_str).show()
 
 class Query4:
     def __init__(self):
@@ -52,7 +52,7 @@ class Query4:
         """
 
     def run(self):
-        return duckdb.sql(self.query_str).fetchall()
+        return duckdb.sql(self.query_str).show()
 
 
 class Query3:
@@ -317,9 +317,43 @@ class Query9:
         return duckdb.sql(self.query_str).show()
 
 
+class Query12:
+    def __init__(self):
+        lineitem = TPCHLineItem.load()
+        orders = TPCHOrders.load()
+        duckdb.sql("CREATE TABLE LineItem AS SELECT * FROM lineitem")
+        duckdb.sql("ALTER TABLE LineItem ADD PRIMARY KEY (L_ORDERKEY, L_LINENUMBER);")
+        duckdb.sql("CREATE TABLE Orders AS SELECT * FROM orders")
+        duckdb.sql("ALTER TABLE Orders ADD PRIMARY KEY (O_ORDERKEY);")
+        self.query_str = f"""
+            select
+                (case
+                    when o_orderpriority = 0
+                        or o_orderpriority = 1
+                        then 1
+                    else 0
+                end) as high_line_count,
+                (case
+                    when o_orderpriority <> 0
+                        and o_orderpriority <> 1
+                        then 1
+                    else 0
+                end) as low_line_count
+            from
+                Orders,
+                LineItem
+            where
+                o_orderkey = l_orderkey
+                and l_commitdate < l_receiptdate
+                and l_shipdate < l_commitdate
+        """
+
+    def run(self):
+        return duckdb.sql(self.query_str).show()
+
 
 if __name__ == "__main__":
-    q = Query11()
+    q = Query12()
     import time
     start = time.time()
     out = q.run()
