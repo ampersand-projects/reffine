@@ -120,6 +120,37 @@ class Query11:
                         and s_nationkey = {nation_key}
                     )
         """
+        self.query_str = f"""
+            with ps_values as (
+                    select
+                        ps_partkey,
+                        sum(ps_supplycost * ps_availqty) as value
+                    from
+                        partsupp,
+                        supplier
+                    where
+                        ps_suppkey = s_suppkey
+                        and s_nationkey = {nation_key}
+                    group by
+                        ps_partkey
+            )
+            select
+                ps.ps_partkey,
+                ANY_VALUE(psv.value),
+            from
+                partsupp ps,
+                ps_values psv
+            where
+                ps.ps_partkey = psv.ps_partkey
+                and psv.value > (
+                    select sum(value) * {fraction} from ps_values
+                )
+            group by
+                ps.ps_partkey
+            order by
+                ps.ps_partkey
+        """
+
 
 
     def run(self):
@@ -288,7 +319,7 @@ class Query9:
 
 
 if __name__ == "__main__":
-    q = Query9()
+    q = Query11()
     import time
     start = time.time()
     out = q.run()
