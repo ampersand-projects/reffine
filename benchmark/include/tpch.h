@@ -603,4 +603,66 @@ struct TPCHQuery12 {
     }
 };
 
+struct TPCHQueryExample {
+    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*,
+                               ArrowTable*);
+
+    shared_ptr<ArrowTable2> part;
+    shared_ptr<ArrowTable2> supplier;
+    shared_ptr<ArrowTable2> partsupp;
+    QueryFnTy query_fn;
+
+    TPCHQueryExample()
+    {
+        this->part = load_arrow_file("../benchmark/arrow_data/part.arrow", 1);
+        this->supplier =
+            load_arrow_file("../benchmark/arrow_data/supplier.arrow", 1);
+        this->partsupp =
+            load_arrow_file("../benchmark/arrow_data/partsupp.arrow", 2);
+        this->supplier->build_index();
+        this->partsupp->build_index();
+        this->part->build_index();
+        this->query_fn = compile_op<QueryFnTy>(this->build_op(0, 15));
+    }
+
+    shared_ptr<Func> build_op(int64_t nation_key, int64_t size)
+    {
+        auto part = _sym("part", this->part->get_data_type());
+        auto supplier = _sym("supplier", this->supplier->get_data_type());
+        auto partsupp = _sym("partsupp", this->partsupp->get_data_type());
+
+        auto partkey = _sym("partkey", _i64_t);
+
+        auto value = _red(
+            partsupp[partkey], []() { return _i32(0); },
+            [nation_key, supplier](Expr s, Expr v) {
+                auto skey = _get(v, 0);
+                auto nkey = _get(supplier[skey], 2);
+                auto qty = _get(v, 1);
+                return _sel(_eq(nkey, _i64(nation_key)), _add(s, qty), s);
+            });
+        auto value_sym = _sym("value", value);
+        auto filter = _gt(_get(part[partkey], 4), _i32(size));
+        auto filter_sym = _sym("filter", filter);
+        auto op = _op(vector<Sym>{partkey}, _in(partkey, partsupp) & filter_sym,
+                      vector<Expr>{value_sym});
+        auto op_sym = _sym("op", op);
+
+        auto fn = _func("tpchexample", op_sym, vector<Sym>{part, supplier, partsupp});
+        fn->tbl[op_sym] = op;
+        fn->tbl[value_sym] = value;
+        fn->tbl[filter_sym] = filter;
+
+        return fn;
+    }
+
+    ArrowTable* run()
+    {
+        ArrowTable* out;
+        this->query_fn(&out, this->part.get(), this->supplier.get(),
+                       this->partsupp.get());
+        return out;
+    }
+};
+
 

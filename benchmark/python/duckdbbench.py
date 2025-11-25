@@ -400,9 +400,70 @@ class Query15:
         return duckdb.sql(self.query_str).show()
 
 
+class QueryExample:
+    def __init__(self, nation_key=0, size=15):
+        part = TPCHPart.load()
+        supplier = TPCHSupplier.load()
+        partsupp = TPCHPartSupp.load()
+        duckdb.sql("CREATE TABLE Part AS SELECT * FROM part")
+        duckdb.sql("ALTER TABLE Part ADD PRIMARY KEY (P_PARTKEY);")
+        duckdb.sql("CREATE TABLE Supplier AS SELECT * FROM supplier")
+        duckdb.sql("ALTER TABLE Supplier ADD PRIMARY KEY (S_SUPPKEY);")
+        duckdb.sql("CREATE TABLE PartSupp AS SELECT * FROM partsupp")
+        duckdb.sql("ALTER TABLE PartSupp ADD PRIMARY KEY (PS_PARTKEY, PS_SUPPKEY);")
+        self.query_str = f"""
+            select
+                PS_PARTKEY,
+                sum(PS_AVAILQTY)
+            from
+                PartSupp
+            where
+                ps_partkey in (
+                    select
+                        p_partkey
+                    from
+                        part
+                    Where
+                        p_size > {size}
+                )
+                and ps_suppkey in (
+                    Select
+                        s_suppkey
+                    From
+                        Supplier
+                    Where
+                        s_nationkey = {nation_key}
+                )
+            group by
+                ps_partkey
+            order by
+                ps_partkey
+        """
+        query_str = f"""
+            select
+                PS_PARTKEY,
+                sum(PS_AVAILQTY)
+            from
+                Part,
+                PartSupp,
+                supplier
+            where
+                ps_partkey = p_partkey
+                and ps_suppkey = s_suppkey
+                and p_size > {size}
+                and s_nationkey = {nation_key}
+            group by
+                ps_partkey
+            order by
+                ps_partkey
+        """
+
+    def run(self):
+        return duckdb.sql(self.query_str).show()
+
 
 if __name__ == "__main__":
-    q = Query15()
+    q = QueryExample()
     import time
     start = time.time()
     out = q.run()

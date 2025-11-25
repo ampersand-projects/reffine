@@ -18,7 +18,7 @@ using namespace reffine::reffiner;
 
 int main()
 {
-    TPCHQuery12 bench;
+    TPCHQueryExample bench;
     auto start = std::chrono::high_resolution_clock::now();
     auto out = bench.run();
     auto end = std::chrono::high_resolution_clock::now();
