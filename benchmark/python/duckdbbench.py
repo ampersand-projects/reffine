@@ -349,14 +349,60 @@ class Query12:
                 and l_shipdate < l_commitdate
             group by
                 l_orderkey
+            order by
+                l_orderkey
         """
 
     def run(self):
         return duckdb.sql(self.query_str).show()
 
 
+class Query15:
+    def __init__(self):
+        lineitem = TPCHLineItem.load()
+        supplier = TPCHSupplier.load()
+        duckdb.sql("CREATE TABLE LineItem AS SELECT * FROM lineitem")
+        duckdb.sql("ALTER TABLE LineItem ADD PRIMARY KEY (L_ORDERKEY, L_LINENUMBER);")
+        duckdb.sql("CREATE TABLE Supplier AS SELECT * FROM supplier")
+        duckdb.sql("ALTER TABLE Supplier ADD PRIMARY KEY (S_SUPPKEY);")
+        self.query_str = f"""
+        with revenue (supplier_no, total_revenue) as (
+                select
+                    l_suppkey,
+                    sum(l_extendedprice * (1 - l_discount))
+                from
+                    LineItem
+                where
+                    L_SHIPDATE >= 820454400
+                    and L_SHIPDATE < 852076800
+                group by
+                    l_suppkey
+                )
+        select
+            s_suppkey,
+            total_revenue
+        from
+            Supplier,
+            revenue
+        where
+            s_suppkey = supplier_no
+            and total_revenue = (
+                select
+                    max(total_revenue)
+                from
+                    revenue
+            )
+        order by
+            s_suppkey
+    """
+
+    def run(self):
+        return duckdb.sql(self.query_str).show()
+
+
+
 if __name__ == "__main__":
-    q = Query12()
+    q = Query15()
     import time
     start = time.time()
     out = q.run()
