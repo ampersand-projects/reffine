@@ -327,13 +327,14 @@ class Query12:
         duckdb.sql("ALTER TABLE Orders ADD PRIMARY KEY (O_ORDERKEY);")
         self.query_str = f"""
             select
-                (case
+                l_orderkey,
+                sum(case
                     when o_orderpriority = 0
                         or o_orderpriority = 1
                         then 1
                     else 0
                 end) as high_line_count,
-                (case
+                sum(case
                     when o_orderpriority <> 0
                         and o_orderpriority <> 1
                         then 1
@@ -346,6 +347,8 @@ class Query12:
                 o_orderkey = l_orderkey
                 and l_commitdate < l_receiptdate
                 and l_shipdate < l_commitdate
+            group by
+                l_orderkey
         """
 
     def run(self):
