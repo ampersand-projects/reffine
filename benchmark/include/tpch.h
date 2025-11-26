@@ -524,3 +524,200 @@ struct TPCHQuery2 {
         return out;
     }
 };
+
+struct TPCHQuery12 {
+    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*);
+
+    shared_ptr<ArrowTable2> lineitem;
+    shared_ptr<ArrowTable2> orders;
+    QueryFnTy query_fn;
+
+    TPCHQuery12()
+    {
+        this->lineitem =
+            load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 2);
+        this->orders =
+            load_arrow_file("../benchmark/arrow_data/orders.arrow", 1);
+        this->lineitem->build_index();
+        this->orders->build_index();
+        this->query_fn = compile_op<QueryFnTy>(this->build_op());
+    }
+
+    shared_ptr<Func> build_op()
+    {
+        auto lineitem = _sym("lineitem", this->lineitem->get_data_type());
+        auto orders = _sym("orders", this->orders->get_data_type());
+        auto orderkey = _sym("orderkey", _i64_t);
+
+        auto oelem = orders[orderkey];
+        auto oelem_sym = _sym("oelem", oelem);
+        auto prio = _get(oelem_sym, 4);
+        auto prio_sym = _sym("prio", prio);
+        auto cond = _or(_eq(prio_sym, _i8(0)), _eq(prio_sym, _i8(1)));
+        auto cond_sym = _sym("cond", cond);
+        auto high_line_count = _sel(cond_sym, _i32(1), _i32(0));
+        auto low_line_count = _sel(_not(cond_sym), _i32(1), _i32(0));
+        auto hc_sym = _sym("hc", high_line_count);
+        auto lc_sym = _sym("lc", low_line_count);
+
+        auto red = _red(
+            lineitem[orderkey],
+            []() { return _new(vector<Expr>{_i32(0), _i32(0)}); },
+            [hc_sym, lc_sym](Expr s, Expr v) {
+                auto hc = _get(s, 0);
+                auto lc = _get(s, 1);
+
+                auto comm = _get(v, 10);
+                auto ship = _get(v, 9);
+                auto rec = _get(v, 11);
+                auto filter = _lt(comm, rec) & _lt(ship, comm);
+
+                return _sel(
+                    filter,
+                    _new(vector<Expr>{_add(hc_sym, hc), _add(lc_sym, lc)}), s);
+            });
+        auto red_sym = _sym("red", red);
+
+        auto op = _op(vector<Sym>{orderkey},
+                      _in(orderkey, lineitem) & _in(orderkey, orders),
+                      vector<Expr>{_get(red_sym, 0), _get(red_sym, 1)});
+        auto op_sym = _sym("op", op);
+
+        auto fn = _func("tpchquery12", op_sym, vector<Sym>{lineitem, orders});
+        fn->tbl[op_sym] = op;
+        fn->tbl[lc_sym] = low_line_count;
+        fn->tbl[hc_sym] = high_line_count;
+        fn->tbl[cond_sym] = cond;
+        fn->tbl[prio_sym] = prio;
+        fn->tbl[oelem_sym] = oelem;
+        fn->tbl[red_sym] = red;
+
+        return fn;
+    }
+
+    ArrowTable* run()
+    {
+        ArrowTable* out;
+        this->query_fn(&out, this->lineitem.get(), this->orders.get());
+        return out;
+    }
+};
+
+struct TPCHQueryExample {
+    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*,
+                               ArrowTable*);
+
+    shared_ptr<ArrowTable2> part;
+    shared_ptr<ArrowTable2> supplier;
+    shared_ptr<ArrowTable2> partsupp;
+    QueryFnTy query_fn;
+
+    TPCHQueryExample()
+    {
+        this->part = load_arrow_file("../benchmark/arrow_data/part.arrow", 1);
+        this->supplier =
+            load_arrow_file("../benchmark/arrow_data/supplier.arrow", 1);
+        this->partsupp =
+            load_arrow_file("../benchmark/arrow_data/partsupp.arrow", 2);
+        this->supplier->build_index();
+        this->partsupp->build_index();
+        this->part->build_index();
+        this->query_fn = compile_op<QueryFnTy>(this->build_op(0, 15));
+    }
+
+    shared_ptr<Func> build_op(int64_t nation_key, int64_t size)
+    {
+        auto part = _sym("part", this->part->get_data_type());
+        auto supplier = _sym("supplier", this->supplier->get_data_type());
+        auto partsupp = _sym("partsupp", this->partsupp->get_data_type());
+
+        auto partkey = _sym("partkey", _i64_t);
+
+        auto value = _red(
+            partsupp[partkey], []() { return _i32(0); },
+            [nation_key, supplier](Expr s, Expr v) {
+                auto skey = _get(v, 0);
+                auto nkey = _get(supplier[skey], 2);
+                auto qty = _get(v, 1);
+                return _sel(_eq(nkey, _i64(nation_key)), _add(s, qty), s);
+            });
+        auto value_sym = _sym("value", value);
+        auto filter = _gt(_get(part[partkey], 4), _i32(size));
+        auto filter_sym = _sym("filter", filter);
+        auto op = _op(vector<Sym>{partkey}, _in(partkey, partsupp) & filter_sym,
+                      vector<Expr>{value_sym});
+        auto op_sym = _sym("op", op);
+
+        auto fn =
+            _func("tpchexample", op_sym, vector<Sym>{part, supplier, partsupp});
+        fn->tbl[op_sym] = op;
+        fn->tbl[value_sym] = value;
+        fn->tbl[filter_sym] = filter;
+
+        return fn;
+    }
+
+    ArrowTable* run()
+    {
+        ArrowTable* out;
+        this->query_fn(&out, this->part.get(), this->supplier.get(),
+                       this->partsupp.get());
+        return out;
+    }
+};
+
+struct TPCHQuery18 {
+    using QueryFnTy = void (*)(ArrowTable**, ArrowTable*, ArrowTable*);
+
+    shared_ptr<ArrowTable2> lineitem;
+    shared_ptr<ArrowTable2> orders;
+    QueryFnTy query_fn;
+
+    TPCHQuery18()
+    {
+        this->lineitem =
+            load_arrow_file("../benchmark/arrow_data/lineitem.arrow", 2);
+        this->orders =
+            load_arrow_file("../benchmark/arrow_data/orders.arrow", 1);
+        this->lineitem->build_index();
+        this->orders->build_index();
+        this->query_fn = compile_op<QueryFnTy>(this->build_op(300));
+    }
+
+    shared_ptr<Func> build_op(int64_t quantity)
+    {
+        auto lineitem = _sym("lineitem", this->lineitem->get_data_type());
+        auto orders = _sym("orders", this->orders->get_data_type());
+        auto orderkey = _sym("orderkey", _i64_t);
+
+        auto red = _red(
+            lineitem[orderkey], []() { return _f64(0); },
+            [](Expr s, Expr v) {
+                auto l_qty = _get(v, 3);
+                return _add(s, l_qty);
+            });
+        auto red_sym = _sym("red", red);
+
+        auto filter = _gt(red_sym, _f64(quantity));
+        auto filter_sym = _sym("filter", filter);
+        auto pred =
+            _in(orderkey, lineitem) & _in(orderkey, orders) & filter_sym;
+
+        auto op = _op(vector<Sym>{orderkey}, pred, vector<Expr>{red_sym});
+        auto op_sym = _sym("op", op);
+
+        auto fn = _func("tpchquery18", op_sym, vector<Sym>{lineitem, orders});
+        fn->tbl[filter_sym] = filter;
+        fn->tbl[op_sym] = op;
+        fn->tbl[red_sym] = red;
+
+        return fn;
+    }
+
+    ArrowTable* run()
+    {
+        ArrowTable* out;
+        this->query_fn(&out, this->lineitem.get(), this->orders.get());
+        return out;
+    }
+};
