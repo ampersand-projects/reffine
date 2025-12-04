@@ -18,5 +18,5 @@ def write_data(filename, df):
     writer.close()
 
 out_file = "fake_data.arrow"
-df = read_data(50_000_000)
+df = read_data(100_000_000)
 write_data(out_file, df)
