@@ -2,6 +2,18 @@
 
 INSTALL_PREFIX=${HOME}/.local
 
+# Build GoogleTest
+GTEST_SRC_DIR="third_party/googletest/"
+GTEST_BUILD_DIR="${GTEST_SRC_DIR}/build"
+mkdir -p ${GTEST_BUILD_DIR}
+pushd ${GTEST_BUILD_DIR}
+cmake -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+      ..
+make -j $(nproc)
+make install
+popd
+
 # Build and install LLVM
 LLVM_SRC_DIR="third_party/llvm-project"
 LLVM_BUILD_DIR="${LLVM_SRC_DIR}/build"
