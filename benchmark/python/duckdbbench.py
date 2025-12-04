@@ -498,9 +498,21 @@ class Query18:
         return duckdb.sql(self.query_str).show()
 
 
+class DDSelectBench:
+    def __init__(self):
+        df = FakeData().load()
+        duckdb.sql("CREATE TABLE FakeData AS SELECT * FROM df")
+        duckdb.sql("ALTER TABLE FakeData ADD PRIMARY KEY (t);")
+        self.query_str = f"""
+            CREATE TABLE out AS SELECT t FROM FakeData WHERE t%2 == 0;
+        """
+
+    def run(self):
+        return duckdb.sql(self.query_str)
+
 
 if __name__ == "__main__":
-    q = Query18()
+    q = DDSelectBench()
     import time
     start = time.time()
     out = q.run()

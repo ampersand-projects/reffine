@@ -835,8 +835,39 @@ class TPCHQuery2:
     def run(self):
         return self.query(0, 0.0001)
 
+
+class FakeData:
+    def __init__(self, size = 100_000_000):
+        self.df = pd.DataFrame({
+            't': range(size),
+            'val': range(size),
+        })
+
+    def load(self):
+        return self.df
+
+    def store(self):
+        schema = pa.Schema.from_pandas(self.df, preserve_index=False)
+        table = pa.Table.from_pandas(self.df, preserve_index=False)
+        writer = pa.ipc.new_file("arrow_data/fake_data.arrow", schema)
+        writer.write(table)
+        writer.close()
+
+
+class SelectBench:
+    def __init__(self):
+        self.df = FakeData().load().reset_index(drop=False)
+
+    def query(self):
+        df = self.df["t"]
+        df = df[df % 2 == 0]
+        return df
+
+    def run(self):
+        return self.query()
+
 if __name__ == '__main__':
-    q = TPCHQuery1()
+    q = SelectBench()
     import time
     start = time.time()
     out = q.run()

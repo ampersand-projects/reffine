@@ -23,7 +23,7 @@ struct SelectBench {
         this->in =
             load_arrow_file("../benchmark/arrow_data/fake_data.arrow", 1);
         this->in->build_index();
-        this->query_fn = compile_op<QueryFnTy>(this->build_op(), true);
+        this->query_fn = compile_op<QueryFnTy>(this->build_op());
     }
 
     shared_ptr<Func> build_op()

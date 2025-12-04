@@ -170,9 +170,17 @@ class Query1:
             )
         )
 
+class PLRSelectBench:
+    def __init__(self):
+        self.df = pl.from_pandas(FakeData().load())
+
+    def run(self):
+        return (
+            self.df.filter(pl.col("t") % 2 == 0).select(pl.col("t"))
+        )
 
 if __name__ == '__main__':
-    q = Query1()
+    q = PLRSelectBench()
     import time
     start = time.time()
     out = q.run()
