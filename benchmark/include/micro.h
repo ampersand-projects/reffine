@@ -48,8 +48,7 @@ struct MicroBench {
         auto val = _get(vec_in[t_sym], 0);
         auto cond = _eq(_mod(t_sym, _i64(2)), _i64(0));
         auto cond_sym = _sym("cond", cond);
-        auto op = _op(vector<Sym>{t_sym},
-                      _in(t_sym, vec_in) & cond_sym,
+        auto op = _op(vector<Sym>{t_sym}, _in(t_sym, vec_in) & cond_sym,
                       vector<Expr>{});
         auto op_sym = _sym("op", op);
 
@@ -70,8 +69,7 @@ struct MicroBench {
         auto rval = _get(right[t_sym], 0);
         auto diff = _sub(lval, rval);
         auto diff_sym = _sym("diff", diff);
-        auto op = _op(vector<Sym>{t_sym},
-                      _in(t_sym, left) & _in(t_sym, right),
+        auto op = _op(vector<Sym>{t_sym}, _in(t_sym, left) & _in(t_sym, right),
                       vector<Expr>{diff_sym});
         auto op_sym = _sym("op", op);
 
@@ -92,8 +90,7 @@ struct MicroBench {
         auto rval = _get(right[t_sym], 0);
         auto diff = _sub(lval, rval);
         auto diff_sym = _sym("diff", diff);
-        auto op = _op(vector<Sym>{t_sym},
-                      _in(t_sym, left) | _in(t_sym, right),
+        auto op = _op(vector<Sym>{t_sym}, _in(t_sym, left) | _in(t_sym, right),
                       vector<Expr>{diff_sym});
         auto op_sym = _sym("op", op);
 
@@ -107,10 +104,9 @@ struct MicroBench {
     shared_ptr<Func> sum_op()
     {
         auto vec_in = _sym("vec_in", this->in->get_data_type());
-        auto red = _red(_subvec(vec_in, _idx(0), _len(vec_in, 1)),
-            []() { return _i64(0); },
-            [](Expr s, Expr v) { return _add(_get(v, 0), s); }
-        );
+        auto red = _red(
+            _subvec(vec_in, _idx(0), _len(vec_in, 1)), []() { return _i64(0); },
+            [](Expr s, Expr v) { return _add(_get(v, 0), s); });
         auto red_sym = _sym("red", red);
         auto fn = _func("sumbench", red_sym, vector<Sym>{vec_in});
         fn->tbl[red_sym] = red;
