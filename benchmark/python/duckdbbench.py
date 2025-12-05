@@ -501,21 +501,53 @@ class Query18:
 class DDSelectBench:
     def __init__(self):
         df = FakeData().load()
+        df2 = FakeData().load()
         duckdb.sql("CREATE TABLE FakeData AS SELECT * FROM df")
         duckdb.sql("ALTER TABLE FakeData ADD PRIMARY KEY (t);")
-        self.query_str = f"""
+        duckdb.sql("CREATE TABLE FakeData2 AS SELECT * FROM df2")
+        duckdb.sql("ALTER TABLE FakeData2 ADD PRIMARY KEY (t);")
+
+    def select(self):
+        query_str = f"""
             CREATE TABLE out AS SELECT t FROM FakeData WHERE t%2 == 0;
         """
+        return duckdb.sql(query_str)
 
-    def run(self):
-        return duckdb.sql(self.query_str)
+    def ijoin(self):
+        query_str = f"""
+            CREATE TABLE out AS SELECT l.t, l.val - r.val FROM FakeData l JOIN FakeData2 r ON l.t = r.t;
+        """
+        return duckdb.sql(query_str)
+
+    def ojoin(self):
+        query_str = f"""
+            CREATE TABLE out AS SELECT l.t, l.val - r.val FROM FakeData l FULL OUTER JOIN FakeData2 r ON l.t = r.t;
+        """
+        return duckdb.sql(query_str)
+
+    def sum(self):
+        query_str = f"""
+            SELECT SUM(val) FROM FakeData;
+        """
+        return duckdb.sql(query_str).fetchone()
+
+
+    def run(self, q):
+        if q == "select":
+            return self.select()
+        elif q == "inner":
+            return self.ijoin()
+        elif q == "outer":
+            return self.ojoin()
+        elif q == "sum":
+            return self.sum()
 
 
 if __name__ == "__main__":
     q = DDSelectBench()
     import time
     start = time.time()
-    out = q.run()
+    out = q.run("sum")
     end = time.time()
     print(out)
     print("Time: ", (end - start) * 1000)

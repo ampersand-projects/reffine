@@ -854,23 +854,41 @@ class FakeData:
         writer.close()
 
 
-class SelectBench:
+class MicroBench:
     def __init__(self):
-        self.df = FakeData().load().reset_index(drop=False)
+        self.left = FakeData().load().reset_index(drop=False)
+        self.right = FakeData().load().reset_index(drop=False)
 
-    def query(self):
-        df = self.df["t"]
+    def select_query(self):
+        df = self.left["t"]
         df = df[df % 2 == 0]
         return df
 
-    def run(self):
-        return self.query()
+    def join_query(self, h):
+        df = (
+            self.left.merge(self.right, on="t", how=h)
+            .assign(diff=lambda df: df["val_x"] - df["val_y"])
+            [["t", "diff"]]
+        )
+        return df
+
+    def sum(self):
+        return self.left["val"].sum()
+
+    def run(self, q):
+        if q == "select":
+            return self.select_query()
+        elif q == "inner" or q == "outer":
+            return self.join_query(q)
+        elif q == "sum":
+            return self.sum()
+
 
 if __name__ == '__main__':
-    q = SelectBench()
+    q = MicroBench()
     import time
     start = time.time()
-    out = q.run()
+    out = q.run("sum")
     end = time.time()
     print(out)
     print("Time: ", (end - start)*1000)
