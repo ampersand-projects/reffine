@@ -184,7 +184,6 @@ class PLRMicroBench:
         return self.left.join(self.right, on="t", how=h, suffix="_r") \
             .with_columns((pl.col("val") - pl.col("val_r")).alias("diff")) \
             .select(["t", "diff"])
-        
 
     def sum(self):
         return self.left.select(pl.col("val").sum())
