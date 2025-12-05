@@ -835,11 +835,60 @@ class TPCHQuery2:
     def run(self):
         return self.query(0, 0.0001)
 
+
+class FakeData:
+    def __init__(self, size = 100_000_000):
+        self.df = pd.DataFrame({
+            't': range(size),
+            'val': range(size),
+        })
+
+    def load(self):
+        return self.df
+
+    def store(self):
+        schema = pa.Schema.from_pandas(self.df, preserve_index=False)
+        table = pa.Table.from_pandas(self.df, preserve_index=False)
+        writer = pa.ipc.new_file("arrow_data/fake_data.arrow", schema)
+        writer.write(table)
+        writer.close()
+
+
+class MicroBench:
+    def __init__(self):
+        self.left = FakeData().load().reset_index(drop=False)
+        self.right = FakeData().load().reset_index(drop=False)
+
+    def select_query(self):
+        df = self.left["t"]
+        df = df[df % 2 == 0]
+        return df
+
+    def join_query(self, h):
+        df = (
+            self.left.merge(self.right, on="t", how=h)
+            .assign(diff=lambda df: df["val_x"] - df["val_y"])
+            [["t", "diff"]]
+        )
+        return df
+
+    def sum(self):
+        return self.left["val"].sum()
+
+    def run(self, q):
+        if q == "select":
+            return self.select_query()
+        elif q == "inner" or q == "outer":
+            return self.join_query(q)
+        elif q == "sum":
+            return self.sum()
+
+
 if __name__ == '__main__':
-    q = TPCHQuery1()
+    q = MicroBench()
     import time
     start = time.time()
-    out = q.run()
+    out = q.run("sum")
     end = time.time()
     print(out)
     print("Time: ", (end - start)*1000)

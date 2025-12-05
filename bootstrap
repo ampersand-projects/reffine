@@ -72,25 +72,24 @@ make -j $(nproc)
 make install
 popd
 
-# Build PyBind11
-PYBIND_SRC_DIR="third_party/pybind11/"
-PYBIND_BUILD_DIR="${PYBIND_SRC_DIR}/build"
-mkdir -p ${PYBIND_BUILD_DIR}
-pushd ${PYBIND_BUILD_DIR}
-cmake -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
-      ..
-make -j $(nproc)
-make install
-popd
+## Build PyBind11
+#PYBIND_SRC_DIR="third_party/pybind11/"
+#PYBIND_BUILD_DIR="${PYBIND_SRC_DIR}/build"
+#mkdir -p ${PYBIND_BUILD_DIR}
+#pushd ${PYBIND_BUILD_DIR}
+#cmake -DCMAKE_BUILD_TYPE=Release \
+#      -DCMAKE_INSTALL_PREFIX=${INSTALL_PREFIX} \
+#      ..
+#make -j $(nproc)
+#make install
+#popd
 
 # Build Reffine
 REFFINE_BUILD_DIR="build/"
 mkdir -p ${REFFINE_BUILD_DIR}
 pushd ${REFFINE_BUILD_DIR}
-cmake -DCMAKE_BUILD_TYPE=Debug \
-      -DCMAKE_PREFIX_PATH=${INSTALL_PREFIX} \
-      -DENABLE_CUDA=ON \
+cmake -DCMAKE_PREFIX_PATH=${INSTALL_PREFIX} \
+      -DENABLE_CUDA=OFF \
       ..
 make -j $(nproc)
 popd

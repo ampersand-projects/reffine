@@ -170,12 +170,38 @@ class Query1:
             )
         )
 
+class PLRMicroBench:
+    def __init__(self):
+        self.left = pl.from_pandas(FakeData().load())
+        self.right = pl.from_pandas(FakeData().load())
+
+    def select(self):
+        return (
+            self.left.filter(pl.col("t") % 2 == 0).select(pl.col("t"))
+        )
+
+    def join(self, h):
+        return self.left.join(self.right, on="t", how=h, suffix="_r") \
+            .with_columns((pl.col("val") - pl.col("val_r")).alias("diff")) \
+            .select(["t", "diff"])
+
+    def sum(self):
+        return self.left.select(pl.col("val").sum())
+
+    def run(self, q):
+        if q == "select":
+            return self.select()
+        elif q == "inner" or q == "full":
+            return self.join(q)
+        elif q == "sum":
+            return self.sum()
+
 
 if __name__ == '__main__':
-    q = Query1()
+    q = PLRMicroBench()
     import time
     start = time.time()
-    out = q.run()
+    out = q.run("full")
     end = time.time()
     print(out)
     print("Time: ", (end - start) * 1000)
