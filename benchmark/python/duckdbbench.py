@@ -498,7 +498,7 @@ class Query18:
         return duckdb.sql(self.query_str).show()
 
 
-class DDSelectBench:
+class DDMicroBench:
     def __init__(self):
         df = FakeData().load()
         df2 = FakeData().load()
@@ -509,7 +509,7 @@ class DDSelectBench:
 
     def select(self):
         query_str = f"""
-            CREATE TABLE out AS SELECT t FROM FakeData WHERE t%2 == 0;
+            CREATE TABLE out AS SELECT t FROM FakeData WHERE t%2 = 0;
         """
         return duckdb.sql(query_str)
 
@@ -544,7 +544,7 @@ class DDSelectBench:
 
 
 if __name__ == "__main__":
-    q = DDSelectBench()
+    q = DDMicroBench()
     import time
     start = time.time()
     out = q.run("sum")
