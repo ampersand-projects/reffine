@@ -1,359 +1,14 @@
-import scipy as sp
-import networkx as nx
-import numpy as np
-import pandas as pd
-import pyarrow as pa
-import pyarrow.compute as pc
+from pandasbench import *
+import dask
+import dask.dataframe as dd
 
-OUTPUT_DIR = "arrow_data"
+NTHREADS=8
+dask.config.set(scheduler="threads", num_workers=1, num_threads=NTHREADS)
 
-def write_dataframe(filename, df):
-    schema = pa.Schema.from_pandas(df, preserve_index=False)
-    table = pa.Table.from_pandas(df, preserve_index=False)
-    with pa.ipc.new_file(filename, schema) as writer:
-        writer.write(table)
-
-def write_table(filename, table):
-    combined_table = table.combine_chunks()
-    '''
-    with pa.OSFile(filename, "wb") as sink:
-        with pa.ipc.RecordBatchFileWriter(sink, combined_table.schema) as writer:
-            writer.write_table(combined_table)
-    '''
-    with pa.ipc.new_file(filename, combined_table.schema) as writer:
-        writer.write(combined_table)
-
-def read_table(filename):
-    with pa.ipc.open_file(filename) as reader:
-        return reader.read_all()
-
-class TPCHLineItem:
-    dtypes = {
-        "L_ORDERKEY": np.int64,
-        "L_PARTKEY": np.int64,
-        "L_SUPPKEY": np.int64,
-        "L_LINENUMBER": np.int64,
-        "L_QUANTITY": np.float64,
-        "L_EXTENDEDPRICE": np.float64,
-        "L_DISCOUNT": np.float64,
-        "L_TAX": np.float64,
-        "L_RETURNFLAG": np.int32,
-        "L_LINESTATUS": np.str_,
-        "L_SHIPDATE": np.dtype('datetime64[s]'),
-        "L_COMMITDATE": np.dtype('datetime64[s]'),
-        "L_RECEIPTDATE": np.dtype('datetime64[s]'),
-        "L_SHIPINSTRUCT": np.str_,
-        "L_SHIPMODE": np.str_,
-        "L_COMMENT": np.str_,
-    }
-
-    arrow_dtypes = {
-        "L_ORDERKEY": np.int64,
-        "L_LINENUMBER": np.int64,
-        "L_PARTKEY": np.int64,
-        "L_SUPPKEY": np.int64,
-        "L_QUANTITY": np.float64,
-        "L_EXTENDEDPRICE": np.float64,
-        "L_DISCOUNT": np.float64,
-        "L_TAX": np.float64,
-        "L_RETURNFLAG": np.int32,
-        "L_LINESTATUS": np.str_,
-        "L_SHIPDATE": np.dtype('datetime64[s]'),
-        "L_COMMITDATE": np.dtype('datetime64[s]'),
-        "L_RECEIPTDATE": np.dtype('datetime64[s]'),
-        "L_SHIPINSTRUCT": np.str_,
-        "L_SHIPMODE": np.str_,
-        "L_COMMENT": np.str_,
-    }
-
-    ret_flag = {
-        "A": 0,
-        "N": 1,
-        "R": 2,
-    }
-
-    @classmethod
-    def load(cls):
-        df = pd.read_csv(
-            "lib/tpch-v3.0.1/dbgen/lineitem.tbl",
-            delimiter="|",
-            names=list(cls.dtypes.keys()),
-            converters={"L_RETURNFLAG": lambda val : cls.ret_flag[val]},
-        ).astype(cls.dtypes)
-        df["L_SHIPDATE"] = df["L_SHIPDATE"].astype("int64")
-        df["L_COMMITDATE"] = df["L_COMMITDATE"].astype("int64")
-        df["L_RECEIPTDATE"] = df["L_RECEIPTDATE"].astype("int64")
-
-        return df
-
-    @classmethod
-    def store(cls):
-        df = cls.load().reset_index(drop=False)
-        cols = {key: pa.array(df[key]) for key in list(cls.arrow_dtypes.keys())}
-        cols["L_ORDERKEY"] = pc.run_end_encode(cols["L_ORDERKEY"])
-        write_table(OUTPUT_DIR + "/lineitem.arrow", pa.table(cols))
-
-
-class TPCHCustomer:
-    dtypes = {
-        "C_CUSTKEY": np.int64,
-        "C_NAME": np.str_,
-        "C_ADDRESS": np.str_,
-        "C_NATIONKEY": np.int64,
-        "C_PHONE": np.str_,
-        "C_ACCTBAL": np.float64,
-        "C_MKTSEGMENT": np.int8,
-        "C_COMMENT": np.str_,
-    }
-
-    mktseg_enum = {
-        "BUILDING": 0,
-        "AUTOMOBILE": 1,
-        "MACHINERY": 2,
-        "HOUSEHOLD": 3,
-        "FURNITURE": 4,
-    }
-
-    @classmethod
-    def load(cls):
-        df = pd.read_csv(
-            "lib/tpch-v3.0.1/dbgen/customer.tbl",
-            delimiter="|",
-            names=list(cls.dtypes.keys()),
-            converters={"C_MKTSEGMENT": lambda val : cls.mktseg_enum[val]},
-        ).astype(cls.dtypes)
-
-        return df
-
-    @classmethod
-    def store(cls):
-        df = cls.load().reset_index(drop=False)
-        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
-        write_table(OUTPUT_DIR + "/customer.arrow", pa.table(cols))
-
-
-class TPCHOrders:
-    dtypes = {
-        "O_ORDERKEY": np.int64,
-        "O_CUSTKEY": np.int64,
-        "O_ORDERSTATUS": np.str_,
-        "O_TOTALPRICE": np.float64,
-        "O_ORDERDATE": np.dtype('datetime64[s]'),
-        "O_ORDERPRIORITY": np.int8,
-        "O_CLERK": np.str_,
-        "O_SHIPPRIORITY": np.int32,
-        "O_COMMENT": np.str_,
-    }
-
-    orderpriority = {
-        "1-URGENT": 0,
-        "2-HIGH": 1,
-        "3-MEDIUM": 2,
-        "4-NOT SPECIFIED": 3,
-        "5-LOW": 4,
-    }
-
-    @classmethod
-    def load(cls):
-        df = pd.read_csv(
-            "lib/tpch-v3.0.1/dbgen/orders.tbl",
-            delimiter="|",
-            names=list(cls.dtypes.keys()),
-            converters={"O_ORDERPRIORITY": lambda val : cls.orderpriority[val]},
-        ).astype(cls.dtypes)
-        df["O_ORDERDATE"] = df["O_ORDERDATE"].astype("int64")
-
-        return df
-
-    @classmethod
-    def store(cls):
-        df = cls.load().reset_index(drop=False)
-        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
-        write_table(OUTPUT_DIR + "/orders.arrow", pa.table(cols))
-
-
-class TPCDSStoreSales:
-    dtypes = {
-        "ss_item_sk": np.int64,
-        "ss_ticket_number": np.int64,
-        "ss_sold_date_sk": np.int64,
-        "ss_sold_time_sk": np.int64,
-        "ss_customer_sk": np.int64,
-        "ss_cdemo_sk": np.int64,
-        "ss_hdemo_sk": np.int64,
-        "ss_addr_sk": np.int64,
-        "ss_store_sk": np.int64,
-        "ss_promo_sk": np.int64,
-        "ss_quantity": np.int32,
-        "ss_wholesale_cost": np.float64,
-        "ss_list_price": np.float64,
-        "ss_sales_price": np.float64,
-        "ss_ext_discount_amt": np.float64,
-        "ss_ext_sales_price": np.float64,
-        "ss_ext_wholesale_cost": np.float64,
-        "ss_ext_list_price": np.float64,
-        "ss_ext_tax": np.float64,
-        "ss_coupon_amt": np.float64,
-        "ss_net_paid": np.float64,
-        "ss_net_paid_inc_tax": np.float64,
-        "ss_net_profit": np.float64,
-    }
-
-    @classmethod
-    def load(cls):
-        df = pd.read_csv(
-            "lib/tpcds-v3.2.0rc2/tools/store_sales.tbl",
-            delimiter="|",
-            usecols = [2, 9, 0, 1, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
-            names=list(cls.dtypes.keys()),
-        ).fillna(value=0).astype(cls.dtypes)
-
-        return df
-
-    @classmethod
-    def store(cls):
-        df = cls.load().reset_index(drop=False)
-        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
-        cols["ss_item_sk"] = pc.run_end_encode(cols["ss_item_sk"])
-        write_table(OUTPUT_DIR + "/store_sales.arrow", pa.table(cols))
-
-
-class StockPrice:
-    dtypes = {
-        "ts": np.int64,
-        "val": np.float32,
-    }
-
-    @classmethod
-    def load(cls, size = 1000000):
-        timestamps = np.arange(size, dtype=np.int64)
-        values = np.random.randn(size) * 10 + 100
-
-        df = pd.DataFrame({
-            "ts": timestamps,
-            "val": values,
-        }).astype(cls.dtypes)
-
-        return df
-
-    @classmethod
-    def store(cls):
-        df = cls.load().reset_index(drop=False)
-        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
-        write_table(OUTPUT_DIR + "/stock_price.arrow", pa.table(cols))
-
-
-class TPCHPartSupp:
-    dtypes = {
-        "PS_PARTKEY": np.int64,
-        "PS_SUPPKEY": np.int64,
-        "PS_AVAILQTY": np.int32,
-        "PS_SUPPLYCOST": np.float64,
-        "PS_COMMENT": np.str_,
-    }
-
-    dtypes2 = {
-        "PS_SUPPKEY": np.int64,
-        "PS_PARTKEY": np.int64,
-        "PS_AVAILQTY": np.int32,
-        "PS_SUPPLYCOST": np.float64,
-        "PS_COMMENT": np.str_,
-    }
-
-    @classmethod
-    def load(cls):
-        df = pd.read_csv(
-            "lib/tpch-v3.0.1/dbgen/partsupp.tbl",
-            delimiter="|",
-            names=list(cls.dtypes.keys()),
-        ).astype(cls.dtypes)
-
-        return df
-
-    @classmethod
-    def load2(cls):
-        df2 = cls.load()
-        cs = df2.columns.tolist()
-        cs[0], cs[1] = cs[1], cs[0]
-        df2 = df2[cs]
-        df2 = df2.sort_values(by=[cs[0], cs[1]])
-
-        return df2
-
-    @classmethod
-    def store(cls):
-        df = cls.load().reset_index(drop=False)
-        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
-        cols["PS_PARTKEY"] = pc.run_end_encode(cols["PS_PARTKEY"])
-        write_table(OUTPUT_DIR + "/partsupp.arrow", pa.table(cols))
-
-        df2 = cls.load2().reset_index(drop=False)
-        cols2 = {key: pa.array(df2[key]) for key in list(cls.dtypes2.keys())}
-        cols2["PS_SUPPKEY"] = pc.run_end_encode(cols2["PS_SUPPKEY"])
-        write_table(OUTPUT_DIR + "/supppart.arrow", pa.table(cols2))
-
-
-class TPCHSupplier:
-    dtypes = {
-        "S_SUPPKEY": np.int64,
-        "S_NAME": np.str_,
-        "S_ADDRESS": np.str_,
-        "S_NATIONKEY": np.int64,
-        "S_PHONE": np.str_,
-        "S_ACCTBAL": np.float64,
-        "S_COMMENT": np.str_,
-    }
-
-    @classmethod
-    def load(cls):
-        df = pd.read_csv(
-            "lib/tpch-v3.0.1/dbgen/supplier.tbl",
-            delimiter="|",
-            names=list(cls.dtypes.keys()),
-        ).astype(cls.dtypes)
-
-        return df
-
-    @classmethod
-    def store(cls):
-        df = cls.load().reset_index(drop=False)
-        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
-        write_table(OUTPUT_DIR + "/supplier.arrow", pa.table(cols))
-
-
-class TPCHPart:
-    dtypes = {
-        "P_PARTKEY": np.int64,
-        "P_NAME": np.str_,
-        "P_MFGR": np.str_,
-        "P_BRAND": np.str_,
-        "P_TYPE": np.str_,
-        "P_SIZE": np.int32,
-        "P_CONTAINER": np.str_,
-        "P_RETAILPRICE": np.float64,
-        "P_COMMENT": np.str_,
-    }
-
-    @classmethod
-    def load(cls):
-        df = pd.read_csv(
-            "lib/tpch-v3.0.1/dbgen/part.tbl",
-            delimiter="|",
-            names=list(cls.dtypes.keys()),
-        ).astype(cls.dtypes)
-
-        return df
-
-    @classmethod
-    def store(cls):
-        df = cls.load().reset_index(drop=False)
-        cols = {key: pa.array(df[key]) for key in list(cls.dtypes.keys())}
-        write_table(OUTPUT_DIR + "/part.arrow", pa.table(cols))
-
-
-class TPCHQuery6:
+class Query6:
     def __init__(self):
-        self.lineitem = TPCHLineItem.load()
+        pdf = TPCHLineItem.load()
+        self.lineitem = dd.from_pandas(pdf, npartitions=NTHREADS) 
 
     def query(self, start_date, end_date, discount, quantity):
         filtered = self.lineitem[
@@ -370,7 +25,7 @@ class TPCHQuery6:
         return self.query(820454400, 852076800, 0.05, 24.5)
 
 
-class TPCHQuery3:
+class Query3:
     def __init__(self):
         self.lineitem = TPCHLineItem.load().reset_index(drop=False)
         self.customer = TPCHCustomer.load().reset_index(drop=False)
@@ -428,7 +83,7 @@ class TPCHQuery3:
         return self.query(1, 795484800)
 
 
-class TPCHQuery4:
+class Query4:
     def __init__(self):
         self.lineitem = TPCHLineItem.load().reset_index(drop=False)
         self.orders = TPCHOrders.load().reset_index(drop=False)
@@ -474,40 +129,7 @@ class TPCHQuery4:
     def run(self):
         return self.query(700000000, 900000000)
 
-
-class TPCDSQuery9:
-    def __init__(self):
-        self.store_sales = TPCDSStoreSales.load()
-
-    def query(self):
-        def bucket(df, low, high, threshold):
-            f = df[(df['ss_quantity'] >= low) & (df['ss_quantity'] <= high)]
-            if len(f) > threshold:
-                return f['ss_ext_tax'].sum()
-            else:
-                return f['ss_net_paid_inc_tax'].sum()
-        
-        bucket1 = bucket(self.store_sales, 1, 20, 1071)
-        bucket2 = bucket(self.store_sales, 21, 40, 39161)
-        bucket3 = bucket(self.store_sales, 41, 60, 29434)
-        bucket4 = bucket(self.store_sales, 61, 80, 6568)
-        bucket5 = bucket(self.store_sales, 81, 100, 21216)
-        
-        result = pd.DataFrame([{
-            'bucket1': bucket1,
-            'bucket2': bucket2,
-            'bucket3': bucket3,
-            'bucket4': bucket4,
-            'bucket5': bucket5
-        }])
-
-        return result
-
-    def run(self):
-        return self.query()
-
-
-class AlgoTrading:
+class DaskAlgoTrading:
     def __init__(self):
         self.stock_price = StockPrice.load()
 
@@ -530,7 +152,7 @@ class AlgoTrading:
         return self.query()
 
 
-class NBody:
+class DaskNBody:
     def __init__(self, n):
         self.bodies = self.make_nbody_df(n)
 
@@ -595,7 +217,7 @@ class NBody:
         return df
 
 
-class PageRank:
+class DaskPageRank:
     def __init__(self):
         edges = pd.read_csv(
             "./lib/snap/twitter_combined.tbl",
@@ -732,75 +354,7 @@ class PageRank:
         #return self.google_matrix(self.G)
 
 
-class TPCHQuery11:
-    def __init__(self):
-        self.supplier = TPCHSupplier.load().reset_index(drop=False)
-        self.partsupp = TPCHPartSupp.load().reset_index(drop=False)
-        self.supppart = TPCHPartSupp.load2().reset_index(drop=False)
-
-    def query(self, nation_key, fraction):
-        supp_nat = self.supplier[self.supplier["S_NATIONKEY"] == nation_key]
-
-        ps = self.partsupp.merge(
-            supp_nat,
-            left_on="PS_SUPPKEY",
-            right_on="S_SUPPKEY",
-            how="inner"
-        )
-
-        ps["VALUE"] = ps["PS_SUPPLYCOST"] * ps["PS_AVAILQTY"]
-
-        per_part = (
-            ps.groupby("PS_PARTKEY", as_index=False)["VALUE"]
-              .sum()
-              .rename(columns={"VALUE": "VALUE"})
-        )
-
-        total_value = ps["VALUE"].sum()
-
-        threshold = total_value * fraction
-
-        result = per_part[per_part["VALUE"] > threshold]
-
-        return result
-
-    def run(self):
-        return self.query(0, 0.0001/10)
-
-
-class TPCHQuery1:
-    def __init__(self):
-        self.lineitem = TPCHLineItem.load().reset_index(drop=False)
-
-    def query(self):
-        var1 = 904694400
-
-        filt = self.lineitem[self.lineitem["L_SHIPDATE"] <= var1]
-
-        # This is lenient towards pandas as normally an optimizer should decide
-        # that this could be computed before the groupby aggregation.
-        # Other implementations don't enjoy this benefit.
-        filt["disc_price"] = filt.L_EXTENDEDPRICE * (1.0 - filt.L_DISCOUNT)
-        filt["charge"] = (
-            filt.L_EXTENDEDPRICE * (1.0 - filt.L_DISCOUNT) * (1.0 + filt.L_TAX)
-        )
-
-        gb = filt.groupby(["L_RETURNFLAG"], as_index=False)
-        agg = gb.agg(
-            sum_qty=pd.NamedAgg(column="L_QUANTITY", aggfunc="sum"),
-            sum_base_price=pd.NamedAgg(column="L_EXTENDEDPRICE", aggfunc="sum"),
-            sum_disc_price=pd.NamedAgg(column="disc_price", aggfunc="sum"),
-            sum_charge=pd.NamedAgg(column="charge", aggfunc="sum"),
-            count_order=pd.NamedAgg(column="L_ORDERKEY", aggfunc="size"),
-        )
-
-        return agg
-
-    def run(self):
-        return self.query()
-
-
-class TPCHQuery2:
+class Query11:
     def __init__(self):
         self.supplier = TPCHSupplier.load().reset_index(drop=False)
         self.partsupp = TPCHPartSupp.load().reset_index(drop=False)
@@ -836,96 +390,78 @@ class TPCHQuery2:
         return self.query(0, 0.0001)
 
 
-class TPCHQuery12:
+class Query1:
     def __init__(self):
         self.lineitem = TPCHLineItem.load().reset_index(drop=False)
-        self.orders = TPCHOrders.load().reset_index(drop=False)
 
     def query(self):
-        orders = self.orders
-        lineitem = self.lineitem
+        var1 = 904694400
 
-        df = lineitem.merge(
-            orders,
-            left_on="L_ORDERKEY",
-            right_on="O_ORDERKEY",
-            how="inner"
+        filt = self.lineitem[self.lineitem["L_SHIPDATE"] <= var1]
+
+        # This is lenient towards pandas as normally an optimizer should decide
+        # that this could be computed before the groupby aggregation.
+        # Other implementations don't enjoy this benefit.
+        filt["disc_price"] = filt.L_EXTENDEDPRICE * (1.0 - filt.L_DISCOUNT)
+        filt["charge"] = (
+            filt.L_EXTENDEDPRICE * (1.0 - filt.L_DISCOUNT) * (1.0 + filt.L_TAX)
         )
-        df = df[
-            (df["L_COMMITDATE"] < df["L_RECEIPTDATE"]) &
-            (df["L_SHIPDATE"] < df["L_COMMITDATE"])
-        ]
-        df["high_flag"] = df["O_ORDERPRIORITY"].isin([0, 1]).astype(int)
-        df["low_flag"]  = (~df["O_ORDERPRIORITY"].isin([0, 1])).astype(int)
-        result = (
-            df.groupby("L_ORDERKEY")
-            .agg(high_line_count=("high_flag", "sum"),
-                low_line_count=("low_flag", "sum"))
-            .reset_index()
-            .sort_values("L_ORDERKEY")
+
+        gb = filt.groupby(["L_RETURNFLAG"], as_index=False)
+        agg = gb.agg(
+            sum_qty=pd.NamedAgg(column="L_QUANTITY", aggfunc="sum"),
+            sum_base_price=pd.NamedAgg(column="L_EXTENDEDPRICE", aggfunc="sum"),
+            sum_disc_price=pd.NamedAgg(column="disc_price", aggfunc="sum"),
+            sum_charge=pd.NamedAgg(column="charge", aggfunc="sum"),
+            count_order=pd.NamedAgg(column="L_ORDERKEY", aggfunc="size"),
         )
-        return result
+
+        return agg
 
     def run(self):
         return self.query()
 
 
-class FakeData:
-    def __init__(self, size = 100_000_000):
-        self.df = pd.DataFrame({
-            't': range(size),
-            'val': range(size),
-        })
-
-    def load(self):
-        return self.df
-
-    def store(self):
-        schema = pa.Schema.from_pandas(self.df, preserve_index=False)
-        table = pa.Table.from_pandas(self.df, preserve_index=False)
-        writer = pa.ipc.new_file("arrow_data/fake_data.arrow", schema)
-        writer.write(table)
-        writer.close()
-
-
-class MicroBench:
+class Query2:
     def __init__(self):
-        self.left = FakeData().load().reset_index(drop=False)
-        self.right = FakeData().load().reset_index(drop=False)
+        self.supplier = TPCHSupplier.load().reset_index(drop=False)
+        self.partsupp = TPCHPartSupp.load().reset_index(drop=False)
+        self.supppart = TPCHPartSupp.load2().reset_index(drop=False)
 
-    def select_query(self):
-        df = self.left["t"]
-        df = df[df % 2 == 0]
-        return df
+    def query(self, nation_key, fraction):
+        supp_nat = self.supplier[self.supplier["S_NATIONKEY"] == nation_key]
 
-    def join_query(self, h):
-        df = (
-            self.left.merge(self.right, on="t", how=h)
-            .assign(diff=lambda df: df["val_x"] - df["val_y"])
-            [["t", "diff"]]
+        ps = self.partsupp.merge(
+            supp_nat,
+            left_on="PS_SUPPKEY",
+            right_on="S_SUPPKEY",
+            how="inner"
         )
-        return df
 
-    def sum(self):
-        return self.left["val"].sum()
+        ps["VALUE"] = ps["PS_SUPPLYCOST"] * ps["PS_AVAILQTY"]
 
-    def run(self, q):
-        if q == "select":
-            return self.select_query()
-        elif q == "inner" or q == "outer":
-            return self.join_query(q)
-        elif q == "sum":
-            return self.sum()
+        per_part = (
+            ps.groupby("PS_PARTKEY", as_index=False)["VALUE"]
+              .sum()
+              .rename(columns={"VALUE": "VALUE"})
+        )
 
+        total_value = ps["VALUE"].sum()
+
+        threshold = total_value * fraction
+
+        result = per_part[per_part["VALUE"] > threshold]
+
+        return result
+
+    def run(self):
+        return self.query(0, 0.0001)
 
 if __name__ == '__main__':
-    q = TPCHQuery12()
+    q = Query6()
     import time
-    for i in range(5):
-        start = time.time()
-        out = q.run()
-        end = time.time()
-        print("Time: ", (end - start)*1000)
+    start = time.time()
+    out = q.run().compute()
+    end = time.time()
     print(out)
-
-
+    print("Time: ", (end - start)*1000)
