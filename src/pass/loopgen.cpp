@@ -112,7 +112,7 @@ shared_ptr<Loop> LoopGen::build_loop(Op& op, shared_ptr<Loop> loop)
 
 Expr LoopGen::visit(Op& op)
 {
-    auto len = _idx(10000000);
+    auto len = _idx(100000000);
 
     // Output vector builder
     auto mem_id = memman.add_builder([op](int64_t len) {
