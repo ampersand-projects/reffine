@@ -509,22 +509,15 @@ class TPCDSQuery9:
 
 class AlgoTrading:
     def __init__(self):
-        self.stock_price = StockPrice.load()
+        self.stock_price = FakeData().load().set_index("t")
 
     def query(self):
         df = self.stock_price
 
-        df['price_10'] = df['val'].shift(10)
-        df['price_20'] = df['val'].shift(20)
-    
-        # Basic differences
-        df['diff_10'] = df['val'] - df['price_10']
-        df['diff_20'] = df['val'] - df['price_20']
-    
-        # Your requirement: subtract 10-step value from 20-step value
-        df['past_diff'] = df['price_20'] - df['price_10']
-    
-        return df[["val", "past_diff"]]
+        df['rolling_sum'] = df['val'].rolling(window=50, min_periods=1).sum()
+        res = df["val"] - df["rolling_sum"]
+
+        return res
 
     def run(self):
         return self.query()
@@ -885,10 +878,10 @@ class MicroBench:
 
 
 if __name__ == '__main__':
-    q = MicroBench()
+    q = AlgoTrading()
     import time
     start = time.time()
-    out = q.run("sum")
+    out = q.run()
     end = time.time()
     print(out)
     print("Time: ", (end - start)*1000)
