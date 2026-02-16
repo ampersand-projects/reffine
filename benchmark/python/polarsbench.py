@@ -198,10 +198,10 @@ class PLRMicroBench:
 
 
 if __name__ == '__main__':
-    q = PLRMicroBench()
+    q = Query3()
     import time
     start = time.time()
-    out = q.run("full")
+    out = q.run()
     end = time.time()
     print(out)
     print("Time: ", (end - start) * 1000)
